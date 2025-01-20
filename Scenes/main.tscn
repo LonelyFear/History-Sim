@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b1mh36mwq3q24"]
+
+[ext_resource type="Script" path="res://Scripts/pop_test.gd" id="1_wta3h"]
+
+[node name="Main" type="Node2D"]
+
+[node name="PopTest" type="Node" parent="."]
+script = ExtResource("1_wta3h")
