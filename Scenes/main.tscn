@@ -1,8 +1,35 @@
-[gd_scene load_steps=2 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=9 format=3 uid="uid://b1mh36mwq3q24"]
 
-[ext_resource type="Script" path="res://Scripts/pop_test.gd" id="1_wta3h"]
+[ext_resource type="Script" path="res://Scripts/generate.gd" id="1_h4cr5"]
+[ext_resource type="Texture2D" uid="uid://cjvdhxvhm3bk4" path="res://Sprites/Reliefs.png" id="1_rsr3n"]
+[ext_resource type="Script" path="res://Scripts/load_mods.gd" id="1_w647p"]
+[ext_resource type="Script" path="res://Scripts/tectonics.gd" id="3_irl8t"]
+[ext_resource type="Script" path="res://Scripts/Utility/update_tile_map_layer.gd" id="4_jaihg"]
+[ext_resource type="Script" path="res://Scripts/load_biomes.gd" id="5_xnnej"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_23mtj"]
+texture = ExtResource("1_rsr3n")
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_or647"]
+sources/0 = SubResource("TileSetAtlasSource_23mtj")
 
 [node name="Main" type="Node2D"]
+script = ExtResource("1_w647p")
 
-[node name="PopTest" type="Node" parent="."]
-script = ExtResource("1_wta3h")
+[node name="World" type="Node2D" parent="."]
+script = ExtResource("1_h4cr5")
+worldSize = Vector2i(500, 250)
+
+[node name="Tectonics" type="Node" parent="World"]
+script = ExtResource("3_irl8t")
+
+[node name="Map" type="TileMapLayer" parent="World"]
+tile_set = SubResource("TileSet_or647")
+script = ExtResource("4_jaihg")
+
+[node name="Node" type="Node" parent="."]
+script = ExtResource("5_xnnej")
