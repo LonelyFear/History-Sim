@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://b1mh36mwq3q24"]
 
-[ext_resource type="Script" path="res://Scripts/generate.gd" id="1_h4cr5"]
+[ext_resource type="Script" path="res://Scripts/world_generator.gd" id="1_h4cr5"]
 [ext_resource type="Texture2D" uid="uid://cjvdhxvhm3bk4" path="res://Sprites/Reliefs.png" id="1_rsr3n"]
 [ext_resource type="Script" path="res://Scripts/load_mods.gd" id="1_w647p"]
 [ext_resource type="Script" path="res://Scripts/tectonics.gd" id="3_irl8t"]
@@ -22,10 +22,13 @@ script = ExtResource("1_w647p")
 
 [node name="World" type="Node2D" parent="."]
 script = ExtResource("1_h4cr5")
-worldSize = Vector2i(500, 250)
+seed = 447
+worldSize = Vector2i(380, 160)
 
-[node name="Tectonics" type="Node" parent="World"]
+[node name="Tectonics" type="Node" parent="World" node_paths=PackedStringArray("map", "worldGen")]
 script = ExtResource("3_irl8t")
+map = NodePath("../Map")
+worldGen = NodePath("..")
 
 [node name="Map" type="TileMapLayer" parent="World"]
 tile_set = SubResource("TileSet_or647")

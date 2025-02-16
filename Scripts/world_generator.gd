@@ -1,8 +1,9 @@
 extends Node2D
-class_name Generate
+class_name WorldGenerator
 
 var map : TileMapLayer
-var seaLevel : float = 0.4
+var seaLevel : float = 0.6
+
 
 var biomes : Dictionary
 var heightMap : Dictionary
@@ -34,8 +35,10 @@ enum HumidTypes{
 	INVALID
 }
 
+@export var seed : int
 @export var worldSize : Vector2i = Vector2i(400, 400)
 func _ready() -> void:
+	scale = Vector2(1,1) * (72/float(worldSize.x))
 	map = $"Map"
 	generateWorld()
 
@@ -43,26 +46,41 @@ func createHeightMap(scale : float) -> Dictionary:
 	var noiseMap = {}
 	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 7.2, true)
 	
+	var simplexNoise : FastNoiseLite = FastNoiseLite.new()
+	simplexNoise.fractal_octaves = 8
+	simplexNoise.seed = seed
+	simplexNoise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	
 	var noise : FastNoiseLite = FastNoiseLite.new()
-	noise.fractal_octaves = 8
-	noise.seed = 999999
-	noise.TYPE_SIMPLEX
-
+	noise.fractal_octaves = 2
+	noise.noise_type = FastNoiseLite.TYPE_CELLULAR
+	
+	var minNoise = INF
+	var maxNoise = -INF
 	for x in worldSize.x:
 		for y in worldSize.y:
-			noiseMap[Vector2i(x,y)] = noise.get_noise_2d(x / scale ,y / scale) * 2 - falloff[Vector2i(x, y)]
+			var noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
+			if (noiseValue < minNoise):
+				minNoise = noiseValue
+			if (noiseValue > maxNoise):
+				maxNoise = noiseValue
+			noiseMap[Vector2i(x,y)] = noiseValue - falloff[Vector2i(x, y)]
 			#print(noiseMap[Vector2i(x,y)])
 	return noiseMap
 
 func createTempMap(scale : float) -> Dictionary:
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed
 	var tempMap = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
-	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 2)
+	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 1.25)
 	noise.fractal_octaves = 8
-	noise.TYPE_PERLIN
+	noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	noise.seed = randi()
 	for x in worldSize.x:
 		for y in worldSize.y:
-			tempMap[Vector2i(x,y)] = lerpf((1.0 - falloff[Vector2i(x,y)]), abs(noise.get_noise_2d(x / scale ,y / scale) * 2), 0.125)
+			var noiseValue = inverse_lerp(-1, 1, noise.get_noise_2d(x / scale ,y / scale))
+			tempMap[Vector2i(x,y)] = lerpf((1.0 - falloff[Vector2i(x,y)]), noiseValue, 0.15)
 			#tempMap[Vector2i(x,y)] = (1.0 - falloff[Vector2i(x,y)])
 	return tempMap
 
@@ -70,17 +88,18 @@ func createMoistMap(scale : float) -> Dictionary:
 	var moistMap = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	noise.fractal_octaves = 8
-	noise.TYPE_SIMPLEX
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.seed = rand_from_seed(seed)[0]
 	for x in worldSize.x:
 		for y in worldSize.y:
-			moistMap[Vector2i(x,y)] = noise.get_noise_2d(x / scale ,y / scale) * 2
+			var noiseValue = inverse_lerp(0.3, 0.7, (noise.get_noise_2d(x / scale ,y / scale) + 1)/2)
+			moistMap[Vector2i(x,y)] = noiseValue
 	return moistMap
 
 func generateWorld():
 	clearMap()
-	scale = Vector2(1,1) * (72/float(worldSize.x))
 	heightMap = createHeightMap(1)
-	tempMap = createTempMap(1.5)
+	tempMap = createTempMap(0.25)
 	humidMap = createMoistMap(1)
 	for x in worldSize.x:
 		for y in worldSize.y:
@@ -93,7 +112,7 @@ func generateWorld():
 				if (biome["mergedIds"].has(biomes[Vector2i(x,y)])):
 					map.update_tile_color(currentPos, Color(biome["color"]))
 					break
-			#map.update_tile_color(currentPos, lerp(Color.BLUE, Color.RED, tempMap[Vector2i(x,y)]))
+			#map.update_tile_color(currentPos, lerp(Color.BLUE, Color.RED, heightMap[Vector2i(x,y)]))
 			#map.get_cell_tile_data(currentpos).modulate = Color(randf_range(0, 1), randf_range(0, 1), randf_range(0, 1), 1)
 func clearMap():
 	for i in map.get_used_cells():
@@ -105,11 +124,14 @@ func setBiome(x : int, y : int) -> String:
 	var biome : String = "rock"
 	# If we are below the ocean threshold
 	if (altitude <= seaLevel):
+		
 		match(getTempType(x, y)):
 			TempTypes.POLAR:
 				biome = "polar ice"
 			_:
-				biome = "ocean"
+				biome = "shallow ocean"
+				if (altitude <= seaLevel - 0.05):
+					biome = "ocean"
 	else:
 		#landTiles++;
 		match (getTempType(x, y)):
