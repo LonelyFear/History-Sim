@@ -1,38 +1,114 @@
-[gd_scene load_steps=9 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=15 format=4 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" path="res://Scripts/world_generator.gd" id="1_h4cr5"]
-[ext_resource type="Texture2D" uid="uid://cjvdhxvhm3bk4" path="res://Sprites/Reliefs.png" id="1_rsr3n"]
 [ext_resource type="Script" path="res://Scripts/load_mods.gd" id="1_w647p"]
-[ext_resource type="Script" path="res://Scripts/tectonics.gd" id="3_irl8t"]
+[ext_resource type="Script" path="res://Scripts/sim_manager.gd" id="2_e7n5d"]
+[ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="3_wjc6s"]
 [ext_resource type="Script" path="res://Scripts/Utility/update_tile_map_layer.gd" id="4_jaihg"]
 [ext_resource type="Script" path="res://Scripts/load_biomes.gd" id="5_xnnej"]
+[ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
+[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_ijhcp"]
+[ext_resource type="Script" path="res://Scripts/camera_controller.gd" id="6_kmkn8"]
+[ext_resource type="Script" path="res://Scenes/terrain_map.gd" id="8_plgql"]
+[ext_resource type="Script" path="res://Scripts/time_manager.gd" id="9_dbmc3"]
+[ext_resource type="Script" path="res://Scripts/tectonics.gd" id="12_xcgyf"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_23mtj"]
-texture = ExtResource("1_rsr3n")
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
+texture = ExtResource("6_dynbe")
 0:0/0 = 0
 1:0/0 = 0
+1:0/0/z_index = 1
 0:1/0 = 0
 1:1/0 = 0
+1:1/0/z_index = 1
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+2:2/0/z_index = 1
+3:2/0 = 0
+3:2/0/z_index = -2
+0:3/0 = 0
+0:3/0/z_index = 1
+1:3/0 = 0
+1:3/0/z_index = 1
+2:3/0 = 0
+2:3/0/z_index = 1
+3:3/0 = 0
+3:3/0/z_index = -1
+3:1/0 = 0
+3:1/0/z_index = -3
+2:1/0 = 0
+2:0/0 = 0
+2:0/0/z_index = 1
+3:0/0 = 0
+3:0/0/z_index = 1
 
-[sub_resource type="TileSet" id="TileSet_or647"]
-sources/0 = SubResource("TileSetAtlasSource_23mtj")
+[sub_resource type="TileSet" id="TileSet_hda34"]
+tile_size = Vector2i(12, 12)
+sources/0 = SubResource("TileSetAtlasSource_wcrxr")
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_w647p")
 
-[node name="World" type="Node2D" parent="."]
-script = ExtResource("1_h4cr5")
-seed = 447
-worldSize = Vector2i(380, 160)
+[node name="Scaling Buddy" type="Sprite2D" parent="."]
+z_index = -1000
+position = Vector2(180, 95)
+texture = ExtResource("6_ijhcp")
 
-[node name="Tectonics" type="Node" parent="World" node_paths=PackedStringArray("map", "worldGen")]
-script = ExtResource("3_irl8t")
-map = NodePath("../Map")
-worldGen = NodePath("..")
+[node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "regionMap", "terrainMap")]
+z_index = 2
+script = ExtResource("2_e7n5d")
+world = NodePath("../World")
+regionMap = NodePath("Region Map")
+terrainMap = NodePath("../World/Terrain Map")
 
-[node name="Map" type="TileMapLayer" parent="World"]
-tile_set = SubResource("TileSet_or647")
+[node name="Region Map" type="TileMapLayer" parent="Simulation"]
+tile_set = ExtResource("3_wjc6s")
+y_sort_origin = 1
 script = ExtResource("4_jaihg")
 
-[node name="Node" type="Node" parent="."]
+[node name="World" type="Node2D" parent="."]
+script = ExtResource("1_h4cr5")
+worldSize = Vector2i(360, 180)
+mapScale = 2.0
+riverCount = 500
+minRiverDist = 10
+
+[node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionMap")]
+scale = Vector2(1.333, 1.333)
+tile_map_data = PackedByteArray("AAABAAEAAAADAAIAAAAAAAEAAAADAAIAAAD//wAAAAABAAAAAAD//wEAAAABAAAAAAABAAAAAAADAAIAAAAAAAAAAAADAAIAAAACAAAAAAADAAIAAAACAAEAAAADAAIAAAD/////AAABAAAAAAAAAP//AAABAAAAAAABAP//AAABAAAAAAACAP//AAABAAAAAAADAP//AAABAAAAAAADAAAAAAABAAAAAAADAAEAAAABAAAAAAADAAIAAAABAAAAAAACAAIAAAABAAEAAAABAAIAAAABAAEAAAAAAAIAAAABAAEAAAA=")
+tile_set = SubResource("TileSet_hda34")
+script = ExtResource("8_plgql")
+camera = NodePath("../../PlayerCamera")
+lodMap = NodePath("../LOD Map")
+regionMap = NodePath("../../Simulation/Region Map")
+baseRegionOpacity = 0.8
+
+[node name="LOD Map" type="Sprite2D" parent="World"]
+scale = Vector2(16, 16)
+centered = false
+
+[node name="Biome Loader" type="Node" parent="."]
 script = ExtResource("5_xnnej")
+
+[node name="PlayerCamera" type="Camera2D" parent="."]
+position = Vector2(576, 324)
+script = ExtResource("6_kmkn8")
+minZoom = Vector2(15, 15)
+
+[node name="Time Manager" type="Node" parent="."]
+script = ExtResource("9_dbmc3")
+daysPerTick = 30
+secondsPerTick = 0.001
+
+[node name="TickTimer" type="Timer" parent="Time Manager"]
+
+[node name="Tectonics" type="Node" parent="." node_paths=PackedStringArray("map", "worldGen")]
+script = ExtResource("12_xcgyf")
+map = NodePath("../World/Terrain Map")
+worldGen = NodePath("../World")
+
+[connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]
+[connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]
+[connection signal="tick" from="Time Manager" to="Simulation" method="_on_tick"]
+[connection signal="timeout" from="Time Manager/TickTimer" to="Time Manager" method="_on_tick_timer_timeout"]

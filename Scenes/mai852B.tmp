@@ -1,0 +1,58 @@
+[gd_scene load_steps=11 format=3 uid="uid://b1mh36mwq3q24"]
+
+[ext_resource type="Script" path="res://Scripts/world_generator.gd" id="1_h4cr5"]
+[ext_resource type="Script" path="res://Scripts/load_mods.gd" id="1_w647p"]
+[ext_resource type="Script" path="res://Scripts/sim_manager.gd" id="2_e7n5d"]
+[ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="3_wjc6s"]
+[ext_resource type="Script" path="res://Scripts/Utility/update_tile_map_layer.gd" id="4_jaihg"]
+[ext_resource type="Script" path="res://Scripts/load_biomes.gd" id="5_xnnej"]
+[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_ijhcp"]
+[ext_resource type="Script" path="res://Scripts/camera_controller.gd" id="6_kmkn8"]
+[ext_resource type="Script" path="res://Scripts/terrain_map.gd" id="7_wdvp3"]
+[ext_resource type="Script" path="res://Scripts/time_manager.gd" id="9_dbmc3"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_w647p")
+
+[node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "regionMap", "terrainMap")]
+z_index = 1
+script = ExtResource("2_e7n5d")
+world = NodePath("../World")
+regionMap = NodePath("Region Map")
+terrainMap = NodePath("../World/Terrain Map")
+
+[node name="Region Map" type="TileMapLayer" parent="Simulation"]
+tile_set = ExtResource("3_wjc6s")
+y_sort_origin = 1
+script = ExtResource("4_jaihg")
+
+[node name="World" type="Node2D" parent="."]
+script = ExtResource("1_h4cr5")
+worldSize = Vector2i(720, 360)
+seed = 347
+mapScale = 2.0
+riverThreshold = 0.3
+riverCount = 200
+minRiverDist = 10
+
+[node name="Scaling Buddy" type="Sprite2D" parent="World"]
+position = Vector2(180, 95)
+texture = ExtResource("6_ijhcp")
+
+[node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera")]
+tile_set = ExtResource("3_wjc6s")
+script = ExtResource("7_wdvp3")
+camera = NodePath("../../PlayerCamera")
+
+[node name="Biome Loader" type="Node" parent="."]
+script = ExtResource("5_xnnej")
+
+[node name="PlayerCamera" type="Camera2D" parent="."]
+position = Vector2(576, 324)
+script = ExtResource("6_kmkn8")
+minZoom = Vector2(10, 10)
+
+[node name="Time Manager" type="Node" parent="."]
+script = ExtResource("9_dbmc3")
+
+[connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]

@@ -1,17 +1,18 @@
 extends Node2D
 class_name WorldGenerator
 
-var map : TileMapLayer
-var seaLevel : float = 0.6
-
+var map : UpdateTileMapLayer
 
 var biomes : Dictionary
+var tileBiomes : Dictionary
 var heightMap : Dictionary
 var tempMap : Dictionary
 var humidMap : Dictionary
 
 var temps = [0.874, 0.765, 0.594, 0.439, 0.366, 0.124]
 var humids = [0.941, 0.778, 0.507, 0.236, 0.073, 0.014, 0.002]
+var terrainImage : Image
+var worldCreated : bool = false
 
 enum TempTypes {
 	POLAR,
@@ -35,88 +36,240 @@ enum HumidTypes{
 	INVALID
 }
 
+signal worldgenFinished()
+
+## the size of the world in width and height
+@export var worldSize : Vector2i = Vector2i(720, 360)
+## the height threshold above which there will be land
+@export var seaLevel : float = 0.6
+@export_category("Noise Settings")
+## the seed the world generator uses
 @export var seed : int
-@export var worldSize : Vector2i = Vector2i(400, 400)
+## the scale of the world generator's noise
+@export var mapScale : float = 1
+## Number of fractal octaves used in heightmap generation
+@export var heightOctaves : float = 8
+@export_category("Rivers")
+## the height threshold for an area to be a river source relative to sea level
+@export var riverThreshold : float = 0.4
+## the amount of rivers that the world generator will attempt to generate
+@export var riverCount : int
+## the minimum distance between rivers
+@export var minRiverDist : int
+
 func _ready() -> void:
-	scale = Vector2(1,1) * (72/float(worldSize.x))
-	map = $"Map"
-	generateWorld()
+	
+	map = $"Terrain Map"
+	scale = (Vector2(1,1) * (72/float(worldSize.x)))
+	map.scale = Vector2(1,1) * 16/map.tile_set.tile_size.x
+	#generateWorld()
+
+#region Noise
 
 func createHeightMap(scale : float) -> Dictionary:
+	# Generates a heightmap with random noise
 	var noiseMap = {}
-	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 7.2, true)
+	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
 	
 	var simplexNoise : FastNoiseLite = FastNoiseLite.new()
-	simplexNoise.fractal_octaves = 8
+	simplexNoise.fractal_octaves = heightOctaves
 	simplexNoise.seed = seed
 	simplexNoise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	
+	# Worley noise for use later
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	noise.fractal_octaves = 2
 	noise.noise_type = FastNoiseLite.TYPE_CELLULAR
 	
-	var minNoise = INF
-	var maxNoise = -INF
+	# Gets our height values
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
-			if (noiseValue < minNoise):
-				minNoise = noiseValue
-			if (noiseValue > maxNoise):
-				maxNoise = noiseValue
 			noiseMap[Vector2i(x,y)] = noiseValue - falloff[Vector2i(x, y)]
-			#print(noiseMap[Vector2i(x,y)])
+	# Returns the heightmap
 	return noiseMap
 
 func createTempMap(scale : float) -> Dictionary:
+	# Generates a tempmap with random noise
+	# Creates a random number generator for getting our seed
 	var rng = RandomNumberGenerator.new()
 	rng.seed = seed
 	var tempMap = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
+	
+	# Creates our noise generator
 	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 1.25)
 	noise.fractal_octaves = 8
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
-	noise.seed = randi()
+	noise.seed = rand_from_seed(seed * 2)[0]
+	
+	# Iterates through noise
 	for x in worldSize.x:
 		for y in worldSize.y:
+			# Gets out noise value
 			var noiseValue = inverse_lerp(-1, 1, noise.get_noise_2d(x / scale ,y / scale))
+			# Multiplies noise value by falloff
 			tempMap[Vector2i(x,y)] = lerpf((1.0 - falloff[Vector2i(x,y)]), noiseValue, 0.15)
-			#tempMap[Vector2i(x,y)] = (1.0 - falloff[Vector2i(x,y)])
+			# Gets our height factor, higher relative altitude = cooler temperature
+			var heightFactor = (heightMap[Vector2i(x,y)] - seaLevel - 0.2)/(1 - seaLevel - 0.2)
+			# Modifies temperature by height factor
+			if (heightFactor > 0):
+				tempMap[Vector2i(x,y)] -= heightFactor
+			# Clamps temperature
+			tempMap[Vector2i(x,y)] = clampf(tempMap[Vector2i(x,y)], 0, 1)
+	# Returns our tempmap
 	return tempMap
 
 func createMoistMap(scale : float) -> Dictionary:
+	# Generates our moisture map
 	var moistMap = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
+	# Creates a random noise generator with a seed derived from world seed
 	noise.fractal_octaves = 8
 	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	noise.seed = rand_from_seed(seed)[0]
+	noise.seed = rand_from_seed(rand_from_seed(seed)[0])[0]
+	# Assigns values to the map
 	for x in worldSize.x:
 		for y in worldSize.y:
+			# Gets a lerped noise value so temperature extremes of 0 and 1 can exist
 			var noiseValue = inverse_lerp(0.3, 0.7, (noise.get_noise_2d(x / scale ,y / scale) + 1)/2)
 			moistMap[Vector2i(x,y)] = noiseValue
+			# TODO: modify moisture map by temperature so cooler areas are less moist
 	return moistMap
+#endregion
+
+#region Rivers
+
+func generateRivers():
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed
+	var samplePoints : Array = []
+	var maxAttempts : int = 1000
+	var maxRiverLength : int = 2000
+	
+	for i in riverCount:
+		var pos : Vector2i = Vector2i(rng.randi_range(0, worldSize.x - 1), rng.randi_range(0, worldSize.y - 1))
+		var attempts : int = 0
+		var posGood : bool = false
+		while !posGood && attempts < maxAttempts:
+			attempts += 1
+			rng.seed += 10
+			pos = Vector2i(rng.randi_range(0, worldSize.x - 1), rng.randi_range(0, worldSize.y - 1))
+			var adjustedElevation = (heightMap[pos] - seaLevel)/(1 - seaLevel)
+			
+			# Checks our new position
+			if !samplePoints.has(pos) && adjustedElevation >= riverThreshold:
+				posGood = true
+				for point in samplePoints:
+					if pos.distance_to(point) < minRiverDist:
+						posGood = false
+						break
+				#for dx in range(-5, 5):
+					#for dy in range(-5, 5):
+						#if samplePoints.has(pos + Vector2i(dx, dy)):
+							#posGood = false
+		if (attempts < maxAttempts):
+			samplePoints.append(pos)
+	
+	for pos : Vector2i in samplePoints:
+		var adjustedElevation = (heightMap[pos] - seaLevel)/(1 - seaLevel)
+		var currentRiver : Array
+		if adjustedElevation >= riverThreshold:
+			var riverPos : Vector2i = pos
+			var riverContinue : bool = true
+			var riverLength : int = 0
+			while heightMap[riverPos] > seaLevel && riverContinue:
+				var lowestPos : Vector2i
+				var lowestHeight : float = INF
+				for dy in range(-1, 2):
+					for dx in range(-1, 2):
+						var testPos = riverPos + Vector2i(dx, dy)
+						if (dx != 0 && dy != 0):
+							continue
+						elif (heightMap[testPos] <= lowestHeight && !currentRiver.has(testPos)):
+							lowestHeight = heightMap[testPos]
+							lowestPos = testPos
+				
+				var nearOtherRiver : bool = false
+				for dx in range(-1, 2):
+					for dy in range(-1, 2):
+						if (dx != 0 && dy != 0):
+							continue
+						if (biomes.has(lowestPos + Vector2i(dx, dy)) && biomes[lowestPos + Vector2i(dx, dy)] == "river"):
+							nearOtherRiver = false
+							break
+				if (heightMap[lowestPos] > seaLevel && heightMap[lowestPos] - 0.1 < heightMap[riverPos]):
+					addRiver(riverPos)
+					currentRiver.append(riverPos)
+					riverPos = lowestPos
+					riverLength += 1
+				else:
+					riverContinue = false
+				addRiver(riverPos)
+				currentRiver.append(riverPos)
+				if (riverLength > maxRiverLength * mapScale || nearOtherRiver):
+					riverContinue = false
+
+func addRiver(pos : Vector2i):
+	biomes[pos] = "river"
+#endregion
 
 func generateWorld():
+	var worldGenStartTime = Time.get_ticks_msec()
+	print("World generation started")
 	clearMap()
-	heightMap = createHeightMap(1)
-	tempMap = createTempMap(0.25)
-	humidMap = createMoistMap(1)
+	print("Generating heightmap...")
+	
+	var startTime = Time.get_ticks_msec()
+	heightMap = createHeightMap(mapScale)
+	print("Heightmap generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	
+	print("Generating tempmap...")
+	startTime = Time.get_ticks_msec()
+	tempMap = createTempMap(mapScale/4)
+	print("Teightmap generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	
+	print("Generating moisture...")
+	startTime = Time.get_ticks_msec()
+	humidMap = createMoistMap(mapScale)
+	print("Moisture generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	
+	print("Generating biomes...")
+	startTime = Time.get_ticks_msec()
 	for x in worldSize.x:
 		for y in worldSize.y:
 			
 			var currentPos : Vector2i = Vector2i(x,y)
-			map.set_cell(currentPos, 0, Vector2i(0,0))
 			FastNoiseLite.new()
 			biomes[Vector2i(x,y)] = setBiome(x,y)
-			for biome in BiomeLoader.biomes["biomes"]:
+	print("Biome generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	
+	print("Generating rivers...")
+	startTime = Time.get_ticks_msec()
+	generateRivers()
+	print("River generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	
+	print("Coloring tiles...")
+	startTime = Time.get_ticks_msec()
+	terrainImage = Image.create(worldSize.x, worldSize.y, true, Image.FORMAT_RGB8)
+	for x in worldSize.x:
+		for y in worldSize.y:
+			var currentPos : Vector2i = Vector2i(x,y)
+			for biome in BiomeLoader.biomes:
 				if (biome["mergedIds"].has(biomes[Vector2i(x,y)])):
-					map.update_tile_color(currentPos, Color(biome["color"]))
+					map.set_cell(currentPos, 0, Vector2i(biome["textureX"],biome["textureY"]))
+					terrainImage.set_pixel(x,y, biome["color"])
+					tileBiomes[Vector2i(x,y)] = biome
 					break
-			#map.update_tile_color(currentPos, lerp(Color.BLUE, Color.RED, heightMap[Vector2i(x,y)]))
+			#map.update_tile_color(currentPos, lerp(Color.BLUE, Color.RED, (heightMap[Vector2i(x,y)] - seaLevel)/(1 - seaLevel)))
 			#map.get_cell_tile_data(currentpos).modulate = Color(randf_range(0, 1), randf_range(0, 1), randf_range(0, 1), 1)
+	print("Tiles colored! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	print("World generation completed after " + str(Time.get_ticks_msec() - worldGenStartTime) + "ms")
+	worldgenFinished.emit()
 func clearMap():
 	for i in map.get_used_cells():
 		map.erase_cell(i)
+	print("Tilemap clear")
 
 #region Biomes
 func setBiome(x : int, y : int) -> String:
