@@ -20,15 +20,25 @@ enum CrustTypes {
 }
 
 func _ready() -> void:
-	worldSize = worldGen.worldSize
-	seed = worldGen.seed
-	createPlates(5, 5)
-	initHeightmap()
-	initTilemap()
-	getPressures()
-	updateTilemap()
+	#runSimulation(worldGen.worldSize, Vector2i(4, 4))
+	pass
 
-#func runSimulation(worldSize : Vector2i, plates : Vector2i)
+func runSimulation(fWorldSize : Vector2i, plates : Vector2i) -> Dictionary:
+	worldSize = fWorldSize
+	seed = rand_from_seed(worldGen.seed)[0]
+	seaLevel = worldGen.seaLevel
+	createPlates(plates.x, plates.y)
+	initHeightmap()
+	getPressures()
+	return getHeightMap()
+
+func getHeightMap() -> Dictionary:
+	var heightMap : Dictionary
+	for x in worldSize.x:
+		for y in worldSize.y:
+			var tile : WorldTile = tiles[Vector2i(x,y)]
+			heightMap.get_or_add(Vector2i(x,y), clampf(tile.topCrust.elevation, 0.0, 1.0))
+	return heightMap
 
 func getPressures():
 	for x in worldSize.x:
@@ -42,20 +52,33 @@ func getPressures():
 			var tile : WorldTile = tiles[Vector2i(x,y)]
 			var crust : Crust = tile.crust[0]
 			
-			for dx in range(-1,2):
-				for dy in range(-1,2):
-					if (dx == 0 && dy == 0):
-						continue
+			for dx in range(-2,3):
+				for dy in range(-2,3):
 					var testPos : Vector2i = getNewPos(Vector2i(x,y), Vector2i(dx, dy))
 					var testTile : WorldTile = tiles[testPos]
 					var testCrust : Crust = testTile.crust[0]
 					if (crust.plate != testCrust.plate):
-						var relativeVel = testCrust.dir - crust.dir
-						if (relativeVel.length() * relativeVel.dot(testCrust.pos - crust.pos) < 0):
-							crust.pressure += 0.16
+						var relativeVel = crust.dir - testCrust.dir
+						if (relativeVel.length() * relativeVel.normalized().dot(testCrust.pos - crust.pos) < 0):
+							crust.pressure += relativeVel.length() * 0.1
 						else:
-							crust.pressure -= 0.025
-					crust.elevation += randf_range(0.015, 0.3) * crust.pressure
+							crust.pressure -= relativeVel.length() * 0.1
+					if (crust.pressure > 0):
+						# Convergence
+						if (crust.crustType == CrustTypes.OCEANIC):
+							# Island Chans
+							crust.elevation += (randf_range(0.015, 0.3) * crust.pressure)/6
+						else:
+							# Mountains
+							crust.elevation += (randf_range(0.015, 0.32) * crust.pressure)/5
+					elif (crust.pressure < 0):
+						# Divergence
+						if (crust.crustType == CrustTypes.OCEANIC):
+							# Mid ocean ridges
+							crust.elevation += (randf_range(0.1, 0.2) * abs(crust.pressure))/6
+						else:
+							# Rift valleys
+							crust.elevation += (randf_range(0.05, 0.1) * crust.pressure)/6
 
 func initTilemap():
 	if (map):
@@ -75,7 +98,8 @@ func updateTilemap():
 					color = lerp(Color.SEA_GREEN, Color.TAN, (tile.topCrust.elevation - seaLevel)/(1 - seaLevel))
 				else:
 					color = lerp(Color.DARK_BLUE, Color.DEEP_SKY_BLUE, tile.topCrust.elevation + oceanDepth)
-				#color = lerp(Color.BLUE, Color.RED, tile.topCrust.pressure + 0.5)
+				#color = lerp(Color.DARK_BLUE, Color.RED, tile.topCrust.pressure + 0.5)
+				#color = tile.topCrust.plate.color
 			map.update_tile_color(Vector2i(x,y), color)
 		
 
@@ -113,19 +137,26 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 	var points : Dictionary
 	var plateOrigins : Dictionary
 	# Makes plates
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed
+	var pointRng = RandomNumberGenerator.new()
+	pointRng.seed = rand_from_seed(seed)[0]
 	for gx in gridSizeX:
 		for gy in gridSizeY:
 			
-			var x = gx * ppcX + randi_range(0, ppcX)
-			var y = gy * ppcY + randi_range(0, ppcY)
+			#var x = gx * ppcX + randi_range(0, ppcX)
+			#var y = gy * ppcY + randi_range(0, ppcY)
 			
-			points[Vector2i(gx,gy)] = Vector2i(x, y)
+			#points[Vector2i(gx,gy)] = Vector2i(x, y)
+			points[Vector2i(gx,gy)] = Vector2i(pointRng.randi_range(0, worldSize.x - 1), pointRng.randi_range(0, worldSize.y - 1))
+			pointRng.seed += rand_from_seed(pointRng.seed)[0]
 			
 			var newPlate : Plate = Plate.new()
 			newPlate.color = Color(randf(), randf(), randf())
-			newPlate.dir = Vector2(randf_range(-1, 1), randf_range(-1, 1))
-			while (newPlate.dir.x == 0):
-				newPlate.dir = Vector2(randi_range(-1, 1), 0)
+			
+			
+			newPlate.dir = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1))
+			rng.seed = rand_from_seed(rng.seed)[0]
 			
 			var di = randi_range(0, densities.size() - 1)
 			newPlate.density = densities[di]
@@ -135,57 +166,66 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 			plateOrigins[points[Vector2i(gx,gy)]] = newPlate
 			map.update_tile_color(points[Vector2i(gx,gy)], newPlate.color)
 	
-	var noise : FastNoiseLite = FastNoiseLite.new()
-	noise.fractal_octaves = 1
-	noise.seed = seed
-	noise.noise_type = FastNoiseLite.TYPE_VALUE
+	var freeTiles = (worldSize.x * worldSize.y)
+	
+	var fullPositions : Array[Vector2i]
 	
 	for x in worldSize.x:
 		for y in worldSize.y:
-			var tile : WorldTile = tiles[Vector2i(x,y)]
-			var closestPlate : Plate
-			var nearestPoint : Vector2i
-			var closestDist  : float = INF
 			
-			for dx in range(-1,2):
-				for dy in range(-1,2):
-					var gx : int = x / ppcX
-					var gy : int = y / ppcY
-					
-					var tx : int = gx + dx
-					var ty : int = gy + dy
-					
-					if (tx < 0):
-						tx = gridSizeX - 1
-					if (tx >= gridSizeX):
-						tx = 0
-					
-					if (ty < 0):
-						ty = gridSizeY - 1
-					if (ty >= gridSizeY):
-						ty = 0
-					randomIterator += 1
-					var posA = Vector2i(x + (noise.get_noise_2d(randomIterator/10, x) * 3), y + (noise.get_noise_2d(randomIterator/10, y) * 3))
-					var dist = getWrappedDist(posA, points[Vector2i(tx, ty)])
-					if (dist < closestDist):
-						closestDist = dist
-						nearestPoint = points[Vector2i(tx, ty)]
-			
-			closestPlate = plateOrigins[nearestPoint]
-			var newCrust : Crust = Crust.new()
-			newCrust.plate = closestPlate
-			newCrust.pos = Vector2i(x,y)
-			
-			tile.crust.append(newCrust)
-			tile.topCrust = newCrust
-			closestPlate.crust.append(newCrust)
+			if (plateOrigins.has(Vector2i(x,y))):
+				freeTiles -= 1
+				var tile : WorldTile = tiles[Vector2i(x,y)]
+				fullPositions.append(Vector2i(x,y))
+				
+				var plate : Plate = plateOrigins[Vector2i(x,y)]
+				var newCrust : Crust = Crust.new()
+				
+				newCrust.plate = plate
+				newCrust.pos = Vector2i(x,y)
+				
+				tile.crust.append(newCrust)
+				tile.topCrust = newCrust
+				plate.crust.append(newCrust)
+	var attempts = freeTiles * 8
+	
+	while freeTiles > 0 && attempts > 0:
+		rng.seed = rand_from_seed(rng.seed)[0]
+		attempts -= 1
+		for pos in fullPositions:
+				var border : bool = false
+				var tile : WorldTile = tiles[pos]
+				var plate : Plate = tile.topCrust.plate
+				
+				for dx in range(-1, 2):
+					for dy in range(-1, 2):
+						if (dx != 0 && dy != 0):
+							continue
+						var newPos : Vector2i = getNewPos(pos, Vector2i(dx, dy))
+						var newTile : WorldTile = tiles[newPos]
+						
+						if (!newTile.topCrust):
+							border = true
+							if (rng.randf() <= 0.1):
+								var newCrust : Crust = Crust.new()
+								newCrust.plate = plate
+								newCrust.pos = newPos
+								
+								newTile.crust.append(newCrust)
+								newTile.topCrust = newCrust
+								plate.crust.append(newCrust)
+								
+								fullPositions.append(newPos)
+								freeTiles -= 1
+				if !border:
+					fullPositions.erase(pos)
 
 func initHeightmap():
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	noise.fractal_octaves = 8
 	noise.seed = seed
 
-	var falloffMap = Falloff.generateFalloff(worldSize.x, worldSize.y, 7.2, true)
+	var falloffMap = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var height = clampf((noise.get_noise_2d(x/worldGen.mapScale,y/worldGen.mapScale) + 1)/2 - falloffMap[Vector2i(x,y)], 0, 1)
@@ -222,8 +262,6 @@ class Plate:
 	var density : int
 	var color : Color
 	var dir : Vector2
-	var diagDir : Vector2i
-	var moveStep : Vector2i
 	var crust : Array = []
 
 class WorldTile:

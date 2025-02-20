@@ -42,6 +42,8 @@ signal worldgenFinished()
 @export var worldSize : Vector2i = Vector2i(720, 360)
 ## the height threshold above which there will be land
 @export var seaLevel : float = 0.6
+## Whether or not a basic tectonic sim should be used
+@export var useTectonics : bool = true
 @export_category("Noise Settings")
 ## the seed the world generator uses
 @export var seed : int
@@ -62,11 +64,17 @@ func _ready() -> void:
 	map = $"Terrain Map"
 	scale = (Vector2(1,1) * (72/float(worldSize.x)))
 	map.scale = Vector2(1,1) * 16/map.tile_set.tile_size.x
-	#generateWorld()
+	generateWorld()
 
 #region Noise
 
 func createHeightMap(scale : float) -> Dictionary:
+	var tectonicHeightMap : Dictionary
+	if (useTectonics):
+		var tectonicStartTime = Time.get_ticks_msec()
+		print("Tectonics simulation started")
+		tectonicHeightMap = $"Tectonics".runSimulation(worldSize, Vector2i(5,4))
+		print("Tectonics finished after " + str(Time.get_ticks_msec() - tectonicStartTime) + " ms")
 	# Generates a heightmap with random noise
 	var noiseMap = {}
 	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
@@ -85,7 +93,12 @@ func createHeightMap(scale : float) -> Dictionary:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
-			noiseMap[Vector2i(x,y)] = noiseValue - falloff[Vector2i(x, y)]
+			if (useTectonics):
+				noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/(scale/1.5) ,y/(scale/1.5)))
+				noiseMap[Vector2i(x,y)] = lerpf(tectonicHeightMap[Vector2i(x,y)], noiseValue, 0.5)
+			else:
+				noiseMap[Vector2i(x,y)] = noiseValue - falloff[Vector2i(x, y)]
+			
 	# Returns the heightmap
 	return noiseMap
 
@@ -184,6 +197,10 @@ func generateRivers():
 				for dy in range(-1, 2):
 					for dx in range(-1, 2):
 						var testPos = riverPos + Vector2i(dx, dy)
+						testPos.x = testPos.x % worldSize.x
+						testPos.y = testPos.y % worldSize.y
+						if (testPos.x < 0 || testPos.y < 0):
+							continue
 						if (dx != 0 && dy != 0):
 							continue
 						elif (heightMap[testPos] <= lowestHeight && !currentRiver.has(testPos)):
@@ -195,8 +212,8 @@ func generateRivers():
 					for dy in range(-1, 2):
 						if (dx != 0 && dy != 0):
 							continue
-						if (biomes.has(lowestPos + Vector2i(dx, dy)) && biomes[lowestPos + Vector2i(dx, dy)] == "river"):
-							nearOtherRiver = false
+						if (biomes.has(lowestPos + Vector2i(dx, dy)) && biomes[lowestPos + Vector2i(dx, dy)] == "river" && !currentRiver.has(lowestPos + Vector2i(dx, dy))):
+							nearOtherRiver = true
 							break
 				if (heightMap[lowestPos] > seaLevel && heightMap[lowestPos] - 0.1 < heightMap[riverPos]):
 					addRiver(riverPos)
@@ -265,6 +282,7 @@ func generateWorld():
 			#map.get_cell_tile_data(currentpos).modulate = Color(randf_range(0, 1), randf_range(0, 1), randf_range(0, 1), 1)
 	print("Tiles colored! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
 	print("World generation completed after " + str(Time.get_ticks_msec() - worldGenStartTime) + "ms")
+	worldCreated = true
 	worldgenFinished.emit()
 func clearMap():
 	for i in map.get_used_cells():
@@ -283,7 +301,7 @@ func setBiome(x : int, y : int) -> String:
 				biome = "polar ice"
 			_:
 				biome = "shallow ocean"
-				if (altitude <= seaLevel - 0.05):
+				if (altitude <= seaLevel - 0.1):
 					biome = "ocean"
 	else:
 		#landTiles++;
