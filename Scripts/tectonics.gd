@@ -3,7 +3,6 @@ class_name Tectonics
 
 @export var map : UpdateTileMapLayer
 @export var oceanDepth : float = 0.5
-@export var seaLevel : float = 0.6
 @export var worldGen : WorldGenerator
 
 var tiles : Dictionary
@@ -26,7 +25,6 @@ func _ready() -> void:
 func runSimulation(fWorldSize : Vector2i, plates : Vector2i) -> Dictionary:
 	worldSize = fWorldSize
 	seed = rand_from_seed(worldGen.seed)[0]
-	seaLevel = worldGen.seaLevel
 	createPlates(plates.x, plates.y)
 	initHeightmap()
 	getPressures()
@@ -94,8 +92,8 @@ func updateTilemap():
 			var tile : WorldTile = tiles[Vector2i(x,y)]
 			if (tile.topCrust != null):
 				color = lerp(Color.BLACK, Color.WHITE, tile.topCrust.elevation)
-				if (tile.topCrust.elevation > seaLevel):
-					color = lerp(Color.SEA_GREEN, Color.TAN, (tile.topCrust.elevation - seaLevel)/(1 - seaLevel))
+				if (tile.topCrust.elevation > worldGen.seaLevel):
+					color = lerp(Color.SEA_GREEN, Color.TAN, (tile.topCrust.elevation - worldGen.seaLevel)/(1 - worldGen.seaLevel))
 				else:
 					color = lerp(Color.DARK_BLUE, Color.DEEP_SKY_BLUE, tile.topCrust.elevation + oceanDepth)
 				#color = lerp(Color.DARK_BLUE, Color.RED, tile.topCrust.pressure + 0.5)
@@ -111,15 +109,9 @@ func DeleteCrust(pos : Vector2i, crust : Crust):
 func getNewPos(pos : Vector2i, dir : Vector2i) -> Vector2i:
 	var newPos = pos + dir
 	
-	if (newPos.x >= worldSize.x):
-		newPos.x = 0
-	if (newPos.x < 0):
-		newPos.x = worldSize.x - 1
-	if (newPos.y >= worldSize.y):
-		newPos.y = 0
-	if (newPos.y < 0):
-		newPos.y = worldSize.y - 1
-		
+	newPos.x = posmod(newPos.x, worldSize.x)
+	newPos.y = posmod(newPos.y, worldSize.y)
+	
 	return newPos
 
 func createPlates(gridSizeX : int, gridSizeY : int):
@@ -232,10 +224,12 @@ func initHeightmap():
 			var tile : WorldTile = tiles[Vector2i(x,y)]
 			
 			
-			if height > seaLevel:
+			if height > worldGen.seaLevel:
+				if (height > worldGen.seaLevel + 0.05):
+					height = worldGen.seaLevel + 0.05
 				tile.topCrust.crustType = CrustTypes.CONTINENTAL
 			else:
-				height = lerpf(seaLevel - oceanDepth, seaLevel, calcInverseFalloff(inverse_lerp(seaLevel, 0, height)))
+				height = lerpf(worldGen.seaLevel - oceanDepth, worldGen.seaLevel, calcInverseFalloff(inverse_lerp(worldGen.seaLevel, 0, height)))
 			tile.topCrust.elevation = height
 	
 func calcInverseFalloff(v : float):

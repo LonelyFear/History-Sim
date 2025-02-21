@@ -5,18 +5,17 @@ class_name SimManager
 @export var tilesPerRegion : int = 4
 @export var regionMap : UpdateTileMapLayer
 @export var terrainMap : UpdateTileMapLayer
-
-@export var popsPerRegion : int = 20
+@export var timeManager : TimeManager
+@export var popsPerRegion : int = 15
 var tiles : Dictionary
 var regions : Dictionary
+
 var terrainSize : Vector2i
 var worldSize : Vector2i
 
-# Threads
-var popThread1 : Thread = Thread.new()
-var popThread2 : Thread = Thread.new()
-var popThread3 : Thread = Thread.new()
-var popThread4 : Thread = Thread.new()
+# Population
+var pops : Array[Pop] = []
+@export var worldPopulation : int = 0
 
 # World size is the amount of regions in the world
 func on_worldgen_finished() -> void:
@@ -55,44 +54,40 @@ func on_worldgen_finished() -> void:
 			if (newRegion.claimable):
 				regionMap.update_tile_color(Vector2i(x,y), Color(randf(), randf(), randf()))
 				for i in popsPerRegion:
-					var newPop : Pop = Pop.new()
-					# Adds the region to our pop
-					newPop.region = newRegion
-					# And pop to our region
-					newRegion.pops.append(newPop)
+					createPop(10, newRegion)
 
+func createPop(population : int, region : Region):
+	var newPop : Pop = Pop.new()
+	newPop.simManager = self
+	newPop.region = region
+	newPop.updateTick = randi_range(1, 30/timeManager.daysPerTick)
+	region.pops.append(newPop)
+	newPop.changePopulation(population)
+	
+	pops.append(newPop)
 
 func _on_tick() -> void:
-	updatePops()
+	var popsUpdated : Array[Pop] = []
+	for pop : Pop in pops:
+		if (pop.updateTick == (timeManager.day/timeManager.daysPerTick)):
+			popsUpdated.append(pop)
+	updatePopArray(popsUpdated)
+
+func _on_month() -> void:
+	#updatePops()
+	pass
 
 func updatePops():
-	var pops1 : Array[Pop] = []
-	var pops2 : Array[Pop] = []
-	var pops3 : Array[Pop] = []
-	var pops4 : Array[Pop] = []
-	
-	var iterator : int = 0
-	for region in regions.values():
-		for pop : Pop in region.pops:
-			match iterator:
-				0:
-					pops1.append(pop)
-				1:
-					pops2.append(pop)
-		iterator += 1
-		if (iterator > 0):
-			iterator = 0
-	
-	updatePopArray(pops1)
-	#popThread1.start(updatePopArray.bind(pops2))
-	#popThread1.wait_to_finish()
+	updatePopArray(pops)
 
 
 func updatePopArray(pops : Array[Pop]):
 	for pop : Pop in pops:
-		var NIR : float = pop.birthRate - pop.deathRate
+		var bRate = pop.birthRate
+		if (pop.region.population > 10000):
+			bRate *= 0.25
+		var NIR : float = bRate - pop.deathRate
 		var increase = int(float(pop.population) * NIR)
 		if (randf() < abs(fmod(float(pop.population) * NIR, 1))):
 			increase += sign(NIR)
 		pop.changePopulation(increase)
-	

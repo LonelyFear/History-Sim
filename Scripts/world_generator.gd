@@ -56,8 +56,6 @@ signal worldgenFinished()
 @export var riverThreshold : float = 0.4
 ## the amount of rivers that the world generator will attempt to generate
 @export var riverCount : int
-## the minimum distance between rivers
-@export var minRiverDist : int
 
 func _ready() -> void:
 	
@@ -151,86 +149,6 @@ func createMoistMap(scale : float) -> Dictionary:
 	return moistMap
 #endregion
 
-#region Rivers
-
-func generateRivers():
-	var rng = RandomNumberGenerator.new()
-	rng.seed = seed
-	var samplePoints : Array = []
-	var maxAttempts : int = 1000
-	var maxRiverLength : int = 2000
-	
-	for i in riverCount:
-		var pos : Vector2i = Vector2i(rng.randi_range(0, worldSize.x - 1), rng.randi_range(0, worldSize.y - 1))
-		var attempts : int = 0
-		var posGood : bool = false
-		while !posGood && attempts < maxAttempts:
-			attempts += 1
-			rng.seed += 10
-			pos = Vector2i(rng.randi_range(0, worldSize.x - 1), rng.randi_range(0, worldSize.y - 1))
-			var adjustedElevation = (heightMap[pos] - seaLevel)/(1 - seaLevel)
-			
-			# Checks our new position
-			if !samplePoints.has(pos) && adjustedElevation >= riverThreshold:
-				posGood = true
-				for point in samplePoints:
-					if pos.distance_to(point) < minRiverDist:
-						posGood = false
-						break
-				#for dx in range(-5, 5):
-					#for dy in range(-5, 5):
-						#if samplePoints.has(pos + Vector2i(dx, dy)):
-							#posGood = false
-		if (attempts < maxAttempts):
-			samplePoints.append(pos)
-	
-	for pos : Vector2i in samplePoints:
-		var adjustedElevation = (heightMap[pos] - seaLevel)/(1 - seaLevel)
-		var currentRiver : Array
-		if adjustedElevation >= riverThreshold:
-			var riverPos : Vector2i = pos
-			var riverContinue : bool = true
-			var riverLength : int = 0
-			while heightMap[riverPos] > seaLevel && riverContinue:
-				var lowestPos : Vector2i
-				var lowestHeight : float = INF
-				for dy in range(-1, 2):
-					for dx in range(-1, 2):
-						var testPos = riverPos + Vector2i(dx, dy)
-						testPos.x = testPos.x % worldSize.x
-						testPos.y = testPos.y % worldSize.y
-						if (testPos.x < 0 || testPos.y < 0):
-							continue
-						if (dx != 0 && dy != 0):
-							continue
-						elif (heightMap[testPos] <= lowestHeight && !currentRiver.has(testPos)):
-							lowestHeight = heightMap[testPos]
-							lowestPos = testPos
-				
-				var nearOtherRiver : bool = false
-				for dx in range(-1, 2):
-					for dy in range(-1, 2):
-						if (dx != 0 && dy != 0):
-							continue
-						if (biomes.has(lowestPos + Vector2i(dx, dy)) && biomes[lowestPos + Vector2i(dx, dy)] == "river" && !currentRiver.has(lowestPos + Vector2i(dx, dy))):
-							nearOtherRiver = true
-							break
-				if (heightMap[lowestPos] > seaLevel && heightMap[lowestPos] - 0.1 < heightMap[riverPos]):
-					addRiver(riverPos)
-					currentRiver.append(riverPos)
-					riverPos = lowestPos
-					riverLength += 1
-				else:
-					riverContinue = false
-				addRiver(riverPos)
-				currentRiver.append(riverPos)
-				if (riverLength > maxRiverLength * mapScale || nearOtherRiver):
-					riverContinue = false
-
-func addRiver(pos : Vector2i):
-	biomes[pos] = "river"
-#endregion
-
 func generateWorld():
 	var worldGenStartTime = Time.get_ticks_msec()
 	print("World generation started")
@@ -260,11 +178,10 @@ func generateWorld():
 			FastNoiseLite.new()
 			biomes[Vector2i(x,y)] = setBiome(x,y)
 	print("Biome generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
-	
-	print("Generating rivers...")
-	startTime = Time.get_ticks_msec()
-	generateRivers()
-	print("River generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
+	#print("Generating rivers...")
+	#startTime = Time.get_ticks_msec()
+	#generateRivers()
+	#print("River generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
 	
 	print("Coloring tiles...")
 	startTime = Time.get_ticks_msec()
@@ -276,6 +193,7 @@ func generateWorld():
 				if (biome["mergedIds"].has(biomes[Vector2i(x,y)])):
 					map.set_cell(currentPos, 0, Vector2i(biome["textureX"],biome["textureY"]))
 					terrainImage.set_pixel(x,y, biome["color"])
+					#terrainImage.set_pixel(x,y, lerp(Color.BLACK, Color.WHITE, heightMap[Vector2i(x,y)]))
 					tileBiomes[Vector2i(x,y)] = biome
 					break
 			#map.update_tile_color(currentPos, lerp(Color.BLUE, Color.RED, (heightMap[Vector2i(x,y)] - seaLevel)/(1 - seaLevel)))
