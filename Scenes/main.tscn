@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=17 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" path="res://Scripts/world_generator.gd" id="1_h4cr5"]
 [ext_resource type="Script" path="res://Scripts/load_mods.gd" id="1_w647p"]
@@ -12,7 +12,8 @@
 [ext_resource type="Script" path="res://Scenes/terrain_map.gd" id="8_plgql"]
 [ext_resource type="Script" path="res://Scripts/time_manager.gd" id="9_dbmc3"]
 [ext_resource type="Script" path="res://Scripts/tectonics.gd" id="12_xcgyf"]
-[ext_resource type="Script" path="res://Scripts/UI/population_label.gd" id="13_8yh0i"]
+[ext_resource type="Script" path="res://Scripts/Ui/population_label.gd" id="13_8yh0i"]
+[ext_resource type="Script" path="res://Scripts/Ui/date_label.gd" id="14_m5dvi"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
 texture = ExtResource("6_dynbe")
@@ -73,10 +74,11 @@ script = ExtResource("4_jaihg")
 
 [node name="World" type="Node2D" parent="."]
 script = ExtResource("1_h4cr5")
+worldSize = Vector2i(1440, 720)
 seaLevel = 0.55
 useTectonics = false
 seed = 78227528352
-mapScale = 4.0
+mapScale = 8.0
 riverCount = 1
 
 [node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionMap")]
@@ -107,6 +109,7 @@ minZoom = Vector2(15, 15)
 
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("9_dbmc3")
+daysPerTick = 30
 secondsPerTick = 0.001
 
 [node name="TickTimer" type="Timer" parent="Time Manager"]
@@ -122,6 +125,18 @@ theme_override_font_sizes/font_size = 20
 text = "World Population:"
 script = ExtResource("13_8yh0i")
 simManager = NodePath("../../Simulation")
+
+[node name="Date Label" type="Label" parent="UI" node_paths=PackedStringArray("timeManager")]
+offset_left = 978.0
+offset_right = 1152.0
+offset_bottom = 28.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 20
+text = "01/01/0000"
+horizontal_alignment = 2
+script = ExtResource("14_m5dvi")
+timeManager = NodePath("../../Time Manager")
 
 [connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]
 [connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]

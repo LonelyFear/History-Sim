@@ -11,15 +11,18 @@ signal yearTick()
 @export_category("Date")
 
 @export var day : int = 1
+@export var yearDay : int = 1
 @export var month : int = 1
 @export var year : int = 1
 
 var tickTimer : Timer
 
+var yearTest : int
 func _on_world_worldgen_finished() -> void:
 	tickTimer = $"TickTimer"
-	tickTimer.wait_time = secondsPerTick	
+	tickTimer.wait_time = secondsPerTick
 	tickTimer.start()
+	yearTest = Time.get_ticks_msec()
 
 func resetTickTimer():
 	if (tickTimer):
@@ -27,8 +30,15 @@ func resetTickTimer():
 		tickTimer.start()
 
 func _on_tick_timer_timeout() -> void:
+	resetTickTimer()
+
+func _process(delta: float) -> void:
+	tickGame()
+
+func tickGame():
 	tick.emit()
 	day += daysPerTick
+	yearDay = day + ((month - 1) * 30)
 	if (day > 30):
 		month += int(float(day) / 30)
 		day = day - (30 * int(float(day) / 30))
@@ -38,5 +48,6 @@ func _on_tick_timer_timeout() -> void:
 			month = 1
 			year += 1
 			yearTick.emit()
-	
-	resetTickTimer()
+			var secondsForYear = float(Time.get_ticks_msec() - yearTest)/1000.0
+			yearTest = Time.get_ticks_msec()
+			print("Year length (s): " + str(secondsForYear))

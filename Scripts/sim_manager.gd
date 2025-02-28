@@ -6,7 +6,7 @@ class_name SimManager
 @export var regionMap : UpdateTileMapLayer
 @export var terrainMap : UpdateTileMapLayer
 @export var timeManager : TimeManager
-@export var popsPerRegion : int = 15
+@export var popsPerRegion : int = 60
 var tiles : Dictionary
 var regions : Dictionary
 
@@ -16,6 +16,8 @@ var worldSize : Vector2i
 # Population
 var pops : Array[Pop] = []
 @export var worldPopulation : int = 0
+
+var popThread : Thread = Thread.new()
 
 # World size is the amount of regions in the world
 func on_worldgen_finished() -> void:
@@ -60,34 +62,46 @@ func createPop(population : int, region : Region):
 	var newPop : Pop = Pop.new()
 	newPop.simManager = self
 	newPop.region = region
-	newPop.updateTick = randi_range(1, 30/timeManager.daysPerTick)
+	newPop.updateTick = randi_range(1, 360/timeManager.daysPerTick)
 	region.pops.append(newPop)
 	newPop.changePopulation(population)
 	
 	pops.append(newPop)
 
 func _on_tick() -> void:
-	var popsUpdated : Array[Pop] = []
-	for pop : Pop in pops:
-		if (pop.updateTick == (timeManager.day/timeManager.daysPerTick)):
-			popsUpdated.append(pop)
-	updatePopArray(popsUpdated)
+	updatePops()
 
 func _on_month() -> void:
 	#updatePops()
 	pass
 
+
+#region Pops
+
 func updatePops():
-	updatePopArray(pops)
+	WorkerThreadPool.add_group_task(updatePop, pops.size())
 
+# Grows pop populations
+func updatePop(index : int):
+	var pop : Pop = pops[index]
+	var bRate = pop.birthRate
+	
+	if (pop.region.population > 1000):
+		# If the region is overpopulated apply a 25% decrease to birth rates
+		bRate *= 0.75
+	if (pop.population < 2):
+		bRate *= 0
+	# Gets our natural increase trate
+	var NIR : float = (bRate - pop.deathRate)
+	# Flat increase rate
+	var increase = int(float(pop.population) * NIR)
+	# Gets the decimal from the NIR multiplied by population and uses it as a chance for one more person to exist
+	if (randf() < abs(fmod(float(pop.population) * NIR, 1))):
+		# If that person exists (Or dies) change population
+		increase += sign(NIR)
+	# Updates the pop's population
+	pop.changePopulation(increase)
+#endregion
 
-func updatePopArray(pops : Array[Pop]):
-	for pop : Pop in pops:
-		var bRate = pop.birthRate
-		if (pop.region.population > 10000):
-			bRate *= 0.25
-		var NIR : float = bRate - pop.deathRate
-		var increase = int(float(pop.population) * NIR)
-		if (randf() < abs(fmod(float(pop.population) * NIR, 1))):
-			increase += sign(NIR)
-		pop.changePopulation(increase)
+func _exit_tree() -> void:
+	pass
