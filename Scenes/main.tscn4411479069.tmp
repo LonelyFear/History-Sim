@@ -73,6 +73,7 @@ centered = false
 script = ExtResource("1_h4cr5")
 worldSize = Vector2i(1440, 720)
 seaLevel = 0.55
+useTectonics = false
 seed = 78227528352
 mapScale = 8.0
 riverCount = 1

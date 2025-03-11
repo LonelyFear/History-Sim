@@ -10,11 +10,13 @@ signal yearTick()
 @export_range(0, 1) var secondsPerTick : float = 0.1
 @export_category("Date")
 
+@export var elapsedTicks : int = 0
 @export var day : int = 1
 @export var yearDay : int = 1
 @export var month : int = 1
 @export var year : int = 1
-
+@export_category("References")
+@export var simManager : SimManager
 var tickTimer : Timer
 
 var yearTest : int
@@ -30,12 +32,16 @@ func resetTickTimer():
 		tickTimer.start()
 
 func _on_tick_timer_timeout() -> void:
-	resetTickTimer()
+	pass
 
 func _process(delta: float) -> void:
-	tickGame()
+	if (elapsedTicks == 0):
+		tickGame()
+	if (WorkerThreadPool.is_group_task_completed(simManager.popTaskId)):
+		tickGame()
 
 func tickGame():
+	elapsedTicks += 1
 	tick.emit()
 	day += daysPerTick
 	yearDay = day + ((month - 1) * 30)

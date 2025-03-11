@@ -3,11 +3,11 @@ class_name WorldGenerator
 
 var map : UpdateTileMapLayer
 
-var biomes : Dictionary
-var tileBiomes : Dictionary
-var heightMap : Dictionary
-var tempMap : Dictionary
-var humidMap : Dictionary
+var biomes : Dictionary[Vector2i, String]
+var tileBiomes : Dictionary[Vector2i, Dictionary]
+var heightMap : Dictionary[Vector2i, float]
+var tempMap : Dictionary[Vector2i, float]
+var humidMap : Dictionary[Vector2i, float]
 
 var temps = [0.874, 0.765, 0.594, 0.439, 0.366, 0.124]
 var humids = [0.941, 0.778, 0.507, 0.236, 0.073, 0.014, 0.002]
@@ -58,7 +58,6 @@ signal worldgenFinished()
 @export var riverCount : int
 
 func _ready() -> void:
-	
 	map = $"Terrain Map"
 	scale = (Vector2(1,1) * (72/float(worldSize.x)))
 	map.scale = Vector2(1,1) * 16/map.tile_set.tile_size.x
@@ -66,15 +65,15 @@ func _ready() -> void:
 
 #region Noise
 
-func createHeightMap(scale : float) -> Dictionary:
-	var tectonicHeightMap : Dictionary
+func createHeightMap(scale : float) -> Dictionary[Vector2i, float]:
+	var tectonicHeightMap : Dictionary[Vector2i, float]
 	if (useTectonics):
 		var tectonicStartTime = Time.get_ticks_msec()
 		print("Tectonics simulation started")
 		tectonicHeightMap = $"Tectonics".runSimulation(worldSize, Vector2i(5,4))
 		print("Tectonics finished after " + str(Time.get_ticks_msec() - tectonicStartTime) + " ms")
 	# Generates a heightmap with random noise
-	var noiseMap = {}
+	var noiseMap : Dictionary[Vector2i, float] = {}
 	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
 	
 	var simplexNoise : FastNoiseLite = FastNoiseLite.new()
@@ -92,7 +91,7 @@ func createHeightMap(scale : float) -> Dictionary:
 		for y in worldSize.y:
 			var noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
 			if (useTectonics):
-				noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/(scale/1.5) ,y/(scale/1.5)))
+				noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/(scale/2) ,y/(scale/2)))
 				noiseMap[Vector2i(x,y)] = lerpf(tectonicHeightMap[Vector2i(x,y)], noiseValue, 0.5)
 			else:
 				noiseMap[Vector2i(x,y)] = noiseValue - falloff[Vector2i(x, y)]
@@ -100,12 +99,12 @@ func createHeightMap(scale : float) -> Dictionary:
 	# Returns the heightmap
 	return noiseMap
 
-func createTempMap(scale : float) -> Dictionary:
+func createTempMap(scale : float) -> Dictionary[Vector2i, float]:
 	# Generates a tempmap with random noise
 	# Creates a random number generator for getting our seed
 	var rng = RandomNumberGenerator.new()
 	rng.seed = seed
-	var tempMap = {}
+	var tempMap : Dictionary[Vector2i, float] = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	
 	# Creates our noise generator
@@ -131,9 +130,9 @@ func createTempMap(scale : float) -> Dictionary:
 	# Returns our tempmap
 	return tempMap
 
-func createMoistMap(scale : float) -> Dictionary:
+func createMoistMap(scale : float) -> Dictionary[Vector2i, float]:
 	# Generates our moisture map
-	var moistMap = {}
+	var moistMap : Dictionary[Vector2i, float] = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	# Creates a random noise generator with a seed derived from world seed
 	noise.fractal_octaves = 8

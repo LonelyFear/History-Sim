@@ -5,13 +5,14 @@ class_name Tectonics
 @export var oceanDepth : float = 0.5
 @export var worldGen : WorldGenerator
 
-var tiles : Dictionary
+var tiles : Dictionary[Vector2i, WorldTile]
 var plates : Array = []
 
 var plateTarget : int
 var worldSize : Vector2i
 var randomIterator : int
 var seed : int
+var positions : Array[Vector2i]
 
 enum CrustTypes {
 	OCEANIC,
@@ -22,22 +23,58 @@ func _ready() -> void:
 	#runSimulation(worldGen.worldSize, Vector2i(4, 4))
 	pass
 
-func runSimulation(fWorldSize : Vector2i, plates : Vector2i) -> Dictionary:
+func runSimulation(fWorldSize : Vector2i, plates : Vector2i) -> Dictionary[Vector2i, float]:
 	worldSize = fWorldSize
 	seed = rand_from_seed(worldGen.seed)[0]
 	createPlates(plates.x, plates.y)
 	initHeightmap()
+	var id = WorkerThreadPool.add_group_task(getPressure, worldSize.x * worldSize.y)
+	WorkerThreadPool.wait_for_group_task_completion(id)
 	getPressures()
 	return getHeightMap()
 
-func getHeightMap() -> Dictionary:
-	var heightMap : Dictionary
+func getHeightMap() -> Dictionary[Vector2i, float]:
+	var heightMap : Dictionary[Vector2i, float]
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var tile : WorldTile = tiles[Vector2i(x,y)]
 			heightMap.get_or_add(Vector2i(x,y), clampf(tile.topCrust.elevation, 0.0, 1.0))
 	return heightMap
 
+func getPressure(index : int):
+	var x = positions[index].x
+	var y = positions[index].y
+	var tile : WorldTile = tiles[Vector2i(x,y)]
+	var crust : Crust = tile.crust[0]
+	crust.dir = crust.plate.dir
+	
+	for dx in range(-2,3):
+		for dy in range(-2,3):
+			var testPos : Vector2i = getNewPos(Vector2i(x,y), Vector2i(dx, dy))
+			var testTile : WorldTile = tiles[testPos]
+			var testCrust : Crust = testTile.crust[0]
+			if (crust.plate != testCrust.plate):
+				var relativeVel = crust.dir - testCrust.dir
+				if (relativeVel.length() * relativeVel.normalized().dot(testCrust.pos - crust.pos) < 0):
+					crust.pressure += relativeVel.length() * 0.1
+				else:
+					crust.pressure -= relativeVel.length() * 0.1
+			if (crust.pressure > 0):
+				# Convergence
+				if (crust.crustType == CrustTypes.OCEANIC):
+					# Island Chans
+					crust.elevation += (randf_range(0.015, 0.3) * crust.pressure)/6
+				else:
+					# Mountains
+					crust.elevation += (randf_range(0.015, 0.32) * crust.pressure)/5
+			elif (crust.pressure < 0):
+				# Divergence
+				if (crust.crustType == CrustTypes.OCEANIC):
+					# Mid ocean ridges
+					crust.elevation += (randf_range(0.1, 0.2) * abs(crust.pressure))/6
+				else:
+					# Rift valleys
+					crust.elevation += (randf_range(0.05, 0.1) * crust.pressure)/6
 func getPressures():
 	for x in worldSize.x:
 		for y in worldSize.y:
@@ -117,6 +154,7 @@ func getNewPos(pos : Vector2i, dir : Vector2i) -> Vector2i:
 func createPlates(gridSizeX : int, gridSizeY : int):
 	for x in worldSize.x:
 		for y in worldSize.y:
+			positions.append(Vector2i(x,y))
 			tiles[Vector2i(x,y)] = WorldTile.new()
 	var densities : Array = []
 	

@@ -2,7 +2,7 @@ extends UpdateTileMapLayer
 
 @export var camera : CameraController
 @export var lodMap : Sprite2D
-@export var regionMap : TileMapLayer
+@export var regionSprite : Sprite2D
 @export var highQualityMaxZoom : float = 3
 
 @export_category("Zoom Fade")
@@ -10,8 +10,7 @@ extends UpdateTileMapLayer
 @export var regionMinOpacity : float = 0.2
 @export var baseRegionOpacity : float = 0.5
 var world : WorldGenerator
-
-var mapThread : Thread = Thread.new()
+var showMapId : int
 
 func _ready() -> void:
 	world = get_parent()
@@ -20,11 +19,11 @@ func _process(delta: float) -> void:
 	manageMaps()
 	
 	# Makes our region map more transparent as we zoom in
-	if (camera.zoom.x >= regionMapLerpZoom && regionMap):
+	if (camera.zoom.x >= regionMapLerpZoom && regionSprite):
 		# Slowly makes region map transparent
-		regionMap.self_modulate.a = lerp(regionMinOpacity, baseRegionOpacity, clampf(inverse_lerp(10, regionMapLerpZoom, camera.zoom.x), 0, 1))
-	elif (regionMap):
-		regionMap.modulate.a = baseRegionOpacity
+		regionSprite.self_modulate.a = lerp(regionMinOpacity, baseRegionOpacity, clampf(inverse_lerp(10, regionMapLerpZoom, camera.zoom.x), 0, 1))
+	elif (regionSprite):
+		regionSprite.modulate.a = baseRegionOpacity
 
 func manageMaps():
 	if (world.worldCreated):
@@ -34,8 +33,7 @@ func manageMaps():
 			if zoomVal < highQualityMaxZoom && visible == true:
 				hideMap()
 			elif visible == false && zoomVal >= highQualityMaxZoom:
-				mapThread.start(showMap)
-
+				showMapId = WorkerThreadPool.add_task(showMap)
 
 func hideMap():
 	visible = false
@@ -43,8 +41,8 @@ func hideMap():
 	lodMap.visible = true
 
 func showMap():
-	lodMap.visible = false
-	visible = true
-
+	lodMap.call_deferred("set_visible", false)
+	call_deferred("set_visible", true)
 func _exit_tree() -> void:
-	mapThread.wait_to_finish()
+	pass
+	#WorkerThreadPool.wait_for_task_completion(showMapId)
