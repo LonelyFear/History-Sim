@@ -39,16 +39,19 @@ enum HumidTypes{
 signal worldgenFinished()
 
 ## the size of the world in width and height
-@export var worldSize : Vector2i = Vector2i(720, 360)
+@export_range(1, 4, 0.5)
+var worldSizeMult : float = 2
+var worldSize : Vector2i = Vector2i(360, 180)
 ## the height threshold above which there will be land
-@export var seaLevel : float = 0.6
+@export_range(0, 1, 0.01)
+var seaLevel : float = 0.6
 ## Whether or not a basic tectonic sim should be used
 @export var useTectonics : bool = true
 @export_category("Noise Settings")
 ## the seed the world generator uses
 @export var seed : int
 ## the scale of the world generator's noise
-@export var mapScale : float = 1
+@export_range(1, 10, 0.1) var mapScale : float = 1
 ## Number of fractal octaves used in heightmap generation
 @export var heightOctaves : float = 8
 @export_category("Rivers")
@@ -58,6 +61,8 @@ signal worldgenFinished()
 @export var riverCount : int
 
 func _ready() -> void:
+	worldSize *= worldSizeMult
+	mapScale *= worldSizeMult
 	map = $"Terrain Map"
 	scale = (Vector2(1,1) * (72/float(worldSize.x)))
 	map.scale = Vector2(1,1) * 16/map.tile_set.tile_size.x
@@ -108,7 +113,7 @@ func createTempMap(scale : float) -> Dictionary[Vector2i, float]:
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	
 	# Creates our noise generator
-	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 1.25)
+	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 1.1)
 	noise.fractal_octaves = 8
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	noise.seed = rand_from_seed(seed * 2)[0]
@@ -142,7 +147,7 @@ func createMoistMap(scale : float) -> Dictionary[Vector2i, float]:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			# Gets a lerped noise value so temperature extremes of 0 and 1 can exist
-			var noiseValue = inverse_lerp(0.3, 0.7, (noise.get_noise_2d(x / scale ,y / scale) + 1)/2)
+			var noiseValue = inverse_lerp(0.35, 0.7, (noise.get_noise_2d(x / scale ,y / scale) + 1)/2)
 			moistMap[Vector2i(x,y)] = noiseValue
 			# TODO: modify moisture map by temperature so cooler areas are less moist
 	return moistMap

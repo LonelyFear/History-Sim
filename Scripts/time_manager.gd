@@ -19,6 +19,9 @@ signal yearTick()
 @export var simManager : SimManager
 var tickTimer : Timer
 
+var tickDeltaStart : float = 0
+var tickDeltaTime : float = 0.001
+
 var yearTest : int
 func _on_world_worldgen_finished() -> void:
 	tickTimer = $"TickTimer"
@@ -38,9 +41,12 @@ func _process(delta: float) -> void:
 	if (elapsedTicks == 0):
 		tickGame()
 	if (WorkerThreadPool.is_group_task_completed(simManager.popTaskId)):
+		tickDeltaTime = (Time.get_ticks_msec() - tickDeltaStart) / 1000
+		WorkerThreadPool.wait_for_group_task_completion(simManager.popTaskId)
 		tickGame()
 
 func tickGame():
+	tickDeltaStart = Time.get_ticks_msec()
 	elapsedTicks += 1
 	tick.emit()
 	day += daysPerTick
@@ -56,4 +62,3 @@ func tickGame():
 			yearTick.emit()
 			var secondsForYear = float(Time.get_ticks_msec() - yearTest)/1000.0
 			yearTest = Time.get_ticks_msec()
-			print("Year length (s): " + str(secondsForYear))

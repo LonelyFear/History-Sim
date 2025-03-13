@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=16 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://dud41vmnk0o16" path="res://Scripts/world_generator.gd" id="1_h4cr5"]
 [ext_resource type="Script" uid="uid://dcudjmvcfl6la" path="res://Scripts/load_mods.gd" id="1_w647p"]
@@ -9,9 +9,10 @@
 [ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/camera_controller.gd" id="6_kmkn8"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
 [ext_resource type="Script" uid="uid://cufwlcmua8jbj" path="res://Scripts/time_manager.gd" id="9_dbmc3"]
+[ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/Ui/date_label.gd" id="12_fdnlq"]
 [ext_resource type="Script" uid="uid://bgbbd4h4wk40k" path="res://Scripts/tectonics.gd" id="12_xcgyf"]
 [ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/Ui/population_label.gd" id="13_8yh0i"]
-[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/Ui/date_label.gd" id="14_m5dvi"]
+[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/Ui/tps_label.gd" id="14_m5dvi"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
 texture = ExtResource("6_dynbe")
@@ -71,10 +72,9 @@ centered = false
 
 [node name="World" type="Node2D" parent="."]
 script = ExtResource("1_h4cr5")
-worldSize = Vector2i(1440, 720)
-seaLevel = 0.55
-seed = 78227528352
-mapScale = 8.0
+useTectonics = false
+seed = 89669141
+mapScale = 1.5
 riverCount = 1
 
 [node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionSprite")]
@@ -131,6 +131,19 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 20
 text = "01/01/0000"
+horizontal_alignment = 2
+script = ExtResource("12_fdnlq")
+timeManager = NodePath("../../Time Manager")
+
+[node name="TPS Label" type="Label" parent="UI" node_paths=PackedStringArray("timeManager")]
+offset_left = 978.0
+offset_top = 31.0
+offset_right = 1152.0
+offset_bottom = 59.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 20
+text = "TPS: 3"
 horizontal_alignment = 2
 script = ExtResource("14_m5dvi")
 timeManager = NodePath("../../Time Manager")

@@ -45,3 +45,15 @@ func changePopulation(workforceIncrease : int, dependentIncrease : int):
 	workforce += workforceIncrease
 	dependents += dependentIncrease
 	population = workforce + dependents
+
+func removePop(pop : Pop):
+	if (pops.has(pop)):
+		changePopulation(-pop.workforce, -pop.dependents)
+		pops.erase(pop)
+		pop.region = null
+
+func addPop(pop : Pop):
+	if (!pops.has(pop)):
+		changePopulation(pop.workforce, pop.dependents)
+		pops.append(pop)
+		pop.region = self

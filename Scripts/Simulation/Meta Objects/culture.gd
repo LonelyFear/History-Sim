@@ -20,3 +20,10 @@ func removePop(pop : Pop):
 		pop.culture = null
 		population -= pop.population
 		pops.erase(pop)
+
+static func SimilarCulture(cultureA : Culture, cultureB : Culture) -> bool:
+	var minColorDiff : float = 0.05
+	var similarR : bool = abs(cultureA.color.r - cultureB.color.r) < minColorDiff
+	var similarG : bool = abs(cultureA.color.g - cultureB.color.g) < minColorDiff	
+	var similarB : bool = abs(cultureA.color.b - cultureB.color.b) < minColorDiff
+	return similarR && similarG && similarB

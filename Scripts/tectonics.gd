@@ -25,7 +25,7 @@ func _ready() -> void:
 
 func runSimulation(fWorldSize : Vector2i, plates : Vector2i) -> Dictionary[Vector2i, float]:
 	worldSize = fWorldSize
-	seed = rand_from_seed(worldGen.seed)[0]
+	seed = worldGen.seed
 	createPlates(plates.x, plates.y)
 	initHeightmap()
 	var id = WorkerThreadPool.add_group_task(getPressure, worldSize.x * worldSize.y)
@@ -63,15 +63,15 @@ func getPressure(index : int):
 				# Convergence
 				if (crust.crustType == CrustTypes.OCEANIC):
 					# Island Chans
-					crust.elevation += (randf_range(0.015, 0.3) * crust.pressure)/6
+					crust.elevation += (randf_range(0.015, 0.15) * crust.pressure)/6
 				else:
 					# Mountains
-					crust.elevation += (randf_range(0.015, 0.32) * crust.pressure)/5
+					crust.elevation += (randf_range(0.015, 0.2) * crust.pressure)/6
 			elif (crust.pressure < 0):
 				# Divergence
 				if (crust.crustType == CrustTypes.OCEANIC):
 					# Mid ocean ridges
-					crust.elevation += (randf_range(0.1, 0.2) * abs(crust.pressure))/6
+					crust.elevation += (randf_range(0.2, 0.4) * abs(crust.pressure))/6
 				else:
 					# Rift valleys
 					crust.elevation += (randf_range(0.05, 0.1) * crust.pressure)/6
