@@ -72,6 +72,7 @@ centered = false
 
 [node name="World" type="Node2D" parent="."]
 script = ExtResource("1_h4cr5")
+worldSizeMult = 4.0
 useTectonics = false
 seed = 89669141
 mapScale = 1.5
@@ -105,11 +106,7 @@ minZoom = Vector2(15, 15)
 
 [node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("simManager")]
 script = ExtResource("9_dbmc3")
-daysPerTick = 30
-secondsPerTick = 0.01
 simManager = NodePath("../Simulation")
-
-[node name="TickTimer" type="Timer" parent="Time Manager"]
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -152,4 +149,3 @@ timeManager = NodePath("../../Time Manager")
 [connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]
 [connection signal="monthTick" from="Time Manager" to="Simulation" method="_on_month"]
 [connection signal="tick" from="Time Manager" to="Simulation" method="_on_tick"]
-[connection signal="timeout" from="Time Manager/TickTimer" to="Time Manager" method="_on_tick_timer_timeout"]

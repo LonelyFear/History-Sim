@@ -5,7 +5,7 @@ var militaryLevel : int
 var societyLevel : int
 var industryLevel : int
 
-static func sameTech(techA : Tech, techB : Tech):
+static func sameTech(techA : Tech, techB : Tech) -> bool:
 	var sameMil : bool = techA.militaryLevel == techB.militaryLevel
 	var sameSoc : bool = techA.societyLevel == techB.societyLevel
 	var sameInd : bool = techA.industryLevel == techB.industryLevel

@@ -9,8 +9,8 @@ var heightMap : Dictionary[Vector2i, float]
 var tempMap : Dictionary[Vector2i, float]
 var humidMap : Dictionary[Vector2i, float]
 
-var temps = [0.874, 0.765, 0.594, 0.439, 0.366, 0.124]
-var humids = [0.941, 0.778, 0.507, 0.236, 0.073, 0.014, 0.002]
+var temps := [0.874, 0.765, 0.594, 0.439, 0.366, 0.124]
+var humids := [0.941, 0.778, 0.507, 0.236, 0.073, 0.014, 0.002]
 var terrainImage : Image
 var worldCreated : bool = false
 
@@ -73,13 +73,13 @@ func _ready() -> void:
 func createHeightMap(scale : float) -> Dictionary[Vector2i, float]:
 	var tectonicHeightMap : Dictionary[Vector2i, float]
 	if (useTectonics):
-		var tectonicStartTime = Time.get_ticks_msec()
+		var tectonicStartTime : float = Time.get_ticks_msec()
 		print("Tectonics simulation started")
 		tectonicHeightMap = $"Tectonics".runSimulation(worldSize, Vector2i(5,4))
 		print("Tectonics finished after " + str(Time.get_ticks_msec() - tectonicStartTime) + " ms")
 	# Generates a heightmap with random noise
 	var noiseMap : Dictionary[Vector2i, float] = {}
-	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
+	var falloff : Dictionary = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
 	
 	var simplexNoise : FastNoiseLite = FastNoiseLite.new()
 	simplexNoise.fractal_octaves = heightOctaves
@@ -94,7 +94,7 @@ func createHeightMap(scale : float) -> Dictionary[Vector2i, float]:
 	# Gets our height values
 	for x in worldSize.x:
 		for y in worldSize.y:
-			var noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
+			var noiseValue : float = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
 			if (useTectonics):
 				noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/(scale/2) ,y/(scale/2)))
 				noiseMap[Vector2i(x,y)] = lerpf(tectonicHeightMap[Vector2i(x,y)], noiseValue, 0.5)
@@ -107,13 +107,13 @@ func createHeightMap(scale : float) -> Dictionary[Vector2i, float]:
 func createTempMap(scale : float) -> Dictionary[Vector2i, float]:
 	# Generates a tempmap with random noise
 	# Creates a random number generator for getting our seed
-	var rng = RandomNumberGenerator.new()
+	var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed
 	var tempMap : Dictionary[Vector2i, float] = {}
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	
 	# Creates our noise generator
-	var falloff = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 1.1)
+	var falloff : Dictionary = Falloff.generateFalloff(worldSize.x, worldSize.y, 1, false, 1.1)
 	noise.fractal_octaves = 8
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	noise.seed = rand_from_seed(seed * 2)[0]
@@ -122,11 +122,11 @@ func createTempMap(scale : float) -> Dictionary[Vector2i, float]:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			# Gets out noise value
-			var noiseValue = inverse_lerp(-1, 1, noise.get_noise_2d(x / scale ,y / scale))
+			var noiseValue : float= inverse_lerp(-1, 1, noise.get_noise_2d(x / scale ,y / scale))
 			# Multiplies noise value by falloff
 			tempMap[Vector2i(x,y)] = lerpf((1.0 - falloff[Vector2i(x,y)]), noiseValue, 0.15)
 			# Gets our height factor, higher relative altitude = cooler temperature
-			var heightFactor = (heightMap[Vector2i(x,y)] - seaLevel - 0.2)/(1 - seaLevel - 0.2)
+			var heightFactor : float = (heightMap[Vector2i(x,y)] - seaLevel - 0.2)/(1 - seaLevel - 0.2)
 			# Modifies temperature by height factor
 			if (heightFactor > 0):
 				tempMap[Vector2i(x,y)] -= heightFactor
@@ -147,19 +147,19 @@ func createMoistMap(scale : float) -> Dictionary[Vector2i, float]:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			# Gets a lerped noise value so temperature extremes of 0 and 1 can exist
-			var noiseValue = inverse_lerp(0.35, 0.7, (noise.get_noise_2d(x / scale ,y / scale) + 1)/2)
+			var noiseValue : float = inverse_lerp(0.35, 0.7, (noise.get_noise_2d(x / scale ,y / scale) + 1)/2)
 			moistMap[Vector2i(x,y)] = noiseValue
 			# TODO: modify moisture map by temperature so cooler areas are less moist
 	return moistMap
 #endregion
 
-func generateWorld():
-	var worldGenStartTime = Time.get_ticks_msec()
+func generateWorld() -> void:
+	var worldGenStartTime : int = Time.get_ticks_msec()
 	print("World generation started")
 	clearMap()
 	print("Generating heightmap...")
 	
-	var startTime = Time.get_ticks_msec()
+	var startTime : int = Time.get_ticks_msec()
 	heightMap = createHeightMap(mapScale)
 	print("Heightmap generation complete! Process took " + str(Time.get_ticks_msec() - startTime) + "ms")
 	
@@ -193,7 +193,7 @@ func generateWorld():
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var currentPos : Vector2i = Vector2i(x,y)
-			for biome in BiomeLoader.biomes:
+			for biome : Dictionary in BiomeLoader.biomes:
 				if (biome["mergedIds"].has(biomes[Vector2i(x,y)])):
 					map.set_cell(currentPos, 0, Vector2i(biome["textureX"],biome["textureY"]))
 					terrainImage.set_pixel(x,y, biome["color"])
@@ -206,14 +206,15 @@ func generateWorld():
 	print("World generation completed after " + str(Time.get_ticks_msec() - worldGenStartTime) + "ms")
 	worldCreated = true
 	worldgenFinished.emit()
-func clearMap():
+
+func clearMap() -> void:
 	for i in map.get_used_cells():
 		map.erase_cell(i)
 	print("Tilemap clear")
 
 #region Biomes
 func setBiome(x : int, y : int) -> String:
-	var altitude = heightMap[Vector2i(x,y)]
+	var altitude : float = heightMap[Vector2i(x,y)]
 	var biome : String = "rock"
 	# If we are below the ocean threshold
 	if (altitude <= seaLevel):

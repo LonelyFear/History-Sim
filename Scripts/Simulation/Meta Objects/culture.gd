@@ -7,7 +7,7 @@ var cultureName : String
 var population : int
 var pops : Array[Pop]
 
-func addPop(pop : Pop):
+func addPop(pop : Pop) -> void:
 	if (!pops.has(pop)):
 		if (pop.culture != null):
 			pop.culture.removePop(pop)
@@ -15,7 +15,7 @@ func addPop(pop : Pop):
 		pop.culture = self
 		population += pop.population
 
-func removePop(pop : Pop):
+func removePop(pop : Pop) -> void:
 	if (pops.has(pop)):
 		pop.culture = null
 		population -= pop.population

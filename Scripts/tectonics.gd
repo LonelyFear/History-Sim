@@ -28,7 +28,7 @@ func runSimulation(fWorldSize : Vector2i, plates : Vector2i) -> Dictionary[Vecto
 	seed = worldGen.seed
 	createPlates(plates.x, plates.y)
 	initHeightmap()
-	var id = WorkerThreadPool.add_group_task(getPressure, worldSize.x * worldSize.y)
+	var id : int = WorkerThreadPool.add_group_task(getPressure, worldSize.x * worldSize.y)
 	WorkerThreadPool.wait_for_group_task_completion(id)
 	getPressures()
 	return getHeightMap()
@@ -41,9 +41,9 @@ func getHeightMap() -> Dictionary[Vector2i, float]:
 			heightMap.get_or_add(Vector2i(x,y), clampf(tile.topCrust.elevation, 0.0, 1.0))
 	return heightMap
 
-func getPressure(index : int):
-	var x = positions[index].x
-	var y = positions[index].y
+func getPressure(index : int) -> void:
+	var x : int = positions[index].x
+	var y : int = positions[index].y
 	var tile : WorldTile = tiles[Vector2i(x,y)]
 	var crust : Crust = tile.crust[0]
 	crust.dir = crust.plate.dir
@@ -54,7 +54,7 @@ func getPressure(index : int):
 			var testTile : WorldTile = tiles[testPos]
 			var testCrust : Crust = testTile.crust[0]
 			if (crust.plate != testCrust.plate):
-				var relativeVel = crust.dir - testCrust.dir
+				var relativeVel : Vector2 = crust.dir - testCrust.dir
 				if (relativeVel.length() * relativeVel.normalized().dot(testCrust.pos - crust.pos) < 0):
 					crust.pressure += relativeVel.length() * 0.1
 				else:
@@ -75,7 +75,7 @@ func getPressure(index : int):
 				else:
 					# Rift valleys
 					crust.elevation += (randf_range(0.05, 0.1) * crust.pressure)/6
-func getPressures():
+func getPressures() -> void:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var tile : WorldTile = tiles[Vector2i(x,y)]
@@ -93,7 +93,7 @@ func getPressures():
 					var testTile : WorldTile = tiles[testPos]
 					var testCrust : Crust = testTile.crust[0]
 					if (crust.plate != testCrust.plate):
-						var relativeVel = crust.dir - testCrust.dir
+						var relativeVel : Vector2 = crust.dir - testCrust.dir
 						if (relativeVel.length() * relativeVel.normalized().dot(testCrust.pos - crust.pos) < 0):
 							crust.pressure += relativeVel.length() * 0.1
 						else:
@@ -115,14 +115,14 @@ func getPressures():
 							# Rift valleys
 							crust.elevation += (randf_range(0.05, 0.1) * crust.pressure)/6
 
-func initTilemap():
+func initTilemap() -> void:
 	if (map):
 		for x in worldSize.x:
 			for y in worldSize.y:
 				var currentPos : Vector2i = Vector2i(x,y)
 				map.set_cell(currentPos, 0, Vector2i(0,0))
 
-func updateTilemap():
+func updateTilemap() -> void:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var color : Color
@@ -138,20 +138,20 @@ func updateTilemap():
 			map.update_tile_color(Vector2i(x,y), color)
 		
 
-func DeleteCrust(pos : Vector2i, crust : Crust):
+func DeleteCrust(pos : Vector2i, crust : Crust) -> void:
 	var tile : WorldTile = tiles[pos]
 	tile.crust.erase(crust)
 	crust.plate.crust.erase(crust)
 
 func getNewPos(pos : Vector2i, dir : Vector2i) -> Vector2i:
-	var newPos = pos + dir
+	var newPos : Vector2i = pos + dir
 	
 	newPos.x = posmod(newPos.x, worldSize.x)
 	newPos.y = posmod(newPos.y, worldSize.y)
 	
 	return newPos
 
-func createPlates(gridSizeX : int, gridSizeY : int):
+func createPlates(gridSizeX : int, gridSizeY : int) -> void:
 	for x in worldSize.x:
 		for y in worldSize.y:
 			positions.append(Vector2i(x,y))
@@ -167,9 +167,9 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 	var points : Dictionary
 	var plateOrigins : Dictionary
 	# Makes plates
-	var rng = RandomNumberGenerator.new()
+	var rng : RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed
-	var pointRng = RandomNumberGenerator.new()
+	var pointRng : RandomNumberGenerator = RandomNumberGenerator.new()
 	pointRng.seed = rand_from_seed(seed)[0]
 	for gx in gridSizeX:
 		for gy in gridSizeY:
@@ -188,7 +188,7 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 			newPlate.dir = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1))
 			rng.seed = rand_from_seed(rng.seed)[0]
 			
-			var di = randi_range(0, densities.size() - 1)
+			var di : int = randi_range(0, densities.size() - 1)
 			newPlate.density = densities[di]
 			densities.remove_at(di)
 			
@@ -196,7 +196,7 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 			plateOrigins[points[Vector2i(gx,gy)]] = newPlate
 			map.update_tile_color(points[Vector2i(gx,gy)], newPlate.color)
 	
-	var freeTiles = (worldSize.x * worldSize.y)
+	var freeTiles : int = (worldSize.x * worldSize.y)
 	
 	var fullPositions : Array[Vector2i]
 	
@@ -217,7 +217,7 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 				tile.crust.append(newCrust)
 				tile.topCrust = newCrust
 				plate.crust.append(newCrust)
-	var attempts = freeTiles * 8
+	var attempts : int = freeTiles * 8
 	
 	while freeTiles > 0 && attempts > 0:
 		rng.seed = rand_from_seed(rng.seed)[0]
@@ -250,15 +250,15 @@ func createPlates(gridSizeX : int, gridSizeY : int):
 				if !border:
 					fullPositions.erase(pos)
 
-func initHeightmap():
+func initHeightmap() -> void:
 	var noise : FastNoiseLite = FastNoiseLite.new()
 	noise.fractal_octaves = 8
 	noise.seed = seed
 
-	var falloffMap = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
+	var falloffMap : Dictionary = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
 	for x in worldSize.x:
 		for y in worldSize.y:
-			var height = clampf((noise.get_noise_2d(x/worldGen.mapScale,y/worldGen.mapScale) + 1)/2 - falloffMap[Vector2i(x,y)], 0, 1)
+			var height : float = clampf((noise.get_noise_2d(x/worldGen.mapScale,y/worldGen.mapScale) + 1)/2 - falloffMap[Vector2i(x,y)], 0, 1)
 			var tile : WorldTile = tiles[Vector2i(x,y)]
 			
 			
@@ -270,16 +270,16 @@ func initHeightmap():
 				height = lerpf(worldGen.seaLevel - oceanDepth, worldGen.seaLevel, calcInverseFalloff(inverse_lerp(worldGen.seaLevel, 0, height)))
 			tile.topCrust.elevation = height
 	
-func calcInverseFalloff(v : float):
-	var a = 3
-	var b = .15
+func calcInverseFalloff(v : float) -> float:
+	var a : float = 3
+	var b : float= .15
 	return 1 - pow(v, a) / (pow(v, a) + pow(b - b*v, a))
 
 func getWrappedDist(a : Vector2, b : Vector2) -> float:
-	var dx = abs(b.x - a.x) 
+	var dx : int = abs(b.x - a.x) 
 	if (dx > worldSize.x/2):
 		dx = worldSize.x - dx
-	var dy = abs(b.y - a.y)
+	var dy : int = abs(b.y - a.y)
 	if (dy > worldSize.y/2):
 		dy = worldSize.y - dy
 	

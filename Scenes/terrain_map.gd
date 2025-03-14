@@ -25,22 +25,22 @@ func _process(delta: float) -> void:
 	elif (regionSprite):
 		regionSprite.modulate.a = baseRegionOpacity
 
-func manageMaps():
+func manageMaps() -> void:
 	if (world.worldCreated):
 		# Switches between a sprite and tilemap for displaying map
 		if (camera && camera.visible):
-			var zoomVal = camera.zoom.x
+			var zoomVal : float = camera.zoom.x
 			if zoomVal < highQualityMaxZoom && visible == true:
 				hideMap()
 			elif visible == false && zoomVal >= highQualityMaxZoom:
 				showMapId = WorkerThreadPool.add_task(showMap)
 
-func hideMap():
+func hideMap() -> void:
 	visible = false
 	lodMap.texture = ImageTexture.create_from_image(world.terrainImage)
 	lodMap.visible = true
 
-func showMap():
+func showMap() -> void:
 	lodMap.call_deferred("set_visible", false)
 	call_deferred("set_visible", true)
 func _exit_tree() -> void:

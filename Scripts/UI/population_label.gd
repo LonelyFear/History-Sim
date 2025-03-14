@@ -4,20 +4,20 @@ extends Label
 
 func _process(delta: float) -> void:
 	if (simManager):
-		text = "World Population: " + thousands_sep(simManager.worldPopulation) + "\nWorld Workforce: " + thousands_sep(simManager.worldWorkforce) + "\nWorld Dependents: " + thousands_sep(simManager.worldDependents)+ "\nTotal Pops: " + thousands_sep(simManager.pops.size())
+		text = "World Population: " + thousands_sep(Pop.fromSimPopulation(simManager.worldPopulation)) + "\nWorld Workforce: " + thousands_sep(Pop.fromSimPopulation(simManager.worldWorkforce)) + "\nWorld Dependents: " + thousands_sep(Pop.fromSimPopulation(simManager.worldDependents))+ "\nTotal Pops: " + thousands_sep(simManager.pops.size())
 	else:
 		visible = false
 	
 
-static func thousands_sep(number : int, prefix=''):
+static func thousands_sep(number : int, prefix := '') -> String:
 	number = int(number)
-	var neg = false
+	var neg := false
 	if number < 0:
 		number = -number
 		neg = true
-	var string = str(number)
-	var mod = string.length() % 3
-	var res = ""
+	var string := str(number)
+	var mod := string.length() % 3
+	var res := ""
 	for i in range(0, string.length()):
 		if i != 0 && i % 3 == mod:
 			res += ","

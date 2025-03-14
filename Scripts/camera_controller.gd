@@ -16,9 +16,9 @@ var velocity : Vector2
 func _process(delta: float) -> void:
 	cameraControl()
 
-func cameraControl():
-	var cameraRealSpeed = cameraSpeed / zoom.x
-	var cameraRealAccel = cameraAccel / zoom.x
+func cameraControl() -> void:
+	var cameraRealSpeed : float = cameraSpeed / zoom.x
+	var cameraRealAccel : float = cameraAccel / zoom.x
 	var movementVector : Vector2
 	movementVector.x = Input.get_axis("Move_Left", "Move_Right")
 	movementVector.y = Input.get_axis("Move_Up", "Move_Down")
@@ -30,6 +30,6 @@ func cameraControl():
 	
 	position += velocity
 	
-	var zoomVel = int(Input.is_action_just_released("Zoom_In")) - int(Input.is_action_just_released("Zoom_Out"))
+	var zoomVel : float = int(Input.is_action_just_released("Zoom_In")) - int(Input.is_action_just_released("Zoom_Out"))
 	zoom += Vector2(zoomVel, zoomVel) * (zoomSpeed * get_process_delta_time())
 	zoom = clamp(zoom, maxZoom, minZoom)

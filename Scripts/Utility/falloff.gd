@@ -13,5 +13,5 @@ static func generateFalloff(width : int, height : int, b : float, includeX : boo
 			map[Vector2i(i,j)] = evaluate(val, b, a)
 	return map
 
-static func evaluate(value : float, b : float = 7.2, a : float = 3):
+static func evaluate(value : float, b : float = 7.2, a : float = 3) -> float:
 	return pow(value, a) / (pow(value, a) + pow(b - (b * value), a));

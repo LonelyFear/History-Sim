@@ -6,8 +6,7 @@ signal monthTick()
 signal yearTick()
 
 @export_category("Time Settings")
-@export_range(1,30) var daysPerTick : int = 1
-@export_range(0, 1) var secondsPerTick : float = 0.1
+const daysPerTick : int = 30
 @export_category("Date")
 
 @export var elapsedTicks : int = 0
@@ -19,33 +18,23 @@ signal yearTick()
 @export var simManager : SimManager
 var tickTimer : Timer
 
-var tickDeltaStart : float = 0
+var tickDeltaStart : int = 0
 var tickDeltaTime : float = 0.001
 
 var yearTest : int
 func _on_world_worldgen_finished() -> void:
-	tickTimer = $"TickTimer"
-	tickTimer.wait_time = secondsPerTick
-	tickTimer.start()
-	yearTest = Time.get_ticks_msec()
-
-func resetTickTimer():
-	if (tickTimer):
-		tickTimer.wait_time = secondsPerTick
-		tickTimer.start()
+	tickGame()
 
 func _on_tick_timer_timeout() -> void:
 	pass
 
 func _process(delta: float) -> void:
-	if (elapsedTicks == 0):
-		tickGame()
 	if (WorkerThreadPool.is_group_task_completed(simManager.popTaskId)):
-		tickDeltaTime = (Time.get_ticks_msec() - tickDeltaStart) / 1000
+		tickDeltaTime = float(Time.get_ticks_msec() - tickDeltaStart) / 1000
 		WorkerThreadPool.wait_for_group_task_completion(simManager.popTaskId)
 		tickGame()
 
-func tickGame():
+func tickGame() -> void:
 	tickDeltaStart = Time.get_ticks_msec()
 	elapsedTicks += 1
 	tick.emit()
@@ -60,5 +49,5 @@ func tickGame():
 			month = 1
 			year += 1
 			yearTick.emit()
-			var secondsForYear = float(Time.get_ticks_msec() - yearTest)/1000.0
+			var secondsForYear := float(Time.get_ticks_msec() - yearTest)/1000.0
 			yearTest = Time.get_ticks_msec()

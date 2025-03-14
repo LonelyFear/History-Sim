@@ -6,15 +6,15 @@ class_name SimManager
 @export var regionSprite : Sprite2D
 @export var terrainMap : UpdateTileMapLayer
 @export var timeManager : TimeManager
-@export var popsPerRegion : int = 50
+@export var popsPerRegion : int = 15
 
 var tiles : Dictionary[Vector2i, Tile]
-var regions : Dictionary[Vector2i, Region]
-
+var regions : Array[Object]
 var terrainSize : Vector2i
 var worldSize : Vector2i
 
 var regionImage : Image
+var regionObj : Object = preload("res://Scripts/Simulation/Region.cs")
 
 # Population
 var pops : Array[Pop] = []
@@ -50,7 +50,7 @@ func on_worldgen_finished() -> void:
 			# Creates a region
 			var newRegion : Region = Region.new()
 			newRegion.pos = Vector2i(x,y)
-			regions[Vector2i(x,y)] = newRegion
+			regions.append(newRegion)
 			for tx in tilesPerRegion:
 				for ty in tilesPerRegion:
 					# Adds subregion tiles
@@ -59,7 +59,7 @@ func on_worldgen_finished() -> void:
 					# Adds biomes to tile
 					newRegion.biomes[Vector2i(tx, ty)] = tile.biome
 			# Checks if our region is claimable
-			for biome in newRegion.biomes.values():
+			for biome : Dictionary in newRegion.biomes.values():
 				if (biome["terrainType"] == 0):
 					newRegion.claimable = true
 					break
@@ -70,11 +70,11 @@ func on_worldgen_finished() -> void:
 			# Adds pops to our region
 			if (newRegion.claimable):
 				for i in popsPerRegion:
-					var startingPopulation : int = 10
+					var startingPopulation : int = Pop.toSimPopulation(20)
 					createPop(startingPopulation * (1.0 - Pop.targetDependencyRatio), startingPopulation * (Pop.targetDependencyRatio), newRegion, Tech.new(), createCulture(newRegion))
 	regionSprite.texture = ImageTexture.create_from_image(regionImage)
 
-func createPop(workforce : int, dependents : int, region : Region, tech : Tech, culture : Culture, profession : Pop.Professions = Pop.Professions.TRIBESPEOPLE) -> Pop:
+func createPop(workforce : int, dependents : int, region : Object, tech : Tech, culture : Culture, profession : Pop.Professions = Pop.Professions.TRIBESPEOPLE) -> Pop:
 	# Creates a new pop
 	var newPop : Pop = Pop.new()
 	newPop.simManager = self
@@ -92,7 +92,7 @@ func createPop(workforce : int, dependents : int, region : Region, tech : Tech, 
 	pops.append(newPop)
 	
 	# Adds profession
-	newPop.profession
+	newPop.profession = Pop.Professions.TRIBESPEOPLE
 	
 	# Adds tech
 	var popTech : Tech = Tech.new()
@@ -105,60 +105,53 @@ func createPop(workforce : int, dependents : int, region : Region, tech : Tech, 
 
 func _on_tick() -> void:
 	mapUpdate = false
-	updatePops()
+	popTaskId = WorkerThreadPool.add_group_task(updateRegion, regions.size(), -1, false, "Updates all the regions in the game")
 	#worldPopulation = worldDependents + worldWorkforce
 	if (mapUpdate):
 		regionSprite.texture = ImageTexture.create_from_image(regionImage)
 
-func getRegion(pos : Vector2i) -> Region:
-	return regions[pos]
+func getRegion(pos : Vector2i) -> Object:
+	var index : int = (pos.y * worldSize.x) + pos.x
+	return regions[index]
 
-func _on_month() -> void:
-	#updatePops()
-	pass
-
+#region Regions
+func updateRegion(index : int) -> void:
+	var region : Region = regions[index]
+	region.growPops()
+#endregion
 
 #region Pops
 
-func changePopulation(workforceIncrease : int, dependentIncrease : int):
+func changePopulation(workforceIncrease : int, dependentIncrease : int) -> void:
 	worldWorkforce += workforceIncrease
 	worldDependents += dependentIncrease
 	worldPopulation = worldWorkforce + worldDependents
 
-func updatePops():
+func updatePops() -> void:
 	popTaskId = WorkerThreadPool.add_group_task(growPop, pops.size(), 4, false, "Grows all the pops in the simulation")
 
 # Grows pop populations
-func growPop(index : int):
+func growPop(index : int) -> void:
 	var pop : Pop = pops[index]
-	var bRate = pop.birthRate
-
+	var bRate : float = pop.birthRate
 	if (pop.region.population > pop.region.maxPopulation):
 		# If the region is overpopulated apply a 25% decrease to birth rates
 		bRate *= 0.75
 	if (pop.population < 2):
 		bRate = 0
+		
 	# Gets our natural increase trate
 	var NIR : float = (bRate - pop.deathRate)/12
-	# Flat increase rate
-	var increase : int = int(float(pop.population) * NIR)
-	# Gets the decimal from the NIR multiplied by population and uses it as a chance for one more person to exist
-	if (randf() < abs(fmod(float(pop.population) * NIR, 1))):
-		# If that person is born (Or dies) change population
-		increase += sign(NIR)
-	# Updates the pop's population
-	
-	# Gets dependent change
-	var dependentIncrease : int = int(float(increase) * pop.targetDependencyRatio)
-	# Checks if an dependent is born
-	if (randf() < abs(fmod(float(increase) * pop.targetDependencyRatio, 1))):
-		dependentIncrease += sign(increase)
+	# Gets our increase
+	var increase : int = (pop.dependents + pop.workforce) * NIR
+	# Gets our increase in dependents
+	var dependentIncrease : int = increase * pop.targetDependencyRatio
 	# Has dependents age into workforce (25%)
 	pop.changeWorkforce(increase - dependentIncrease)
 	# Has dependents born (75%)
 	pop.changeDependents(dependentIncrease)
 
-func MovePop(pop : Pop, destination : Region, workforce : int, dependents : int, profession : Pop.Professions):
+func MovePop(pop : Pop, destination : Region, workforce : int, dependents : int, profession : Pop.Professions) -> void:
 	if (destination != null):
 		if (workforce > pop.workforce):
 			workforce = pop.workforce
@@ -184,12 +177,12 @@ func MovePop(pop : Pop, destination : Region, workforce : int, dependents : int,
 #endregion
 
 #region Cultures
-func createCulture(region : Region) -> Culture:
+func createCulture(region : Object) -> Culture:
 	var newCulture : Culture = Culture.new()
 	newCulture.name = "New Culture"
-	var r = inverse_lerp(0, worldSize.x, region.pos.x)
-	var g = inverse_lerp(0, worldSize.y, region.pos.y)
-	var b = inverse_lerp(0, worldSize.y, region.pos.y - worldSize.x)
+	var r : float = inverse_lerp(0, worldSize.x, region.pos.x)
+	var g : float= inverse_lerp(0, worldSize.y, region.pos.y)
+	var b : float = inverse_lerp(0, worldSize.y, region.pos.y - worldSize.x)
 	newCulture.color = Color(r, g, b, 0)
 	cultures.append(newCulture)
 	
@@ -197,7 +190,7 @@ func createCulture(region : Region) -> Culture:
 #endregion
 
 #region MapEdit
-func setRegionColor(pos : Vector2i, color : Color):
+func setRegionColor(pos : Vector2i, color : Color) -> void:
 	regionImage.set_pixel(pos.x, pos.y, Color(color, 1))
 	mapUpdate = true
 #endregion
