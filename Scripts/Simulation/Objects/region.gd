@@ -61,8 +61,6 @@ func addPop(pop : Pop) -> void:
 
 func growPops() -> void:
 	for pop : Pop in pops:
-		if (pop.batchID != TimeManager.month):
-			continue
 		var bRate : float
 		if (pop.population < 2):
 			bRate = 0
@@ -73,7 +71,7 @@ func growPops() -> void:
 			bRate *= 0.75
 		
 		# Gets our natural increase trate
-		var NIR : float = (bRate - pop.deathRate)# / (360/TimeManager.daysPerTick)
+		var NIR : float = (bRate - pop.deathRate) / (360/TimeManager.daysPerTick)
 		# Gets our increase
 		var increase : int = (pop.dependents + pop.workforce) * NIR
 		# Gets our increase in dependents

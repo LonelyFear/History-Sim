@@ -1,6 +1,6 @@
 extends Label
 
-@export var simManager : SimManager
+@export var simManager : Node
 
 func _process(delta: float) -> void:
 	if (simManager):

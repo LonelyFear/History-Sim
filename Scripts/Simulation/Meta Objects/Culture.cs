@@ -9,24 +9,24 @@ public partial class Culture : GodotObject
     public int population = 0;
     public Array<Pop> pops = new Array<Pop>();
 
-    public void addPop(Pop pop){
+    public void AddPop(Pop pop){
         if (!pops.Contains(pop)){
             if (pop.culture != null){
-                pop.culture.removePop(pop);
+                pop.culture.RemovePop(pop);
             }
             pops.Add(pop);
             pop.culture = this;
             population += pop.population;
         }
     }
-    public void removePop(Pop pop){
+    public void RemovePop(Pop pop){
         if (pops.Contains(pop)){
             pop.culture = null;
             population -= pop.population;            
             pops.Remove(pop);
         }
     }
-    static bool checkCultureSimilarity(Culture a, Culture b){
+    static bool CheckCultureSimilarity(Culture a, Culture b){
         float minColorDiff = 0.05f;
         bool similarR = Math.Abs(a.color.R - a.color.B) < minColorDiff;
         bool similarG = Math.Abs(a.color.G - a.color.G) < minColorDiff;

@@ -12,6 +12,7 @@ public partial class Region : GodotObject
     public Vector2I pos;
     public float avgFertility;
     public int landCount;
+    public SimManager simManager;
 
     // Demographics
     public int maxPopulation = 0;
@@ -19,7 +20,7 @@ public partial class Region : GodotObject
     public int dependents = 0;    
     public int workforce = 0;
 
-    public void calcAvgFertility(){
+    public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
         foreach (Dictionary biome in biomes.Values){
@@ -30,35 +31,36 @@ public partial class Region : GodotObject
         }
         avgFertility = (f/landCount);
     }
-    public void calcMaxPopulation(){
+
+    public void CalcMaxPopulation(){
         foreach (Vector2I bpos in biomes.Keys){
             Dictionary biome = biomes[bpos];
             GodotObject tile = tiles[bpos];
 
             tile.Set("maxPopulation", 0);
             if ((float)biome["terrainType"] == 0){
-                maxPopulation += (int)(Pop.toSimPopulation(1000) * (float)biome["fertility"]);
-                tile.Set("maxPopulation", (int)(Pop.toSimPopulation(1000) * (float)biome["fertility"])) ;
+                maxPopulation += (int)(Pop.toNativePopulation(1000) * (float)biome["fertility"]);
+                tile.Set("maxPopulation", (int)(Pop.toNativePopulation(1000) * (float)biome["fertility"])) ;
             }
         }
     }
 
-    public void changePopulation(int workforceChange, int dependentChange){
+    public void ChangePopulation(int workforceChange, int dependentChange){
         workforce += workforceChange;
         dependents += dependentChange;
         population += (workforceChange + dependentChange);
     }
 
-    public void removePop(Pop pop){
+    public void RemovePop(Pop pop){
         if (pops.Contains(pop)){
-            changePopulation(-(int)pop.Get("workforce"), -(int)pop.Get("dependents"));
+            ChangePopulation(-(int)pop.Get("workforce"), -(int)pop.Get("dependents"));
             pops.Remove(pop);
             pop.region = null;
         }
     }
     public void addPop(Pop pop){
         if (!pops.Contains(pop)){
-            changePopulation((int)pop.Get("workforce"), (int)pop.Get("dependents"));
+            ChangePopulation((int)pop.Get("workforce"), (int)pop.Get("dependents"));
             pops.Add(pop);
             pop.region = this;
         }
@@ -79,8 +81,9 @@ public partial class Region : GodotObject
             int increase = Mathf.RoundToInt(((int)pop.Get("workforce") + (int)pop.Get("dependents")) * NIR);
             int dependentIncrease = Mathf.RoundToInt(increase * (float)pop.Get("targetDependencyRatio"));
 
-            pop.Call("changeWorkforce", increase - dependentIncrease);
-            pop.Call("changeDependents", dependentIncrease);
+            pop.changeWorkforce(increase - dependentIncrease);
+            pop.changeDependents(dependentIncrease);
+            ChangePopulation(increase - dependentIncrease, dependentIncrease);
         }
     }
 }

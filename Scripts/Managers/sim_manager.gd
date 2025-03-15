@@ -1,12 +1,11 @@
 extends Node2D
 class_name SimManager
 
-@export var world : WorldGenerator
+@onready var world : WorldGenerator
 @export var tilesPerRegion : int = 4
-@export var regionSprite : Sprite2D
-@export var terrainMap : UpdateTileMapLayer
-@export var timeManager : TimeManager
-@export var popsPerRegion : int = 15
+@onready var regionSprite : Sprite2D = $"RegionOverlay"
+@onready var timeManager : TimeManager 
+@export var popsPerRegion : int = 1
 
 var tiles : Dictionary[Vector2i, Tile]
 var regions : Array[Object]
@@ -24,18 +23,21 @@ var worldWorkforce : int = 0
 var worldDependents : int = 0
 var cultures : Array[Culture] = []
 
-var popThread : Thread = Thread.new()
-
 var mapUpdate : bool = false
 
+var currentBatchNum : int = 0
 var popTaskId : int = 0
+
+func _ready() -> void:
+	world = get_parent().find_child("World")
+	timeManager = get_parent().find_child("Time Manager")
 
 # World size is the amount of regions in the world
 func on_worldgen_finished() -> void:
 	terrainSize = world.worldSize
 	worldSize = terrainSize / tilesPerRegion
 	scale = world.scale * tilesPerRegion
-	regionImage = Image.create(worldSize.x, worldSize.y, true, Image.FORMAT_RGBA8)
+	regionImage = Image.create_empty(worldSize.x, worldSize.y, true, Image.FORMAT_RGBA8)
 	# Adds our subregions to a dictionary
 	for x in terrainSize.x:
 		for y in terrainSize.y:
@@ -49,6 +51,7 @@ func on_worldgen_finished() -> void:
 			regionImage.set_pixel(x,y, Color(0,0,0,0))
 			# Creates a region
 			var newRegion : Region = Region.new()
+			newRegion.simManager = self
 			newRegion.pos = Vector2i(x,y)
 			regions.append(newRegion)
 			for tx in tilesPerRegion:
@@ -58,11 +61,8 @@ func on_worldgen_finished() -> void:
 					newRegion.tiles[Vector2i(tx, ty)] = tile
 					# Adds biomes to tile
 					newRegion.biomes[Vector2i(tx, ty)] = tile.biome
-			# Checks if our region is claimable
-			for biome : Dictionary in newRegion.biomes.values():
-				if (biome["terrainType"] == 0):
-					newRegion.claimable = true
-					break
+					if (tile.biome["terrainType"] == 0):
+						newRegion.claimable = true
 			# Calculates average fertility of region
 			newRegion.calcAvgFertility()
 			# Calculates max population of region
@@ -75,33 +75,36 @@ func on_worldgen_finished() -> void:
 	regionSprite.texture = ImageTexture.create_from_image(regionImage)
 
 func createPop(workforce : int, dependents : int, region : Object, tech : Tech, culture : Culture, profession : Pop.Professions = Pop.Professions.TRIBESPEOPLE) -> Pop:
+	currentBatchNum += 1
+	if (currentBatchNum > 12):
+		currentBatchNum = 1
 	# Creates a new pop
-	var newPop : Pop = Pop.new()
-	newPop.simManager = self
+	var pop : Pop = Pop.new()
 	
 	# Adds pop to region
-	newPop.region = region
-	region.pops.append(newPop)
+	pop.region = region
+	region.pops.append(pop)
 	
 	# Changes population
-	newPop.changeWorkforce(workforce)
-	newPop.changeDependents(dependents)
+	pop.batchID = currentBatchNum
+	pop.changeWorkforce(workforce)
+	pop.changeDependents(dependents)
 	
 	# Adds culture
-	culture.addPop(newPop)
-	pops.append(newPop)
+	culture.addPop(pop)
+	pops.append(pop)
 	
 	# Adds profession
-	newPop.profession = Pop.Professions.TRIBESPEOPLE
+	pop.profession = Pop.Professions.TRIBESPEOPLE
 	
 	# Adds tech
 	var popTech : Tech = Tech.new()
 	popTech.industryLevel = tech.industryLevel
 	popTech.militaryLevel = tech.militaryLevel
 	popTech.societyLevel = tech.societyLevel
-	newPop.tech = popTech
+	pop.tech = popTech
 	
-	return newPop
+	return pop
 
 func _on_tick() -> void:
 	mapUpdate = false
@@ -127,53 +130,6 @@ func changePopulation(workforceIncrease : int, dependentIncrease : int) -> void:
 	worldDependents += dependentIncrease
 	worldPopulation = worldWorkforce + worldDependents
 
-func updatePops() -> void:
-	popTaskId = WorkerThreadPool.add_group_task(growPop, pops.size(), 4, false, "Grows all the pops in the simulation")
-
-# Grows pop populations
-func growPop(index : int) -> void:
-	var pop : Pop = pops[index]
-	var bRate : float = pop.birthRate
-	if (pop.region.population > pop.region.maxPopulation):
-		# If the region is overpopulated apply a 25% decrease to birth rates
-		bRate *= 0.75
-	if (pop.population < 2):
-		bRate = 0
-		
-	# Gets our natural increase trate
-	var NIR : float = (bRate - pop.deathRate)/12
-	# Gets our increase
-	var increase : int = (pop.dependents + pop.workforce) * NIR
-	# Gets our increase in dependents
-	var dependentIncrease : int = increase * pop.targetDependencyRatio
-	# Has dependents age into workforce (25%)
-	pop.changeWorkforce(increase - dependentIncrease)
-	# Has dependents born (75%)
-	pop.changeDependents(dependentIncrease)
-
-func MovePop(pop : Pop, destination : Region, workforce : int, dependents : int, profession : Pop.Professions) -> void:
-	if (destination != null):
-		if (workforce > pop.workforce):
-			workforce = pop.workforce
-		if (dependents > pop.dependents):
-			dependents = pop.dependents
-		if (workforce + dependents >= pop.workforce + pop.dependents):
-			pop.profession = profession
-			pop.region.removePop(pop)
-			destination.addPop(pop)
-		else:
-			var similarPop : Pop
-			var createPop : bool = true
-			for rPop : Pop in destination.pops:
-				if (Culture.SimilarCulture(pop.culture, rPop.culture) && profession == rPop.profession):
-					createPop = false
-					similarPop = rPop
-					break
-			if createPop:
-				var newPop : Pop = createPop(workforce, dependents, destination, pop.tech, pop.culture, profession)
-			elif similarPop != null:
-				similarPop.changePopulation(workforce, dependents)
-		pop.changePopulation(-workforce, -dependents)
 #endregion
 
 #region Cultures

@@ -286,8 +286,6 @@ func getWrappedDist(a : Vector2, b : Vector2) -> float:
 
 	## Manhattan
 	return dx + dy
-	## Eucledian
-	return sqrt(pow(dx,2) + pow(dy,2))
 
 class Plate:
 	var velChanged : bool

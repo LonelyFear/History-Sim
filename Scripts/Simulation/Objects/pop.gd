@@ -19,6 +19,8 @@ var culture : Culture
 var tech : Tech
 var profession : Professions = Professions.TRIBESPEOPLE
 
+var batchID : int = 0
+
 enum Professions {
 	TRIBESPEOPLE, # No class
 	PEASANT, # Lower Class
@@ -34,8 +36,7 @@ func changeWorkforce(amount : int) -> void:
 	workforce += amount
 	population += amount
 	if (region):
-		region.changePopulation(amount, 0)
-		simManager.changePopulation(amount, 0)
+		pass
 
 func changeDependents(amount : int) -> void:
 	if (dependents + amount < 0):
@@ -43,8 +44,7 @@ func changeDependents(amount : int) -> void:
 	dependents += amount
 	population += amount
 	if (region):
-		region.changePopulation(0, amount)
-		simManager.changePopulation(0, amount)
+		pass
 
 func changePopulation(workforce : int, dependents : int) -> void:
 	changeWorkforce(workforce)

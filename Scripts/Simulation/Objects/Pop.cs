@@ -8,6 +8,7 @@ public partial class Pop : GodotObject
 
     public Region region;
     public Culture culture;
+    public Tech tech;
 
     public void changeWorkforce(int amount){
         if (workforce + amount < 0){
@@ -15,9 +16,6 @@ public partial class Pop : GodotObject
         }
         workforce += amount;
         population += amount;
-        if (region != null){
-            region.changePopulation(amount, 0);
-        }
     }
     public void changeDependents(int amount){
         if (dependents + amount < 0){
@@ -25,16 +23,21 @@ public partial class Pop : GodotObject
         }
         dependents += amount;
         population += amount;
-        if (region != null){
-            region.changePopulation(amount, 0);
-        }
     }
 
     public const int simPopulationMultiplier = 1000;
-    public static int fromSimPopulation(int simPopulation){
+    public static int fromNativePopulation(int simPopulation){
         return simPopulation/simPopulationMultiplier;
     }
-    public static int toSimPopulation(int population){
+    public static int toNativePopulation(int population){
         return population * simPopulationMultiplier;
     }
+}
+public enum Professions{
+    TRIBESPEOPLE,
+	PEASANT,
+	UNEMPLOYED,
+	WORKERS,
+	SKILLED,
+	ARISTOCRATS
 }

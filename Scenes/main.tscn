@@ -1,18 +1,18 @@
 [gd_scene load_steps=16 format=3 uid="uid://b1mh36mwq3q24"]
 
-[ext_resource type="Script" uid="uid://dud41vmnk0o16" path="res://Scripts/world_generator.gd" id="1_h4cr5"]
-[ext_resource type="Script" uid="uid://dcudjmvcfl6la" path="res://Scripts/load_mods.gd" id="1_w647p"]
-[ext_resource type="Script" uid="uid://donrrj170473w" path="res://Scripts/sim_manager.gd" id="2_e7n5d"]
-[ext_resource type="Script" uid="uid://4lvygj5vh4ho" path="res://Scripts/load_biomes.gd" id="5_xnnej"]
+[ext_resource type="Script" uid="uid://dud41vmnk0o16" path="res://Scripts/Managers/world_generator.gd" id="1_h4cr5"]
+[ext_resource type="Script" uid="uid://dcudjmvcfl6la" path="res://Scripts/Loading/load_mods.gd" id="1_w647p"]
+[ext_resource type="Script" uid="uid://bnosek8iswm7d" path="res://Scripts/Managers/sim_manager.gd" id="3_fdnlq"]
+[ext_resource type="Script" uid="uid://4lvygj5vh4ho" path="res://Scripts/Loading/load_biomes.gd" id="5_xnnej"]
 [ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
 [ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_ijhcp"]
-[ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/camera_controller.gd" id="6_kmkn8"]
+[ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_kmkn8"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
-[ext_resource type="Script" uid="uid://cufwlcmua8jbj" path="res://Scripts/time_manager.gd" id="9_dbmc3"]
-[ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/Ui/date_label.gd" id="12_fdnlq"]
+[ext_resource type="Script" uid="uid://cufwlcmua8jbj" path="res://Scripts/Managers/time_manager.gd" id="9_dbmc3"]
+[ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="12_fdnlq"]
 [ext_resource type="Script" uid="uid://bgbbd4h4wk40k" path="res://Scripts/tectonics.gd" id="12_xcgyf"]
-[ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/Ui/population_label.gd" id="13_8yh0i"]
-[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/Ui/tps_label.gd" id="14_m5dvi"]
+[ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="13_8yh0i"]
+[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="14_m5dvi"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
 texture = ExtResource("6_dynbe")
@@ -58,13 +58,9 @@ z_index = -1000
 position = Vector2(180, 95)
 texture = ExtResource("6_ijhcp")
 
-[node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "regionSprite", "terrainMap", "timeManager")]
+[node name="Simulation" type="Node2D" parent="."]
 z_index = 2
-script = ExtResource("2_e7n5d")
-world = NodePath("../World")
-regionSprite = NodePath("RegionOverlay")
-terrainMap = NodePath("../World/Terrain Map")
-timeManager = NodePath("../Time Manager")
+script = ExtResource("3_fdnlq")
 
 [node name="RegionOverlay" type="Sprite2D" parent="Simulation"]
 scale = Vector2(16, 16)

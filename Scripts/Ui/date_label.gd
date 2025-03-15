@@ -1,6 +1,6 @@
 extends Label
 
-@export var timeManager : TimeManager
+@export var timeManager : Node
 func _process(delta: float) -> void:
 	if (timeManager):
 		var formatDate := "%02d/%02d/%04d"

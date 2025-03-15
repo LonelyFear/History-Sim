@@ -9,13 +9,12 @@ signal yearTick()
 const daysPerTick : int = 30
 @export_category("Date")
 
-@export var elapsedTicks : int = 0
-@export var day : int = 1
-@export var yearDay : int = 1
-@export var month : int = 1
-@export var year : int = 1
+static var elapsedTicks : int = 0
+static var day : int = 1
+static var month : int = 1
+static var year : int = 1
 @export_category("References")
-@export var simManager : SimManager
+@export var simManager : Node
 var tickTimer : Timer
 
 var tickDeltaStart : int = 0
@@ -39,7 +38,6 @@ func tickGame() -> void:
 	elapsedTicks += 1
 	tick.emit()
 	day += daysPerTick
-	yearDay = day + ((month - 1) * 30)
 	if (day > 30):
 		month += int(float(day) / 30)
 		day = day - (30 * int(float(day) / 30))
