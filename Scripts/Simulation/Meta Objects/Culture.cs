@@ -26,7 +26,7 @@ public partial class Culture : GodotObject
             pops.Remove(pop);
         }
     }
-    static bool CheckCultureSimilarity(Culture a, Culture b){
+    public static bool CheckCultureSimilarity(Culture a, Culture b){
         float minColorDiff = 0.05f;
         bool similarR = Math.Abs(a.color.R - a.color.B) < minColorDiff;
         bool similarG = Math.Abs(a.color.G - a.color.G) < minColorDiff;

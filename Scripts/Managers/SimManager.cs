@@ -54,7 +54,7 @@ public partial class SimManager : Node2D
     private void OnWorldgenFinished(){
         terrainSize = (Vector2I)world.Get("worldSize");
         worldSize = terrainSize/tilesPerRegion;
-        Scale = (Vector2I)world.Get("Scale") * tilesPerRegion;
+        Scale = (Vector2)world.Get("scale") * tilesPerRegion;
         regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
 
         for (int x = 0; x < terrainSize.X; x++){
@@ -67,7 +67,7 @@ public partial class SimManager : Node2D
 
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
-                regionImage.SetPixel(x, y, Color.Color8(0,0,0,0));
+                regionImage.SetPixel(x, y, Color.Color8(0,255,0,1));
                 // Creates a region
                 Region newRegion = new Region();
                 newRegion.simManager = this;
@@ -100,7 +100,7 @@ public partial class SimManager : Node2D
                 }
             }
         }
-            
+        regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
 
     public void OnTick(){
@@ -108,9 +108,12 @@ public partial class SimManager : Node2D
         task = Parallel.ForEachAsync(regions, (region, ct) =>
         {
             region.currentMonth = month;
-            region.growPops();
+            region.GrowPops();
             return new ValueTask();
         });
+        foreach (Region region in regions){
+            SetRegionColor(region.pos.X, region.pos.Y, Color.Color8(255, 255, 0, 255));
+        }
     }
 
     #region Pops
@@ -130,6 +133,7 @@ public partial class SimManager : Node2D
         pop.tech = new Tech();
         pop.tech.militaryLevel = tech.militaryLevel;
         pop.tech.societyLevel = tech.societyLevel;
+        pop.profession = profession;
         pop.tech.industryLevel = tech.industryLevel;
 
         pop.changeWorkforce(workforce);
@@ -137,8 +141,19 @@ public partial class SimManager : Node2D
 
         return pop;
     }
+
+    public void DestroyPop(Pop pop){
+        if (pop.region != null){
+            pop.region.RemovePop(pop);
+        }
+        pops.Remove(pop);
+    }
     #endregion
 
+    public Region GetRegion(int x, int y){
+        int index = (y * worldSize.X) + x;
+        return regions[index];
+    }
     public Culture CreateCulture(Region region){
         Culture culture = new Culture();
         culture.name = "Culturism";
@@ -149,5 +164,17 @@ public partial class SimManager : Node2D
         cultures.Append(culture);
 
         return culture;
+    }
+
+    public void SetRegionColor(int x, int y, Color color){
+        if (regionImage.GetPixel(x,y) != color){
+            regionImage.SetPixel(x, y, color);
+            mapUpdate = true;            
+        }
+    }
+
+    public void UpdateMap(){
+        mapUpdate = false;
+        regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
 }

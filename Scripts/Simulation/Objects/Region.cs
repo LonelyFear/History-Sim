@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using Godot.Collections;
 using Dictionary = Godot.Collections.Dictionary;
@@ -70,10 +71,10 @@ public partial class Region : GodotObject
         }
     }
 
-    public void growPops(){
+    public void GrowPops(){
         long twc = 0;
         long tdc = 0;
-        foreach (Pop pop in pops){
+        foreach (Pop pop in pops.ToArray()){
             float bRate;
             if (pop.population < 2){
                 bRate = 0;
@@ -95,4 +96,28 @@ public partial class Region : GodotObject
         }
         ChangePopulation(twc, tdc);
     }
+
+    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
+        if (movedWorkforce > pop.workforce){
+            movedWorkforce = pop.workforce;
+        }
+        if (movedDependents > pop.dependents){
+            movedDependents = pop.dependents;
+        }
+        Pop merger = null;
+        foreach (Pop resident in destination.pops){
+            if (Culture.CheckCultureSimilarity(pop.culture, resident.culture)){
+                merger = resident;
+                break;
+            }
+        }
+        if (merger != null){
+            merger.changePopulation(movedWorkforce, movedDependents);
+        } else {
+            Pop newPop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
+        }
+        pop.changePopulation(-movedWorkforce, -movedDependents);
+    }
+
+    //public void MergePops
 }

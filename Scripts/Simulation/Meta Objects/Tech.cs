@@ -6,7 +6,7 @@ public partial class Tech : GodotObject
     public int societyLevel;
     public int industryLevel;
 
-    static bool sameTech(Tech a, Tech b){
+    public static bool sameTech(Tech a, Tech b){
         bool sameMil = a.militaryLevel == b.militaryLevel;
         bool sameSoc = a.societyLevel == b.societyLevel;
         bool sameInd = a.industryLevel == b.industryLevel;

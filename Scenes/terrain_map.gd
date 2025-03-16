@@ -23,7 +23,8 @@ func _process(delta: float) -> void:
 		# Slowly makes region map transparent
 		regionSprite.self_modulate.a = lerp(regionMinOpacity, baseRegionOpacity, clampf(inverse_lerp(10, regionMapLerpZoom, camera.zoom.x), 0, 1))
 	elif (regionSprite):
-		regionSprite.modulate.a = baseRegionOpacity
+		regionSprite.self_modulate.a = baseRegionOpacity
+	regionSprite.self_modulate.a = baseRegionOpacity
 
 func manageMaps() -> void:
 	if (world.worldCreated):

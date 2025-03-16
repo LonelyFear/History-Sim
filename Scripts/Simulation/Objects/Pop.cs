@@ -11,6 +11,7 @@ public partial class Pop : GodotObject
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
+    public Professions profession;
     public Tech tech;
     public int batchId;
 
@@ -27,6 +28,10 @@ public partial class Pop : GodotObject
         }
         dependents += amount;
         population += amount;
+    }
+    public void changePopulation(long workforceChange, long dependentChange){
+        changeWorkforce(workforceChange);
+        changeDependents(dependentChange);
     }
 
     public const long simPopulationMultiplier = 1000;

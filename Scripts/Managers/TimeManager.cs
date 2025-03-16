@@ -35,6 +35,9 @@ public partial class TimeManager : Node
         if (simManager.task.IsCompleted){
             tickDelta = (double)(Time.GetTicksMsec() - tickStartTime)/1000;
             TickGame();
+            if (simManager.mapUpdate){
+                simManager.UpdateMap();
+            }
         }
     }
 
