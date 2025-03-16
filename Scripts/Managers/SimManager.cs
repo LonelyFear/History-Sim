@@ -52,6 +52,8 @@ public partial class SimManager : Node2D
     }
     
     private void OnWorldgenFinished(){
+        Random rng = new Random();
+
         terrainSize = (Vector2I)world.Get("worldSize");
         worldSize = terrainSize/tilesPerRegion;
         Scale = (Vector2)world.Get("scale") * tilesPerRegion;
@@ -80,21 +82,19 @@ public partial class SimManager : Node2D
                         newRegion.tiles.Add(new Vector2I(tx, ty), tile);
                         // Adds biomes to tile
                         newRegion.biomes.Add(new Vector2I(tx, ty), tile.biome);
-                        if ((int)tile.biome["terrainType"] == 0){
-                            newRegion.claimable = true;
-                        }
-
                     }
                 }
                 // Calc average fertility
                 newRegion.CalcAvgFertility();
+                // Checks habitability
+                newRegion.CheckHabitability();
                 // Calc max populaiton
                 newRegion.CalcMaxPopulation();
                 // Adds pops
-                if (newRegion.claimable){
+                if (newRegion.habitable){
                     // Add pops here
-                    for (int i = 0; i < maxPopsPerRegion; i++){
-                        long startingPopulation = Pop.toNativePopulation(2);
+                    for (int i = 0; i < rng.Next(1, maxPopsPerRegion + 1); i++){
+                        long startingPopulation = Pop.toNativePopulation(20);
                         CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
                     }
                 }
@@ -103,17 +103,14 @@ public partial class SimManager : Node2D
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
 
-    public void OnTick(){
-        month = (int)timeManager.Get("month");
-        task = Parallel.ForEachAsync(regions, (region, ct) =>
-        {
-            region.currentMonth = month;
+    public void simTick(){
+        ParallelLoopResult result = Parallel.ForEach<Region>(regions, region =>{
             region.GrowPops();
-            return new ValueTask();
         });
-        foreach (Region region in regions){
-            SetRegionColor(region.pos.X, region.pos.Y, Color.Color8(255, 255, 0, 255));
-        }
+        worldPopulation = worldDependents + worldWorkforce;
+    }
+    public void OnTick(){
+        task = Task.Run(simTick);
     }
 
     #region Pops
@@ -126,8 +123,11 @@ public partial class SimManager : Node2D
         Pop pop = new Pop();
         pop.batchId = currentBatch;
 
-        region.addPop(pop);
+        pop.changeWorkforce(workforce);
+        pop.changeDependents(dependents);
+
         pops.Add(pop);
+        region.AddPop(pop);       
         culture.AddPop(pop);
 
         pop.tech = new Tech();
@@ -135,9 +135,6 @@ public partial class SimManager : Node2D
         pop.tech.societyLevel = tech.societyLevel;
         pop.profession = profession;
         pop.tech.industryLevel = tech.industryLevel;
-
-        pop.changeWorkforce(workforce);
-        pop.changeDependents(dependents);
 
         return pop;
     }
@@ -164,6 +161,16 @@ public partial class SimManager : Node2D
         cultures.Append(culture);
 
         return culture;
+    }
+
+    public Color GetRegionColor(Region region){
+        Color color;
+        if (region.habitable){
+            color = new Color(0, (float)region.pops.Count/maxPopsPerRegion, 0, 1);
+        } else {
+            color = new Color(0, 0, 0, 0);
+        }
+        return color;
     }
 
     public void SetRegionColor(int x, int y, Color color){

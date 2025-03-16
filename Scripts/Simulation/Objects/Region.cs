@@ -8,7 +8,7 @@ public partial class Region : GodotObject
 {
 	public Dictionary<Vector2I, GodotObject> tiles = new Dictionary<Vector2I, GodotObject>();
     public Dictionary<Vector2I, Dictionary> biomes = new Dictionary<Vector2I, Dictionary>();
-    public bool claimable = false;
+    public bool habitable;
     public Array<Pop> pops = new Array<Pop> ();
 
     public Vector2I pos;
@@ -21,6 +21,8 @@ public partial class Region : GodotObject
     public long population = 0;
     public long dependents = 0;    
     public long workforce = 0;
+
+    Random rng = new Random();
 
     public int currentMonth;
     public void CalcAvgFertility(){
@@ -35,6 +37,11 @@ public partial class Region : GodotObject
         avgFertility = (f/landCount);
     }
 
+    public void CheckHabitability(){
+        if (landCount > 0){
+            habitable = true;
+        }
+    }
     public void CalcMaxPopulation(){
         foreach (Vector2I bpos in biomes.Keys){
             Dictionary biome = biomes[bpos];
@@ -53,21 +60,46 @@ public partial class Region : GodotObject
         dependents += dependentChange;
         population += workforceChange + dependentChange;
 
-        simManager.worldPopulation += workforceChange + dependentChange;
+        simManager.worldDependents += dependentChange;
+        simManager.worldWorkforce += workforceChange;
     }
 
     public void RemovePop(Pop pop){
         if (pops.Contains(pop)){
-            ChangePopulation(pop.workforce, pop.dependents);
             pops.Remove(pop);
-            pop.region = null;
+            pop.region = null;            
+            ChangePopulation(-pop.workforce, -pop.dependents);
         }
     }
-    public void addPop(Pop pop){
+    public void AddPop(Pop pop){
         if (!pops.Contains(pop)){
-            ChangePopulation(pop.workforce, pop.dependents);
             pops.Add(pop);
-            pop.region = this;
+            pop.region = this;            
+            ChangePopulation(pop.workforce, pop.dependents);
+        }
+    }
+
+    public void CheckPopulation(){
+        long countedPopulation = 0;
+        long countedDependents = 0;
+        long countedWorkforce = 0;
+        foreach (Pop pop in pops.ToArray()){
+            if (pop.population < Pop.toNativePopulation(1)){
+                simManager.DestroyPop(pop);
+            }
+            countedPopulation += pop.population;
+            countedDependents += pop.dependents;
+            countedWorkforce += pop.workforce;
+        }
+
+        if (countedPopulation != population){
+            GD.PushWarning("Warning: Regional population mismatch");
+        }
+        if (countedDependents != dependents){
+            GD.PushWarning("Warning: Regional dependents mismatch");
+        }
+        if (countedWorkforce != workforce){
+            GD.PushWarning("Warning: Regional workforce mismatch");
         }
     }
 
@@ -76,7 +108,7 @@ public partial class Region : GodotObject
         long tdc = 0;
         foreach (Pop pop in pops.ToArray()){
             float bRate;
-            if (pop.population < 2){
+            if (pop.population < Pop.toNativePopulation(2)){
                 bRate = 0;
             } else {
                 bRate = pop.birthRate;
@@ -85,16 +117,21 @@ public partial class Region : GodotObject
                 bRate *= 0.75f;
             }
             float NIR =  (bRate - pop.deathRate)/12;
-            long increase = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
-            long dependentIncrease = Mathf.RoundToInt(increase * pop.targetDependencyRatio);
+            long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
+            long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
+            long workforceChange = change - dependentChange;
+            pop.changeWorkforce(workforceChange);
+            pop.changeDependents(dependentChange);
 
-            pop.changeWorkforce(increase - dependentIncrease);
-            pop.changeDependents(dependentIncrease);
-            twc += increase - dependentIncrease;
-            tdc += dependentIncrease;
+            twc += workforceChange;
+            tdc += dependentChange;
             
         }
         ChangePopulation(twc, tdc);
+    }
+
+    public void MovePops(){
+
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){

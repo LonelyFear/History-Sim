@@ -21,6 +21,9 @@ public partial class Pop : GodotObject
         }
         workforce += amount;
         population += amount;
+        if (culture != null){
+            culture.ChangePopulation(amount);
+        }
     }
     public void changeDependents(long amount){
         if (dependents + amount < 0){
@@ -28,6 +31,9 @@ public partial class Pop : GodotObject
         }
         dependents += amount;
         population += amount;
+        if (culture != null){
+            culture.ChangePopulation(amount);
+        }
     }
     public void changePopulation(long workforceChange, long dependentChange){
         changeWorkforce(workforceChange);

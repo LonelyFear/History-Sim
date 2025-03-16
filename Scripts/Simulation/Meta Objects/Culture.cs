@@ -9,6 +9,9 @@ public partial class Culture : GodotObject
     public long population = 0;
     public Array<Pop> pops = new Array<Pop>();
 
+    public void ChangePopulation(long amount){
+        population += amount;
+    }
     public void AddPop(Pop pop){
         if (!pops.Contains(pop)){
             if (pop.culture != null){
