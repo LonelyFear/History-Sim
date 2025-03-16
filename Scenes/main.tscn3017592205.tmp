@@ -1,0 +1,145 @@
+[gd_scene load_steps=16 format=3 uid="uid://b1mh36mwq3q24"]
+
+[ext_resource type="Script" uid="uid://dud41vmnk0o16" path="res://Scripts/Managers/world_generator.gd" id="1_h4cr5"]
+[ext_resource type="Script" uid="uid://dcudjmvcfl6la" path="res://Scripts/Loading/load_mods.gd" id="1_w647p"]
+[ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="3_fdnlq"]
+[ext_resource type="Script" uid="uid://4lvygj5vh4ho" path="res://Scripts/Loading/load_biomes.gd" id="5_xnnej"]
+[ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
+[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_ijhcp"]
+[ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_kmkn8"]
+[ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
+[ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="10_fdnlq"]
+[ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="12_fdnlq"]
+[ext_resource type="Script" uid="uid://bgbbd4h4wk40k" path="res://Scripts/tectonics.gd" id="12_xcgyf"]
+[ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="13_8yh0i"]
+[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="14_m5dvi"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
+texture = ExtResource("6_dynbe")
+0:0/0 = 0
+0:0/0/z_index = -1
+1:0/0 = 0
+1:0/0/z_index = 1
+0:1/0 = 0
+1:1/0 = 0
+1:1/0/z_index = 1
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+2:2/0/z_index = 1
+3:2/0 = 0
+3:2/0/z_index = -3
+0:3/0 = 0
+0:3/0/z_index = 1
+1:3/0 = 0
+1:3/0/z_index = 1
+2:3/0 = 0
+2:3/0/z_index = 1
+3:3/0 = 0
+3:3/0/modulate = Color(0, 0, 0, 1)
+3:3/0/z_index = -2
+3:1/0 = 0
+3:1/0/z_index = -4
+2:1/0 = 0
+2:0/0 = 0
+2:0/0/z_index = 1
+3:0/0 = 0
+3:0/0/z_index = 1
+
+[sub_resource type="TileSet" id="TileSet_hda34"]
+tile_size = Vector2i(12, 12)
+sources/0 = SubResource("TileSetAtlasSource_wcrxr")
+
+[node name="Main" type="Node"]
+script = ExtResource("1_w647p")
+
+[node name="Scaling Buddy" type="Sprite2D" parent="."]
+z_index = -1000
+position = Vector2(180, 95)
+texture = ExtResource("6_ijhcp")
+
+[node name="Simulation" type="Node2D" parent="."]
+z_index = 2
+script = ExtResource("3_fdnlq")
+
+[node name="RegionOverlay" type="Sprite2D" parent="Simulation"]
+scale = Vector2(16, 16)
+centered = false
+
+[node name="World" type="Node2D" parent="."]
+script = ExtResource("1_h4cr5")
+useTectonics = false
+seed = 89669141
+mapScale = 1.5
+riverCount = 1
+
+[node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionSprite")]
+scale = Vector2(1.333, 1.333)
+tile_set = SubResource("TileSet_hda34")
+script = ExtResource("8_plgql")
+camera = NodePath("../../PlayerCamera")
+lodMap = NodePath("../LOD Map")
+regionSprite = NodePath("../../Simulation/RegionOverlay")
+baseRegionOpacity = 1.0
+
+[node name="LOD Map" type="Sprite2D" parent="World"]
+scale = Vector2(16, 16)
+centered = false
+
+[node name="Tectonics" type="Node" parent="World" node_paths=PackedStringArray("map", "worldGen")]
+script = ExtResource("12_xcgyf")
+map = NodePath("../Terrain Map")
+worldGen = NodePath("..")
+
+[node name="Biome Loader" type="Node" parent="."]
+script = ExtResource("5_xnnej")
+
+[node name="PlayerCamera" type="Camera2D" parent="."]
+position = Vector2(576, 324)
+script = ExtResource("6_kmkn8")
+minZoom = Vector2(15, 15)
+
+[node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("world")]
+script = ExtResource("10_fdnlq")
+world = NodePath("../World")
+monthsPerTick = 1
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Population Label" type="Label" parent="UI" node_paths=PackedStringArray("simManager")]
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 20
+text = "World Population:"
+script = ExtResource("13_8yh0i")
+simManager = NodePath("../../Simulation")
+
+[node name="Date Label" type="Label" parent="UI" node_paths=PackedStringArray("timeManager")]
+offset_left = 978.0
+offset_right = 1152.0
+offset_bottom = 28.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 20
+text = "01/01/0000"
+horizontal_alignment = 2
+script = ExtResource("12_fdnlq")
+timeManager = NodePath("../../Time Manager")
+
+[node name="TPS Label" type="Label" parent="UI" node_paths=PackedStringArray("timeManager")]
+offset_left = 978.0
+offset_top = 31.0
+offset_right = 1152.0
+offset_bottom = 59.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 20
+text = "TPS: 3"
+horizontal_alignment = 2
+script = ExtResource("14_m5dvi")
+timeManager = NodePath("../../Time Manager")
+
+[connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]
+[connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]

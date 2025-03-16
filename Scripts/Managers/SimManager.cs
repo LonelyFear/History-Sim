@@ -37,9 +37,11 @@ public partial class SimManager : Node2D
     int currentBatch = 0;
     int month = 1;
 
+    public long simToPopMult;
     public Task task;
     public override void _Ready()
     {
+        simToPopMult = Pop.simPopulationMultiplier;
         regionOverlay = GetNode<Sprite2D>("RegionOverlay");
         world = GetParent().GetNode<Node2D>("World");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
