@@ -2,22 +2,26 @@ using Godot;
 
 public partial class Pop : GodotObject
 {
-    public int population = 0;
-    public int workforce = 0;
-    public int dependents = 0;
+    public long population = 0;
+    public long workforce = 0;
+    public long dependents = 0;
 
+    public float birthRate = 0.3f;
+    public float deathRate = 0.25f;
+    public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
     public Tech tech;
+    public int batchId;
 
-    public void changeWorkforce(int amount){
+    public void changeWorkforce(long amount){
         if (workforce + amount < 0){
             amount = -workforce;
         }
         workforce += amount;
         population += amount;
     }
-    public void changeDependents(int amount){
+    public void changeDependents(long amount){
         if (dependents + amount < 0){
             amount = -dependents;
         }
@@ -25,11 +29,11 @@ public partial class Pop : GodotObject
         population += amount;
     }
 
-    public const int simPopulationMultiplier = 1000;
-    public static int fromNativePopulation(int simPopulation){
+    public const long simPopulationMultiplier = 1000;
+    public static long fromNativePopulation(long simPopulation){
         return simPopulation/simPopulationMultiplier;
     }
-    public static int toNativePopulation(int population){
+    public static long toNativePopulation(long population){
         return population * simPopulationMultiplier;
     }
 }

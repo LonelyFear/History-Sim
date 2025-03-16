@@ -1,7 +1,10 @@
+using System;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Godot;
 using Godot.Collections;
-using Microsoft.VisualBasic;
 
 public partial class SimManager : Node2D
 {
@@ -11,7 +14,7 @@ public partial class SimManager : Node2D
     public int tilesPerRegion {private set; get;} = 4;
     Sprite2D regionOverlay;
     [Export]
-    public Node timeManager {private set; get;}
+    public TimeManager timeManager {private set; get;}
 
     public Dictionary<Vector2I,Tile> tiles = new Dictionary<Vector2I, Tile>();
     public Array<Region> regions = new Array<Region>();
@@ -22,23 +25,30 @@ public partial class SimManager : Node2D
 
     // Population
     public Array<Pop> pops = new Array<Pop>();
-    public int worldPopulation = 0;
-    public int worldWorkforce = 0;
-    public int worldDependents = 0;
+    public long worldPopulation = 0;
+    public long worldWorkforce = 0;
+    public long worldDependents = 0;
     public Array<Culture> cultures = new Array<Culture>();
 
-    public int maxPopsPerRegion {private set; get;} = 15;
+    public int maxPopsPerRegion = 60;
     public bool mapUpdate = false;
-    public int popTaskId = 0;
-    
+    public long popTaskId = 0;
+
+    int currentBatch = 0;
+    int month = 1;
+
+    public Task task;
     public override void _Ready()
     {
         regionOverlay = GetNode<Sprite2D>("RegionOverlay");
-        GD.Print(regionOverlay);
+        world = GetParent().GetNode<Node2D>("World");
+        timeManager = GetParent().GetNode<TimeManager>("Time Manager");
+
         // Connection
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
+        timeManager.Tick += OnTick;
     }
-
+    
     private void OnWorldgenFinished(){
         terrainSize = (Vector2I)world.Get("worldSize");
         worldSize = terrainSize/tilesPerRegion;
@@ -82,8 +92,8 @@ public partial class SimManager : Node2D
                 if (newRegion.claimable){
                     // Add pops here
                     for (int i = 0; i < maxPopsPerRegion; i++){
-                        int startingPopulation = Pop.toNativePopulation(20);
-                        CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), newRegion, new Tech(), new Culture());
+                        long startingPopulation = Pop.toNativePopulation(2);
+                        CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
                     }
                 }
             }
@@ -91,9 +101,25 @@ public partial class SimManager : Node2D
             
     }
 
+    public void OnTick(){
+        month = (int)timeManager.Get("month");
+        task = Parallel.ForEachAsync(regions, (region, ct) =>
+        {
+            region.currentMonth = month;
+            region.growPops();
+            return new ValueTask();
+        });
+    }
+
     #region Pops
-    public Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, Professions profession = Professions.TRIBESPEOPLE){
+    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Professions profession = Professions.TRIBESPEOPLE){
+        currentBatch += 1;
+        if (currentBatch > 12){
+            currentBatch = 1;
+        }
+
         Pop pop = new Pop();
+        pop.batchId = currentBatch;
 
         region.addPop(pop);
         pops.Add(pop);
@@ -110,4 +136,16 @@ public partial class SimManager : Node2D
         return pop;
     }
     #endregion
+
+    public Culture CreateCulture(Region region){
+        Culture culture = new Culture();
+        culture.name = "Culturism";
+        float r = Mathf.InverseLerp(0, worldSize.X, region.pos.X);
+        float g = Mathf.InverseLerp(0, worldSize.Y, region.pos.Y);
+        float b = Mathf.InverseLerp(0, worldSize.Y, region.pos.Y - worldSize.Y);
+        culture.color = new Color(r,g,b);
+        cultures.Append(culture);
+
+        return culture;
+    }
 }

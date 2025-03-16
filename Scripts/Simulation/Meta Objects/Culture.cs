@@ -6,7 +6,7 @@ public partial class Culture : GodotObject
 {
     public Color color;
     public string name = "Culturism";
-    public int population = 0;
+    public long population = 0;
     public Array<Pop> pops = new Array<Pop>();
 
     public void AddPop(Pop pop){

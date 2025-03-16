@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Godot.Collections;
 using Dictionary = Godot.Collections.Dictionary;
@@ -15,11 +16,12 @@ public partial class Region : GodotObject
     public SimManager simManager;
 
     // Demographics
-    public int maxPopulation = 0;
-    public int population = 0;
-    public int dependents = 0;    
-    public int workforce = 0;
+    public long maxPopulation = 0;
+    public long population = 0;
+    public long dependents = 0;    
+    public long workforce = 0;
 
+    public int currentMonth;
     public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
@@ -39,51 +41,58 @@ public partial class Region : GodotObject
 
             tile.Set("maxPopulation", 0);
             if ((float)biome["terrainType"] == 0){
-                maxPopulation += (int)(Pop.toNativePopulation(1000) * (float)biome["fertility"]);
-                tile.Set("maxPopulation", (int)(Pop.toNativePopulation(1000) * (float)biome["fertility"])) ;
+                maxPopulation += (long)(Pop.toNativePopulation(1000) * (float)biome["fertility"]);
+                tile.Set("maxPopulation", (long)(Pop.toNativePopulation(1000) * (float)biome["fertility"])) ;
             }
         }
     }
 
-    public void ChangePopulation(int workforceChange, int dependentChange){
+    public void ChangePopulation(long workforceChange, long dependentChange){
         workforce += workforceChange;
         dependents += dependentChange;
-        population += (workforceChange + dependentChange);
+        population += workforceChange + dependentChange;
+
+        simManager.worldPopulation += workforceChange + dependentChange;
     }
 
     public void RemovePop(Pop pop){
         if (pops.Contains(pop)){
-            ChangePopulation(-(int)pop.Get("workforce"), -(int)pop.Get("dependents"));
+            ChangePopulation(pop.workforce, pop.dependents);
             pops.Remove(pop);
             pop.region = null;
         }
     }
     public void addPop(Pop pop){
         if (!pops.Contains(pop)){
-            ChangePopulation((int)pop.Get("workforce"), (int)pop.Get("dependents"));
+            ChangePopulation(pop.workforce, pop.dependents);
             pops.Add(pop);
             pop.region = this;
         }
     }
 
-    void growPops(){
+    public void growPops(){
+        long twc = 0;
+        long tdc = 0;
         foreach (Pop pop in pops){
             float bRate;
-            if ((int)pop.Get("population") > 2){
+            if (pop.population < 2){
                 bRate = 0;
             } else {
-                bRate = (float)pop.Get("birthRate");
+                bRate = pop.birthRate;
             }
             if (population > maxPopulation){
                 bRate *= 0.75f;
             }
-            float NIR =  bRate - (float)pop.Get("deathRate");
-            int increase = Mathf.RoundToInt(((int)pop.Get("workforce") + (int)pop.Get("dependents")) * NIR);
-            int dependentIncrease = Mathf.RoundToInt(increase * (float)pop.Get("targetDependencyRatio"));
+            float NIR =  (bRate - pop.deathRate)/12;
+            long increase = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
+            long dependentIncrease = Mathf.RoundToInt(increase * pop.targetDependencyRatio);
 
             pop.changeWorkforce(increase - dependentIncrease);
             pop.changeDependents(dependentIncrease);
-            ChangePopulation(increase - dependentIncrease, dependentIncrease);
+            twc += increase - dependentIncrease;
+            tdc += dependentIncrease;
+            
         }
+        ChangePopulation(twc, tdc);
     }
 }
