@@ -60,6 +60,8 @@ func addPop(pop : Pop) -> void:
 		pop.region = self
 
 func growPops() -> void:
+	var wc : int
+	var dc : int
 	for pop : Pop in pops:
 		if (pop.batchID != TimeManager.month):
 			continue
