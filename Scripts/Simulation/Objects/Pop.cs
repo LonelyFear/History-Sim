@@ -24,6 +24,7 @@ public partial class Pop : GodotObject
         if (culture != null){
             culture.ChangePopulation(amount);
         }
+
     }
     public void changeDependents(long amount){
         if (dependents + amount < 0){

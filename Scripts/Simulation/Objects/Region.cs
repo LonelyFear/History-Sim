@@ -60,9 +60,10 @@ public partial class Region : GodotObject
         dependents += dependentChange;
         population += workforceChange + dependentChange;
 
-        simManager.worldDependents += dependentChange;
-        simManager.worldWorkforce += workforceChange;
+        simManager.dependentsChange += dependentChange;
+        simManager.workforceChange += workforceChange;
     }
+
 
     public void RemovePop(Pop pop){
         if (pops.Contains(pop)){
@@ -103,6 +104,14 @@ public partial class Region : GodotObject
         }
     }
 
+    public void ClearEmptyPops(){
+        foreach (Pop pop in pops.ToArray()){
+            if (pop.population < Pop.toNativePopulation(1)){
+                simManager.DestroyPop(pop);
+            }
+        }
+    }
+
     public void GrowPops(){
         long twc = 0;
         long tdc = 0;
@@ -131,7 +140,21 @@ public partial class Region : GodotObject
     }
 
     public void MovePops(){
-
+        foreach (Pop pop in pops.ToArray()){
+            if (rng.NextDouble() <= 1){
+                for (int dx = -1; dx < 2; dx++){
+                    for (int dy = -1; dy < 2; dy++){
+                        Region target = simManager.GetRegion(pos.X + dx, pos.Y + dy);
+                        if (target.habitable){
+                            MovePop(pop, target, pop.population, pop.population);
+                        }
+                        
+                    }
+                }
+                
+            }
+            
+        }
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
@@ -142,8 +165,8 @@ public partial class Region : GodotObject
             movedDependents = pop.dependents;
         }
         Pop merger = null;
-        foreach (Pop resident in destination.pops){
-            if (Culture.CheckCultureSimilarity(pop.culture, resident.culture)){
+        foreach (Pop resident in destination.pops.ToArray()){
+            if (Culture.CheckCultureSimilarity(pop.culture, resident.culture) || resident == pop){
                 merger = resident;
                 break;
             }
@@ -151,7 +174,7 @@ public partial class Region : GodotObject
         if (merger != null){
             merger.changePopulation(movedWorkforce, movedDependents);
         } else {
-            Pop newPop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
+            simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
         }
         pop.changePopulation(-movedWorkforce, -movedDependents);
     }

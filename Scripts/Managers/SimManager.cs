@@ -28,9 +28,11 @@ public partial class SimManager : Node2D
     public long worldPopulation = 0;
     public long worldWorkforce = 0;
     public long worldDependents = 0;
+    public long workforceChange = 0;
+    public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
 
-    public int maxPopsPerRegion = 60;
+    public int maxPopsPerRegion = 2;
     public bool mapUpdate = false;
     public long popTaskId = 0;
 
@@ -104,16 +106,37 @@ public partial class SimManager : Node2D
     }
 
     public void simTick(){
-        ParallelLoopResult result = Parallel.ForEach<Region>(regions, region =>{
-            region.GrowPops();
-        });
-        worldPopulation = worldDependents + worldWorkforce;
+        // Parallel.ForEach(regions, region => {
+        //     region.GrowPops();
+        //     region.MovePops();
+        // });
+        foreach (Region region in regions){
+            if (region.pops.Count > 0){
+                region.GrowPops();
+                region.MovePops();    
+                region.ClearEmptyPops();           
+            }
+        }
+        foreach (Region region in regions){
+            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
+        }
+
+        UpdateStats();
     }
     public void OnTick(){
         task = Task.Run(simTick);
     }
 
+
+
     #region Pops
+    void UpdateStats(){
+        worldDependents += dependentsChange;
+        worldWorkforce += workforceChange;
+        dependentsChange = 0;
+        workforceChange = 0;
+        worldPopulation = worldDependents + worldWorkforce;
+    }
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Professions profession = Professions.TRIBESPEOPLE){
         currentBatch += 1;
         if (currentBatch > 12){
@@ -166,7 +189,7 @@ public partial class SimManager : Node2D
     public Color GetRegionColor(Region region){
         Color color;
         if (region.habitable){
-            color = new Color(0, (float)region.pops.Count/maxPopsPerRegion, 0, 1);
+            color = new Color(0, (float)region.pops.Count/(maxPopsPerRegion * 2), 0, 1);
         } else {
             color = new Color(0, 0, 0, 0);
         }
