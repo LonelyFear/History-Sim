@@ -171,7 +171,7 @@ public partial class SimManager : Node2D
     #endregion
 
     public Region GetRegion(int x, int y){
-        int index = (y * worldSize.X) + x;
+        int index = (x * worldSize.Y) + y;
         return regions[index];
     }
     public Culture CreateCulture(Region region){
