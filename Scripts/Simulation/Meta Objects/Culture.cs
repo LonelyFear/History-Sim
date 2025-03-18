@@ -30,10 +30,10 @@ public partial class Culture : GodotObject
         }
     }
     public static bool CheckCultureSimilarity(Culture a, Culture b){
-        float minColorDiff = 0.05f;
-        bool similarR = Math.Abs(a.color.R - a.color.B) < minColorDiff;
-        bool similarG = Math.Abs(a.color.G - a.color.G) < minColorDiff;
-        bool similarB = Math.Abs(a.color.B - a.color.B) < minColorDiff;
+        float minColorDiff = 1f;
+        bool similarR = Math.Abs(a.color.R - b.color.B) <= minColorDiff;
+        bool similarG = Math.Abs(a.color.G - b.color.G) <= minColorDiff;
+        bool similarB = Math.Abs(a.color.B - b.color.B) <= minColorDiff;
         return similarR && similarG && similarB;
     }
 }

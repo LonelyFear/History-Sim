@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Godot;
 using Godot.Collections;
 using Dictionary = Godot.Collections.Dictionary;
@@ -59,9 +60,6 @@ public partial class Region : GodotObject
         workforce += workforceChange;
         dependents += dependentChange;
         population += workforceChange + dependentChange;
-
-        simManager.dependentsChange += dependentChange;
-        simManager.workforceChange += workforceChange;
     }
 
 
@@ -74,6 +72,9 @@ public partial class Region : GodotObject
     }
     public void AddPop(Pop pop){
         if (!pops.Contains(pop)){
+            if (pop.region != null){
+                pop.region.RemovePop(pop);
+            }
             pops.Add(pop);
             pop.region = this;            
             ChangePopulation(pop.workforce, pop.dependents);
@@ -82,26 +83,23 @@ public partial class Region : GodotObject
 
     public void CheckPopulation(){
         long countedPopulation = 0;
-        long countedDependents = 0;
-        long countedWorkforce = 0;
         foreach (Pop pop in pops.ToArray()){
             if (pop.population < Pop.toNativePopulation(1)){
                 simManager.DestroyPop(pop);
+                continue;
             }
             countedPopulation += pop.population;
-            countedDependents += pop.dependents;
-            countedWorkforce += pop.workforce;
         }
-
-        if (countedPopulation != population){
-            GD.PushWarning("Warning: Regional population mismatch");
-        }
-        if (countedDependents != dependents){
-            GD.PushWarning("Warning: Regional dependents mismatch");
-        }
-        if (countedWorkforce != workforce){
-            GD.PushWarning("Warning: Regional workforce mismatch");
-        }
+        population = countedPopulation;
+        // if (countedPopulation != population){
+        //     GD.PushWarning("Warning: Regional population mismatch");
+        // }
+        // if (countedDependents != dependents){
+        //     GD.PushWarning("Warning: Regional dependents mismatch");
+        // }
+        // if (countedWorkforce != workforce){
+        //     GD.PushWarning("Warning: Regional workforce mismatch");
+        // }
     }
 
     public void ClearEmptyPops(){
@@ -116,6 +114,8 @@ public partial class Region : GodotObject
         long twc = 0;
         long tdc = 0;
         foreach (Pop pop in pops.ToArray()){
+            pop.canMove = true;
+
             float bRate;
             if (pop.population < Pop.toNativePopulation(2)){
                 bRate = 0;
@@ -125,7 +125,7 @@ public partial class Region : GodotObject
             if (population > maxPopulation){
                 bRate *= 0.75f;
             }
-            float NIR =  (bRate - pop.deathRate)/12;
+            float NIR =  (bRate - pop.deathRate)/12f;
             long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
             long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
             long workforceChange = change - dependentChange;
@@ -141,42 +141,47 @@ public partial class Region : GodotObject
 
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
-            if (rng.NextDouble() <= 1){
-                for (int dx = -1; dx < 2; dx++){
-                    for (int dy = -1; dy < 2; dy++){
+            for (int dx = -1; dx < 2; dx++){
+                for (int dy = -1; dy < 2; dy++){
+                    if (dx == 0 && dy == 0){
+                        continue;
+                    }
+                    if (pop.canMove && rng.NextDouble() <= 0.0001){
                         Region target = simManager.GetRegion(pos.X + dx, pos.Y + dy);
                         if (target.habitable){
-                            MovePop(pop, target, pop.population, pop.population);
-                        }
-                        
-                    }
+                            MovePop(pop, target, pop.workforce, pop.dependents); 
+                        } 
+                    }                
                 }
-                
             }
-            
         }
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
-        if (movedWorkforce > pop.workforce){
-            movedWorkforce = pop.workforce;
-        }
-        if (movedDependents > pop.dependents){
-            movedDependents = pop.dependents;
-        }
-        Pop merger = null;
-        foreach (Pop resident in destination.pops.ToArray()){
-            if (Culture.CheckCultureSimilarity(pop.culture, resident.culture) || resident == pop){
-                merger = resident;
-                break;
+        if (destination != this){
+            if (movedWorkforce > pop.workforce){
+                movedWorkforce = pop.workforce;
             }
+            if (movedDependents > pop.dependents){
+                movedDependents = pop.dependents;
+            }
+            Pop merger = null;
+            foreach (Pop resident in destination.pops.ToArray()){
+                if (Culture.CheckCultureSimilarity(pop.culture, resident.culture)){
+                    merger = resident;
+                    break;
+                }
+            }
+            if (merger != null){
+                merger.ChangePopulation(movedWorkforce, movedDependents);
+                merger.canMove = false;
+            } else {
+                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
+                npop.canMove = false;
+            }
+            pop.ChangePopulation(-movedWorkforce, -movedDependents);     
         }
-        if (merger != null){
-            merger.changePopulation(movedWorkforce, movedDependents);
-        } else {
-            simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
-        }
-        pop.changePopulation(-movedWorkforce, -movedDependents);
+
     }
 
     //public void MergePops

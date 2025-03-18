@@ -7,13 +7,15 @@ public partial class Pop : GodotObject
     public long dependents = 0;
 
     public float birthRate = 0.3f;
-    public float deathRate = 0.25f;
+    public float deathRate = 0.29f;
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
     public Professions profession;
     public Tech tech;
     public int batchId;
+
+    public bool canMove = true;
 
     public void changeWorkforce(long amount){
         if (workforce + amount < 0){
@@ -36,7 +38,7 @@ public partial class Pop : GodotObject
             culture.ChangePopulation(amount);
         }
     }
-    public void changePopulation(long workforceChange, long dependentChange){
+    public void ChangePopulation(long workforceChange, long dependentChange){
         changeWorkforce(workforceChange);
         changeDependents(dependentChange);
     }

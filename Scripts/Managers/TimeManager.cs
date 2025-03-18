@@ -12,6 +12,7 @@ public partial class TimeManager : Node
 
     [Export]
     public int monthsPerTick;
+    public int day;
     public int month;
     public int year;
     public int totalTicks = 0;

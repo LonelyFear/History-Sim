@@ -18,6 +18,7 @@ public partial class SimManager : Node2D
 
     public Dictionary<Vector2I,Tile> tiles = new Dictionary<Vector2I, Tile>();
     public Array<Region> regions = new Array<Region>();
+    public Array<Region> habitableRegions = new Array<Region>();
     public Vector2I terrainSize;   
     public Vector2I worldSize;
 
@@ -32,7 +33,7 @@ public partial class SimManager : Node2D
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
 
-    public int maxPopsPerRegion = 2;
+    public int maxPopsPerRegion = 1;
     public bool mapUpdate = false;
     public long popTaskId = 0;
 
@@ -90,12 +91,15 @@ public partial class SimManager : Node2D
                 newRegion.CalcAvgFertility();
                 // Checks habitability
                 newRegion.CheckHabitability();
+                if (newRegion.habitable){
+                    habitableRegions.Add(newRegion);
+                }
                 // Calc max populaiton
                 newRegion.CalcMaxPopulation();
                 // Adds pops
                 if (newRegion.habitable){
                     // Add pops here
-                    for (int i = 0; i < rng.Next(1, maxPopsPerRegion + 1); i++){
+                    for (int i = 0; i < maxPopsPerRegion; i++){
                         long startingPopulation = Pop.toNativePopulation(20);
                         CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
                     }
@@ -105,26 +109,27 @@ public partial class SimManager : Node2D
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
 
-    public void simTick(){
-        // Parallel.ForEach(regions, region => {
-        //     region.GrowPops();
-        //     region.MovePops();
-        // });
-        foreach (Region region in regions){
+    void SimTick(){
+        Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
-                region.MovePops();    
-                region.ClearEmptyPops();           
             }
-        }
-        foreach (Region region in regions){
+        });
+        Parallel.ForEach(habitableRegions, region =>{
+            if (region.pops.Count > 0){
+                region.MovePops();
+                region.CheckPopulation();
+            }
+        });
+        long worldPop = 0;
+        foreach (Region region in habitableRegions){
+            worldPop += region.population;
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         }
-
-        UpdateStats();
+        worldPopulation = worldPop; 
     }
     public void OnTick(){
-        task = Task.Run(simTick);
+        task = Task.Run(SimTick);
     }
 
 
@@ -189,7 +194,8 @@ public partial class SimManager : Node2D
     public Color GetRegionColor(Region region){
         Color color;
         if (region.habitable){
-            color = new Color(0, (float)region.pops.Count/(maxPopsPerRegion * 2), 0, 1);
+            //color = new Color(0, (float)region.pops.Count/(maxPopsPerRegion * 2), 0, 1);
+            color = new Color(0, (float)region.population/region.maxPopulation, 0, 1);
         } else {
             color = new Color(0, 0, 0, 0);
         }
