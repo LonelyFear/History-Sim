@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Godot;
 using Godot.Collections;
@@ -85,21 +86,28 @@ public partial class Region : GodotObject
         long countedPopulation = 0;
         foreach (Pop pop in pops.ToArray()){
             if (pop.population < Pop.toNativePopulation(1)){
-                simManager.DestroyPop(pop);
+                pops.Remove(pop);
+                simManager.pops.Remove(pop);
                 continue;
             }
             countedPopulation += pop.population;
         }
         population = countedPopulation;
-        // if (countedPopulation != population){
-        //     GD.PushWarning("Warning: Regional population mismatch");
-        // }
-        // if (countedDependents != dependents){
-        //     GD.PushWarning("Warning: Regional dependents mismatch");
-        // }
-        // if (countedWorkforce != workforce){
-        //     GD.PushWarning("Warning: Regional workforce mismatch");
-        // }
+    }
+
+    public void MergePops(){
+        foreach (Pop pop in pops){
+            if (pop.population >= Pop.toNativePopulation(1)){
+                foreach (Pop merger in pops){
+                    if (pop != merger && Culture.CheckCultureSimilarity(pop.culture, merger.culture)){
+                        merger.ChangePopulation(pop.workforce, pop.dependents);
+                        pop.ChangePopulation(-pop.workforce, -pop.dependents);
+                        break;
+                    }
+                }                
+            }
+
+        }
     }
 
     public void ClearEmptyPops(){

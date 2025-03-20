@@ -33,7 +33,7 @@ public partial class SimManager : Node2D
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
 
-    public int maxPopsPerRegion = 1;
+    public int maxPopsPerRegion = 5;
     public bool mapUpdate = false;
     public long popTaskId = 0;
 
@@ -116,13 +116,19 @@ public partial class SimManager : Node2D
             }
         });
         Parallel.ForEach(habitableRegions, region =>{
-            if (region.pops.Count > 0){
-                region.MovePops();
-                region.CheckPopulation();
-            }
+            // if (region.pops.Count > 0){
+            //     if (region.pops.Count > 1){
+            //         region.MergePops();
+            //     }
+            //     region.CheckPopulation();
+            // }
         });
         long worldPop = 0;
         foreach (Region region in habitableRegions){
+            if (region.pops.Count > 1){
+                region.MergePops();
+            }
+            region.CheckPopulation();
             worldPop += region.population;
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         }
