@@ -113,22 +113,18 @@ public partial class SimManager : Node2D
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
+                region.MovePops();
             }
-        });
-        Parallel.ForEach(habitableRegions, region =>{
-            // if (region.pops.Count > 0){
-            //     if (region.pops.Count > 1){
-            //         region.MergePops();
-            //     }
-            //     region.CheckPopulation();
-            // }
         });
         long worldPop = 0;
         foreach (Region region in habitableRegions){
-            if (region.pops.Count > 1){
-                region.MergePops();
+            if (region.pops.Count > 0){
+                if (region.pops.Count > 1){
+                    region.MergePops();
+                }
+                region.CheckPopulation();
             }
-            region.CheckPopulation();
+
             worldPop += region.population;
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         }
@@ -199,11 +195,12 @@ public partial class SimManager : Node2D
 
     public Color GetRegionColor(Region region){
         Color color;
-        if (region.habitable){
+        if (region.habitable && region.pops.Count > 0){
             //color = new Color(0, (float)region.pops.Count/(maxPopsPerRegion * 2), 0, 1);
             color = new Color(0, (float)region.population/region.maxPopulation, 0, 1);
+            //color = region.pops[0].culture.color;
         } else {
-            color = new Color(0, 0, 0, 0);
+            color = new Color(0, 0, 0, 1);
         }
         return color;
     }
