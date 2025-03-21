@@ -7,10 +7,10 @@
 [ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
 [ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_ijhcp"]
 [ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_kmkn8"]
+[ext_resource type="Script" uid="uid://b0ryxyvnp8xt8" path="res://Scripts/Misc/Tectonics.cs" id="7_fdnlq"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="10_fdnlq"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="12_fdnlq"]
-[ext_resource type="Script" uid="uid://bgbbd4h4wk40k" path="res://Scripts/tectonics.gd" id="12_xcgyf"]
 [ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="13_8yh0i"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="14_m5dvi"]
 
@@ -91,10 +91,8 @@ baseRegionOpacity = 1.0
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Tectonics" type="Node" parent="World" node_paths=PackedStringArray("map", "worldGen")]
-script = ExtResource("12_xcgyf")
-map = NodePath("../Terrain Map")
-worldGen = NodePath("..")
+[node name="Tectonics" type="Node" parent="World"]
+script = ExtResource("7_fdnlq")
 
 [node name="Biome Loader" type="Node" parent="."]
 script = ExtResource("5_xnnej")

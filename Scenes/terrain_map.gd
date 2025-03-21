@@ -44,6 +44,3 @@ func hideMap() -> void:
 func showMap() -> void:
 	lodMap.call_deferred("set_visible", false)
 	call_deferred("set_visible", true)
-func _exit_tree() -> void:
-	pass
-	#WorkerThreadPool.wait_for_task_completion(showMapId)
