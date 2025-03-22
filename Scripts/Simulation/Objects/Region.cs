@@ -11,6 +11,7 @@ public partial class Region : GodotObject
 	public Dictionary<Vector2I, GodotObject> tiles = new Dictionary<Vector2I, GodotObject>();
     public Dictionary<Vector2I, Dictionary> biomes = new Dictionary<Vector2I, Dictionary>();
     public bool habitable;
+    public bool coastal;
     public Array<Pop> pops = new Array<Pop> ();
 
     public Vector2I pos;
@@ -34,7 +35,9 @@ public partial class Region : GodotObject
             if ((float)biome["terrainType"] == 0){
                 landCount++;
                 f += (float)biome["fertility"];
-            }
+            } else if ((float)biome["terrainType"] == 1){
+                coastal = true;
+            }   
         }
         avgFertility = (f/landCount);
     }
@@ -150,7 +153,7 @@ public partial class Region : GodotObject
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
             // Chance of pop to migrate
-            double migrateChance = 0;
+            double migrateChance = 0.001;
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){
@@ -159,47 +162,21 @@ public partial class Region : GodotObject
 
             // If the pop migrates
             if (rng.NextDouble() <= migrateChance){
-                Region chosenDestination = null;
-                long maxScore = 0;
-                // Goes through all the regions nearby the pop
                 for (int dx = -1; dx < 2; dx++){
                     for (int dy = -1; dy < 2; dy++){
                         // Removes our region to avoid any messy behavior
-                        if (dx == 0 && dy == 0){
+                        if (dx == 0 && dy == 0 || dx != 0 && dy != 0){
                             continue;
                         }
-
-                        long score;
                         // Gets the tested region
                         Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
 
-                        /*
-                        Below is the function for calculating migration score. When a pop moves it chooses the most attractive
-                        region to move to. Region attractiveness is calculated based on if its developed, if the pops culture is present
-                        if the region is fertile, if the region is overpopulated etc.        
-                        */
-                        if (region.habitable){
-                            score = 1;
-                            score += Mathf.RoundToInt(region.avgFertility * 10);
-                            if (region.population >= region.maxPopulation * 0.95f){
-                                score -= 100;
-                            }
-                        } else {
-                            score = -10000000;
-                        } 
-
-                        // If the score beats our max score sets the region as the chosen destination
-                        if (score > maxScore){
-                            maxScore = score;
-                            chosenDestination = region;
+                        if (region.habitable && rng.NextDouble() <= 0.25d){
+                            MovePop(pop, region, Pop.toNativePopulation(100), Pop.toNativePopulation(100));
+                            return;
                         }
                     }
                 } 
-
-                // If the score is greater than zero and a destination was choses move people
-                if (chosenDestination != null && maxScore > 0){
-                    MovePop(pop, chosenDestination, Pop.toNativePopulation(100), Pop.toNativePopulation(100));
-                }
             }
         }
     }

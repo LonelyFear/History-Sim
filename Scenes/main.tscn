@@ -1,11 +1,10 @@
-[gd_scene load_steps=16 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=15 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://dud41vmnk0o16" path="res://Scripts/Managers/world_generator.gd" id="1_h4cr5"]
 [ext_resource type="Script" uid="uid://dcudjmvcfl6la" path="res://Scripts/Loading/load_mods.gd" id="1_w647p"]
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="3_fdnlq"]
 [ext_resource type="Script" uid="uid://4lvygj5vh4ho" path="res://Scripts/Loading/load_biomes.gd" id="5_xnnej"]
 [ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
-[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_ijhcp"]
 [ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_kmkn8"]
 [ext_resource type="Script" uid="uid://b0ryxyvnp8xt8" path="res://Scripts/Misc/Tectonics.cs" id="7_fdnlq"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
@@ -53,27 +52,23 @@ sources/0 = SubResource("TileSetAtlasSource_wcrxr")
 [node name="Main" type="Node"]
 script = ExtResource("1_w647p")
 
-[node name="Scaling Buddy" type="Sprite2D" parent="."]
-z_index = -1000
-position = Vector2(180, 95)
-texture = ExtResource("6_ijhcp")
-
 [node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "timeManager")]
 z_index = 10
 script = ExtResource("3_fdnlq")
 world = NodePath("../World")
+tilesPerRegion = 8
 timeManager = NodePath("../Time Manager")
 
 [node name="RegionOverlay" type="Sprite2D" parent="Simulation"]
 scale = Vector2(16, 16)
-texture = ExtResource("6_ijhcp")
 centered = false
 
 [node name="World" type="Node2D" parent="."]
 z_index = -10
 z_as_relative = false
 script = ExtResource("1_h4cr5")
-useTectonics = false
+worldSizeMult = 4.0
+generate = false
 seed = 89669141
 mapScale = 1.5
 riverCount = 1
@@ -91,8 +86,12 @@ baseRegionOpacity = 1.0
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Tectonics" type="Node" parent="World"]
+[node name="Tectonics" type="Node" parent="World" node_paths=PackedStringArray("textureDisplay")]
 script = ExtResource("7_fdnlq")
+textureDisplay = NodePath("Sprite2D")
+
+[node name="Sprite2D" type="Sprite2D" parent="World/Tectonics"]
+centered = false
 
 [node name="Biome Loader" type="Node" parent="."]
 script = ExtResource("5_xnnej")

@@ -31,7 +31,7 @@
 		{
 			"id":"coniferous forest",
 			"mergedIds":["boreal moist forest", "boreal wet forest", "boreal rain forest"],
-			"fertility":0.4,
+			"fertility":0.7,
 			"color":"465A23",
 			"textureX": 0,
 			"textureY": 3,
@@ -40,7 +40,7 @@
 		{
 			"id":"mixed forest",
 			"mergedIds":["cool temperate moist forest", "cool temperate wet forest", "cool temperate rain forest"],
-			"fertility":0.95,
+			"fertility":1,
 			"color":"739114",
 			"textureX": 1,
 			"textureY": 0,
@@ -49,7 +49,7 @@
 		{
 			"id":"steppe",
 			"mergedIds":["cool temperate steppe"],
-			"fertility":0.55,
+			"fertility":0.7,
 			"color":"FAFAC8",
 			"textureX": 1,
 			"textureY": 1,
@@ -58,7 +58,7 @@
 		{
 			"id":"cool desert",
 			"mergedIds":["cool temperate desert", "cool temperate desert scrub"],
-			"fertility":0.12,
+			"fertility":0.2,
 			"color":"B9BE37",
 			"textureX": 1,
 			"textureY": 2,
@@ -67,7 +67,7 @@
 		{
 			"id":"deciduous forest",
 			"mergedIds":["warm temperate moist forest", "warm temperate wet forest", "warm temperate rain forest"],
-			"fertility":0.1,
+			"fertility":1,
 			"color":"9BC805",
 			"textureX": 1,
 			"textureY": 3,
@@ -76,7 +76,7 @@
 		{
 			"id":"chaparral",
 			"mergedIds":["warm temperate thorn scrub", "warm temperate dry forest"],
-			"fertility":0.5,
+			"fertility":0.85,
 			"color":"828205",
 			"textureX": 2,
 			"textureY": 0,
@@ -85,7 +85,7 @@
 		{
 			"id":"hot desert",
 			"mergedIds":["warm temperate desert", "warm temperate desert scrub", "subtropical desert", "subtropical desert scrub", "tropical desert", "tropical desert scrub"],
-			"fertility":0.1,
+			"fertility":0.175,
 			"color":"F0F000",
 			"textureX": 2,
 			"textureY": 1,
@@ -103,7 +103,7 @@
 		{
 			"id":"tropical seasonal forest",
 			"mergedIds":["subtropical dry forest", "tropical dry forest", "subtropical moist forest"],
-			"fertility":0.8,
+			"fertility":0.9,
 			"color":"C8FAC8",
 			"textureX": 2,
 			"textureY": 3,
@@ -112,7 +112,7 @@
 		{
 			"id":"tropical rain forest",
 			"mergedIds":["subtropical wet forest", "subtropical rain forest", "tropical moist forest", "tropical wet forest", "tropical rain forest"],
-			"fertility":0.7,
+			"fertility":0.8,
 			"color":"329664",
 			"textureX": 3,
 			"textureY": 0,
@@ -155,7 +155,7 @@
 		{
 			"id":"rock",
 			"mergedIds":["rock"],
-			"fertility":0.0,
+			"fertility":0,
 			"color":"797979",
 			"terrainType":0
 		}

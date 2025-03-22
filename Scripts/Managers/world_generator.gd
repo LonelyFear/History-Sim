@@ -39,7 +39,7 @@ enum HumidTypes{
 signal worldgenFinished()
 
 ## the size of the world in width and height
-@export_range(1, 4, 0.5)
+@export_range(2, 4, 1)
 var worldSizeMult : float = 2
 var worldSize : Vector2i = Vector2i(360, 180)
 ## the height threshold above which there will be land
@@ -47,6 +47,8 @@ var worldSize : Vector2i = Vector2i(360, 180)
 var seaLevel : float = 0.6
 ## Whether or not a basic tectonic sim should be used
 @export var useTectonics : bool = true
+@export var generate : bool = true
+
 @export_category("Noise Settings")
 ## the seed the world generator uses
 @export var seed : int
@@ -60,13 +62,15 @@ var seaLevel : float = 0.6
 ## the amount of rivers that the world generator will attempt to generate
 @export var riverCount : int
 
+
 func _ready() -> void:
 	worldSize *= worldSizeMult
 	mapScale *= worldSizeMult
 	map = $"Terrain Map"
 	scale = (Vector2(1,1) * (72/float(worldSize.x)))
 	map.scale = Vector2(1,1) * 16/map.tile_set.tile_size.x
-	generateWorld()
+	if (generate):
+		generateWorld()
 
 #region Noise
 
@@ -189,7 +193,7 @@ func generateWorld() -> void:
 	
 	print("Coloring tiles...")
 	startTime = Time.get_ticks_msec()
-	terrainImage = Image.create(worldSize.x, worldSize.y, true, Image.FORMAT_RGB8)
+	terrainImage = Image.create(worldSize.x, worldSize.y, false, Image.FORMAT_RGB8)
 	for x in worldSize.x:
 		for y in worldSize.y:
 			var currentPos : Vector2i = Vector2i(x,y)

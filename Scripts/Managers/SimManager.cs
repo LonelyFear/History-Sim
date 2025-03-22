@@ -13,14 +13,15 @@ public partial class SimManager : Node2D
     [Export]
     public int tilesPerRegion {private set; get;} = 4;
     Sprite2D regionOverlay;
-    [Export]
-    public TimeManager timeManager {private set; get;}
+    [Export(PropertyHint.Range, "4,16,4")]
+    public TimeManager timeManager { get; set; }
 
     public Dictionary<Vector2I,Tile> tiles = new Dictionary<Vector2I, Tile>();
     public Array<Region> regions = new Array<Region>();
     public Array<Region> habitableRegions = new Array<Region>();
     public Vector2I terrainSize;   
     public Vector2I worldSize;
+    public MapModes mapMode = MapModes.POPS;
 
     Image regionImage;
 
@@ -33,7 +34,7 @@ public partial class SimManager : Node2D
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
 
-    public int maxPopsPerRegion = 5;
+    public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
     public long popTaskId = 0;
 
@@ -42,6 +43,8 @@ public partial class SimManager : Node2D
 
     public long simToPopMult;
     public Task task;
+    public Task mapmodeTask;
+    Random rng = new Random();
     public override void _Ready()
     {
         simToPopMult = Pop.simPopulationMultiplier;
@@ -53,9 +56,24 @@ public partial class SimManager : Node2D
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
         timeManager.Tick += OnTick;
     }
-    
+
+    public override void _Process(double delta)
+    {
+        if (mapmodeTask == null || mapmodeTask.IsCompleted){
+            if (Input.IsActionJustPressed("MapMode_Polity")){
+                mapmodeTask = Task.Run(() => SetMapMode(MapModes.POLITIY));
+            }         
+            else if (Input.IsActionJustPressed("MapMode_Culture")){
+                mapmodeTask = Task.Run(() => SetMapMode(MapModes.CULTURE));
+            }      
+            else if (Input.IsActionJustPressed("MapMode_Population")){
+                mapmodeTask = Task.Run(() => SetMapMode(MapModes.POPULATION));
+            }   
+        }
+
+    }
+
     private void OnWorldgenFinished(){
-        Random rng = new Random();
 
         terrainSize = (Vector2I)world.Get("worldSize");
         worldSize = terrainSize/tilesPerRegion;
@@ -96,26 +114,42 @@ public partial class SimManager : Node2D
                 }
                 // Calc max populaiton
                 newRegion.CalcMaxPopulation();
-                // Adds pops
-                if (newRegion.habitable){
-                    // Add pops here
-                    for (int i = 0; i < maxPopsPerRegion; i++){
-                        long startingPopulation = Pop.toNativePopulation(20);
-                        CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
-                    }
-                }
+                // // Adds pops
+                // if (newRegion.habitable){
+                //     // Add pops here
+                //     long startingPopulation = Pop.toNativePopulation(rng.NextInt64(20, 100));
+                //     CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
+                // }
             }
         }
+        InitPops();
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
 
+    void InitPops(){
+        foreach (Region region in habitableRegions){
+            double nodeChance = 0.005;
+            nodeChance *= region.avgFertility;
+            if (region.coastal){
+                nodeChance *= 5;
+            }
+            if (rng.NextDouble() <= nodeChance){
+                long startingPopulation = Pop.toNativePopulation(rng.NextInt64(200, 1000));
+                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), CreateCulture(region));
+            }
+        }
+    }
     void SimTick(){
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
-                region.MovePops();
-            }
+            }         
         });
+        foreach (Region region in habitableRegions){
+            if (region.pops.Count > 0){
+                region.MovePops();
+            }            
+        }
         long worldPop = 0;
         foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
@@ -126,15 +160,15 @@ public partial class SimManager : Node2D
             }
 
             worldPop += region.population;
-            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         }
+        Parallel.ForEach(regions, region =>{
+            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
+        });
         worldPopulation = worldPop; 
     }
     public void OnTick(){
         task = Task.Run(SimTick);
     }
-
-
 
     #region Pops
     void UpdateStats(){
@@ -193,14 +227,40 @@ public partial class SimManager : Node2D
         return culture;
     }
 
+    public void SetMapMode(MapModes mode){
+        mapMode = mode;
+        foreach (Region region in regions){
+            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
+        }
+        // Parallel.ForEach(regions, region =>{
+        //     SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
+        // });
+    }
+
     public Color GetRegionColor(Region region){
-        Color color;
-        if (region.habitable && region.pops.Count > 0){
-            //color = new Color(0, (float)region.pops.Count/(maxPopsPerRegion * 2), 0, 1);
-            color = new Color(0, (float)region.population/region.maxPopulation, 0, 1);
-            //color = region.pops[0].culture.color;
-        } else {
-            color = new Color(0, 0, 0, 1);
+        Color color = new Color(0, 0, 0, 0);
+        switch (mapMode){
+            case MapModes.POLITIY:  
+                // Eventually display polity colors
+            break;
+            case MapModes.POPULATION:
+                if (region.habitable && region.pops.Count > 0){
+                    color = new Color(0, (float)region.population/Pop.toNativePopulation(10000L), 0, 1);
+                } else if (region.habitable) {
+                    color = new Color(0, 0, 0, 1);
+                }
+            break;
+            case MapModes.CULTURE:
+                // TODO: Culture mapmode
+            break;
+            case MapModes.POPS:
+                if (region.habitable && region.pops.Count > 0){
+                    color = new Color(0, 0,(float)region.pops.Count/10, 1);
+                } else if (region.habitable) {
+                    color = new Color(0, 0, 0, 1);
+                }
+                
+            break;
         }
         return color;
     }
@@ -216,4 +276,11 @@ public partial class SimManager : Node2D
         mapUpdate = false;
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
+}
+
+public enum MapModes {
+    POLITIY,
+    POPULATION,
+    CULTURE,
+    POPS
 }
