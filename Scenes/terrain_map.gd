@@ -9,7 +9,7 @@ extends UpdateTileMapLayer
 @export var regionMapLerpZoom : float = 3
 @export var regionMinOpacity : float = 0.2
 @export var baseRegionOpacity : float = 0.5
-var world : WorldGenerator
+var world : Node
 var showMapId : int
 
 func _ready() -> void:

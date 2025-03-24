@@ -1,17 +1,58 @@
-[gd_scene load_steps=15 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=13 format=3 uid="uid://b1mh36mwq3q24"]
 
-[ext_resource type="Script" uid="uid://dud41vmnk0o16" path="res://Scripts/Managers/world_generator.gd" id="1_h4cr5"]
-[ext_resource type="Script" uid="uid://dcudjmvcfl6la" path="res://Scripts/Loading/load_mods.gd" id="1_w647p"]
+[ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_6iyac"]
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="3_fdnlq"]
-[ext_resource type="Script" uid="uid://4lvygj5vh4ho" path="res://Scripts/Loading/load_biomes.gd" id="5_xnnej"]
 [ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
 [ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_kmkn8"]
-[ext_resource type="Script" uid="uid://b0ryxyvnp8xt8" path="res://Scripts/Misc/Tectonics.cs" id="7_fdnlq"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="10_fdnlq"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="12_fdnlq"]
 [ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="13_8yh0i"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="14_m5dvi"]
+
+[sub_resource type="GDScript" id="GDScript_ynf5e"]
+script/source = "extends Node
+
+var modsPath : String = \"res://Mods/\"
+var validModPaths := []
+var modids := []
+
+func _ready() -> void:
+	pass
+	#loadMods(modsPath)
+	#print(\"Mod loading complete: Succesfully loaded \" + str(validModPaths.size()) + \" mods\")
+
+func loadMods(path : String) -> void:
+	if DirAccess.dir_exists_absolute(path):
+		print(\"Found \" + str(DirAccess.get_directories_at(path).size()) + \" directories\")
+		for mod in DirAccess.get_directories_at(path):
+			var modPath : String = modsPath + mod
+			if DirAccess.dir_exists_absolute(modPath):
+				var modJsonPath : String = modPath + \"/mod.json\"
+				if (FileAccess.file_exists(modJsonPath)):
+					var modJsonFile := FileAccess.open(modJsonPath, FileAccess.READ)
+					var modData : Dictionary = JSON.parse_string(modJsonFile.get_as_text())
+					
+					if modData is Dictionary and modData.has(\"author\") and modData.has(\"version\") and modData.has(\"modid\") and modData.has(\"name\"):
+						if (!modids.has(modData[\"modid\"])):
+							print(\"Succesfully loaded \" + modData[\"name\"] + \" by \" + modData[\"author\"])
+							print(\"Version: \" + str(modData[\"version\"]))
+							if modData.has(\"description\"):
+								print(\"Description: \" + modData[\"description\"])
+							
+							validModPaths.append(modPath)
+							modids.append(modData[\"modid\"])
+						else:
+							print(\"Mod id already in use!\")
+					else:
+						print(\"Error loading mod \" + mod + \": mod.json invalid\")
+				else:
+					print(\"Error loading mod \" + mod + \": mod.json not found\")
+			else:
+				print(\"Error loading mod \" + mod + \": Path invalid\")
+	else:
+		print(\"Error loading mods: mods directory invalid\")
+"
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
 texture = ExtResource("6_dynbe")
@@ -50,7 +91,7 @@ tile_size = Vector2i(12, 12)
 sources/0 = SubResource("TileSetAtlasSource_wcrxr")
 
 [node name="Main" type="Node"]
-script = ExtResource("1_w647p")
+script = SubResource("GDScript_ynf5e")
 
 [node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "timeManager")]
 z_index = 10
@@ -63,15 +104,11 @@ timeManager = NodePath("../Time Manager")
 scale = Vector2(16, 16)
 centered = false
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" type="Node2D" parent="." node_paths=PackedStringArray("biomeLoader")]
 z_index = -10
 z_as_relative = false
-script = ExtResource("1_h4cr5")
-worldSizeMult = 4.0
-generate = false
-seed = 89669141
-mapScale = 1.5
-riverCount = 1
+script = ExtResource("3_6iyac")
+biomeLoader = NodePath("")
 
 [node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionSprite")]
 scale = Vector2(1.333, 1.333)
@@ -85,16 +122,6 @@ baseRegionOpacity = 1.0
 [node name="LOD Map" type="Sprite2D" parent="World"]
 scale = Vector2(16, 16)
 centered = false
-
-[node name="Tectonics" type="Node" parent="World" node_paths=PackedStringArray("textureDisplay")]
-script = ExtResource("7_fdnlq")
-textureDisplay = NodePath("Sprite2D")
-
-[node name="Sprite2D" type="Sprite2D" parent="World/Tectonics"]
-centered = false
-
-[node name="Biome Loader" type="Node" parent="."]
-script = ExtResource("5_xnnej")
 
 [node name="PlayerCamera" type="Camera2D" parent="."]
 position = Vector2(576, 324)

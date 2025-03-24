@@ -75,36 +75,28 @@ func _ready() -> void:
 #region Noise
 
 func createHeightMap(scale : float) -> Dictionary[Vector2i, float]:
-	var tectonicHeightMap : Dictionary[Vector2i, float]
-	if (useTectonics):
-		var tectonicStartTime : float = Time.get_ticks_msec()
-		print("Tectonics simulation started")
-		tectonicHeightMap = $"Tectonics".runSimulation(worldSize, Vector2i(5,4))
-		print("Tectonics finished after " + str(Time.get_ticks_msec() - tectonicStartTime) + " ms")
-	# Generates a heightmap with random noise
 	var noiseMap : Dictionary[Vector2i, float] = {}
-	var falloff : Dictionary = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
-	
-	var simplexNoise : FastNoiseLite = FastNoiseLite.new()
-	simplexNoise.fractal_octaves = heightOctaves
-	simplexNoise.seed = seed
-	simplexNoise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	
-	# Worley noise for use later
-	var noise : FastNoiseLite = FastNoiseLite.new()
-	noise.fractal_octaves = 2
-	noise.noise_type = FastNoiseLite.TYPE_CELLULAR
-	
-	# Gets our height values
-	for x in worldSize.x:
-		for y in worldSize.y:
-			var noiseValue : float = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
-			if (useTectonics):
-				noiseValue = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/(scale/2) ,y/(scale/2)))
-				noiseMap[Vector2i(x,y)] = lerpf(tectonicHeightMap[Vector2i(x,y)], noiseValue, 0.5)
-			else:
+	if (!useTectonics):
+		# Generates a heightmap with random noise
+		var falloff : Dictionary = Falloff.generateFalloff(worldSize.x, worldSize.y, 9.2, true)
+		
+		var simplexNoise : FastNoiseLite = FastNoiseLite.new()
+		simplexNoise.fractal_octaves = heightOctaves
+		simplexNoise.seed = seed
+		simplexNoise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+		
+		# Worley noise for use later
+		var noise : FastNoiseLite = FastNoiseLite.new()
+		noise.fractal_octaves = 2
+		noise.noise_type = FastNoiseLite.TYPE_CELLULAR
+		
+		# Gets our height values
+		for x in worldSize.x:
+			for y in worldSize.y:
+				var noiseValue : float = inverse_lerp(-1, 1, simplexNoise.get_noise_2d(x/scale ,y/scale))
 				noiseMap[Vector2i(x,y)] = noiseValue - falloff[Vector2i(x, y)]
-			
+	else:
+		noiseMap = $"Tectonics".RunSimulation(2);
 	# Returns the heightmap
 	return noiseMap
 

@@ -9,14 +9,14 @@ using Godot.Collections;
 public partial class SimManager : Node2D
 {
     [Export]
-    public Node world {private set; get;}
+    public WorldGeneration world {private set; get;}
     [Export]
     public int tilesPerRegion {private set; get;} = 4;
     Sprite2D regionOverlay;
     [Export(PropertyHint.Range, "4,16,4")]
     public TimeManager timeManager { get; set; }
 
-    public Dictionary<Vector2I,Tile> tiles = new Dictionary<Vector2I, Tile>();
+    public Tile[,] tiles;
     public Array<Region> regions = new Array<Region>();
     public Array<Region> habitableRegions = new Array<Region>();
     public Vector2I terrainSize;   
@@ -49,7 +49,7 @@ public partial class SimManager : Node2D
     {
         simToPopMult = Pop.simPopulationMultiplier;
         regionOverlay = GetNode<Sprite2D>("RegionOverlay");
-        world = GetParent().GetNode<Node2D>("World");
+        world = (WorldGeneration)GetParent().GetNode<Node2D>("World");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
 
         // Connection
@@ -75,16 +75,17 @@ public partial class SimManager : Node2D
 
     private void OnWorldgenFinished(){
 
-        terrainSize = (Vector2I)world.Get("worldSize");
+        terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
-        Scale = (Vector2)world.Get("scale") * tilesPerRegion;
+        Scale = world.Scale * tilesPerRegion;
         regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
 
+        tiles = new Tile[terrainSize.X, terrainSize.Y];
         for (int x = 0; x < terrainSize.X; x++){
             for (int y = 0; y < terrainSize.Y; y++){
                 Tile newTile = new Tile();
-                tiles[new Vector2I(x,y)] = newTile;
-                newTile.biome = (Dictionary)((Dictionary)world.Get("tileBiomes"))[new Vector2I(x,y)];
+                tiles[x,y] = newTile;
+                newTile.biome = world.biomes[x,y];
             }
         }
 
@@ -93,16 +94,20 @@ public partial class SimManager : Node2D
                 regionImage.SetPixel(x, y, Color.Color8(0,255,0,1));
                 // Creates a region
                 Region newRegion = new Region();
+
+                newRegion.tiles = new Tile[tilesPerRegion, tilesPerRegion];
+                newRegion.biomes = new Biome[tilesPerRegion, tilesPerRegion];
+
                 newRegion.simManager = this;
                 newRegion.pos = new Vector2I(x,y);
                 regions.Add(newRegion);
                 for (int tx = 0; tx < tilesPerRegion; tx++){
                     for (int ty = 0; ty < tilesPerRegion; ty++){
                         // Adds subregion to tile
-                        Tile tile = tiles[new Vector2I(x * tilesPerRegion + tx, y * tilesPerRegion + ty)];
-                        newRegion.tiles.Add(new Vector2I(tx, ty), tile);
+                        Tile tile = tiles[x * tilesPerRegion + tx, y * tilesPerRegion + ty];
+                        newRegion.tiles[tx, ty] = tile;
                         // Adds biomes to tile
-                        newRegion.biomes.Add(new Vector2I(tx, ty), tile.biome);
+                        newRegion.biomes[tx, ty] = tile.biome;
                     }
                 }
                 // Calc average fertility
