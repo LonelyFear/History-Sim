@@ -61,7 +61,6 @@ script = SubResource("GDScript_ynf5e")
 z_index = 10
 script = ExtResource("3_fdnlq")
 world = NodePath("../World")
-tilesPerRegion = 8
 timeManager = NodePath("../Time Manager")
 
 [node name="RegionOverlay" type="Sprite2D" parent="Simulation"]
@@ -72,7 +71,7 @@ centered = false
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_6iyac")
-worldSizeMult = 1
+worldSizeMult = 2
 seed = 48590
 mapScale = 1.0
 

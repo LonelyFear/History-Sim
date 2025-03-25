@@ -18,6 +18,7 @@ public partial class Region : GodotObject
     public float avgFertility;
     public int landCount;
     public SimManager simManager;
+    public Nation nation;
 
     // Demographics
     public long maxPopulation = 0;
@@ -158,7 +159,7 @@ public partial class Region : GodotObject
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
             // Chance of pop to migrate
-            double migrateChance = 0.001;
+            double migrateChance = 0.0001;
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){

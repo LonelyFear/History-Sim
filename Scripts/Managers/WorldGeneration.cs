@@ -109,7 +109,7 @@ public partial class WorldGeneration : Node2D
                 }
                 
                 moisture = Mathf.Clamp(moisture, 0f, 1f);
-                map[x,y] = Mathf.InverseLerp(-0.5f, 0.5f, noise.GetNoise(x,y));
+                map[x,y] = Mathf.InverseLerp(-0.2f, 0.5f, noise.GetNoise(x,y));
             }
         }
         return map;
@@ -381,7 +381,7 @@ public partial class WorldGeneration : Node2D
     }
 
     List<Biome> LoadBiomes(){
-        string biomesPath = "Json Resources/biomes.json";
+        string biomesPath = "Resources/biomes.json";
         if (File.Exists(biomesPath)){
             StreamReader reader = new StreamReader(biomesPath);
             string biomeData = reader.ReadToEnd();

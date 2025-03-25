@@ -73,7 +73,7 @@ public class Tectonics
 
                 if (elevation <= seaLevel){
                     crust.crustType = CrustTypes.OCEANIC;
-                    elevation = Mathf.Lerp(seaLevel - oceanDepth, seaLevel, 1f - Falloff.Evaluate(Mathf.InverseLerp(seaLevel, 0, elevation), 0.075f, 3f));
+                    elevation = Mathf.Lerp(seaLevel - oceanDepth, seaLevel, 1f - Falloff.Evaluate(Mathf.InverseLerp(seaLevel, 0, elevation), 0.15f, 3f));
                 } else {
                     crust.crustType = CrustTypes.CONTINENTAL;
                     elevation = Mathf.Lerp(seaLevel, 0.8f, (elevation - seaLevel)/(1f - seaLevel));
@@ -121,7 +121,7 @@ public class Tectonics
                 crust.elevation += NextFloatInRange(0.6f, 0.65f) * Mathf.Abs(crust.pressure);
             } else {
                 // Mountains
-                crust.elevation += NextFloatInRange(0.3f, 0.3f + 0.05f) * Mathf.Abs(crust.pressure);
+                crust.elevation += NextFloatInRange(0.34f, 0.35f) * Mathf.Abs(crust.pressure);
             }
         } else if (crust.pressure < 0){
             crust.elevation -= NextFloatInRange(0.11f, 0.13f) * Mathf.Abs(crust.pressure);

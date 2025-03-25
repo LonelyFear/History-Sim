@@ -33,6 +33,7 @@ public partial class SimManager : Node2D
     public long workforceChange = 0;
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
+    public Array<Nation> nations = new Array<Nation>();
 
     public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
@@ -74,7 +75,10 @@ public partial class SimManager : Node2D
     }
 
     private void OnWorldgenFinished(){
-
+        for (int i = 0; i < 100; i++){
+            GD.Print(NameGenerator.GenerateNationName());
+        }
+        
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
         Scale = world.Scale * tilesPerRegion;
@@ -133,10 +137,10 @@ public partial class SimManager : Node2D
 
     void InitPops(){
         foreach (Region region in habitableRegions){
-            double nodeChance = 0.005;
+            double nodeChance = 0.0025;
             nodeChance *= region.avgFertility;
             if (region.coastal){
-                nodeChance *= 5;
+                nodeChance *= 10;
             }
             if (rng.NextDouble() <= nodeChance){
                 long startingPopulation = Pop.toNativePopulation(rng.NextInt64(200, 1000));
@@ -231,7 +235,8 @@ public partial class SimManager : Node2D
 
         return culture;
     }
-
+    
+    #region Map Stuff
     public void SetMapMode(MapModes mode){
         mapMode = mode;
         foreach (Region region in regions){
@@ -246,11 +251,15 @@ public partial class SimManager : Node2D
         Color color = new Color(0, 0, 0, 0);
         switch (mapMode){
             case MapModes.POLITIY:  
-                // Eventually display polity colors
+                if (region.pops.Count > 0){
+                    color = new Color(0.1f, 0.1f, 0.1f);
+                } else if (region.nation != null){
+                    color = region.nation.color;
+                }
             break;
             case MapModes.POPULATION:
                 if (region.habitable && region.pops.Count > 0){
-                    color = new Color(0, (float)region.population/Pop.toNativePopulation(10000L), 0, 1);
+                    color = new Color(0, (float)region.population/Pop.toNativePopulation(1000 * (int)Mathf.Pow(tilesPerRegion, 2)), 0, 1);
                 } else if (region.habitable) {
                     color = new Color(0, 0, 0, 1);
                 }
@@ -281,6 +290,7 @@ public partial class SimManager : Node2D
         mapUpdate = false;
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
+    #endregion
 }
 
 public enum MapModes {

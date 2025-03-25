@@ -12,7 +12,7 @@
 		{
 			"id":"tundra",
 			"mergedIds":["subpolar moist tundra", "subpolar wet tundra", "subpolar dry tundra", "subpolar rain tundra"],
-			"fertility":0.1,
+			"fertility":0.05,
 			"color":"BEBEBE",
 			"textureX": 0,
 			"textureY": 1,
@@ -30,7 +30,7 @@
 		{
 			"id":"coniferous forest",
 			"mergedIds":["boreal moist forest", "boreal wet forest", "boreal rain forest"],
-			"fertility":0.7,
+			"fertility":0.5,
 			"color":"465A23",
 			"textureX": 0,
 			"textureY": 3,
