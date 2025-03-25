@@ -10,8 +10,7 @@ using System.Text.Json.Serialization;
 public partial class WorldGeneration : Node2D
 {
     TileMapLayer tileMap;
-    [Export] Node biomeLoader;
-    public String[,] tileBiomes;
+    public string[,] tileBiomes;
     public Biome[,] biomes;
     float[,] heightmap;
     float[,] tempmap;
@@ -47,21 +46,25 @@ public partial class WorldGeneration : Node2D
     [Signal]
     public delegate void worldgenFinishedEventHandler();
 
-    public Vector2I worldSize = new Vector2I(1440, 720);
-    [Export(PropertyHint.Range, "0, 1, 0.01")]
+    public Vector2I worldSize = new Vector2I(360, 180);
+    [Export(PropertyHint.Range, "1, 4, 1")] public int worldSizeMult = 4;
     public float seaLevel = 0.6f;
 
     [ExportCategory("Noise Settings")]
     [Export] public int seed;
-    [Export] public float mapScale = 1f;
+    [Export] public float mapScale = 1.5f;
     [Export] public int octaves = 8;
     public List<Biome> loadedBiomes;
     Random rng;
     //[ExportCategory("Rivers Settings")]
 
     public override void _Ready(){
+        worldSize *= worldSizeMult;
+        mapScale *= worldSizeMult;
+
         rng = new Random(seed);
         tileMap = (TileMapLayer)GetNode("Terrain Map");
+        Scale = new Vector2(1,1) * 72f/worldSize.X;
         tileMap.Scale = new Vector2(1,1) * 16f/tileMap.TileSet.TileSize.X;
         GenerateWorld();
     }
@@ -74,7 +77,7 @@ public partial class WorldGeneration : Node2D
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(rng.Next(-99999, 99999));
 
-        float[,] falloff = Falloff.GenerateFalloffMap(worldSize.X, worldSize.Y, false, 1.1f);
+        float[,] falloff = Falloff.GenerateFalloffMap(worldSize.X, worldSize.Y, false, 1, 1.1f);
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
@@ -96,10 +99,17 @@ public partial class WorldGeneration : Node2D
         noise.SetFractalOctaves(octaves);
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(rng.Next(-99999, 99999));
-        for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++){
-                float noiseValue = Mathf.InverseLerp(-0.7f, 0.7f, noise.GetNoise(x / scale, y / scale));
-                map[x, y] = noiseValue;
+        for (int y = 0; y < worldSize.Y; y++){
+            float moisture = 0;
+            for (int x = 0; x < worldSize.X; x++){
+                if (heightmap[x,y] < seaLevel){
+                    moisture += 0.05f * tempmap[x,y];
+                } else if ((heightmap[x,y] - seaLevel)/(1f - seaLevel) > 0.4f){
+                    moisture -= (heightmap[x,y] - seaLevel)/(1f - seaLevel) - 0.4f;
+                }
+                
+                moisture = Mathf.Clamp(moisture, 0f, 1f);
+                map[x,y] = Mathf.InverseLerp(-0.5f, 0.5f, noise.GetNoise(x,y));
             }
         }
         return map;
@@ -108,8 +118,7 @@ public partial class WorldGeneration : Node2D
     void GenerateWorld(){
         GD.Print("Heightmap Generation Started");
         ulong startTime = Time.GetTicksMsec();
-        //heightmap = new Tectonics().RunSimulation(this, 16);
-        heightmap = new float[worldSize.X, worldSize.Y];
+        heightmap = new Tectonics().RunSimulation(this, 40);
         GD.Print("Heightmap Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         GD.Print("Temperature Generation Started");
@@ -143,7 +152,7 @@ public partial class WorldGeneration : Node2D
             for (int y = 0; y < worldSize.Y; y++){
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
-                        tileMap.SetCell(new Vector2I(x,y), 0, biome.texturePos);
+                        tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
                         terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
                         biomes[x,y] = biome;
                     }
@@ -166,7 +175,10 @@ public partial class WorldGeneration : Node2D
                     biome = "polar ice";
                     break;
                 default:
-                    biome = "ocean";
+                	biome = "shallow ocean";
+				    if (altitude <= seaLevel - 0.1){
+                        biome = "ocean";
+                    }
                     break;
             }
         } else {
@@ -373,7 +385,8 @@ public partial class WorldGeneration : Node2D
         if (File.Exists(biomesPath)){
             StreamReader reader = new StreamReader(biomesPath);
             string biomeData = reader.ReadToEnd();
-            return JsonSerializer.Deserialize<List<Biome>>(biomeData);
+            List<Biome> biomeList = JsonSerializer.Deserialize<List<Biome>>(biomeData);
+            return biomeList;
         }
         //GD.Print("Biomes.json not found at path '" + biomesPath + "'");  
         return null;

@@ -1,10 +1,7 @@
-using Godot;
-using Godot.Collections;
-
-
-public partial class Tile : GodotObject
+public class Tile
 {
-    public Dictionary biome;
+	public long maxPopulation;
+    public Biome biome;
     public bool hasRoad;
     public SettlementTypes settlementType = SettlementTypes.NONE;
    

@@ -1,8 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=11 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_6iyac"]
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="3_fdnlq"]
-[ext_resource type="Texture2D" uid="uid://b4vn2a225l8wb" path="res://Sprites/Biomes.png" id="6_dynbe"]
+[ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="3_ynf5e"]
 [ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_kmkn8"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scenes/terrain_map.gd" id="8_plgql"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="10_fdnlq"]
@@ -54,42 +54,6 @@ func loadMods(path : String) -> void:
 		print(\"Error loading mods: mods directory invalid\")
 "
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wcrxr"]
-texture = ExtResource("6_dynbe")
-0:0/0 = 0
-0:0/0/z_index = -1
-1:0/0 = 0
-1:0/0/z_index = 1
-0:1/0 = 0
-1:1/0 = 0
-1:1/0/z_index = 1
-0:2/0 = 0
-1:2/0 = 0
-2:2/0 = 0
-2:2/0/z_index = 1
-3:2/0 = 0
-3:2/0/z_index = -3
-0:3/0 = 0
-0:3/0/z_index = 1
-1:3/0 = 0
-1:3/0/z_index = 1
-2:3/0 = 0
-2:3/0/z_index = 1
-3:3/0 = 0
-3:3/0/modulate = Color(0, 0, 0, 1)
-3:3/0/z_index = -2
-3:1/0 = 0
-3:1/0/z_index = -4
-2:1/0 = 0
-2:0/0 = 0
-2:0/0/z_index = 1
-3:0/0 = 0
-3:0/0/z_index = 1
-
-[sub_resource type="TileSet" id="TileSet_hda34"]
-tile_size = Vector2i(12, 12)
-sources/0 = SubResource("TileSetAtlasSource_wcrxr")
-
 [node name="Main" type="Node"]
 script = SubResource("GDScript_ynf5e")
 
@@ -104,15 +68,17 @@ timeManager = NodePath("../Time Manager")
 scale = Vector2(16, 16)
 centered = false
 
-[node name="World" type="Node2D" parent="." node_paths=PackedStringArray("biomeLoader")]
+[node name="World" type="Node2D" parent="."]
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_6iyac")
-biomeLoader = NodePath("")
+worldSizeMult = 1
+seed = 48590
+mapScale = 1.0
 
 [node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionSprite")]
 scale = Vector2(1.333, 1.333)
-tile_set = SubResource("TileSet_hda34")
+tile_set = ExtResource("3_ynf5e")
 script = ExtResource("8_plgql")
 camera = NodePath("../../PlayerCamera")
 lodMap = NodePath("../LOD Map")
@@ -126,6 +92,7 @@ centered = false
 [node name="PlayerCamera" type="Camera2D" parent="."]
 position = Vector2(576, 324)
 script = ExtResource("6_kmkn8")
+zoomSpeed = 20.0
 minZoom = Vector2(15, 15)
 
 [node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("world")]

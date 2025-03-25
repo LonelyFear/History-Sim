@@ -7,7 +7,8 @@ public class Biome
     public string[] mergedIds { get; set; } 
     public float fertility { get; set; } 
     public string color { get; set; } 
-    public Vector2I texturePos { get; set; } 
+    public int textureX { get; set; } 
+    public int textureY { get; set; } 
     public TerrainType terrainType { get; set; } 
     public enum TerrainType{
         LAND,

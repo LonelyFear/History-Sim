@@ -21,7 +21,7 @@ public partial class SimManager : Node2D
     public Array<Region> habitableRegions = new Array<Region>();
     public Vector2I terrainSize;   
     public Vector2I worldSize;
-    public MapModes mapMode = MapModes.POPS;
+    public MapModes mapMode = MapModes.POLITIY;
 
     Image regionImage;
 

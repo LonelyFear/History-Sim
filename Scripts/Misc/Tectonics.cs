@@ -20,7 +20,6 @@ public class Tectonics
     float maxPressure = float.MinValue;
     float minPressure = float.MaxValue;
     float maxElevation = float.MinValue;
-    float[,] elevations;
     Random rng;
 
     public float[,] RunSimulation(WorldGeneration w, int plateCount){
@@ -28,25 +27,38 @@ public class Tectonics
         worldSize = world.worldSize;
         seaLevel = world.seaLevel;
         seed = world.seed;
-        elevations = new float[worldSize.X, worldSize.Y];
         rng = new Random(seed);
 
+        crusts = new Crust[worldSize.X * worldSize.Y];
+        for (int x = 0; x < worldSize.X; x++){
+            for (int y = 0; y < worldSize.Y; y++){
+                Crust crust = new Crust(){
+                    plate = null,
+                    pos = new Vector2I(x,y)
+                };
+                crusts[(worldSize.Y * x) + y] = crust;
+            }
+        }
         CreatePlates(plateCount);
         InitElevation();
         
         foreach (Crust crust in crusts){
             GetPressure(crust);
         }
+        Parallel.ForEach(crusts, GrowRange);  
+        return GetElevations();
+    }
+    float[,] GetElevations(){
+        float[,] elevations = new float[worldSize.X, worldSize.Y];
         foreach (Crust crust in crusts){
-            GrowRange(crust);
+            elevations[crust.pos.X, crust.pos.Y] = crust.elevation;
         }
-
-        return elevations;       
+        return elevations;
     }
 
     void InitElevation(){
         float[,] falloff = Falloff.GenerateFalloffMap(worldSize.X, worldSize.Y);
-        float scale = (float)world.Get("mapScale") * sizeMult;
+        float scale = world.mapScale;
         FastNoiseLite noise = new FastNoiseLite();
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         noise.SetSeed(seed);
@@ -58,13 +70,15 @@ public class Tectonics
             for (int y = 0; y < worldSize.Y; y++){
                 Crust crust = GetCrust(x, y);
                 float elevation = Mathf.InverseLerp(-1, 1, noise.GetNoise((float)x / scale, (float)y / scale)) - falloff[x,y];
+
                 if (elevation <= seaLevel){
                     crust.crustType = CrustTypes.OCEANIC;
                     elevation = Mathf.Lerp(seaLevel - oceanDepth, seaLevel, 1f - Falloff.Evaluate(Mathf.InverseLerp(seaLevel, 0, elevation), 0.075f, 3f));
                 } else {
                     crust.crustType = CrustTypes.CONTINENTAL;
-                    elevation = Mathf.Lerp(seaLevel, 0.75f, (elevation - seaLevel)/(1f - seaLevel));
+                    elevation = Mathf.Lerp(seaLevel, 0.8f, (elevation - seaLevel)/(1f - seaLevel));
                 }            
+                
                 crust.elevation = elevation;
             }
         }
@@ -97,35 +111,25 @@ public class Tectonics
 
     void GrowRange(Crust crust){
         if (crust.pressure != 0){
-            crust.pressure = Mathf.InverseLerp(minPressure, maxPressure, crust.pressure) * 2 - 1;
+            
         }
-        
+        crust.pressure = Mathf.InverseLerp(minPressure, maxPressure, crust.pressure) * 2 - 1;
         if (crust.pressure > 0){
             // Convergence
             if (crust.crustType == CrustTypes.OCEANIC){
                 // Island Chains
-                crust.elevation += NextFloatInRange(0.65f, 0.75f, rng) * crust.pressure;
+                crust.elevation += NextFloatInRange(0.6f, 0.65f) * Mathf.Abs(crust.pressure);
             } else {
                 // Mountains
-                crust.elevation += NextFloatInRange(0.5f, 0.6f, rng) * crust.pressure;
+                crust.elevation += NextFloatInRange(0.3f, 0.3f + 0.05f) * Mathf.Abs(crust.pressure);
             }
         } else if (crust.pressure < 0){
-            // Divergence
-            if (crust.crustType == CrustTypes.OCEANIC){
-                // Mid Ocean Ridges
-                if (crust.elevation <= seaLevel - oceanDepth + 0.05f){
-                    crust.elevation += NextFloatInRange(0.4f, 0.5f, rng) * Mathf.Abs(crust.pressure);
-                }
-            } else {
-                // Rift Valleys
-                crust.elevation += NextFloatInRange(0.1f, 0.15f, rng) * crust.pressure;
-            }
+            crust.elevation -= NextFloatInRange(0.11f, 0.13f) * Mathf.Abs(crust.pressure);
         }
-        elevations[crust.pos.X, crust.pos.Y] = crust.elevation;
     }
 
-    float NextFloatInRange(float min, float max, Random r){
-        return Mathf.Lerp(min, max, r.NextSingle());
+    float NextFloatInRange(float min, float max){
+        return Mathf.Lerp(min, max, rng.NextSingle());
     }
 
     void ColorDisplay(){
@@ -162,16 +166,6 @@ public class Tectonics
 
     public void CreatePlates(int amount){
         plates = new Plate[amount];
-        crusts = new Crust[worldSize.X * worldSize.Y];
-        for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++){
-                Crust crust = new Crust(){
-                    plate = null,
-                    pos = new Vector2I(x,y)
-                };
-                crusts[(worldSize.Y * x) + y] = crust;
-            }
-        }
         
         Vector2I[] points = new Vector2I[amount];
 
@@ -183,8 +177,8 @@ public class Tectonics
             points[i] = pos;
 
             Plate newPlate = new Plate(){
-                vel = new Vector2((float)rng.NextDouble() * 2f - 1f, (float)rng.NextDouble() * 2f - 1f),
-                color = new Color((float)rng.NextDouble(), (float)rng.NextDouble(), (float)rng.NextDouble())
+                vel = new Vector2(NextFloatInRange(-3f, 3f), NextFloatInRange(-3f, 3f)),
+                color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle())
             };
             
             plates[i] = newPlate;
@@ -219,7 +213,7 @@ public class Tectonics
 
                         if (crust.plate == null){
                             border = true;
-                            if (rng.NextDouble() <= 0.5){
+                            if (rng.NextDouble() <= 0.1){
                                 crust.plate = plate;
                                 fullPositions.Add(nPos);
                                 freeTiles -= 1;                                

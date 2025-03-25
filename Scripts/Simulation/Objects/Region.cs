@@ -8,8 +8,8 @@ using Dictionary = Godot.Collections.Dictionary;
 
 public partial class Region : GodotObject
 {
-	public Dictionary<Vector2I, GodotObject> tiles = new Dictionary<Vector2I, GodotObject>();
-    public Dictionary<Vector2I, Dictionary> biomes = new Dictionary<Vector2I, Dictionary>();
+	public Tile[,] tiles;
+    public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
     public Array<Pop> pops = new Array<Pop> ();
@@ -31,13 +31,16 @@ public partial class Region : GodotObject
     public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
-        foreach (Dictionary biome in biomes.Values){
-            if ((float)biome["terrainType"] == 0){
-                landCount++;
-                f += (float)biome["fertility"];
-            } else if ((float)biome["terrainType"] == 1){
-                coastal = true;
-            }   
+        for (int x = 0; x < simManager.tilesPerRegion; x++){
+            for (int y = 0; y < simManager.tilesPerRegion; y++){
+                Biome biome = biomes[x,y];
+                if (biome.terrainType == Biome.TerrainType.LAND){
+                    landCount++;
+                    f += biome.fertility;
+                } else if (biome.terrainType == Biome.TerrainType.WATER){
+                    coastal = true;
+                }               
+            }
         }
         avgFertility = (f/landCount);
     }
@@ -48,14 +51,16 @@ public partial class Region : GodotObject
         }
     }
     public void CalcMaxPopulation(){
-        foreach (Vector2I bpos in biomes.Keys){
-            Dictionary biome = biomes[bpos];
-            GodotObject tile = tiles[bpos];
+        for (int x = 0; x < simManager.tilesPerRegion; x++){
+            for (int y = 0; y < simManager.tilesPerRegion; y++){
+                Biome biome = biomes[x, y];
+                Tile tile = tiles[x,y];
 
-            tile.Set("maxPopulation", 0);
-            if ((float)biome["terrainType"] == 0){
-                maxPopulation += (long)(Pop.toNativePopulation(1000) * (float)biome["fertility"]);
-                tile.Set("maxPopulation", (long)(Pop.toNativePopulation(1000) * (float)biome["fertility"])) ;
+                tile.maxPopulation = 0;
+                if (biome.terrainType == Biome.TerrainType.LAND){
+                    maxPopulation += (long)(Pop.toNativePopulation(1000) * biome.fertility);
+                    tile.maxPopulation = (long)(Pop.toNativePopulation(1000) * biome.fertility);
+                }
             }
         }
     }

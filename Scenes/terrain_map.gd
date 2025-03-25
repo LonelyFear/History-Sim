@@ -1,4 +1,4 @@
-extends UpdateTileMapLayer
+extends TileMapLayer
 
 @export var camera : CameraController
 @export var lodMap : Sprite2D
