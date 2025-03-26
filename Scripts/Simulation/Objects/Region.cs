@@ -18,7 +18,7 @@ public partial class Region : GodotObject
     public float avgFertility;
     public int landCount;
     public SimManager simManager;
-    public Nation nation;
+    public State nation;
 
     // Demographics
     public long maxPopulation = 0;
@@ -93,6 +93,8 @@ public partial class Region : GodotObject
 
     public void CheckPopulation(){
         long countedPopulation = 0;
+        long countedDependents = 0;
+        long countedWorkforce = 0;
         foreach (Pop pop in pops.ToArray()){
             if (pop.population < Pop.toNativePopulation(1)){
                 pops.Remove(pop);
@@ -100,8 +102,12 @@ public partial class Region : GodotObject
                 continue;
             }
             countedPopulation += pop.population;
+            countedWorkforce += pop.workforce;
+            countedDependents += pop.dependents;
         }
         population = countedPopulation;
+        dependents = countedDependents;
+        workforce = countedWorkforce;
     }
 
     public void MergePops(){
@@ -159,11 +165,11 @@ public partial class Region : GodotObject
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
             // Chance of pop to migrate
-            double migrateChance = 0.0001;
+            double migrateChance = 0.0005;
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){
-                migrateChance = 0.005;
+                migrateChance = 0.01;
             }
 
             // If the pop migrates

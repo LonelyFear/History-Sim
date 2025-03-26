@@ -213,7 +213,7 @@ public class Tectonics
 
                         if (crust.plate == null){
                             border = true;
-                            if (rng.NextDouble() <= 0.1){
+                            if (rng.NextDouble() <= 0.5){
                                 crust.plate = plate;
                                 fullPositions.Add(nPos);
                                 freeTiles -= 1;                                

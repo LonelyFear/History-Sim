@@ -33,7 +33,7 @@ public partial class SimManager : Node2D
     public long workforceChange = 0;
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
-    public Array<Nation> nations = new Array<Nation>();
+    public Array<State> nations = new Array<State>();
 
     public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
@@ -46,6 +46,9 @@ public partial class SimManager : Node2D
     public Task task;
     public Task mapmodeTask;
     Random rng = new Random();
+    public Vector2 mousePos;
+    public Vector2I hoveredRegionPos;
+    public Region hoveredRegion = null;
     public override void _Ready()
     {
         simToPopMult = Pop.simPopulationMultiplier;
@@ -60,6 +63,16 @@ public partial class SimManager : Node2D
 
     public override void _Process(double delta)
     {
+        mousePos = GetGlobalMousePosition();
+        hoveredRegionPos = GlobalToRegionPos(mousePos);
+        if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y){
+            hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
+        } else {
+            hoveredRegion = null;
+        }
+        CheckMapmodeChange();
+    }
+    void CheckMapmodeChange(){
         if (mapmodeTask == null || mapmodeTask.IsCompleted){
             if (Input.IsActionJustPressed("MapMode_Polity")){
                 mapmodeTask = Task.Run(() => SetMapMode(MapModes.POLITIY));
@@ -70,17 +83,19 @@ public partial class SimManager : Node2D
             else if (Input.IsActionJustPressed("MapMode_Population")){
                 mapmodeTask = Task.Run(() => SetMapMode(MapModes.POPULATION));
             }   
-        }
-
+        }        
     }
 
-    private void OnWorldgenFinished(){
-        for (int i = 0; i < 100; i++){
-            GD.Print(NameGenerator.GenerateNationName());
-        }
-        
+    public Vector2I GlobalToRegionPos(Vector2 pos){
+        return (Vector2I)(pos / (world.Scale * 16))/tilesPerRegion;
+    }
+
+    private void OnWorldgenFinished(){ 
+           
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
+        GD.Print(terrainSize); 
+        GD.Print(world.Scale);
         Scale = world.Scale * tilesPerRegion;
         regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
 
@@ -221,7 +236,10 @@ public partial class SimManager : Node2D
     #endregion
 
     public Region GetRegion(int x, int y){
-        int index = (x * worldSize.Y) + y;
+        int lx = Mathf.PosMod(x, worldSize.X);
+        int ly = Mathf.PosMod(y, worldSize.Y);
+
+        int index = (lx * worldSize.Y) + ly;
         return regions[index];
     }
     public Culture CreateCulture(Region region){
@@ -234,6 +252,20 @@ public partial class SimManager : Node2D
         cultures.Append(culture);
 
         return culture;
+    }
+    public void CreateNation(Region region){
+        if (region.owner == null){
+        float r = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
+        float g = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
+        float b = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());    
+
+            State state = new State(){
+                name = NameGenerator.GenerateNationName(),
+                color = new Color(r, g, b)
+            };
+            state.AddRegion(region);
+            nations.Add(state);
+        }
     }
     
     #region Map Stuff
@@ -252,9 +284,9 @@ public partial class SimManager : Node2D
         switch (mapMode){
             case MapModes.POLITIY:  
                 if (region.pops.Count > 0){
-                    color = new Color(0.1f, 0.1f, 0.1f);
-                } else if (region.nation != null){
-                    color = region.nation.color;
+                    color = new Color(0.2f, 0.2f, 0.2f);
+                } else if (region.owner != null){
+                    color = region.owner.color;
                 }
             break;
             case MapModes.POPULATION:
