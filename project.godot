@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Nations"
 config/version="Alpha 1"
-run/main_scene="res://Scenes/main.tscn"
+run/main_scene="uid://bbnm5jqp5n32i"
 config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 

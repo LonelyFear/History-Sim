@@ -33,7 +33,7 @@ public partial class SimManager : Node2D
     public long workforceChange = 0;
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
-    public Array<State> nations = new Array<State>();
+    public Array<State> states = new Array<State>();
 
     public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
@@ -47,8 +47,11 @@ public partial class SimManager : Node2D
     public Task mapmodeTask;
     Random rng = new Random();
     public Vector2 mousePos;
+
+    // Hovering
     public Vector2I hoveredRegionPos;
     public Region hoveredRegion = null;
+    public State hoveredState = null;
     public override void _Ready()
     {
         simToPopMult = Pop.simPopulationMultiplier;
@@ -67,8 +70,10 @@ public partial class SimManager : Node2D
         hoveredRegionPos = GlobalToRegionPos(mousePos);
         if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y){
             hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
+            hoveredState = hoveredRegion.owner;
         } else {
             hoveredRegion = null;
+            hoveredState = null;
         }
         CheckMapmodeChange();
     }
@@ -163,7 +168,11 @@ public partial class SimManager : Node2D
             }
         }
     }
+    #region SimTick
     void SimTick(){
+        Parallel.ForEach(states, state =>{
+            state.borderingStates = new Array<State>();
+        });
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
@@ -182,10 +191,14 @@ public partial class SimManager : Node2D
                 }
                 region.CheckPopulation();
             }
-
             worldPop += region.population;
         }
+
         Parallel.ForEach(regions, region =>{
+            if (region.owner != null){
+                region.StateBordering();
+            }
+            region.RandomStateFormation();
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         });
         worldPopulation = worldPop; 
@@ -193,6 +206,7 @@ public partial class SimManager : Node2D
     public void OnTick(){
         task = Task.Run(SimTick);
     }
+    #endregion
 
     #region Pops
     void UpdateStats(){
@@ -202,7 +216,7 @@ public partial class SimManager : Node2D
         workforceChange = 0;
         worldPopulation = worldDependents + worldWorkforce;
     }
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Professions profession = Professions.TRIBESPEOPLE){
+    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Strata strata = Strata.TRIBAL){
         currentBatch += 1;
         if (currentBatch > 12){
             currentBatch = 1;
@@ -221,7 +235,7 @@ public partial class SimManager : Node2D
         pop.tech = new Tech();
         pop.tech.militaryLevel = tech.militaryLevel;
         pop.tech.societyLevel = tech.societyLevel;
-        pop.profession = profession;
+        pop.strata = strata;
         pop.tech.industryLevel = tech.industryLevel;
 
         return pop;
@@ -261,10 +275,11 @@ public partial class SimManager : Node2D
 
             State state = new State(){
                 name = NameGenerator.GenerateNationName(),
-                color = new Color(r, g, b)
+                color = new Color(r, g, b),
+                capital = region
             };
             state.AddRegion(region);
-            nations.Add(state);
+            states.Add(state);
         }
     }
     
@@ -285,7 +300,8 @@ public partial class SimManager : Node2D
             case MapModes.POLITIY:  
                 if (region.pops.Count > 0){
                     color = new Color(0.2f, 0.2f, 0.2f);
-                } else if (region.owner != null){
+                }
+                if (region.owner != null){
                     color = region.owner.color;
                 }
             break;

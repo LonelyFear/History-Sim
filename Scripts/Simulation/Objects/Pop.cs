@@ -11,7 +11,7 @@ public partial class Pop : GodotObject
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
-    public Professions profession;
+    public Strata strata;
     public Tech tech;
     public int batchId;
 
@@ -51,11 +51,9 @@ public partial class Pop : GodotObject
         return population * simPopulationMultiplier;
     }
 }
-public enum Professions{
-    TRIBESPEOPLE,
-	PEASANT,
-	UNEMPLOYED,
-	WORKERS,
-	SKILLED,
-	ARISTOCRATS
+public enum Strata{
+    TRIBAL,
+    LOW,
+    MIDDLE,
+    HIGH
 }

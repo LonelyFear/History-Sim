@@ -18,7 +18,7 @@ public partial class Region : GodotObject
     public float avgFertility;
     public int landCount;
     public SimManager simManager;
-    public State nation;
+    public State owner;
 
     // Demographics
     public long maxPopulation = 0;
@@ -29,6 +29,7 @@ public partial class Region : GodotObject
     Random rng = new Random();
 
     public int currentMonth;
+    public bool border;
     public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
@@ -90,6 +91,31 @@ public partial class Region : GodotObject
             ChangePopulation(pop.workforce, pop.dependents);
         }
     }
+    #region Nations
+    public void RandomStateFormation(){
+        if (owner == null && population > Pop.toNativePopulation(1000) && rng.NextDouble() <= 0.0001){
+            simManager.CreateNation(this);
+        }
+    }
+
+    public void StateBordering(){
+        border = false;
+        for (int dx = -1; dx < 2; dx++){
+            for (int dy = -1; dy < 2; dy++){
+                if ((dx != 0  && dy != 0) || (dx == 0 && dy == 0)){
+                    continue;
+                }
+                Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
+                if (region.owner != null){
+                    border = true;
+                    if (!owner.borderingStates.Contains(region.owner)){
+                        owner.borderingStates.Append(region.owner);                        
+                    }
+                }
+            }
+        }
+    }
+    #endregion
 
     public void CheckPopulation(){
         long countedPopulation = 0;
@@ -184,7 +210,7 @@ public partial class Region : GodotObject
                         Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
 
                         if (region.habitable && rng.NextDouble() <= 0.25d){
-                            MovePop(pop, region, Pop.toNativePopulation(100), Pop.toNativePopulation(100));
+                            MovePop(pop, region, (long)Mathf.Round(pop.workforce * Mathf.InverseLerp(0.05, 0.5, rng.NextDouble())), (long)Mathf.Round(pop.dependents * Mathf.InverseLerp(0.05, 0.5, rng.NextDouble())));
                             return;
                         }
                     }
@@ -212,7 +238,7 @@ public partial class Region : GodotObject
                 merger.ChangePopulation(movedWorkforce, movedDependents);
                 merger.canMove = false;
             } else {
-                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
+                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.strata);
                 npop.canMove = false;
             }
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
