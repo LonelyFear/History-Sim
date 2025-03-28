@@ -154,10 +154,13 @@ public partial class WorldGeneration : Node2D
             }
         }
         GD.Print("Biome Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
+        //EmitSignal();
+    }
 
+    public void ColorMap(){
         worldGenStage++;
         GD.Print("Map Coloring Started");
-        startTime = Time.GetTicksMsec();
+        ulong startTime = Time.GetTicksMsec();
         // Map coloring
         loadedBiomes = LoadBiomes();
         biomes = new Biome[worldSize.X, worldSize.Y]; 
@@ -168,10 +171,10 @@ public partial class WorldGeneration : Node2D
                 preparationProgress++;
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
-                        //tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
-                        tileMap.CallDeferred("set_cell", [new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY)]);
-                        //terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
-                        terrainImage.CallDeferred("set_pixel", [x, y, Color.FromString(biome.color, new Color(1, 1, 1))]);
+                        tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
+                        //tileMap.CallDeferred("set_cell", [new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY)]);
+                        terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                        //terrainImage.CallDeferred("set_pixel", [x, y, Color.FromString(biome.color, new Color(1, 1, 1))]);
                         biomes[x,y] = biome;
                     }
                 }
@@ -179,8 +182,7 @@ public partial class WorldGeneration : Node2D
         }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
         worldCreated = true;
-        CallDeferred("emit_signal", SignalName.worldgenFinished);
-        //EmitSignal();
+        CallDeferred("emit_signal", SignalName.worldgenFinished);        
     }
 
     string GetBiome(int x, int y){

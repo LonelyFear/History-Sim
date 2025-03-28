@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=24 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scenes/Game.cs" id="1_rku1e"]
@@ -7,21 +7,20 @@
 [ext_resource type="Texture2D" uid="uid://cijdk3pvlrko" path="res://Sprites/Borders.png" id="2_rku1e"]
 [ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_rfjv2"]
 [ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="4_1phco"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="4_exi56"]
+[ext_resource type="Texture2D" uid="uid://bxcobj3k4w7ug" path="res://Sprites/Under.png" id="4_iivbl"]
 [ext_resource type="Texture2D" uid="uid://dgw77xp2rspt" path="res://Sprites/loading.png" id="4_nnt18"]
+[ext_resource type="Texture2D" uid="uid://gcfy0su0hgup" path="res://Sprites/Over.png" id="5_7nbq1"]
 [ext_resource type="Script" uid="uid://bn6k8xr4csl48" path="res://Scripts/loading_icon.gd" id="5_ewbju"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scripts/terrain_map.gd" id="5_nb51f"]
+[ext_resource type="Texture2D" uid="uid://bdyro1h0wkigt" path="res://Sprites/Progress.png" id="6_exi56"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
+[ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="8_7t8sx"]
 [ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="8_85qyi"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
-
-[sub_resource type="SystemFont" id="SystemFont_48xlc"]
-
-[sub_resource type="Theme" id="Theme_1phco"]
-default_font = SubResource("SystemFont_48xlc")
-default_font_size = 77
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d1ilt"]
 texture = ExtResource("2_rku1e")
@@ -47,21 +46,20 @@ offset_bottom = 648.0
 script = ExtResource("2_1phco")
 
 [node name="TextureRect" type="TextureRect" parent="Loading Screen"]
-modulate = Color(0.42, 0.42, 0.42, 1)
+modulate = Color(0.49, 0.49, 0.49, 1)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -672.004
-offset_top = -335.0
-offset_right = 672.004
-offset_bottom = 335.0
+offset_left = -838.5
+offset_top = -418.0
+offset_right = 838.5
+offset_bottom = 418.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_rfjv2")
-expand_mode = 3
 
 [node name="Game Title" type="Label" parent="Loading Screen"]
 layout_mode = 1
@@ -76,22 +74,33 @@ offset_right = 150.0
 offset_bottom = -174.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_1phco")
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 70
 text = "Generating World..."
 
-[node name="ProgressBar" type="ProgressBar" parent="Loading Screen"]
+[node name="ProgressBar" type="TextureProgressBar" parent="Loading Screen"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -270.0
-offset_top = -22.0
-offset_right = 270.0
-offset_bottom = 22.0
+offset_left = -360.0
+offset_top = -30.5
+offset_right = -280.0
+offset_bottom = -23.5
 grow_horizontal = 2
 grow_vertical = 2
+scale = Vector2(9, 9)
+value = 10.0
+nine_patch_stretch = true
+stretch_margin_left = 1
+stretch_margin_top = 1
+stretch_margin_right = 1
+stretch_margin_bottom = 1
+texture_under = ExtResource("4_iivbl")
+texture_over = ExtResource("5_7nbq1")
+texture_progress = ExtResource("6_exi56")
 
 [node name="Splash Text" type="Label" parent="Loading Screen"]
 layout_mode = 1
@@ -100,18 +109,21 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -53.0
-offset_top = 29.0
-offset_right = 54.0
-offset_bottom = 52.0
+offset_left = -101.0
+offset_top = 36.5
+offset_right = 103.0
+offset_bottom = 67.5
 grow_horizontal = 2
 grow_vertical = 2
-text = "Placing Tribes"
+theme_override_fonts/font = ExtResource("8_7t8sx")
+theme_override_font_sizes/font_size = 30
+text = "Generating A World..."
 
 [node name="Sprite2D" type="Sprite2D" parent="Loading Screen"]
-position = Vector2(576, 480)
-scale = Vector2(9.71428, 9.71428)
+position = Vector2(576, 491)
+scale = Vector2(8, 8)
 texture = ExtResource("4_nnt18")
+offset = Vector2(1, 0)
 script = ExtResource("5_ewbju")
 
 [node name="Time Manager" type="Node" parent="."]
@@ -135,7 +147,7 @@ tile_set = SubResource("TileSet_6iyac")
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
-worldSizeMult = 2
+worldSizeMult = 3
 seed = 48590
 mapScale = 1.0
 
@@ -155,28 +167,41 @@ centered = false
 visible = false
 
 [node name="Population Label" type="Label" parent="UI" node_paths=PackedStringArray("simManager")]
-offset_right = 40.0
-offset_bottom = 23.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 169.0
+offset_bottom = 26.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("8_7t8sx")
 theme_override_font_sizes/font_size = 20
 text = "World Population:"
 script = ExtResource("8_85qyi")
 simManager = NodePath("../../Simulation")
 
 [node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("sim")]
-offset_right = 40.0
-offset_bottom = 23.0
+offset_left = 109.0
+offset_top = 66.0
+offset_right = 199.0
+offset_bottom = 89.0
+theme = ExtResource("4_exi56")
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/font_size = 13
+text = "Region Data:
+Population: 100"
 script = ExtResource("9_iivbl")
 sim = NodePath("../../Simulation")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI"]
-offset_left = 1045.0
-offset_right = 1152.0
-offset_bottom = 60.0
+offset_left = 1043.0
+offset_top = 3.0
+offset_right = 1150.0
+offset_bottom = 70.0
 
 [node name="Date Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
+theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 20
@@ -187,6 +212,7 @@ timeManager = NodePath("../../../Time Manager")
 
 [node name="TPS Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
+theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 20

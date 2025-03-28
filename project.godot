@@ -29,6 +29,11 @@ window/vsync/vsync_mode=0
 
 project/assembly_name="Nations"
 
+[editor]
+
+movie_writer/movie_file="C:/Users/MY_PC/Downloads/recording.avi"
+movie_writer/disable_vsync=true
+
 [input]
 
 Move_Left={
