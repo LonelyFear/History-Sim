@@ -3,8 +3,7 @@ using Godot;
 
 public partial class TimeManager : Node
 {
-    [Export]
-    public Node2D world;
+    
     [Signal]
     public delegate void TickEventHandler();
     [Signal]
@@ -19,21 +18,20 @@ public partial class TimeManager : Node
 
     public ulong tickStartTime = 0;
     public double tickDelta = 1;
-    SimManager simManager;
+    public WorldGeneration world;
+    public SimManager simManager;
+    bool worldGenFinished = false;
     public override void _Ready()
     {
-        world = GetParent().GetNode<Node2D>("World");
-        simManager = GetParent().GetNode<SimManager>("Simulation");
+        world = GetNode<WorldGeneration>("/root/Game/World");
+        simManager = GetNode<SimManager>("/root/Game/Simulation");
         // Connection
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
     }
 
     public override void _Process(double delta)
     {
-        if (totalTicks == 0){
-            TickGame();
-        }
-        if (simManager.task.IsCompleted){
+        if (worldGenFinished && simManager.task.IsCompleted ){
             tickDelta = (double)(Time.GetTicksMsec() - tickStartTime)/1000;
             TickGame();
             if (simManager.mapUpdate){
@@ -43,7 +41,8 @@ public partial class TimeManager : Node
     }
 
     public void OnWorldgenFinished(){
-        //TickGame();
+        TickGame();
+        worldGenFinished = true;
     }
 
     private void TickGame(){

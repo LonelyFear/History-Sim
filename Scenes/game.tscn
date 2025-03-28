@@ -1,60 +1,27 @@
-[gd_scene load_steps=15 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=21 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
+[ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scenes/Game.cs" id="1_rku1e"]
+[ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scenes/LoadingScreen.cs" id="2_1phco"]
+[ext_resource type="Texture2D" uid="uid://dfdnrw2dp1lsf" path="res://Sprites/World.png" id="2_rfjv2"]
 [ext_resource type="Texture2D" uid="uid://cijdk3pvlrko" path="res://Sprites/Borders.png" id="2_rku1e"]
 [ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_rfjv2"]
 [ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="4_1phco"]
+[ext_resource type="Texture2D" uid="uid://dgw77xp2rspt" path="res://Sprites/loading.png" id="4_nnt18"]
+[ext_resource type="Script" uid="uid://bn6k8xr4csl48" path="res://Scripts/loading_icon.gd" id="5_ewbju"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scripts/terrain_map.gd" id="5_nb51f"]
-[ext_resource type="Script" uid="uid://blcppmgbqb27u" path="res://Scripts/UI/camera_controller.gd" id="6_nnt18"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="8_85qyi"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
+[ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 
-[sub_resource type="GDScript" id="GDScript_ynf5e"]
-script/source = "extends Node
+[sub_resource type="SystemFont" id="SystemFont_48xlc"]
 
-var modsPath : String = \"res://Mods/\"
-var validModPaths := []
-var modids := []
-
-func _ready() -> void:
-	pass
-	#loadMods(modsPath)
-	#print(\"Mod loading complete: Succesfully loaded \" + str(validModPaths.size()) + \" mods\")
-
-func loadMods(path : String) -> void:
-	if DirAccess.dir_exists_absolute(path):
-		print(\"Found \" + str(DirAccess.get_directories_at(path).size()) + \" directories\")
-		for mod in DirAccess.get_directories_at(path):
-			var modPath : String = modsPath + mod
-			if DirAccess.dir_exists_absolute(modPath):
-				var modJsonPath : String = modPath + \"/mod.json\"
-				if (FileAccess.file_exists(modJsonPath)):
-					var modJsonFile := FileAccess.open(modJsonPath, FileAccess.READ)
-					var modData : Dictionary = JSON.parse_string(modJsonFile.get_as_text())
-					
-					if modData is Dictionary and modData.has(\"author\") and modData.has(\"version\") and modData.has(\"modid\") and modData.has(\"name\"):
-						if (!modids.has(modData[\"modid\"])):
-							print(\"Succesfully loaded \" + modData[\"name\"] + \" by \" + modData[\"author\"])
-							print(\"Version: \" + str(modData[\"version\"]))
-							if modData.has(\"description\"):
-								print(\"Description: \" + modData[\"description\"])
-							
-							validModPaths.append(modPath)
-							modids.append(modData[\"modid\"])
-						else:
-							print(\"Mod id already in use!\")
-					else:
-						print(\"Error loading mod \" + mod + \": mod.json invalid\")
-				else:
-					print(\"Error loading mod \" + mod + \": mod.json not found\")
-			else:
-				print(\"Error loading mod \" + mod + \": Path invalid\")
-	else:
-		print(\"Error loading mods: mods directory invalid\")
-"
+[sub_resource type="Theme" id="Theme_1phco"]
+default_font = SubResource("SystemFont_48xlc")
+default_font_size = 77
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d1ilt"]
 texture = ExtResource("2_rku1e")
@@ -68,8 +35,88 @@ texture_region_size = Vector2i(8, 8)
 tile_size = Vector2i(8, 8)
 sources/0 = SubResource("TileSetAtlasSource_d1ilt")
 
-[node name="Game" type="Node"]
-script = SubResource("GDScript_ynf5e")
+[node name="Game" type="Node2D"]
+script = ExtResource("1_rku1e")
+
+[node name="Loading Screen" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_top = -7.0
+offset_right = 1152.0
+offset_bottom = 648.0
+script = ExtResource("2_1phco")
+
+[node name="TextureRect" type="TextureRect" parent="Loading Screen"]
+modulate = Color(0.42, 0.42, 0.42, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -672.004
+offset_top = -335.0
+offset_right = 672.004
+offset_bottom = 335.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_rfjv2")
+expand_mode = 3
+
+[node name="Game Title" type="Label" parent="Loading Screen"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -280.0
+offset_right = 150.0
+offset_bottom = -174.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_1phco")
+text = "Generating World..."
+
+[node name="ProgressBar" type="ProgressBar" parent="Loading Screen"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -22.0
+offset_right = 270.0
+offset_bottom = 22.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Splash Text" type="Label" parent="Loading Screen"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -53.0
+offset_top = 29.0
+offset_right = 54.0
+offset_bottom = 52.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Placing Tribes"
+
+[node name="Sprite2D" type="Sprite2D" parent="Loading Screen"]
+position = Vector2(576, 480)
+scale = Vector2(9.71428, 9.71428)
+texture = ExtResource("4_nnt18")
+script = ExtResource("5_ewbju")
+
+[node name="Time Manager" type="Node" parent="."]
+script = ExtResource("7_ewbju")
+monthsPerTick = 1
 
 [node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "timeManager")]
 z_index = 10
@@ -88,15 +135,14 @@ tile_set = SubResource("TileSet_6iyac")
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
-worldSizeMult = 3
+worldSizeMult = 2
 seed = 48590
 mapScale = 1.0
 
-[node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("camera", "lodMap", "regionSprite")]
+[node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("lodMap", "regionSprite")]
 scale = Vector2(1.333, 1.333)
 tile_set = ExtResource("4_1phco")
 script = ExtResource("5_nb51f")
-camera = NodePath("../../PlayerCamera")
 lodMap = NodePath("../LOD Map")
 regionSprite = NodePath("../../Simulation/RegionOverlay")
 baseRegionOpacity = 1.0
@@ -105,18 +151,8 @@ baseRegionOpacity = 1.0
 scale = Vector2(16, 16)
 centered = false
 
-[node name="PlayerCamera" type="Camera2D" parent="."]
-position = Vector2(576, 324)
-script = ExtResource("6_nnt18")
-zoomSpeed = 20.0
-minZoom = Vector2(15, 15)
-
-[node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("world")]
-script = ExtResource("7_ewbju")
-world = NodePath("../World")
-monthsPerTick = 1
-
 [node name="UI" type="CanvasLayer" parent="."]
+visible = false
 
 [node name="Population Label" type="Label" parent="UI" node_paths=PackedStringArray("simManager")]
 offset_right = 40.0
@@ -160,5 +196,8 @@ horizontal_alignment = 2
 script = ExtResource("11_exi56")
 timeManager = NodePath("../../../Time Manager")
 
-[connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]
+[node name="PlayerCamera" parent="." instance=ExtResource("13_rfjv2")]
+position = Vector2(576, 324)
+
 [connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]
+[connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]

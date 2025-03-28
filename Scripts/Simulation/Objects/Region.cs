@@ -30,6 +30,7 @@ public partial class Region : GodotObject
 
     public int currentMonth;
     public bool border;
+    public bool frontier;
     public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
@@ -100,13 +101,17 @@ public partial class Region : GodotObject
 
     public void StateBordering(){
         border = false;
+        frontier = false;
         for (int dx = -1; dx < 2; dx++){
             for (int dy = -1; dy < 2; dy++){
                 if ((dx != 0  && dy != 0) || (dx == 0 && dy == 0)){
                     continue;
                 }
                 Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
-                if (region.owner != null){
+                if (region.owner == null){
+                    frontier = true;
+                }
+                if (region.owner != null && region.owner != owner){
                     border = true;
                     if (!owner.borderingStates.Contains(region.owner)){
                         owner.borderingStates.Append(region.owner);                        
@@ -130,6 +135,9 @@ public partial class Region : GodotObject
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
+        }
+        if (countedPopulation < Pop.toNativePopulation(1) && owner != null){
+            owner.RemoveRegion(this);
         }
         population = countedPopulation;
         dependents = countedDependents;
@@ -210,7 +218,7 @@ public partial class Region : GodotObject
                         Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
 
                         if (region.habitable && rng.NextDouble() <= 0.25d){
-                            MovePop(pop, region, (long)Mathf.Round(pop.workforce * Mathf.InverseLerp(0.05, 0.5, rng.NextDouble())), (long)Mathf.Round(pop.dependents * Mathf.InverseLerp(0.05, 0.5, rng.NextDouble())));
+                            MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
                             return;
                         }
                     }

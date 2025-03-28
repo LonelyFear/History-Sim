@@ -44,6 +44,7 @@ public class Tectonics
         
         foreach (Crust crust in crusts){
             GetPressure(crust);
+            world.heightMapProgress += 0.5f;
         }
         Parallel.ForEach(crusts, GrowRange);  
         return GetElevations();
@@ -196,6 +197,7 @@ public class Tectonics
         }
         
         while (freeTiles > 0 && attempts > 0){
+            world.heightMapProgress += 0.5f;
             attempts -= 1;
             Parallel.ForEach(fullPositions.ToArray(), pos =>{
 

@@ -2,7 +2,7 @@ extends Label
 
 @export var simManager : Node
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if (simManager):
 		text = "World Population: " + thousands_sep(simManager.worldPopulation/simManager.simToPopMult) + "\nWorld Workforce: " + thousands_sep(simManager.worldWorkforce/simManager.simToPopMult) + "\nWorld Dependents: " + thousands_sep(simManager.worldDependents/simManager.simToPopMult)+ "\nTotal Pops: " + thousands_sep(simManager.pops.size())
 	else:

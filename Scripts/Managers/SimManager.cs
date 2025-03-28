@@ -52,6 +52,9 @@ public partial class SimManager : Node2D
     public Vector2I hoveredRegionPos;
     public Region hoveredRegion = null;
     public State hoveredState = null;
+
+    // Events
+    public delegate void SimulationInitializedEventHandler();
     public override void _Ready()
     {
         simToPopMult = Pop.simPopulationMultiplier;
@@ -96,7 +99,6 @@ public partial class SimManager : Node2D
     }
 
     private void OnWorldgenFinished(){ 
-           
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
         GD.Print(terrainSize); 
@@ -303,6 +305,9 @@ public partial class SimManager : Node2D
                 }
                 if (region.owner != null){
                     color = region.owner.color;
+                    if (region.border || region.frontier){
+                        color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+                    }
                 }
             break;
             case MapModes.POPULATION:

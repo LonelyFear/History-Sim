@@ -20,7 +20,7 @@ public partial class WorldGeneration : Node2D
     float[] humidThresholds = [0.941f, 0.778f, 0.507f, 0.236f, 0.073f, 0.014f, 0.002f];
     Image terrainImage;
     public bool worldCreated;
-
+    public int worldGenStage;
     enum TempTypes {
         POLAR,
         ALPINE,
@@ -56,17 +56,24 @@ public partial class WorldGeneration : Node2D
     [Export] public int octaves = 8;
     public List<Biome> loadedBiomes;
     Random rng;
+
+    public bool generationFinished = false;
+    public int worldGenStep = 0;
+    public float heightMapProgress;
+    public float moistMapProgress;
+    public float tempMapProgress;
+    public float preparationProgress;
     //[ExportCategory("Rivers Settings")]
 
-    public override void _Ready(){
+    public override void _Ready()
+    {
+        tileMap = GetNode<TileMapLayer>("Terrain Map");
         worldSize *= worldSizeMult;
         mapScale *= worldSizeMult;
 
         rng = new Random(seed);
-        tileMap = (TileMapLayer)GetNode("Terrain Map");
         Scale = new Vector2(1,1) * 72f/worldSize.X;
         tileMap.Scale = new Vector2(1,1) * 16f/tileMap.TileSet.TileSize.X;
-        GenerateWorld();
     }
 
     float[,] GenerateTempMap(float scale){
@@ -80,6 +87,7 @@ public partial class WorldGeneration : Node2D
         float[,] falloff = Falloff.GenerateFalloffMap(worldSize.X, worldSize.Y, false, 1, 1.1f);
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
+                tempMapProgress += 1f;
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
                 map[x, y] = Mathf.Lerp(1 - falloff[x,y], noiseValue, 0.15f);
                 float heightFactor = (heightmap[x,y] - seaLevel - 0.2f)/(1f - seaLevel - 0.2f);
@@ -102,6 +110,7 @@ public partial class WorldGeneration : Node2D
         for (int y = 0; y < worldSize.Y; y++){
             float moisture = 0;
             for (int x = 0; x < worldSize.X; x++){
+                moistMapProgress += 1;
                 if (heightmap[x,y] < seaLevel){
                     moisture += 0.05f * tempmap[x,y];
                 } else if ((heightmap[x,y] - seaLevel)/(1f - seaLevel) > 0.4f){
@@ -115,22 +124,26 @@ public partial class WorldGeneration : Node2D
         return map;
     }  
 
-    void GenerateWorld(){
+    public void GenerateWorld(){      
+        worldGenStage++;
         GD.Print("Heightmap Generation Started");
         ulong startTime = Time.GetTicksMsec();
         heightmap = new Tectonics().RunSimulation(this, 40);
         GD.Print("Heightmap Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
+        worldGenStage++;
         GD.Print("Temperature Generation Started");
         startTime = Time.GetTicksMsec();
         tempmap = GenerateTempMap(mapScale/4);
         GD.Print("Temperature Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
+        worldGenStage++;
         GD.Print("Humidity Generation Started");
         startTime = Time.GetTicksMsec();
         humidmap = GenerateHumidMap(mapScale/2);
         GD.Print("Humidity Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
+        worldGenStage++;
         GD.Print("Biome Generation Started");
         startTime = Time.GetTicksMsec();
         // Biome generation
@@ -142,18 +155,23 @@ public partial class WorldGeneration : Node2D
         }
         GD.Print("Biome Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
+        worldGenStage++;
         GD.Print("Map Coloring Started");
         startTime = Time.GetTicksMsec();
         // Map coloring
         loadedBiomes = LoadBiomes();
         biomes = new Biome[worldSize.X, worldSize.Y]; 
+
         terrainImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
+                preparationProgress++;
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
-                        tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
-                        terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                        //tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
+                        tileMap.CallDeferred("set_cell", [new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY)]);
+                        //terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                        terrainImage.CallDeferred("set_pixel", [x, y, Color.FromString(biome.color, new Color(1, 1, 1))]);
                         biomes[x,y] = biome;
                     }
                 }
@@ -161,7 +179,8 @@ public partial class WorldGeneration : Node2D
         }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
         worldCreated = true;
-        EmitSignal(SignalName.worldgenFinished);
+        CallDeferred("emit_signal", SignalName.worldgenFinished);
+        //EmitSignal();
     }
 
     string GetBiome(int x, int y){

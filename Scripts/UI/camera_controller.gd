@@ -3,7 +3,7 @@ class_name CameraController
 
 @export var cameraSpeed : float = 100.0
 @export var cameraAccel : float = 50.0
-
+@export var controlEnabled : bool = false
 
 var velocity : Vector2
 @export_category("Zooming")
@@ -11,10 +11,9 @@ var velocity : Vector2
 @export var minZoom : Vector2 = Vector2(6, 6)
 @export var maxZoom : Vector2 = Vector2(1, 1)
 
-
-
-func _process(delta: float) -> void:
-	cameraControl()
+func _process(_delta: float) -> void:
+	if (controlEnabled):
+		cameraControl()
 
 func cameraControl() -> void:
 	var cameraRealSpeed : float = cameraSpeed / zoom.x

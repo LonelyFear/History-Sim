@@ -14,10 +14,10 @@ var showMapId : int
 
 func _ready() -> void:
 	world = get_parent()
+	camera = get_node("/root/Game/PlayerCamera")
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	manageMaps()
-	
 	# Makes our region map more transparent as we zoom in
 	if (camera.zoom.x >= regionMapLerpZoom && regionSprite):
 		# Slowly makes region map transparent
