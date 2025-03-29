@@ -98,6 +98,10 @@ public partial class SimManager : Node2D
         return (Vector2I)(pos / (world.Scale * 16))/tilesPerRegion;
     }
 
+    public Vector2 RegionToGlobalPos(Vector2I regionPos){
+        return tilesPerRegion * (regionPos * (world.Scale * 16));
+    }
+
     private void OnWorldgenFinished(){ 
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;

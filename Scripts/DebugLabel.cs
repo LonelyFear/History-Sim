@@ -18,6 +18,7 @@ public partial class DebugLabel : Label
         } else {
             Text = "";
         }
+        Text = "Mouse Pos: " + sim.mousePos;
         
     } 
 }

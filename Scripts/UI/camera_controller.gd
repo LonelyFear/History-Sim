@@ -50,4 +50,10 @@ func zoomCamera(delta : float) -> void:
 	elif (Input.is_action_just_released("Zoom_Out")):
 		zoomTarget *= 0.9
 	zoomTarget = clamp(zoomTarget, Vector2(maxZoom, maxZoom), Vector2(minZoom, minZoom))
+	
+	var oldZoom = zoom.x
 	zoom = lerp(zoom, zoomTarget, zoomSpeed * delta)
+	
+	# Zooming on position
+	var zoomDir : Vector2 = get_global_mouse_position() - position
+	position += zoomDir - (zoomDir / (zoom.x/oldZoom))

@@ -1,8 +1,9 @@
-[gd_scene load_steps=18 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=19 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scenes/Game.cs" id="1_rku1e"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
+[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="2_nnt18"]
 [ext_resource type="Texture2D" uid="uid://cijdk3pvlrko" path="res://Sprites/Borders.png" id="2_rku1e"]
 [ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_rfjv2"]
 [ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="4_1phco"]
@@ -31,7 +32,26 @@ sources/0 = SubResource("TileSetAtlasSource_d1ilt")
 [node name="Game" type="Node2D"]
 script = ExtResource("1_rku1e")
 
+[node name="Scaling" type="Node2D" parent="."]
+z_index = -4096
+
+[node name="Scaling Buddy" type="Sprite2D" parent="Scaling"]
+z_index = -4096
+scale = Vector2(10, 5)
+texture = ExtResource("2_nnt18")
+centered = false
+
+[node name="Label" type="Label" parent="Scaling"]
+offset_left = 376.0
+offset_top = 649.0
+offset_right = 900.0
+offset_bottom = 735.0
+theme_override_fonts/font = ExtResource("8_7t8sx")
+theme_override_font_sizes/font_size = 62
+text = "History Simulator"
+
 [node name="Loading Screen" parent="." instance=ExtResource("2_nb51f")]
+visible = false
 
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
@@ -71,9 +91,17 @@ scale = Vector2(16, 16)
 centered = false
 
 [node name="UI" type="CanvasLayer" parent="."]
-visible = false
 
-[node name="Population Label" type="Label" parent="UI" node_paths=PackedStringArray("simManager")]
+[node name="Game UI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Population Label" type="Label" parent="UI/Game UI" node_paths=PackedStringArray("simManager")]
+layout_mode = 0
 offset_left = 3.0
 offset_top = 3.0
 offset_right = 169.0
@@ -84,29 +112,18 @@ theme_override_fonts/font = ExtResource("8_7t8sx")
 theme_override_font_sizes/font_size = 20
 text = "World Population:"
 script = ExtResource("8_85qyi")
-simManager = NodePath("../../Simulation")
+simManager = NodePath("../../../Simulation")
 
-[node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("sim")]
-offset_left = 109.0
-offset_top = 66.0
-offset_right = 199.0
-offset_bottom = 89.0
-theme = ExtResource("4_exi56")
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 7
-theme_override_font_sizes/font_size = 13
-text = "Region Data:
-Population: 100"
-script = ExtResource("9_iivbl")
-sim = NodePath("../../Simulation")
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Game UI"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -107.0
+offset_bottom = 67.0
+grow_horizontal = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI"]
-offset_left = 1043.0
-offset_top = 3.0
-offset_right = 1150.0
-offset_bottom = 70.0
-
-[node name="Date Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
+[node name="Date Label" type="Label" parent="UI/Game UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -115,9 +132,9 @@ theme_override_font_sizes/font_size = 20
 text = "01/01/0000"
 horizontal_alignment = 2
 script = ExtResource("10_7nbq1")
-timeManager = NodePath("../../../Time Manager")
+timeManager = NodePath("../../../../Time Manager")
 
-[node name="TPS Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
+[node name="TPS Label" type="Label" parent="UI/Game UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -127,10 +144,29 @@ text = "TPS: 30
 Fps: 300"
 horizontal_alignment = 2
 script = ExtResource("11_exi56")
-timeManager = NodePath("../../../Time Manager")
+timeManager = NodePath("../../../../Time Manager")
+
+[node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("sim")]
+offset_left = 109.0
+offset_top = 66.0
+offset_right = 200.0
+offset_bottom = 97.0
+theme = ExtResource("4_exi56")
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/font_size = 13
+text = "Region Data:
+Population: 100"
+script = ExtResource("9_iivbl")
+sim = NodePath("../../Simulation")
 
 [node name="PlayerCamera" parent="." instance=ExtResource("13_rfjv2")]
-position = Vector2(576, 324)
+position = Vector2(640, 360)
+limit_left = 0
+limit_top = 0
+limit_right = 1280
+limit_bottom = 720
+position_smoothing_enabled = true
 
 [connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]
 [connection signal="worldgenFinished" from="World" to="Simulation" method="on_worldgen_finished"]
