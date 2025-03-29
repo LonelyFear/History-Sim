@@ -1,47 +1,100 @@
-[gd_scene load_steps=2 format=3 uid="uid://chv60w7s0kt3y"]
+[gd_scene load_steps=10 format=3 uid="uid://chv60w7s0kt3y"]
 
-[ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scenes/LoadingScreen.cs" id="1_oobaa"]
+[ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scenes/LoadingScreen.cs" id="1_1opfs"]
+[ext_resource type="Texture2D" uid="uid://dfdnrw2dp1lsf" path="res://Sprites/World.png" id="2_xbrhi"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="3_iom8t"]
+[ext_resource type="Texture2D" uid="uid://bxcobj3k4w7ug" path="res://Sprites/Under.png" id="4_nw6gx"]
+[ext_resource type="Texture2D" uid="uid://gcfy0su0hgup" path="res://Sprites/Over.png" id="5_x8yqx"]
+[ext_resource type="Texture2D" uid="uid://bdyro1h0wkigt" path="res://Sprites/Progress.png" id="6_qbyj8"]
+[ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="7_5emdp"]
+[ext_resource type="Texture2D" uid="uid://dgw77xp2rspt" path="res://Sprites/loading.png" id="8_umxys"]
+[ext_resource type="Script" uid="uid://bn6k8xr4csl48" path="res://Scripts/loading_icon.gd" id="9_4v7p6"]
 
-[node name="Loading Screen" type="CanvasLayer"]
-script = ExtResource("1_oobaa")
+[node name="Loading Screen" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_top = -7.0
+offset_right = 1152.0
+offset_bottom = 648.0
+script = ExtResource("1_1opfs")
 
-[node name="Loading Title" type="Label" parent="."]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -232.5
-offset_right = 232.5
-offset_bottom = 137.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 70
-text = "Generating New World..."
-
-[node name="ProgressBar" type="ProgressBar" parent="."]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -250.0
-offset_top = -25.0
-offset_right = 250.0
-offset_bottom = 25.0
-grow_horizontal = 2
-grow_vertical = 2
-rounded = true
-
-[node name="Splash Text" type="Label" parent="ProgressBar"]
+[node name="TextureRect" type="TextureRect" parent="."]
+modulate = Color(0.49, 0.49, 0.49, 1)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -74.0
-offset_top = 37.5
-offset_right = 74.0
-offset_bottom = 60.5
+offset_left = -838.5
+offset_top = -418.0
+offset_right = 838.5
+offset_bottom = 418.0
 grow_horizontal = 2
 grow_vertical = 2
+texture = ExtResource("2_xbrhi")
+
+[node name="Game Title" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -280.0
+offset_right = 150.0
+offset_bottom = -174.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_iom8t")
+theme_override_font_sizes/font_size = 70
+text = "Generating World..."
+
+[node name="ProgressBar" type="TextureProgressBar" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -360.0
+offset_top = -30.5
+offset_right = -280.0
+offset_bottom = -23.5
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(9, 9)
+value = 10.0
+nine_patch_stretch = true
+stretch_margin_left = 1
+stretch_margin_top = 1
+stretch_margin_right = 1
+stretch_margin_bottom = 1
+texture_under = ExtResource("4_nw6gx")
+texture_over = ExtResource("5_x8yqx")
+texture_progress = ExtResource("6_qbyj8")
+
+[node name="Splash Text" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -101.0
+offset_top = 36.5
+offset_right = 103.0
+offset_bottom = 67.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("7_5emdp")
 theme_override_font_sizes/font_size = 30
-text = "Settling Wilderness..."
+text = "Generating A World..."
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(576, 491)
+scale = Vector2(8, 8)
+texture = ExtResource("8_umxys")
+offset = Vector2(1, 0)
+script = ExtResource("9_4v7p6")

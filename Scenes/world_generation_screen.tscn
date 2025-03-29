@@ -1,0 +1,154 @@
+[gd_scene load_steps=5 format=3 uid="uid://imk426fj4x3a"]
+
+[ext_resource type="Texture2D" uid="uid://dfdnrw2dp1lsf" path="res://Sprites/World.png" id="1_swl4w"]
+[ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="2_4g6c4"]
+[ext_resource type="Script" uid="uid://dswesovn1w4te" path="res://Scripts/world_settings_panel.gd" id="2_8327h"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_ktv3r"]
+
+[node name="World Generation Screen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="."]
+modulate = Color(0.49, 0.49, 0.49, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -838.5
+offset_top = -418.0
+offset_right = 838.5
+offset_bottom = 418.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_swl4w")
+
+[node name="WorldSettingsPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -319.0
+offset_top = -324.0
+offset_right = 319.0
+offset_bottom = 324.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_8327h")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="WorldSettingsPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -297.0
+offset_top = -228.0
+offset_right = 298.0
+offset_bottom = 157.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+
+[node name="SeedContainer" type="VBoxContainer" parent="WorldSettingsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="SeedLabel" type="Label" parent="WorldSettingsPanel/VBoxContainer/SeedContainer"]
+layout_mode = 2
+tooltip_text = "The seed of the world. Must be in numbers only."
+mouse_filter = 0
+mouse_default_cursor_shape = 16
+theme_override_fonts/font = ExtResource("2_4g6c4")
+theme_override_font_sizes/font_size = 32
+text = "Seed"
+
+[node name="Seed" type="LineEdit" parent="WorldSettingsPanel/VBoxContainer/SeedContainer"]
+layout_mode = 2
+tooltip_text = "The seed of the world. Must be in numbers only."
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 32
+placeholder_text = "Leave Empty for Random"
+context_menu_enabled = false
+emoji_menu_enabled = false
+virtual_keyboard_type = 2
+
+[node name="WorldSizeContainer" type="VBoxContainer" parent="WorldSettingsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="WorldSizeLabel" type="Label" parent="WorldSettingsPanel/VBoxContainer/WorldSizeContainer"]
+layout_mode = 2
+tooltip_text = "The size of the simulated regions in the world. Larger simulation means more regions."
+mouse_filter = 0
+mouse_default_cursor_shape = 16
+theme_override_fonts/font = ExtResource("2_4g6c4")
+theme_override_font_sizes/font_size = 32
+text = "Simulation Size"
+
+[node name="WorldSize" type="OptionButton" parent="WorldSettingsPanel/VBoxContainer/WorldSizeContainer"]
+layout_mode = 2
+tooltip_text = "The size of the simulated regions in the world. Larger simulation means more regions."
+theme_override_fonts/font = ExtResource("2_4g6c4")
+theme_override_font_sizes/font_size = 32
+selected = 1
+item_count = 3
+popup/item_0/text = "Large"
+popup/item_0/id = 0
+popup/item_1/text = "Medium"
+popup/item_1/id = 1
+popup/item_2/text = "Small"
+popup/item_2/id = 2
+
+[node name="Game Title" type="Label" parent="WorldSettingsPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -395.0
+offset_top = 10.0
+offset_right = 396.0
+offset_bottom = 57.0
+grow_horizontal = 2
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 46
+text = "World Generation Settings"
+horizontal_alignment = 1
+
+[node name="VSplitContainer" type="VSplitContainer" parent="WorldSettingsPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+split_offset = 7
+
+[node name="HBoxContainer" type="HBoxContainer" parent="WorldSettingsPanel"]
+layout_mode = 0
+offset_top = 588.0
+offset_right = 637.0
+offset_bottom = 635.0
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Back" type="Button" parent="WorldSettingsPanel/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 30
+action_mode = 0
+text = "Back"
+
+[node name="Start" type="Button" parent="WorldSettingsPanel/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 30
+action_mode = 0
+text = "Start Simulation"
+
+[connection signal="text_changed" from="WorldSettingsPanel/VBoxContainer/SeedContainer/Seed" to="WorldSettingsPanel" method="_on_seed_text_changed"]
+[connection signal="pressed" from="WorldSettingsPanel/HBoxContainer/Start" to="WorldSettingsPanel" method="_on_start_pressed"]

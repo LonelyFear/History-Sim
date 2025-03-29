@@ -65,15 +65,14 @@ public partial class WorldGeneration : Node2D
     public float preparationProgress;
     //[ExportCategory("Rivers Settings")]
 
-    public override void _Ready()
-    {
+    public void Init(){
         tileMap = GetNode<TileMapLayer>("Terrain Map");
         worldSize *= worldSizeMult;
         mapScale *= worldSizeMult;
 
         rng = new Random(seed);
         Scale = new Vector2(1,1) * 72f/worldSize.X;
-        tileMap.Scale = new Vector2(1,1) * 16f/tileMap.TileSet.TileSize.X;
+        tileMap.Scale = new Vector2(1,1) * 16f/tileMap.TileSet.TileSize.X;        
     }
 
     float[,] GenerateTempMap(float scale){

@@ -61,26 +61,35 @@ script = ExtResource("2_48xlc")
 [node name="Start" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 action_mode = 0
 text = "Start Simulation"
-flat = true
+alignment = 0
 
 [node name="Options" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 action_mode = 0
 text = "Options"
-flat = true
+alignment = 0
 
 [node name="Exit Game" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 action_mode = 0
-text = "Exit Game"
-flat = true
+text = "Quit Game"
+alignment = 0
+
+[node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
+title = "Quit Game?"
+initial_position = 1
+size = Vector2i(329, 100)
+ok_button_text = "Confirm"
+dialog_text = "Are you sure you want to quit the game?"
 
 [connection signal="pressed" from="Button Holder/Start" to="Button Holder" method="_on_start_pressed"]
 [connection signal="pressed" from="Button Holder/Exit Game" to="Button Holder" method="_on_exit_game_pressed"]
+[connection signal="canceled" from="ConfirmationDialog" to="Button Holder" method="_on_confirmation_dialog_canceled"]
+[connection signal="confirmed" from="ConfirmationDialog" to="Button Holder" method="_on_confirmation_dialog_confirmed"]
