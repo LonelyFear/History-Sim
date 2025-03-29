@@ -12,6 +12,8 @@ public partial class LoadingScreen : Control
     Camera2D camera;
 
     public int seed;
+    public int tilesPerRegionFactor;
+    public int worldSizeFactor;
     public override void _Ready()
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
@@ -27,11 +29,11 @@ public partial class LoadingScreen : Control
     {
         if (task == null){
             world.seed = seed;
-            
+            sim.tilesPerRegion *= tilesPerRegionFactor;
             world.Init();
             task = Task.Run(world.GenerateWorld);
         }
-        
+
         float tileCount = world.worldSize.X * world.worldSize.Y;
         GetNode<TextureProgressBar>("ProgressBar").Value = (world.heightMapProgress/tileCount * 100f) + (world.tempMapProgress/tileCount * 25f) + (world.moistMapProgress/tileCount * 25f) + (world.preparationProgress/tileCount * 50f);
         switch (world.worldGenStage){

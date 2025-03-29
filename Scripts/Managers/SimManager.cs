@@ -11,7 +11,7 @@ public partial class SimManager : Node2D
     [Export]
     public WorldGeneration world {private set; get;}
     [Export]
-    public int tilesPerRegion {private set; get;} = 4;
+    public int tilesPerRegion = 4;
     Sprite2D regionOverlay;
     [Export(PropertyHint.Range, "4,16,4")]
     public TimeManager timeManager { get; set; }

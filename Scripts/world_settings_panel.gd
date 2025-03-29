@@ -19,5 +19,6 @@ func _on_start_pressed() -> void:
 		seed = lineEdit.text.to_int()
 	var game : Node2D = load("res://Scenes/game.tscn").instantiate()
 	game.get_node("Loading Screen").seed = seed
+	game.get_node("Loading Screen").tilesPerRegionFactor = worldSizeDropdown.get_selected_id()
 	get_tree().root.add_child(game)
 	get_parent().queue_free()
