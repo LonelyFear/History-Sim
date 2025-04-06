@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
@@ -55,6 +57,10 @@ public partial class SimManager : Node2D
 
     // Events
     public delegate void SimulationInitializedEventHandler();
+
+    // Saved Stuff
+    public Dictionary<string, SimResource> resources;
+    public Dictionary<string, BuildingData> buildings;
     public override void _Ready()
     {
         simToPopMult = Pop.simPopulationMultiplier;
@@ -102,7 +108,64 @@ public partial class SimManager : Node2D
         return tilesPerRegion * (regionPos * (world.Scale * 16));
     }
 
+    void LoadBuildings(){
+        string buildingPath = "Resources/buildings.json";
+
+        if (File.Exists(buildingPath)){
+            StreamReader reader = new StreamReader(buildingPath);
+            string buildingData = reader.ReadToEnd();
+            Array<BuildingData> buildingList = JsonSerializer.Deserialize<Array<BuildingData>>(buildingData);
+
+            foreach (BuildingData building in buildingList){
+                buildings.Add(building.id, building);
+                foreach (string id in building.resourcesProducedIds.Keys){
+                    if (GetResource(id) == null){
+                        GD.PrintErr("Building couldnt load resource '" + id + "'");
+                        return;
+                    }
+                    building.resourcesProduced.Add(GetResource(id), building.resourcesProducedIds[id]);
+                }
+            }
+        } else {
+            GD.PrintErr("buildings.json not found at path '" + buildingPath + "'"); 
+        }
+    }
+    void LoadResources(){
+        string resourcesPath = "Resources/resources.json";
+
+        if (File.Exists(resourcesPath)){
+            StreamReader reader = new StreamReader(resourcesPath);
+            string resourceData = reader.ReadToEnd();
+            Array<SimResource> resourceList = JsonSerializer.Deserialize<Array<SimResource>>(resourceData);
+
+            foreach (SimResource resource in resourceList){
+                resources.Add(resource.id, resource);
+            }
+        } else {
+            GD.PrintErr("resources.json not found at path '" + resourcesPath + "'"); 
+        }
+    }
+    public SimResource GetResource(string id){
+        if (resources.ContainsKey(id)){
+            return resources[id];
+        } else {
+            GD.PrintErr("Resource not found with ID '" + id + "'");
+            return null;
+        }
+    }
+    public BuildingData GetBuilding(string id){
+        if (buildings.ContainsKey(id)){
+            return buildings[id];
+        } else {
+            GD.PrintErr("Building not found with ID '" + id + "'");
+            return null;
+        }
+    }
     private void OnWorldgenFinished(){ 
+        
+        LoadResources();
+        // Load Resources Before Buildings
+        LoadBuildings();
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
         GD.Print(terrainSize); 
@@ -238,9 +301,7 @@ public partial class SimManager : Node2D
         region.AddPop(pop);       
         culture.AddPop(pop);
 
-        pop.tech = new Tech();
-        pop.tech.militaryLevel = tech.militaryLevel;
-        pop.tech.societyLevel = tech.societyLevel;
+        pop.tech = tech;
         pop.strata = strata;
         pop.tech.industryLevel = tech.industryLevel;
 
@@ -265,9 +326,9 @@ public partial class SimManager : Node2D
     public Culture CreateCulture(Region region){
         Culture culture = new Culture();
         culture.name = "Culturism";
-        float r = Mathf.InverseLerp(0, worldSize.X, region.pos.X);
-        float g = Mathf.InverseLerp(0, worldSize.Y, region.pos.Y);
-        float b = Mathf.InverseLerp(0, worldSize.Y, region.pos.Y - worldSize.Y);
+        float r = rng.NextSingle();
+        float g = rng.NextSingle();
+        float b = rng.NextSingle();
         culture.color = new Color(r,g,b);
         cultures.Append(culture);
 
@@ -322,7 +383,11 @@ public partial class SimManager : Node2D
                 }
             break;
             case MapModes.CULTURE:
-                // TODO: Culture mapmode
+                if (region.habitable && region.pops.Count > 0){
+                    color = region.pops[0].culture.color;
+                } else if (region.habitable) {
+                    color = new Color(0, 0, 0, 1);
+                }
             break;
             case MapModes.POPS:
                 if (region.habitable && region.pops.Count > 0){

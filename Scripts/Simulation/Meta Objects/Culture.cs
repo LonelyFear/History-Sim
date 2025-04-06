@@ -5,6 +5,14 @@ using Godot.Collections;
 public partial class Culture : GodotObject
 {
     public Color color;
+
+    // Increases the chance states of this culture declare wars
+    public TraitLevel agression = TraitLevel.MEDIUM;
+    
+    // Decreases descrimination by units of this culture
+    public TraitLevel acceptance = TraitLevel.MEDIUM;
+    public Array<Culture> hatedCultures = new Array<Culture>();
+
     public string name = "Culturism";
     public long population = 0;
     public Array<Pop> pops = new Array<Pop>();
@@ -30,10 +38,14 @@ public partial class Culture : GodotObject
         }
     }
     public static bool CheckCultureSimilarity(Culture a, Culture b){
-        float minColorDiff = 0.2f;
-        bool similarR = Math.Abs(a.color.R - b.color.R) <= minColorDiff;
-        bool similarG = Math.Abs(a.color.G - b.color.G) <= minColorDiff;
-        bool similarB = Math.Abs(a.color.B - b.color.B) <= minColorDiff;
-        return similarR && similarG && similarB;
+        return a == b;
     }
+}
+
+public enum TraitLevel {
+    VERY_HIGH,
+    HIGH,
+    MEDIUM,
+    LOW,
+    VERY_LOW,
 }

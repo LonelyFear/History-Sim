@@ -1,6 +1,4 @@
-using Godot;
-
-public partial class Tech : GodotObject
+public struct Tech
 {
     public int militaryLevel;
     public int societyLevel;

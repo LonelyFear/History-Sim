@@ -54,6 +54,7 @@ public partial class Pop : GodotObject
 public enum Strata{
     TRIBAL,
     LOW,
+    SOLDIER,
     MIDDLE,
     HIGH
 }

@@ -1,0 +1,8 @@
+[
+	{
+        "name":"Grain",
+        "id":"grain",
+        "baseCost" : 1,
+        "isFood":true
+    }
+]
