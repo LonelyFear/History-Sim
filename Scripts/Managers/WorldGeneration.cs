@@ -401,7 +401,7 @@ public partial class WorldGeneration : Node2D
     }
 
     List<Biome> LoadBiomes(){
-        string biomesPath = "Resources/biomes.json";
+        string biomesPath = "Data/biomes.json";
         if (File.Exists(biomesPath)){
             StreamReader reader = new StreamReader(biomesPath);
             string biomeData = reader.ReadToEnd();

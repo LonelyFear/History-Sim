@@ -109,14 +109,15 @@ public partial class SimManager : Node2D
     }
 
     void LoadBuildings(){
-        string buildingPath = "Resources/buildings.json";
+        string buildingPath = "Data/Buildings";
 
-        if (File.Exists(buildingPath)){
-            StreamReader reader = new StreamReader(buildingPath);
-            string buildingData = reader.ReadToEnd();
-            Array<BuildingData> buildingList = JsonSerializer.Deserialize<Array<BuildingData>>(buildingData);
+        if (Directory.Exists(buildingPath)){
+            foreach (string subPath in Directory.GetFiles(buildingPath)){
 
-            foreach (BuildingData building in buildingList){
+                StreamReader reader = new StreamReader(subPath);
+                string buildingData = reader.ReadToEnd();
+                BuildingData building = JsonSerializer.Deserialize<BuildingData>(buildingData);
+
                 buildings.Add(building.id, building);
                 foreach (string id in building.resourcesProducedIds.Keys){
                     if (GetResource(id) == null){
@@ -126,23 +127,25 @@ public partial class SimManager : Node2D
                     building.resourcesProduced.Add(GetResource(id), building.resourcesProducedIds[id]);
                 }
             }
+
         } else {
-            GD.PrintErr("buildings.json not found at path '" + buildingPath + "'"); 
+            GD.PrintErr("Buildings directory not found at path '" + buildingPath + "'"); 
         }
     }
     void LoadResources(){
-        string resourcesPath = "Resources/resources.json";
+        string resourcesPath = "Data/Resources";
 
-        if (File.Exists(resourcesPath)){
-            StreamReader reader = new StreamReader(resourcesPath);
-            string resourceData = reader.ReadToEnd();
-            Array<SimResource> resourceList = JsonSerializer.Deserialize<Array<SimResource>>(resourceData);
+        if (Directory.Exists(resourcesPath)){
+            foreach (string subPath in Directory.GetFiles(resourcesPath)){
+                StreamReader reader = new StreamReader(subPath);
+                string resourceData = reader.ReadToEnd();
+                SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
 
-            foreach (SimResource resource in resourceList){
-                resources.Add(resource.id, resource);
+                resources.Add(resource.id, resource);            
             }
+
         } else {
-            GD.PrintErr("resources.json not found at path '" + resourcesPath + "'"); 
+            GD.PrintErr("Resources directory not found at path '" + resourcesPath + "'"); 
         }
     }
     public SimResource GetResource(string id){

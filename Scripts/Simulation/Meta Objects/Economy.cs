@@ -6,4 +6,22 @@ public partial class Economy : GodotObject
 {
     Dictionary<SimResource, long> resources;
     
+    public void AddResources(SimResource resource, long amount){
+        if (!resources.ContainsKey(resource)){
+            resources.Add(resource, amount);
+        } else {
+            resources[resource] += amount;
+        }
+    }
+
+    public void RemoveResources(SimResource resource, long amount){
+        if (resources.ContainsKey(resource)){
+            resources[resource] -= amount;
+            if (resources[resource] <= 0){
+                resources.Remove(resource);
+            }
+        } else {
+            GD.PrintErr("Tried to remove resource that doesn't exist from economy");
+        }
+    }
 }

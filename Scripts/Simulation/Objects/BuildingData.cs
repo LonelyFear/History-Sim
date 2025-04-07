@@ -9,7 +9,7 @@ public partial class BuildingData : GodotObject
     public string description = "the basic building";
     public int monthsToBuild;
     public float cost;
-    public long maxWorkforce;
+    public long occupancy;
     public Dictionary<string, float> resourcesProducedIds;
     public Dictionary<SimResource, float> resourcesProduced;
     public string[] productiveBiomes = [];
@@ -17,11 +17,12 @@ public partial class BuildingData : GodotObject
     public float maxFertility;
     public float bestMinFertility;
     public float bestMaxFertility;
+    public BuildingType type;
 }
 
 public enum BuildingType{
+    AGRICULTURE,
     PRODUCTION,
     GOVERNMENT,
     HOUSING,
-
 }
