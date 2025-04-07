@@ -59,8 +59,8 @@ public partial class SimManager : Node2D
     public delegate void SimulationInitializedEventHandler();
 
     // Saved Stuff
-    public Dictionary<string, SimResource> resources;
-    public Dictionary<string, BuildingData> buildings;
+    public Dictionary<string, SimResource> resources = new Dictionary<string, SimResource>();
+    public Dictionary<string, BuildingData> buildings = new Dictionary<string, BuildingData>();
     public override void _Ready()
     {
         simToPopMult = Pop.simPopulationMultiplier;
@@ -114,7 +114,7 @@ public partial class SimManager : Node2D
         if (Directory.Exists(buildingPath)){
             foreach (string subPath in Directory.GetFiles(buildingPath)){
 
-                StreamReader reader = new StreamReader(buildingPath + subPath);
+                StreamReader reader = new StreamReader(subPath.Replace("\\", "/"));
                 string buildingData = reader.ReadToEnd();
                 BuildingData building = JsonSerializer.Deserialize<BuildingData>(buildingData);
 
@@ -133,11 +133,12 @@ public partial class SimManager : Node2D
         }
     }
     void LoadResources(){
-        string resourcesPath = "Data/Resources";
+        string resourcesPath = "Data/Resources/";
 
         if (Directory.Exists(resourcesPath)){
             foreach (string subPath in Directory.GetFiles(resourcesPath)){
-                StreamReader reader = new StreamReader(resourcesPath + subPath);
+                GD.Print(resourcesPath + subPath);
+                StreamReader reader = new StreamReader(subPath.Replace("\\", "/"));
                 string resourceData = reader.ReadToEnd();
                 SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
 
