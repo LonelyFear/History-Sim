@@ -114,7 +114,7 @@ public partial class SimManager : Node2D
         if (Directory.Exists(buildingPath)){
             foreach (string subPath in Directory.GetFiles(buildingPath)){
 
-                StreamReader reader = new StreamReader(subPath);
+                StreamReader reader = new StreamReader(buildingPath + subPath);
                 string buildingData = reader.ReadToEnd();
                 BuildingData building = JsonSerializer.Deserialize<BuildingData>(buildingData);
 
@@ -137,7 +137,7 @@ public partial class SimManager : Node2D
 
         if (Directory.Exists(resourcesPath)){
             foreach (string subPath in Directory.GetFiles(resourcesPath)){
-                StreamReader reader = new StreamReader(subPath);
+                StreamReader reader = new StreamReader(resourcesPath + subPath);
                 string resourceData = reader.ReadToEnd();
                 SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
 
