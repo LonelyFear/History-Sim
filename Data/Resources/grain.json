@@ -2,5 +2,5 @@
 	"name":"Grain",
 	"id":"grain",
 	"baseCost" : 1,
-	"resourceTypes":[0]
+	"types":[0]
 }

@@ -4,9 +4,9 @@ using System;
 
 public partial class Economy : GodotObject
 {
-    Dictionary<SimResource, long> resources;
+    public Dictionary<SimResource, double> resources;
     
-    public void AddResources(SimResource resource, long amount){
+    public void AddResources(SimResource resource, double amount){
         if (!resources.ContainsKey(resource)){
             resources.Add(resource, amount);
         } else {
@@ -14,7 +14,7 @@ public partial class Economy : GodotObject
         }
     }
 
-    public void RemoveResources(SimResource resource, long amount){
+    public void RemoveResources(SimResource resource, double amount){
         if (resources.ContainsKey(resource)){
             resources[resource] -= amount;
             if (resources[resource] <= 0){

@@ -6,7 +6,7 @@ public partial class SimResource : GodotObject
     public string name {get; set;} = "Resource";
     public string id {get; set;} = "defaultresource";
     public float baseCost {get; set;}
-    public ResourceType[] resourceTypes {get; set;}
+    public ResourceType[] types {get; set;}
 }
 
 public enum ResourceType {

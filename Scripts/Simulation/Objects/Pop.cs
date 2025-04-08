@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 
 public partial class Pop : GodotObject
@@ -12,10 +13,14 @@ public partial class Pop : GodotObject
     public Region region;
     public Culture culture;
     public Strata strata;
+    public double totalWealth;
+    public double wealthPerCapita;
     public Tech tech;
     public int batchId;
 
     public bool canMove = true;
+
+    const double foodNeedPerYear = 1;
 
     public void changeWorkforce(long amount){
         if (workforce + amount < 0){
@@ -44,12 +49,42 @@ public partial class Pop : GodotObject
     }
 
     public const long simPopulationMultiplier = 1000;
-    public static long fromNativePopulation(long simPopulation){
+    public static long FromNativePopulation(long simPopulation){
         return simPopulation/simPopulationMultiplier;
     }
-    public static long toNativePopulation(long population){
+    public static long ToNativePopulation(long population){
         return population * simPopulationMultiplier;
     }
+    public void CalcWealthPerCapita(){
+        wealthPerCapita = totalWealth / FromNativePopulation(population);
+    }
+    public double ConsumeResources(ResourceType type, double needCapitaPerYear, Economy economy = null){
+        double needForPopulation = needCapitaPerYear/12d * FromNativePopulation(population);
+        double unsatisfiedNeed = needForPopulation;
+
+        foreach (var pair in economy.resources){
+            SimResource resource = pair.Key;
+            if (resource.types.Contains(type)){
+
+                double amount = pair.Value;
+
+                if (amount > unsatisfiedNeed){
+                    economy.RemoveResources(resource, unsatisfiedNeed);
+                    unsatisfiedNeed = 0;
+                } else {
+                    economy.RemoveResources(resource, amount);
+                    unsatisfiedNeed -= amount;
+                }
+                
+            }
+        }
+        if (unsatisfiedNeed > 0){
+            GD.Print("Need unsatisfied");
+            return unsatisfiedNeed;
+        }
+        return 0;
+    }
+
 }
 public enum Strata{
     TRIBAL,

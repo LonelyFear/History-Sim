@@ -236,7 +236,7 @@ public partial class SimManager : Node2D
                 nodeChance *= 10;
             }
             if (rng.NextDouble() <= nodeChance){
-                long startingPopulation = Pop.toNativePopulation(rng.NextInt64(200, 1000));
+                long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(200, 1000));
                 CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), CreateCulture(region));
             }
         }
@@ -381,7 +381,7 @@ public partial class SimManager : Node2D
             break;
             case MapModes.POPULATION:
                 if (region.habitable && region.pops.Count > 0){
-                    color = new Color(0, (float)region.population/Pop.toNativePopulation(1000 * (int)Mathf.Pow(tilesPerRegion, 2)), 0, 1);
+                    color = new Color(0, (float)region.population/Pop.ToNativePopulation(1000 * (int)Mathf.Pow(tilesPerRegion, 2)), 0, 1);
                 } else if (region.habitable) {
                     color = new Color(0, 0, 0, 1);
                 }

@@ -61,8 +61,8 @@ public partial class Region : GodotObject
 
                 tile.maxPopulation = 0;
                 if (biome.terrainType == Biome.TerrainType.LAND){
-                    maxPopulation += (long)(Pop.toNativePopulation(1000) * biome.fertility);
-                    tile.maxPopulation = (long)(Pop.toNativePopulation(1000) * biome.fertility);
+                    maxPopulation += (long)(Pop.ToNativePopulation(1000) * biome.fertility);
+                    tile.maxPopulation = (long)(Pop.ToNativePopulation(1000) * biome.fertility);
                 }
             }
         }
@@ -94,7 +94,7 @@ public partial class Region : GodotObject
     }
     #region Nations
     public void RandomStateFormation(){
-        if (owner == null && population > Pop.toNativePopulation(1000) && rng.NextDouble() <= 0.0001){
+        if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
             simManager.CreateNation(this);
         }
     }
@@ -127,7 +127,7 @@ public partial class Region : GodotObject
         long countedDependents = 0;
         long countedWorkforce = 0;
         foreach (Pop pop in pops.ToArray()){
-            if (pop.population < Pop.toNativePopulation(1)){
+            if (pop.population < Pop.ToNativePopulation(1)){
                 pops.Remove(pop);
                 simManager.pops.Remove(pop);
                 continue;
@@ -136,7 +136,7 @@ public partial class Region : GodotObject
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
         }
-        if (countedPopulation < Pop.toNativePopulation(1) && owner != null){
+        if (countedPopulation < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
         population = countedPopulation;
@@ -146,7 +146,7 @@ public partial class Region : GodotObject
 
     public void MergePops(){
         foreach (Pop pop in pops){
-            if (pop.population >= Pop.toNativePopulation(1)){
+            if (pop.population >= Pop.ToNativePopulation(1)){
                 foreach (Pop merger in pops){
                     if (pop != merger && Culture.CheckCultureSimilarity(pop.culture, merger.culture)){
                         merger.ChangePopulation(pop.workforce, pop.dependents);
@@ -161,7 +161,7 @@ public partial class Region : GodotObject
 
     public void ClearEmptyPops(){
         foreach (Pop pop in pops.ToArray()){
-            if (pop.population < Pop.toNativePopulation(1)){
+            if (pop.population < Pop.ToNativePopulation(1)){
                 simManager.DestroyPop(pop);
             }
         }
@@ -174,7 +174,7 @@ public partial class Region : GodotObject
             pop.canMove = true;
 
             float bRate;
-            if (pop.population < Pop.toNativePopulation(2)){
+            if (pop.population < Pop.ToNativePopulation(2)){
                 bRate = 0;
             } else {
                 bRate = pop.birthRate;
@@ -228,7 +228,7 @@ public partial class Region : GodotObject
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
-        if (destination != this && movedWorkforce >= Pop.toNativePopulation(1) || movedDependents >= Pop.toNativePopulation(1)){
+        if (destination != this && movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1)){
             if (movedWorkforce > pop.workforce){
                 movedWorkforce = pop.workforce;
             }
