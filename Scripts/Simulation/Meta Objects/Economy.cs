@@ -1,6 +1,7 @@
 using Godot;
 using Godot.Collections;
 using System;
+using System.Linq;
 
 public partial class Economy : GodotObject
 {
@@ -12,6 +13,28 @@ public partial class Economy : GodotObject
         } else {
             resources[resource] += amount;
         }
+    }
+
+    public bool EconomyHasResourceType(ResourceType type){
+        foreach (var pair in resources){
+            SimResource resource = pair.Key;
+            double amount = pair.Value;
+            if (amount > 0 && resource.types.Contains(type)){
+                return true;
+            }
+        }
+        return false;  
+    }
+
+    public bool EconomyHasResource(string id){
+        foreach (var pair in resources){
+            SimResource resource = pair.Key;
+            double amount = pair.Value;
+            if (amount > 0 && resource.id == id.ToLower()){
+                return true;
+            }
+        }
+        return false;  
     }
 
     public void RemoveResources(SimResource resource, double amount){
