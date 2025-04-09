@@ -69,10 +69,10 @@ public partial class Pop : GodotObject
                 double amount = pair.Value;
 
                 if (amount > unsatisfiedNeed){
-                    economy.RemoveResources(resource, unsatisfiedNeed);
+                    economy.ChangeResourceAmount(resource, -unsatisfiedNeed);
                     unsatisfiedNeed = 0;
                 } else {
-                    economy.RemoveResources(resource, amount);
+                    economy.ChangeResourceAmount(resource, -amount);
                     unsatisfiedNeed -= amount;
                 }
                 

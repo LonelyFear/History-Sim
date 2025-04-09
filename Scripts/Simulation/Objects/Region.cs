@@ -27,6 +27,8 @@ public partial class Region : GodotObject
     public long workforce = 0;
 
     Random rng = new Random();
+    public Array<Building> buildings = new Array<Building>();
+    public int buildingSlots;
 
     public int currentMonth;
     public bool border;
@@ -45,6 +47,7 @@ public partial class Region : GodotObject
                 }               
             }
         }
+        buildingSlots = landCount;
         avgFertility = (f/landCount);
     }
 
