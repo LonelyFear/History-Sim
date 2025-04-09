@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Godot;
@@ -29,6 +30,7 @@ public partial class Region : GodotObject
     Random rng = new Random();
     public Array<Building> buildings = new Array<Building>();
     public int buildingSlots;
+    public Array<ConstructionSlot> buildingQueue = new Array<ConstructionSlot>();
 
     public int currentMonth;
     public bool border;
@@ -125,6 +127,38 @@ public partial class Region : GodotObject
     }
     #endregion
 
+    #region Buildings
+    public void QueueConstruction(BuildingData type, Economy economy){
+        if (buildingSlots > 0){
+            buildingSlots--;
+            buildingQueue.Add(new ConstructionSlot(){
+                building = type,
+                months = type.monthsToBuild
+            });
+        }
+    }
+    public void UpdateBuildingQueues(){
+        foreach (ConstructionSlot slot in buildingQueue){
+            slot.months -= 1;
+            if (slot.months < 0){
+                buildingQueue.Remove(slot);
+                PlaceBuilding(slot.building);
+            }
+        }
+    }
+    public void PlaceBuilding(BuildingData type){
+        // Checks if we can level up a preexisting building
+        foreach (Building constructedBuilding in buildings){
+            if (constructedBuilding.data == type && constructedBuilding.LevelUp()){
+                return;
+            }
+        }
+        // Otherwise places new building
+        Building constructed = new Building();
+        constructed.InitBuilding(type);
+        buildings.Add(constructed);
+    }
+    #endregion
     public void CheckPopulation(){
         long countedPopulation = 0;
         long countedDependents = 0;

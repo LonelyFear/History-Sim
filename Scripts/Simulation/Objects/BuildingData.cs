@@ -9,14 +9,15 @@ public partial class BuildingData : GodotObject
     public string description {get; set;} = "the basic building";
     public int monthsToBuild {get; set;}
     public float cost {get; set;}
-    public long occupancy {get; set;}
+    public long baseOccupancy {get; set;}
     public Dictionary<string, float> resourcesProducedIds {get; set;}
-    public Dictionary<SimResource, float> resourcesProduced {get; set;} = new Dictionary<SimResource, float>();
+    public Dictionary<SimResource, float> resourcesProduced = new Dictionary<SimResource, float>();
     public string[] productiveBiomes {get; set;} = [];
     public float minFertility {get; set;}
     public float maxFertility {get; set;}
     public float bestMinFertility {get; set;}
     public float bestMaxFertility {get; set;}
+    public int maxLevel {get; set;}
     public BuildingType type;
 }
 

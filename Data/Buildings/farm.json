@@ -3,7 +3,7 @@
 	"name":"Farm",
 	"monthsToBuild": 1,
 	"cost": 0,
-	"occupancy":100,
+	"baseOccupancy":100,
 	"resourcesProducedIds":{
 		"grain" : 20
 	},
