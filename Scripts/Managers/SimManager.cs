@@ -242,7 +242,7 @@ public partial class SimManager : Node2D
         }
     }
     #region SimTick
-    void SimTick(){
+    void SimTick(){        
         Parallel.ForEach(states, state =>{
             state.borderingStates = new Array<State>();
         });
@@ -254,18 +254,21 @@ public partial class SimManager : Node2D
         foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
                 region.MovePops();
-            }            
+            }       
         }
         long worldPop = 0;
         foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
+
                 if (region.pops.Count > 1){
                     region.MergePops();
                 }
+                region.PopConsumption();
                 region.CheckPopulation();
             }
             worldPop += region.population;
         }
+
 
         Parallel.ForEach(regions, region =>{
             if (region.owner != null){
@@ -298,8 +301,7 @@ public partial class SimManager : Node2D
         Pop pop = new Pop();
         pop.batchId = currentBatch;
 
-        pop.changeWorkforce(workforce);
-        pop.changeDependents(dependents);
+        pop.ChangePopulation(workforce, dependents);
 
         pops.Add(pop);
         region.AddPop(pop);       

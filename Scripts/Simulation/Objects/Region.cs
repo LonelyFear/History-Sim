@@ -31,6 +31,7 @@ public partial class Region : GodotObject
     public Array<Building> buildings = new Array<Building>();
     public int buildingSlots;
     public Array<ConstructionSlot> buildingQueue = new Array<ConstructionSlot>();
+    public Economy economy = new Economy();
 
     public int currentMonth;
     public bool border;
@@ -164,9 +165,11 @@ public partial class Region : GodotObject
         long countedDependents = 0;
         long countedWorkforce = 0;
         foreach (Pop pop in pops.ToArray()){
-            if (pop.population < Pop.ToNativePopulation(1)){
+            if (pop.population <= Pop.ToNativePopulation(1)){
                 pops.Remove(pop);
+                GD.Print(simManager.pops.Count);
                 simManager.pops.Remove(pop);
+                GD.Print(simManager.pops.Count);
                 continue;
             }
             countedPopulation += pop.population;
@@ -180,6 +183,8 @@ public partial class Region : GodotObject
         dependents = countedDependents;
         workforce = countedWorkforce;
     }
+
+    #region PopActions
 
     public void MergePops(){
         foreach (Pop pop in pops){
@@ -219,12 +224,13 @@ public partial class Region : GodotObject
             if (population > maxPopulation){
                 bRate *= 0.75f;
             }
+            
             float NIR =  (bRate - pop.deathRate)/12f;
             long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
             long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
             long workforceChange = change - dependentChange;
-            pop.changeWorkforce(workforceChange);
-            pop.changeDependents(dependentChange);
+            pop.ChangeWorkforce(workforceChange);
+            pop.ChangeDependents(dependentChange);
 
             twc += workforceChange;
             tdc += dependentChange;
@@ -288,8 +294,17 @@ public partial class Region : GodotObject
             }
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
         }
-
+    }
+    public void PopConsumption(){
+        foreach (Pop pop in pops){
+            pop.deathRate = pop.baseDeathRate;
+            double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, 0.083, economy)/pop.GetConsumptionPopulation();
+            if (unsatisfiedFoodPerCapita != 0){
+                float starvationPercentage = (float)(unsatisfiedFoodPerCapita/Pop.foodPerCapita);
+                pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 5f, starvationPercentage);
+            }
+        }            
     }
 
-    //public void MergePops
+    #endregion
 }

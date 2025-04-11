@@ -8,7 +8,7 @@ public partial class DebugLabel : Label
     {
         Position = GetGlobalMousePosition();
         if (sim.hoveredRegion != null){
-            string regionPopulation = "Region Population: " + Pop.fromNativePopulation(sim.hoveredRegion.population);
+            string regionPopulation = "Region Population: " + Pop.FromNativePopulation(sim.hoveredRegion.population);
             string pops = "Region Pops: " + sim.hoveredRegion.pops.Count;
             string owner = "Owner: None";
             if (sim.hoveredState != null){

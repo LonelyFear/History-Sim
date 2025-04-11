@@ -7,8 +7,10 @@ public partial class Pop : GodotObject
     public long workforce = 0;
     public long dependents = 0;
 
-    public float birthRate = 0.3f;
+    public float baseBirthRate = 0.3f;
+    public float baseDeathRate = 0.29f;
     public float deathRate = 0.29f;
+    public float birthRate = 0.3f;
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
@@ -19,10 +21,10 @@ public partial class Pop : GodotObject
     public int batchId;
 
     public bool canMove = true;
+    public const double foodPerCapita = 1.0;
+    public const double dependentNeedMultiplier = .8;
 
-    const double foodNeedPerYear = 1;
-
-    public void changeWorkforce(long amount){
+    public void ChangeWorkforce(long amount){
         if (workforce + amount < 0){
             amount = -workforce;
         }
@@ -33,7 +35,7 @@ public partial class Pop : GodotObject
         }
 
     }
-    public void changeDependents(long amount){
+    public void ChangeDependents(long amount){
         if (dependents + amount < 0){
             amount = -dependents;
         }
@@ -44,8 +46,8 @@ public partial class Pop : GodotObject
         }
     }
     public void ChangePopulation(long workforceChange, long dependentChange){
-        changeWorkforce(workforceChange);
-        changeDependents(dependentChange);
+        ChangeWorkforce(workforceChange);
+        ChangeDependents(dependentChange);
     }
 
     public const long simPopulationMultiplier = 1000;
@@ -58,8 +60,13 @@ public partial class Pop : GodotObject
     public void CalcWealthPerCapita(){
         wealthPerCapita = totalWealth / FromNativePopulation(population);
     }
-    public double ConsumeResources(ResourceType type, double needCapitaPerYear, Economy economy = null){
-        double needForPopulation = needCapitaPerYear/12d * FromNativePopulation(population);
+
+    public long GetConsumptionPopulation(){
+        return (long)(FromNativePopulation(workforce) + (FromNativePopulation(dependents) * dependentNeedMultiplier));
+    }
+
+    public double ConsumeResources(ResourceType type, double needPerCapita, Economy economy){
+        double needForPopulation = (needPerCapita * FromNativePopulation(workforce)) + (needPerCapita * FromNativePopulation(dependents) * dependentNeedMultiplier);
         double unsatisfiedNeed = needForPopulation;
 
         foreach (var pair in economy.resources){
@@ -78,11 +85,7 @@ public partial class Pop : GodotObject
                 
             }
         }
-        if (unsatisfiedNeed > 0){
-            GD.Print("Need unsatisfied");
-            return unsatisfiedNeed;
-        }
-        return 0;
+        return unsatisfiedNeed;
     }
 
 }

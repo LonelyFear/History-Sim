@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Economy : GodotObject
 {
-    public Dictionary<SimResource, double> resources;
+    public Dictionary<SimResource, double> resources = new Dictionary<SimResource, double>();
     
     public void ChangeResourceAmount(SimResource resource, double amount){
         if (amount > 0){
