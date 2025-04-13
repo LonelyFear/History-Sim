@@ -20,6 +20,7 @@ public partial class State : GodotObject
     Dictionary<State, Relation> relations;
     public Array<State> borderingStates;
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
+    public Economy economy = new Economy();
 
     public void CountPopulation(){
         long countedP = 0;

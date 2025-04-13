@@ -236,7 +236,7 @@ public partial class SimManager : Node2D
                 nodeChance *= 10;
             }
             if (rng.NextDouble() <= nodeChance){
-                long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(200, 1000));
+                long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), CreateCulture(region));
             }
         }
@@ -249,6 +249,7 @@ public partial class SimManager : Node2D
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
+                region.CheckEmployment();
             }         
         });
         foreach (Region region in habitableRegions){
@@ -258,12 +259,20 @@ public partial class SimManager : Node2D
         }
         long worldPop = 0;
         foreach (Region region in habitableRegions){
+            Economy eco = region.economy;
+            if (region.owner != null){
+                eco = region.owner.economy;
+            }
             if (region.pops.Count > 0){
 
                 if (region.pops.Count > 1){
                     region.MergePops();
                 }
-                region.PopConsumption();
+                region.SubstinanceFarming(eco);
+                if (region.buildings.Count > 0){
+                    region.BuildingProduction(eco);     
+                }
+                region.PopConsumption(eco);
                 region.CheckPopulation();
             }
             worldPop += region.population;

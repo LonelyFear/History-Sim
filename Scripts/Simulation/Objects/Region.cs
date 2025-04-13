@@ -26,6 +26,7 @@ public partial class Region : GodotObject
     public long population = 0;
     public long dependents = 0;    
     public long workforce = 0;
+    public long unemployedWorkforce = 0;
 
     Random rng = new Random();
     public Array<Building> buildings = new Array<Building>();
@@ -36,6 +37,8 @@ public partial class Region : GodotObject
     public int currentMonth;
     public bool border;
     public bool frontier;
+    public bool needsJobs {private set; get;}
+    public bool needsWorkers {private set; get;}
     public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
@@ -102,6 +105,11 @@ public partial class Region : GodotObject
     public void RandomStateFormation(){
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
             simManager.CreateNation(this);
+            foreach (SimResource res in economy.resources.Keys){
+                double amt = economy.resources[res];
+                economy.ChangeResourceAmount(res, -amt);
+                owner.economy.ChangeResourceAmount(res, amt);
+            }
         }
     }
 
@@ -167,9 +175,7 @@ public partial class Region : GodotObject
         foreach (Pop pop in pops.ToArray()){
             if (pop.population <= Pop.ToNativePopulation(1)){
                 pops.Remove(pop);
-                GD.Print(simManager.pops.Count);
                 simManager.pops.Remove(pop);
-                GD.Print(simManager.pops.Count);
                 continue;
             }
             countedPopulation += pop.population;
@@ -182,6 +188,34 @@ public partial class Region : GodotObject
         population = countedPopulation;
         dependents = countedDependents;
         workforce = countedWorkforce;
+    }
+
+    public void CheckEmployment(){
+        long availableWorkforce = workforce;
+        foreach (Building building in buildings){
+            availableWorkforce -= building.maxWorkforce;
+            building.workforce = building.maxWorkforce;
+            if (availableWorkforce < 0){
+                needsWorkers = true;
+                building.workforce += availableWorkforce;
+                availableWorkforce = 0;
+            }
+        }
+        unemployedWorkforce = 0;
+        if (availableWorkforce > 0){
+            needsJobs = true;
+            unemployedWorkforce = availableWorkforce;
+        }
+    }
+
+    public void BuildingProduction(Economy eco){
+        foreach (Building building in buildings){
+            foreach (SimResource producedResource in building.data.resourcesProduced.Keys){
+                double jobsFilledPercentage = (double)building.workforce/(double)building.maxWorkforce;
+                double amountProduced = building.data.resourcesProduced[producedResource] * building.level * jobsFilledPercentage;
+                eco.ChangeResourceAmount(producedResource, amountProduced);
+            }
+        }  
     }
 
     #region PopActions
@@ -209,6 +243,7 @@ public partial class Region : GodotObject
         }
     }
 
+    #region PopGrowth
     public void GrowPops(){
         long twc = 0;
         long tdc = 0;
@@ -238,6 +273,7 @@ public partial class Region : GodotObject
         }
         ChangePopulation(twc, tdc);
     }
+    #endregion
 
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
@@ -295,14 +331,21 @@ public partial class Region : GodotObject
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
         }
     }
-    public void PopConsumption(){
+    public void PopConsumption(Economy eco){
         foreach (Pop pop in pops){
             pop.deathRate = pop.baseDeathRate;
-            double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, 0.083, economy)/pop.GetConsumptionPopulation();
+            double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, Pop.foodPerCapita, eco)/pop.GetConsumptionPopulation();
             if (unsatisfiedFoodPerCapita != 0){
                 float starvationPercentage = (float)(unsatisfiedFoodPerCapita/Pop.foodPerCapita);
-                pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 5f, starvationPercentage);
+                pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 1f, starvationPercentage);
             }
+        }            
+    }
+
+    public void SubstinanceFarming(Economy eco){
+        if (buildingSlots > 0){
+                double totalWork = (double)((dependents * 0.6) + unemployedWorkforce);
+                eco.ChangeResourceAmount(simManager.GetResource("grain"), Math.Log(totalWork, 1.01) * avgFertility * buildingSlots);       
         }            
     }
 

@@ -7,7 +7,7 @@ public partial class Economy : GodotObject
 {
     public Dictionary<SimResource, double> resources = new Dictionary<SimResource, double>();
     
-    public void ChangeResourceAmount(SimResource resource, double amount){
+    public double ChangeResourceAmount(SimResource resource, double amount){
         if (amount > 0){
             if (!resources.ContainsKey(resource)){
                 resources.Add(resource, amount);
@@ -17,10 +17,12 @@ public partial class Economy : GodotObject
         } else if (resources.ContainsKey(resource)){
             resources[resource] -= amount;
             if (resources[resource] <= 0){
-                resources.Remove(resource);
+                double extra = resources[resource];
+                resources.Remove(resource);                
+                return Mathf.Abs(extra);
             }
         }
-        //return 0;
+        return 0;
     }
 
     public void SetResourceAmount(SimResource resource, double amount){

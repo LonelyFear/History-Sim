@@ -66,7 +66,7 @@ public partial class Pop : GodotObject
     }
 
     public double ConsumeResources(ResourceType type, double needPerCapita, Economy economy){
-        double needForPopulation = (needPerCapita * FromNativePopulation(workforce)) + (needPerCapita * FromNativePopulation(dependents) * dependentNeedMultiplier);
+        double needForPopulation = needPerCapita * GetConsumptionPopulation();
         double unsatisfiedNeed = needForPopulation;
 
         foreach (var pair in economy.resources){

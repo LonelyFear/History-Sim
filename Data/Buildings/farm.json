@@ -1,11 +1,11 @@
 {
 	"id":"farm",
-	"name":"Farm",
+	"name":"Commercial Farm",
 	"monthsToBuild": 1,
 	"cost": 0,
 	"baseOccupancy":100,
 	"resourcesProducedIds":{
-		"grain" : 20
+		"grain" : 200000.0
 	},
 	"productiveBiomes": [],
 	"minFertility":0.5,
