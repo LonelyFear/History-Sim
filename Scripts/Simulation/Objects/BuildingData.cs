@@ -19,6 +19,8 @@ public partial class BuildingData : GodotObject
     public float bestMaxFertility {get; set;}
     public int maxLevel {get; set;}
     public BuildingType type;
+    public Profession[] acceptedProfessions = [];
+    public Profession bestProfession;
 }
 
 public enum BuildingType{

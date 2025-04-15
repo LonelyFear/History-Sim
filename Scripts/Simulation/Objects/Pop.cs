@@ -14,7 +14,7 @@ public partial class Pop : GodotObject
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
-    public Strata strata;
+    public Profession profession;
     public double totalWealth;
     public double wealthPerCapita;
     public Tech tech;
@@ -88,11 +88,11 @@ public partial class Pop : GodotObject
         return unsatisfiedNeed;
     }
 
+    public static bool CanPopsMerge(Pop a, Pop b){
+        return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
+    }
 }
-public enum Strata{
-    TRIBAL,
-    LOW,
-    SOLDIER,
-    MIDDLE,
-    HIGH
+public enum Profession{
+    FARMER,
+
 }

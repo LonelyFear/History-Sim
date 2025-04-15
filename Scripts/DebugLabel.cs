@@ -9,7 +9,7 @@ public partial class DebugLabel : Label
         Position = GetGlobalMousePosition();
         Region region = sim.hoveredRegion;
         if (region != null){
-            Text = "Food: " + region.economy.AmountOfType(ResourceType.FOOD);
+            Text = "Food: " + region.economy.AmountOfType(ResourceType.FOOD).ToString("#,##0.00");
         } else {
             Text = "";
         }

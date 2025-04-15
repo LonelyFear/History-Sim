@@ -280,10 +280,10 @@ public partial class SimManager : Node2D
 
 
         Parallel.ForEach(regions, region =>{
+            region.RandomStateFormation();
             if (region.owner != null){
                 region.StateBordering();
             }
-            region.RandomStateFormation();
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         });
         worldPopulation = worldPop; 
@@ -301,7 +301,7 @@ public partial class SimManager : Node2D
         workforceChange = 0;
         worldPopulation = worldDependents + worldWorkforce;
     }
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Strata strata = Strata.TRIBAL){
+    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER){
         currentBatch += 1;
         if (currentBatch > 12){
             currentBatch = 1;
@@ -317,7 +317,7 @@ public partial class SimManager : Node2D
         culture.AddPop(pop);
 
         pop.tech = tech;
-        pop.strata = strata;
+        pop.profession = profession;
         pop.tech.industryLevel = tech.industryLevel;
 
         return pop;
@@ -351,17 +351,17 @@ public partial class SimManager : Node2D
     }
     public void CreateNation(Region region){
         if (region.owner == null){
-        float r = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
-        float g = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
-        float b = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());    
+            float r = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
+            float g = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
+            float b = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());    
 
             State state = new State(){
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region
             };
+            states.Add(state);            
             state.AddRegion(region);
-            states.Add(state);
         }
     }
     
@@ -384,6 +384,7 @@ public partial class SimManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f);
                 }
                 if (region.owner != null){
+                    GD.Print("Something is good");
                     color = region.owner.color;
                     if (region.border || region.frontier){
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);

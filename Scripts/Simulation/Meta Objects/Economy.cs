@@ -15,7 +15,7 @@ public partial class Economy : GodotObject
                 resources[resource] += amount;
             }            
         } else if (resources.ContainsKey(resource)){
-            resources[resource] -= amount;
+            resources[resource] += amount;
             if (resources[resource] <= 0){
                 double extra = resources[resource];
                 resources.Remove(resource);                
@@ -39,9 +39,9 @@ public partial class Economy : GodotObject
 
     public double AmountOfType(ResourceType type){
         double totalAmount = 0;
-        foreach (var pair in resources){
+        foreach (var pair in resources.ToArray()){
             SimResource resource = pair.Key;
-            if (resource.types.Contains(type)){
+            if (resource != null && resource.types.Contains(type)){
                 totalAmount += pair.Value;                
             }
         }

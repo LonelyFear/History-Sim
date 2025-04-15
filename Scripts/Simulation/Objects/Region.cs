@@ -25,7 +25,7 @@ public partial class Region : GodotObject
     public long maxPopulation = 0;
     public long population = 0;
     public long dependents = 0;    
-    public long workforce = 0;
+     public long totalWorkforce = 0;
     public long unemployedWorkforce = 0;
 
     Random rng = new Random();
@@ -39,6 +39,7 @@ public partial class Region : GodotObject
     public bool frontier;
     public bool needsJobs {private set; get;}
     public bool needsWorkers {private set; get;}
+    public Dictionary<Profession, long> workforce = new Dictionary<Profession, long>();
     public void CalcAvgFertility(){
         landCount = 0;
         float f = 0;
@@ -53,6 +54,7 @@ public partial class Region : GodotObject
                 }               
             }
         }
+        //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
         buildingSlots = landCount;
         avgFertility = (f/landCount);
     }
@@ -78,7 +80,7 @@ public partial class Region : GodotObject
     }
 
     public void ChangePopulation(long workforceChange, long dependentChange){
-        workforce += workforceChange;
+        totalWorkforce += workforceChange;
         dependents += dependentChange;
         population += workforceChange + dependentChange;
     }
@@ -104,6 +106,7 @@ public partial class Region : GodotObject
     #region Nations
     public void RandomStateFormation(){
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
+            GD.Print("Nation Formed!");
             simManager.CreateNation(this);
             foreach (SimResource res in economy.resources.Keys){
                 double amt = economy.resources[res];
@@ -172,6 +175,11 @@ public partial class Region : GodotObject
         long countedPopulation = 0;
         long countedDependents = 0;
         long countedWorkforce = 0;
+
+        foreach (var pair in workforce){
+            workforce[pair.Key] = 0;
+        }
+
         foreach (Pop pop in pops.ToArray()){
             if (pop.population <= Pop.ToNativePopulation(1)){
                 pops.Remove(pop);
@@ -181,30 +189,35 @@ public partial class Region : GodotObject
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
+
+            if (!workforce.ContainsKey(pop.profession)){
+                workforce.Add(pop.profession, pop.workforce);
+            } else {
+                workforce[pop.profession] += pop.workforce;
+            }
         }
         if (countedPopulation < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
         population = countedPopulation;
         dependents = countedDependents;
-        workforce = countedWorkforce;
+        totalWorkforce = countedWorkforce;
     }
 
     public void CheckEmployment(){
-        long availableWorkforce = workforce;
-        foreach (Building building in buildings){
-            availableWorkforce -= building.maxWorkforce;
-            building.workforce = building.maxWorkforce;
-            if (availableWorkforce < 0){
-                needsWorkers = true;
-                building.workforce += availableWorkforce;
-                availableWorkforce = 0;
-            }
+        Dictionary<Profession, long> availableWorkforce = new Dictionary<Profession, long>();
+        foreach (var pair in workforce){
+            availableWorkforce.Add(pair.Key, pair.Value);
         }
-        unemployedWorkforce = 0;
-        if (availableWorkforce > 0){
-            needsJobs = true;
-            unemployedWorkforce = availableWorkforce;
+
+        foreach (Building building in buildings){
+            availableWorkforce[building.data.bestProfession] -= building.maxWorkforce;
+            building.workforce = building.maxWorkforce;
+            if (availableWorkforce[building.data.bestProfession] < 0){
+                needsWorkers = true;
+                building.workforce += availableWorkforce[building.data.bestProfession];
+                availableWorkforce[building.data.bestProfession] = 0;
+            }
         }
     }
 
@@ -224,7 +237,7 @@ public partial class Region : GodotObject
         foreach (Pop pop in pops){
             if (pop.population >= Pop.ToNativePopulation(1)){
                 foreach (Pop merger in pops){
-                    if (pop != merger && Culture.CheckCultureSimilarity(pop.culture, merger.culture)){
+                    if (Pop.CanPopsMerge(pop, merger)){
                         merger.ChangePopulation(pop.workforce, pop.dependents);
                         pop.ChangePopulation(-pop.workforce, -pop.dependents);
                         break;
@@ -316,7 +329,7 @@ public partial class Region : GodotObject
             }
             Pop merger = null;
             foreach (Pop resident in destination.pops.ToArray()){
-                if (Culture.CheckCultureSimilarity(pop.culture, resident.culture)){
+                if (Pop.CanPopsMerge(pop, merger)){
                     merger = resident;
                     break;
                 }
@@ -325,7 +338,7 @@ public partial class Region : GodotObject
                 merger.ChangePopulation(movedWorkforce, movedDependents);
                 merger.canMove = false;
             } else {
-                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.strata);
+                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
                 npop.canMove = false;
             }
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
@@ -344,8 +357,11 @@ public partial class Region : GodotObject
 
     public void SubstinanceFarming(Economy eco){
         if (buildingSlots > 0){
-                double totalWork = (double)((dependents * 0.6) + unemployedWorkforce);
-                eco.ChangeResourceAmount(simManager.GetResource("grain"), Math.Log(totalWork, 1.01) * avgFertility * buildingSlots);       
+            double totalWork = (double)((dependents * 0.6) + unemployedWorkforce);
+            double maxProduced = 530;
+            double steepness = 0.021;
+            double foodPerSlot = maxProduced/(1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));
+            eco.ChangeResourceAmount(simManager.GetResource("grain"), foodPerSlot * avgFertility * buildingSlots);       
         }            
     }
 
