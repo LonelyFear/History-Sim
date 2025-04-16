@@ -26,7 +26,7 @@ public partial class Region : GodotObject
     public long population = 0;
     public long dependents = 0;    
     public long workforce = 0;
-    public long farmers = 0;
+    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
     public double wealth;
 
     Random rng = new Random();
@@ -58,6 +58,9 @@ public partial class Region : GodotObject
     public void CheckHabitability(){
         if (landCount > 0){
             habitable = true;
+        }
+        foreach (Profession profession in Enum.GetValues(typeof(Profession))){
+            professions.Add(profession, 0);
         }
     }
     public void CalcMaxPopulation(){
@@ -134,7 +137,11 @@ public partial class Region : GodotObject
         long countedPopulation = 0;
         long countedDependents = 0;
         long countedWorkforce = 0;
-        long countedFarmers = 0;
+
+        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
+        foreach (Profession profession in Enum.GetValues(typeof(Profession))){
+            countedProfessions.Add(profession, 0);
+        }
 
         foreach (Pop pop in pops.ToArray()){
             if (pop.population <= Pop.ToNativePopulation(1)){
@@ -145,13 +152,13 @@ public partial class Region : GodotObject
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
-            if (pop.profession == Profession.FARMER){
-                countedFarmers += pop.workforce;
-            }
+
+            countedProfessions[pop.profession] += pop.workforce;
         }
         if (countedPopulation < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
+        professions = countedProfessions;
         population = countedPopulation;
         dependents = countedDependents;
         workforce = countedWorkforce;
@@ -316,7 +323,8 @@ public partial class Region : GodotObject
     }
 
     public void Farming(){
-        double totalWork = farmers;
+        double totalWork = professions[Profession.FARMER];
+
         double maxProduced = 530;
         double steepness = 0.021;
         double foodPerSlot = maxProduced/(1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));

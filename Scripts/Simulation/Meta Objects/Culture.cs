@@ -43,9 +43,9 @@ public partial class Culture : GodotObject
 }
 
 public enum TraitLevel {
-    VERY_HIGH,
-    HIGH,
-    MEDIUM,
-    LOW,
-    VERY_LOW,
+    VERY_HIGH = 2,
+    HIGH = 1,
+    MEDIUM = 0,
+    LOW = -1,
+    VERY_LOW = -2,
 }

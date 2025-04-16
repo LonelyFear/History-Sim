@@ -15,10 +15,13 @@ public partial class State : GodotObject
     public Region capital;
     public long population;
     public long workforce;
-    public long military;
+    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
+    public long manpowerTarget;
+    public long manpower;
     Array<State> vassals;
     State liege;
     Dictionary<State, Relation> relations;
+    public Array<State> wars;
     public Array<State> borderingStates;
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public Economy economy = new Economy();
@@ -26,10 +29,21 @@ public partial class State : GodotObject
     public void CountPopulation(){
         long countedP = 0;
         long countedW = 0;
+
+        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
+        foreach (Profession profession in Enum.GetValues(typeof(Profession))){
+            countedProfessions.Add(profession, 0);
+        }
         foreach (Region region in regions.ToArray()){
             countedP += region.population;
             countedW += region.workforce;
+            
+            foreach (Profession profession in region.professions.Keys){
+                countedProfessions[profession] += region.professions[profession];            
+            }
+
         }
+        professions = countedProfessions;
         population = countedP;
         workforce = countedW;
     }
@@ -41,6 +55,10 @@ public partial class State : GodotObject
             region.owner = this;
             regions.Add(region);
         }
+    }
+    public void Recruitment(){
+        manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.7);
+        manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);
     }
 
     public void RemoveRegion(Region region){

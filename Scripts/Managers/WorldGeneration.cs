@@ -181,7 +181,7 @@ public partial class WorldGeneration : Node2D
         }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
         worldCreated = true;
-        CallDeferred("emit_signal", SignalName.worldgenFinished);        
+        CallDeferred("emit_signal", SignalName.worldgenFinished);                    
     }
 
     string GetBiome(int x, int y){

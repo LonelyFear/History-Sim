@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -36,6 +37,7 @@ public partial class SimManager : Node2D
     public long dependentsChange = 0;
     public Array<Culture> cultures = new Array<Culture>();
     public Array<State> states = new Array<State>();
+    public Array<Character> characters = new Array<Character>();
 
     public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
@@ -279,6 +281,7 @@ public partial class SimManager : Node2D
 
         Parallel.ForEach(states, state => {
             state.CountPopulation();
+            state.Recruitment();
         });
 
 
