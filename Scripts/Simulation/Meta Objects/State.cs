@@ -15,6 +15,7 @@ public partial class State : GodotObject
     public Region capital;
     public long population;
     public long workforce;
+    public long military;
     Array<State> vassals;
     State liege;
     Dictionary<State, Relation> relations;
@@ -27,7 +28,7 @@ public partial class State : GodotObject
         long countedW = 0;
         foreach (Region region in regions.ToArray()){
             countedP += region.population;
-            countedW += region.population;
+            countedW += region.workforce;
         }
         population = countedP;
         workforce = countedW;

@@ -249,7 +249,6 @@ public partial class SimManager : Node2D
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
-                region.CheckEmployment();
             }         
         });
         foreach (Region region in habitableRegions){
@@ -259,24 +258,28 @@ public partial class SimManager : Node2D
         }
         long worldPop = 0;
         foreach (Region region in habitableRegions){
-            Economy eco = region.economy;
-            if (region.owner != null){
-                eco = region.owner.economy;
-            }
             if (region.pops.Count > 0){
 
                 if (region.pops.Count > 1){
                     region.MergePops();
                 }
-                region.SubstinanceFarming(eco);
-                if (region.buildings.Count > 0){
-                    region.BuildingProduction(eco);     
+                
+                region.Farming();
+                region.PopConsumption();
+                
+                if (region.owner != null){
+                    region.PopWealth();
+                    region.PopTaxes();
                 }
-                region.PopConsumption(eco);
+                
                 region.CheckPopulation();
             }
             worldPop += region.population;
         }
+
+        Parallel.ForEach(states, state => {
+            state.CountPopulation();
+        });
 
 
         Parallel.ForEach(regions, region =>{
@@ -354,13 +357,12 @@ public partial class SimManager : Node2D
             float r = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
             float g = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
             float b = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());    
-
             State state = new State(){
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region
             };
-            states.Add(state);            
+            states.Add(state);       
             state.AddRegion(region);
         }
     }
@@ -384,7 +386,6 @@ public partial class SimManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f);
                 }
                 if (region.owner != null){
-                    GD.Print("Something is good");
                     color = region.owner.color;
                     if (region.border || region.frontier){
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);

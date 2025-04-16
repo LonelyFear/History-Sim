@@ -1,5 +1,6 @@
 using System.Linq;
 using Godot;
+using Godot.Collections;
 
 public partial class Pop : GodotObject
 {
@@ -94,5 +95,6 @@ public partial class Pop : GodotObject
 }
 public enum Profession{
     FARMER,
-
+    MERCHANT,
+    ARISTOCRAT
 }
