@@ -20,4 +20,17 @@ public class NameGenerator
 
         return name;
     }
+
+    public static string GenerateFirstName(){
+        Random rng = new Random();
+
+        string name = "First";
+        return name;
+    }
+    public static string GenerateLastName(){
+        Random rng = new Random();
+
+        string name = "Last";
+        return name;   
+    }
 }

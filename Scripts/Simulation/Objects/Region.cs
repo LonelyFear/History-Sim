@@ -108,6 +108,16 @@ public partial class Region : GodotObject
             simManager.CreateNation(this);
             owner.population = population;
             owner.workforce = workforce;
+            Pop newRulers = pops[0];
+            simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, newRulers.tech, newRulers.culture, Profession.ARISTOCRAT);
+            newRulers.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
+            owner.rulingPop = newRulers;
+            try {
+                owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
+                owner.leader.role = Character.Role.LEADER;
+            } catch (Exception e) {
+                GD.PushError(e);
+            }    
         }
     }
 
@@ -133,6 +143,7 @@ public partial class Region : GodotObject
         }
     }
     #endregion
+    #region Checks & Taxes
     public void CheckPopulation(){
         long countedPopulation = 0;
         long countedDependents = 0;
@@ -198,6 +209,7 @@ public partial class Region : GodotObject
             pop.totalWealth -= taxesCollected;
         }
     }
+    #endregion
     #region PopActions
 
     public void MergePops(){
@@ -311,6 +323,7 @@ public partial class Region : GodotObject
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
         }
     }
+    #region Food & Consumption
     public void PopConsumption(){
         foreach (Pop pop in pops){
             pop.deathRate = pop.baseDeathRate;
@@ -330,6 +343,6 @@ public partial class Region : GodotObject
         double foodPerSlot = maxProduced/(1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));
         economy.ChangeResourceAmount(simManager.GetResource("grain"), foodPerSlot * avgFertility * landCount);               
     }
-
+    #endregion
     #endregion
 }

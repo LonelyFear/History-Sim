@@ -25,6 +25,9 @@ public partial class State : GodotObject
     public Array<State> borderingStates;
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public Economy economy = new Economy();
+    public Character leader;
+    public Pop rulingPop;
+    public Array<Character> characters = new Array<Character>();
 
     public void CountPopulation(){
         long countedP = 0;
@@ -59,6 +62,15 @@ public partial class State : GodotObject
     public void Recruitment(){
         manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.7);
         manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);
+    }
+
+    public void SetLeader(Character character){
+        leader = character;
+        if (leader != null){
+            if (!characters.Contains(character)){
+                AddCharacter(leader);
+            }            
+        }
     }
 
     public void RemoveRegion(Region region){
@@ -101,6 +113,25 @@ public partial class State : GodotObject
             state.liege = null;
             state.sovereignty = Sovereignty.INDEPENDENT;
             vassals.Remove(state);
+        }
+    }
+
+    public void AddCharacter(Character character){
+        if (!characters.Contains(character)){
+            if (character.state != null){
+                character.state.RemoveCharacter(character);
+            } 
+            character.state = this;
+            characters.Add(character);
+        }
+    }
+    public void RemoveCharacter(Character character){
+        if (characters.Contains(character)){
+            if (leader == character){
+                SetLeader(null);
+            }
+            characters.Remove(character);
+            character.state = null;
         }
     }
 }

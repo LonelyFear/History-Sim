@@ -24,6 +24,7 @@ public partial class Pop : GodotObject
     public bool canMove = true;
     public const double foodPerCapita = 1.0;
     public const double dependentNeedMultiplier = .8;
+    public Array<Character> characters = new Array<Character>();
 
     public void ChangeWorkforce(long amount){
         if (workforce + amount < 0){
@@ -91,6 +92,26 @@ public partial class Pop : GodotObject
 
     public static bool CanPopsMerge(Pop a, Pop b){
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
+    }
+        public void AddCharacter(Character character){
+        if (!characters.Contains(character)){
+            if (character.pop != null){
+                character.pop.RemoveCharacter(character);
+            } 
+            ChangePopulation(Pop.ToNativePopulation(1), 0);
+            character.state = region.owner;
+            character.pop = this;
+            characters.Add(character);
+        }
+    }
+    public void RemoveCharacter(Character character){
+        if (characters.Contains(character)){
+            if (workforce >= Pop.ToNativePopulation(1)){
+                ChangePopulation(Pop.ToNativePopulation(-1), 0);
+            }
+            characters.Remove(character);
+            character.pop = null;
+        }
     }
 }
 public enum Profession{

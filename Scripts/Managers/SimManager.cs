@@ -344,13 +344,16 @@ public partial class SimManager : Node2D
         int index = (lx * worldSize.Y) + ly;
         return regions[index];
     }
+    #region Creation
     public Culture CreateCulture(Region region){
-        Culture culture = new Culture();
-        culture.name = "Culturism";
         float r = rng.NextSingle();
         float g = rng.NextSingle();
-        float b = rng.NextSingle();
-        culture.color = new Color(r,g,b);
+        float b = rng.NextSingle();        
+        Culture culture = new Culture(){
+            name = "Culturism",
+            color = new Color(r,g,b)
+        };
+
         cultures.Append(culture);
 
         return culture;
@@ -369,6 +372,28 @@ public partial class SimManager : Node2D
             state.AddRegion(region);
         }
     }
+    public Character CreateCharacter(Pop pop){
+        if (pop.workforce >= Pop.ToNativePopulation(1)){
+            Character character = new Character(){
+                firstName = NameGenerator.GenerateFirstName(),
+                lastName = NameGenerator.GenerateLastName(),
+                culture = pop.culture,
+                agression = (TraitLevel)rng.Next(-2, 3)
+            };
+            pop.AddCharacter(character);
+            pop.region.owner.AddCharacter(character);
+            characters.Add(character);
+            return character;
+        }
+        return null;
+    }
+
+    public void DeleteCharacter(Character character, bool removePopulation = false){
+        character.pop.RemoveCharacter(character);
+        character.state.RemoveCharacter(character);
+        characters.Remove(character);
+    }
+    #endregion
     
     #region Map Stuff
     public void SetMapMode(MapModes mode){
