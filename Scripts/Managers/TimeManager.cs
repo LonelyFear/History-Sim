@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Godot;
 
@@ -21,6 +22,10 @@ public partial class TimeManager : Node
     public WorldGeneration world;
     public SimManager simManager;
     bool worldGenFinished = false;
+    Task monthTask;
+    Task yearTask;
+    bool doYear = false;
+    public bool background = true;
     public override void _Ready()
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
@@ -31,12 +36,19 @@ public partial class TimeManager : Node
 
     public override void _Process(double delta)
     {
-        if (worldGenFinished && simManager.task.IsCompleted ){
-            tickDelta = (double)(Time.GetTicksMsec() - tickStartTime)/1000;
-            TickGame();
-            if (simManager.mapUpdate){
-                simManager.UpdateMap();
+        if (worldGenFinished && (monthTask == null || monthTask.IsCompleted)){
+            if (doYear){
+                doYear = false;
+                //yearTask = Task.Run();
             }
+            if (yearTask == null || yearTask.IsCompleted){
+                tickDelta = (double)(Time.GetTicksMsec() - tickStartTime)/1000;
+                TickGame();
+                if (simManager.mapUpdate){
+                    simManager.UpdateMap();
+                }                
+            }
+
         }
     }
 
@@ -49,12 +61,21 @@ public partial class TimeManager : Node
         tickStartTime = Time.GetTicksMsec();
         totalTicks += 1;
         month += 1;
-        EmitSignal(SignalName.Tick);
+
+        if (background){
+            monthTask = Task.Run(simManager.SimTick);
+        } else {
+            simManager.SimTick();
+        }
+        
         if (month > 12){
             month = 1;
             year += 1;
-            EmitSignal(SignalName.Year);
+            if (background){
+                doYear = true;
+            } else {
+                // Insert year tick function here
+            }
         }
-        
     }
 }

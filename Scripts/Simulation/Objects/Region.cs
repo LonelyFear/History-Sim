@@ -118,6 +118,7 @@ public partial class Region : GodotObject
             } catch (Exception e) {
                 GD.PushError(e);
             }    
+            owner.UpdateDisplayName();
             owner.leader.role = Character.Role.LEADER;
         }
     }

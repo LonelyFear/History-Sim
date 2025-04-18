@@ -91,6 +91,9 @@ public partial class Pop : GodotObject
     }
 
     public static bool CanPopsMerge(Pop a, Pop b){
+        if (a == null || b == null){
+            return false;
+        }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
         public void AddCharacter(Character character){

@@ -7,10 +7,11 @@ using Godot.Collections;
 public partial class State : GodotObject
 {
     public string name = "Nation";
+    public string displayName = "Nation";
     public Color color;
     public Color displayColor;
 
-    public GovernmentTypes government = GovernmentTypes.AUTOCRACY;
+    public GovernmentTypes government = GovernmentTypes.MONARCHY;
     public Array<Region> regions = new Array<Region>();
     public Region capital;
     public long population;
@@ -21,8 +22,8 @@ public partial class State : GodotObject
     Array<State> vassals;
     State liege;
     Dictionary<State, Relation> relations;
-    public Array<State> wars;
-    public Array<State> borderingStates;
+    public Array<State> wars = new Array<State>();
+    public Array<State> borderingStates = new Array<State>();
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public Economy economy = new Economy();
     public Character leader;
@@ -30,6 +31,24 @@ public partial class State : GodotObject
     public Family rulingFamily;
     public Array<Character> characters = new Array<Character>();
 
+    public void UpdateDisplayName(){
+        string govtName;
+        switch (government){
+            case GovernmentTypes.REPUBLIC:
+                govtName = "Republic";
+                break;
+            case GovernmentTypes.MONARCHY:
+                govtName = "Kingdom";
+                break;
+            case GovernmentTypes.AUTOCRACY:
+                govtName = "Dictatorship";
+                break;
+            default:
+                govtName = "State";
+                break;
+        }
+        displayName = govtName + " of " + name;
+    }
     public void CountPopulation(){
         long countedP = 0;
         long countedW = 0;
@@ -66,15 +85,15 @@ public partial class State : GodotObject
     }
 
     public void SetLeader(Character newLeader){
-        string newName = "nobody";
-        if (newLeader != null){
-            newName = newLeader.name;
-        }
-        if (leader != null){
-            GD.Print("Leader of " + name + " changed from " + leader.name + " to " + newName);
-        } else {
-            GD.Print("Leader of " + name + " changed nobody to " + newName);
-        }
+        // string newName = "nobody";
+        // if (newLeader != null){
+        //     newName = newLeader.name;
+        // }
+        // if (leader != null){
+        //     GD.Print("Leader of " + name + " changed from " + leader.name + " to " + newName);
+        // } else {
+        //     GD.Print("Leader of " + name + " changed nobody to " + newName);
+        // }
         if (leader != null){
             leader.role = Character.Role.CIVILIAN;
         }
@@ -155,7 +174,6 @@ public enum GovernmentTypes {
     REPUBLIC,
     MONARCHY,
     AUTOCRACY,
-    FEDERATION,
 }
 
 public enum Sovereignty {

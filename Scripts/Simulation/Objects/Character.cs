@@ -9,18 +9,16 @@ public partial class Character : GodotObject
     public State state;
     public int age;
     public Pop pop;
-    public Role role;
+    public Role role = Role.CIVILIAN;
     public Family family;
+    public Character parent;
     public SimManager simManager;
     public TraitLevel agression = TraitLevel.MEDIUM;
 
     public void Die(){
               
         if (state.leader == this){
-            GD.Print(name + ", leader of " + state.name + ", died of old age");  
-            if (GetHeir() != null){
-                GD.Print("Heir: " + GetHeir().name);
-            }
+            state.SetLeader(GetHeir());
         }    
         simManager.DeleteCharacter(this);
     }
@@ -34,8 +32,8 @@ public partial class Character : GodotObject
         }
         if (family.members.Count <= 12){
             Character child = simManager.CreateCharacter(pop, family, 0, 0);
+            child.parent = this;
             if (state.leader == this){
-                GD.Print(name + ", leader of " + state.name + ", had a child named " + child.name);
             }         
         }
     }
@@ -45,7 +43,7 @@ public partial class Character : GodotObject
         Character heir = null;
         if (family != null){
             foreach (Character member in family.members){
-                if (member.state == state && member != this && member.role != Role.LEADER && member.age > eldestAge){
+                if ((member.parent == this || member.state == state) && member.state.leader != member && member.age > eldestAge){
                     eldestAge = member.age;
                     heir = member;
                 }
@@ -53,12 +51,21 @@ public partial class Character : GodotObject
         }
         return heir;
     }
+
+    public void FoundFamily(){
+        if (family != null){
+            family.RemoveCharacter(this);
+        }
+        family = new Family();
+        if (state.leader == this){
+            state.rulingFamily = family;
+        }     
+    }
     public enum Role {
         LEADER,
         ADGITATOR,
         HEIR,
         CIVILIAN,
-        FAMILUY_MEMBER
     }
 }
 

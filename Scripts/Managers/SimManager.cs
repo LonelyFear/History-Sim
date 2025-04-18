@@ -76,7 +76,7 @@ public partial class SimManager : Node2D
 
         // Connection
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
-        timeManager.Tick += OnTick;
+        timeManager.Tick += SimTick;
     }
 
     public override void _Process(double delta)
@@ -248,7 +248,7 @@ public partial class SimManager : Node2D
         }
     }
     #region SimTick
-    void SimTick(){        
+    public void SimTick(){        
         Parallel.ForEach(states, state =>{
             state.borderingStates = new Array<State>();
         });
@@ -284,16 +284,21 @@ public partial class SimManager : Node2D
         }
 
         Parallel.ForEach(states, state => {
+            if (state.leader != null && state.leader.family != null){
+                state.rulingFamily = state.leader.family;
+            } else {
+                state.rulingFamily = null;
+            }
             state.CountPopulation();
             state.Recruitment();
         });
 
-        foreach (Character character in characters){
-            character.age += 1;
-            if (rng.NextSingle() <= 0.03/12 && character.age > 240){
+        foreach (Character character in characters.ToArray()){
+            character.age++;
+            if (character.state.leader == character && rng.NextSingle() <= 0.05/12 && character.age > 20 * 12){
                 character.HaveChild();
             }
-            if (character.age > (60 * 12) && rng.NextSingle() <= 0.04/12){
+            if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
                character.Die();
             }
         }
@@ -306,9 +311,6 @@ public partial class SimManager : Node2D
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         });
         worldPopulation = worldPop; 
-    }
-    public void OnTick(){
-        task = Task.Run(SimTick);
     }
     #endregion
 
