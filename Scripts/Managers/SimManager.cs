@@ -65,6 +65,10 @@ public partial class SimManager : Node2D
     public Dictionary<string, BuildingData> buildings = new Dictionary<string, BuildingData>();
     public override void _Ready()
     {
+        for (int i = 0; i < 10; i++){
+            GD.Print(NameGenerator.GenerateCharacterName());
+            GD.Print(NameGenerator.GenerateCharacterName(true));
+        }
         simToPopMult = Pop.simPopulationMultiplier;
         regionOverlay = GetNode<Sprite2D>("RegionOverlay");
         world = (WorldGeneration)GetParent().GetNode<Node2D>("World");
@@ -284,6 +288,15 @@ public partial class SimManager : Node2D
             state.Recruitment();
         });
 
+        foreach (Character character in characters){
+            character.age += 1;
+            if (rng.NextSingle() <= 0.03/12 && character.age > 240){
+                character.HaveChild();
+            }
+            if (character.age > (60 * 12) && rng.NextSingle() <= 0.04/12){
+               character.Die();
+            }
+        }
 
         Parallel.ForEach(regions, region =>{
             region.RandomStateFormation();
@@ -372,26 +385,37 @@ public partial class SimManager : Node2D
             state.AddRegion(region);
         }
     }
-    public Character CreateCharacter(Pop pop){
-        if (pop.workforce >= Pop.ToNativePopulation(1)){
-            Character character = new Character(){
-                firstName = NameGenerator.GenerateFirstName(),
-                lastName = NameGenerator.GenerateLastName(),
-                culture = pop.culture,
-                agression = (TraitLevel)rng.Next(-2, 3)
-            };
-            pop.AddCharacter(character);
-            pop.region.owner.AddCharacter(character);
-            characters.Add(character);
-            return character;
+    public Character CreateCharacter(Pop pop, Family family = null, int minAge = 0, int maxAge = 30){
+        Character character = new Character(){
+            name = NameGenerator.GenerateCharacterName(),
+            culture = pop.culture,
+            agression = (TraitLevel)rng.Next(-2, 3),
+            age = rng.Next(minAge * 12, (maxAge + 1) * 12),
+            simManager = this
+        };
+        pop.AddCharacter(character);
+        if (family != null){
+            family.AddCharacter(character);                
         }
-        return null;
+        pop.region.owner.AddCharacter(character);
+        characters.Add(character);
+        return character;
     }
 
-    public void DeleteCharacter(Character character, bool removePopulation = false){
-        character.pop.RemoveCharacter(character);
-        character.state.RemoveCharacter(character);
-        characters.Remove(character);
+    public void DeleteCharacter(Character character){
+        //GD.Print("Character Deleted");
+        try {
+            character.pop.RemoveCharacter(character);
+            character.state.RemoveCharacter(character);
+            if (character.family != null){
+                character.family.RemoveCharacter(character);                
+            }
+
+            characters.Remove(character);            
+        } catch (Exception e) {
+            GD.PushError(e);
+        }
+
     }
     #endregion
     

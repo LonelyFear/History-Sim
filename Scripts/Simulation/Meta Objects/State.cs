@@ -27,6 +27,7 @@ public partial class State : GodotObject
     public Economy economy = new Economy();
     public Character leader;
     public Pop rulingPop;
+    public Family rulingFamily;
     public Array<Character> characters = new Array<Character>();
 
     public void CountPopulation(){
@@ -64,13 +65,27 @@ public partial class State : GodotObject
         manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);
     }
 
-    public void SetLeader(Character character){
-        leader = character;
+    public void SetLeader(Character newLeader){
+        string newName = "nobody";
+        if (newLeader != null){
+            newName = newLeader.name;
+        }
         if (leader != null){
-            if (!characters.Contains(character)){
-                AddCharacter(leader);
+            GD.Print("Leader of " + name + " changed from " + leader.name + " to " + newName);
+        } else {
+            GD.Print("Leader of " + name + " changed nobody to " + newName);
+        }
+        if (leader != null){
+            leader.role = Character.Role.CIVILIAN;
+        }
+        
+        if (newLeader != null){
+            newLeader.role = Character.Role.LEADER;
+            if (!characters.Contains(newLeader)){
+                AddCharacter(newLeader);
             }            
         }
+        leader = newLeader;
     }
 
     public void RemoveRegion(Region region){

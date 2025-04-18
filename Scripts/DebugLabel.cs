@@ -12,7 +12,7 @@ public partial class DebugLabel : Label
             State state = region.owner;
             string leaderText = "Leader: None";
             if (state.leader != null){
-                leaderText = "Leader: " + state.leader.firstName + " " + state.leader.lastName;
+                leaderText = "Leader: " + state.leader.name + "\nLeader Age: " + (int)(state.leader.age/12f);
             }
             Text = "State: " + state.name + "\n" + "Population: " + Pop.FromNativePopulation(state.population).ToString("#,###0") + "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0") + "\n" + leaderText;
         } else {

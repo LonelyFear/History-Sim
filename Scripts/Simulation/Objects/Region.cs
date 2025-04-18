@@ -108,16 +108,17 @@ public partial class Region : GodotObject
             simManager.CreateNation(this);
             owner.population = population;
             owner.workforce = workforce;
-            Pop newRulers = pops[0];
-            simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, newRulers.tech, newRulers.culture, Profession.ARISTOCRAT);
-            newRulers.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
-            owner.rulingPop = newRulers;
+            Pop basePop = pops[0];
+            Pop rulingPop = simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, basePop.tech, basePop.culture, Profession.ARISTOCRAT);
+            basePop.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
+            
+            owner.rulingPop = rulingPop;
             try {
                 owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
-                owner.leader.role = Character.Role.LEADER;
             } catch (Exception e) {
                 GD.PushError(e);
             }    
+            owner.leader.role = Character.Role.LEADER;
         }
     }
 
