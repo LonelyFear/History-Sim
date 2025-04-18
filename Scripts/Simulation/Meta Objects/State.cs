@@ -26,11 +26,40 @@ public partial class State : GodotObject
     public Array<State> borderingStates = new Array<State>();
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public Economy economy = new Economy();
+    public SimManager simManager;
     public Character leader;
+    public Character lastLeader = null;
     public Pop rulingPop;
     public Family rulingFamily;
     public Array<Character> characters = new Array<Character>();
+    long age = 0;
+    int monthsSinceElection = 0;
+    Random rng = new Random();
+    public void LeaderCheck(){
+        monthsSinceElection++;
+        age++;
+        switch (government){
+            case GovernmentTypes.MONARCHY:
+                if (lastLeader != leader && leader == null){
+                    SetLeader(lastLeader.GetHeir());
+                    lastLeader = null;
+                }
+                break;
+            case GovernmentTypes.REPUBLIC:
+                if (monthsSinceElection > 48 || leader == null){
+                    RunElection();
+                }
+                break;
+        }
+    }
 
+    public void RunElection(){
+        Character newLeader = simManager.CreateCharacter(rulingPop, null, 20, 50);
+        if (characters.Count > 0){
+            newLeader = characters[rng.Next(0, characters.Count - 1)];
+        }
+        SetLeader(newLeader);
+    }
     public void UpdateDisplayName(){
         string govtName;
         switch (government){

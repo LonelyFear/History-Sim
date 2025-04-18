@@ -16,9 +16,8 @@ public partial class Character : GodotObject
     public TraitLevel agression = TraitLevel.MEDIUM;
 
     public void Die(){
-              
         if (state.leader == this){
-            state.SetLeader(GetHeir());
+            state.lastLeader = this;
         }    
         simManager.DeleteCharacter(this);
     }

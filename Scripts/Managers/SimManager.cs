@@ -241,7 +241,7 @@ public partial class SimManager : Node2D
             if (region.coastal){
                 nodeChance *= 10;
             }
-            if (rng.NextDouble() <= nodeChance){
+            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.2){
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), CreateCulture(region));
             }
@@ -283,16 +283,6 @@ public partial class SimManager : Node2D
             worldPop += region.population;
         }
 
-        Parallel.ForEach(states, state => {
-            if (state.leader != null && state.leader.family != null){
-                state.rulingFamily = state.leader.family;
-            } else {
-                state.rulingFamily = null;
-            }
-            state.CountPopulation();
-            state.Recruitment();
-        });
-
         foreach (Character character in characters.ToArray()){
             character.age++;
             if (character.state.leader == character && rng.NextSingle() <= 0.05/12 && character.age > 20 * 12){
@@ -302,6 +292,22 @@ public partial class SimManager : Node2D
                character.Die();
             }
         }
+
+        Parallel.ForEach(states, state => {
+            if (state.leader != null && state.leader.family != null){
+                state.rulingFamily = state.leader.family;
+            } else {
+                state.rulingFamily = null;
+            }
+            state.CountPopulation();
+            state.Recruitment();
+            
+        });
+        foreach (State state in states.ToArray()){
+            state.LeaderCheck();
+        }
+
+
 
         Parallel.ForEach(regions, region =>{
             region.RandomStateFormation();
