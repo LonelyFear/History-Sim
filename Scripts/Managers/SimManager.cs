@@ -25,6 +25,7 @@ public partial class SimManager : Node2D
     public Vector2I terrainSize;   
     public Vector2I worldSize;
     public MapModes mapMode = MapModes.POLITIY;
+    public System.Threading.Mutex m = new System.Threading.Mutex();
 
     Image regionImage;
 
@@ -66,8 +67,8 @@ public partial class SimManager : Node2D
     public override void _Ready()
     {
         for (int i = 0; i < 10; i++){
-            GD.Print(NameGenerator.GenerateCharacterName());
-            GD.Print(NameGenerator.GenerateCharacterName(true));
+            //GD.Print(NameGenerator.GenerateCharacterName());
+            //GD.Print(NameGenerator.GenerateCharacterName(true));
         }
         simToPopMult = Pop.simPopulationMultiplier;
         regionOverlay = GetNode<Sprite2D>("RegionOverlay");
@@ -255,21 +256,7 @@ public partial class SimManager : Node2D
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.GrowPops();
-            }         
-        });
-        foreach (Region region in habitableRegions){
-            if (region.pops.Count > 0){
-                region.MovePops();
-            }       
-        }
-        long worldPop = 0;
-        foreach (Region region in habitableRegions){
-            if (region.pops.Count > 0){
 
-                if (region.pops.Count > 1){
-                    region.MergePops();
-                }
-                
                 region.Farming();
                 region.PopConsumption();
                 
@@ -277,13 +264,27 @@ public partial class SimManager : Node2D
                     region.PopWealth();
                     region.PopTaxes();
                 }
+                region.MovePops();
                 
-                region.CheckPopulation();
+            }         
+        });
+        Parallel.ForEach(habitableRegions, region =>{
+            if (region.pops.Count > 0){
+                region.MergePops();
+                region.CheckPopulation();                
+            }       
+        });
+        long worldPop = 0;
+        foreach (Region region in habitableRegions){
+            if (region.pops.Count > 0){
+                if (region.pops.Count > 1){
+                    region.MergePops();
+                }
             }
             worldPop += region.population;
         }
 
-        foreach (Character character in characters.ToArray()){
+        Parallel.ForEach(characters, character =>{
             character.age++;
             if (character.state.leader == character && rng.NextSingle() <= 0.05/12 && character.age > 20 * 12){
                 character.HaveChild();
@@ -291,8 +292,7 @@ public partial class SimManager : Node2D
             if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
                character.Die();
             }
-        }
-
+        });
         Parallel.ForEach(states, state => {
             if (state.leader != null && state.leader.family != null){
                 state.rulingFamily = state.leader.family;
@@ -354,6 +354,7 @@ public partial class SimManager : Node2D
         if (pop.region != null){
             pop.region.RemovePop(pop);
         }
+        pop.culture.ChangePopulation(-pop.population);
         pops.Remove(pop);
     }
     #endregion

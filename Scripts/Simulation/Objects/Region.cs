@@ -1,11 +1,10 @@
 using System;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Threading;
 using Godot;
 using Godot.Collections;
 using Dictionary = Godot.Collections.Dictionary;
+using Mutex = System.Threading.Mutex;
 
 public partial class Region : GodotObject
 {
@@ -31,6 +30,7 @@ public partial class Region : GodotObject
 
     Random rng = new Random();
     public Economy economy = new Economy();
+    Mutex m = new Mutex();
 
     public int currentMonth;
     public bool border;
@@ -38,6 +38,7 @@ public partial class Region : GodotObject
     public bool needsJobs {private set; get;}
     public bool needsWorkers {private set; get;}
     public void CalcAvgFertility(){
+        m = simManager.m;
         landCount = 0;
         float f = 0;
         for (int x = 0; x < simManager.tilesPerRegion; x++){
@@ -158,8 +159,9 @@ public partial class Region : GodotObject
 
         foreach (Pop pop in pops.ToArray()){
             if (pop.population <= Pop.ToNativePopulation(1)){
-                pops.Remove(pop);
-                simManager.pops.Remove(pop);
+                m.WaitOne();
+                simManager.DestroyPop(pop);
+                m.ReleaseMutex();
                 continue;
             }
             countedPopulation += pop.population;
@@ -217,7 +219,7 @@ public partial class Region : GodotObject
     public void MergePops(){
         foreach (Pop pop in pops){
             if (pop.population >= Pop.ToNativePopulation(1)){
-                foreach (Pop merger in pops){
+                foreach (Pop merger in pops.ToArray()){
                     if (Pop.CanPopsMerge(pop, merger)){
                         merger.ChangePopulation(pop.workforce, pop.dependents);
                         pop.ChangePopulation(-pop.workforce, -pop.dependents);
@@ -315,6 +317,7 @@ public partial class Region : GodotObject
                     break;
                 }
             }
+            m.WaitOne();
             if (merger != null){
                 merger.ChangePopulation(movedWorkforce, movedDependents);
                 merger.canMove = false;
@@ -323,6 +326,7 @@ public partial class Region : GodotObject
                 npop.canMove = false;
             }
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
+            m.ReleaseMutex();
         }
     }
     #region Food & Consumption

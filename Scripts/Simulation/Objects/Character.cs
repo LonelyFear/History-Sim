@@ -62,7 +62,6 @@ public partial class Character : GodotObject
     }
     public enum Role {
         LEADER,
-        ADGITATOR,
         HEIR,
         CIVILIAN,
     }
