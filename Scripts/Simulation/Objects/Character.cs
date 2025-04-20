@@ -7,7 +7,7 @@ public partial class Character : GodotObject
     public float wealth;
     public Culture culture;
     public State state;
-    public int age;
+    public uint age;
     public int existTime;
     public Pop pop;
     public Role role = Role.CIVILIAN;
@@ -39,7 +39,7 @@ public partial class Character : GodotObject
     }
 
     public Character GetHeir(){
-        int eldestAge = -1;
+        uint eldestAge = 0;
         Character heir = null;
         if (family != null){
             foreach (Character member in family.members){

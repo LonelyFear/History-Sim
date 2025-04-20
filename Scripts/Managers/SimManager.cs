@@ -278,7 +278,9 @@ public partial class SimManager : Node2D
                 if (region.owner != null){
                     region.PopWealth();
                     region.PopTaxes();
-                    region.NeutralConquest();
+                    if (region.frontier){
+                        region.NeutralConquest();
+                    }
                 }
                 region.MovePops();
             }         
@@ -323,17 +325,19 @@ public partial class SimManager : Node2D
 
         });
         Parallel.ForEach(states, state => {
+            state.age++;
             if (state.leader != null && state.leader.family != null){
                 state.rulingFamily = state.leader.family;
             } else {
                 state.rulingFamily = null;
             }
+            state.UpdateCapital();
             state.CountPopulation();
             state.Recruitment();
             
         });
         foreach (State state in states.ToArray()){
-            state.LeaderCheck();
+            state.RulersCheck();
         }
 
 
@@ -428,7 +432,7 @@ public partial class SimManager : Node2D
             name = NameGenerator.GenerateCharacterName(),
             culture = pop.culture,
             agression = (TraitLevel)rng.Next(-2, 3),
-            age = rng.Next(minAge * 12, (maxAge + 1) * 12),
+            age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
             simManager = this
         };
         pop.AddCharacter(character);
@@ -479,6 +483,9 @@ public partial class SimManager : Node2D
                     color = region.owner.color;
                     if (region.border || region.frontier){
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+                    }
+                    if (region.owner.capital == region){
+                        color = new Color(1,0,0);
                     }
                 }
             break;

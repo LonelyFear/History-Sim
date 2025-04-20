@@ -16,6 +16,7 @@ public partial class State : GodotObject
     public Region capital;
     public long population;
     public long workforce;
+    public uint age;
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
     public long manpowerTarget;
     public long manpower;
@@ -32,12 +33,18 @@ public partial class State : GodotObject
     public Pop rulingPop;
     public Family rulingFamily;
     public Array<Character> characters = new Array<Character>();
-    long age = 0;
     int monthsSinceElection = 0;
     Random rng = new Random();
-    public void LeaderCheck(){
+    public Tech tech;
+
+    public void UpdateCapital(){
+        if (capital == null){
+            capital = regions.PickRandom();
+        }
+    }
+    public void RulersCheck(){
+        tech = rulingPop.tech;
         monthsSinceElection++;
-        age++;
         switch (government){
             case GovernmentTypes.MONARCHY:
                 if (lastLeader != leader && leader == null){
@@ -196,6 +203,10 @@ public partial class State : GodotObject
             characters.Remove(character);
             character.state = null;
         }
+    }
+
+    public double GetArmyPower(){
+        return Pop.FromNativePopulation(manpower) * ((tech.militaryLevel + 1) / 20d)/regions.Count;
     }
 }
 

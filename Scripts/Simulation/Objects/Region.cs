@@ -143,8 +143,15 @@ public partial class Region : GodotObject
 
     public void NeutralConquest(){
         Region region = borderingRegions.PickRandom();
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01){
-            owner.AddRegion(region);
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f){
+            double armyPower = owner.GetArmyPower();
+            double tribePower = Pop.FromNativePopulation(region.workforce) * 0.2;
+            float winChance = (float)(armyPower / (tribePower + armyPower));
+
+            GD.Print(winChance);
+            if (rng.NextDouble() < winChance){
+                owner.AddRegion(region);
+            }
         }
     }
     
@@ -277,18 +284,18 @@ public partial class Region : GodotObject
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
             // Chance of pop to migrate
-            double migrateChance = 0.0005;
+            float migrateChance = 0.0005f;
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){
-                migrateChance = 0.1;
+                migrateChance = 0.1f;
             }
             if (pop.profession == Profession.ARISTOCRAT){
                 migrateChance /= 100;
             }
 
             // If the pop migrates
-            if (rng.NextDouble() <= migrateChance){
+            if (rng.NextSingle() <= migrateChance){
                 for (int dx = -1; dx < 2; dx++){
                     for (int dy = -1; dy < 2; dy++){
                         // Removes our region to avoid any messy behavior
