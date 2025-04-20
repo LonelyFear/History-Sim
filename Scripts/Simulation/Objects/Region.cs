@@ -30,6 +30,7 @@ public partial class Region : GodotObject
 
     Random rng = new Random();
     public Economy economy = new Economy();
+    public Array<Region> borderingRegions = new Array<Region>();
     Mutex m = new Mutex();
 
     public int currentMonth;
@@ -127,24 +128,26 @@ public partial class Region : GodotObject
     public void StateBordering(){
         border = false;
         frontier = false;
-        for (int dx = -1; dx < 2; dx++){
-            for (int dy = -1; dy < 2; dy++){
-                if ((dx != 0  && dy != 0) || (dx == 0 && dy == 0)){
-                    continue;
-                }
-                Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
-                if (region.owner == null){
-                    frontier = true;
-                }
-                if (region.owner != null && region.owner != owner){
-                    border = true;
-                    if (!owner.borderingStates.Contains(region.owner)){
-                        owner.borderingStates.Append(region.owner);                        
-                    }
-                }
+        foreach (Region region in borderingRegions){
+            if (region.owner == null){
+                frontier = true;
             }
+            if (region.owner != null && region.owner != owner){
+                border = true;
+                if (!owner.borderingStates.Contains(region.owner)){
+                    owner.borderingStates.Append(region.owner);                        
+                }
+            }            
         }
     }
+
+    public void NeutralConquest(){
+        Region region = borderingRegions.PickRandom();
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01){
+            owner.AddRegion(region);
+        }
+    }
+    
     #endregion
     #region Checks & Taxes
     public void CheckPopulation(){
@@ -278,7 +281,10 @@ public partial class Region : GodotObject
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){
-                migrateChance = 0.01;
+                migrateChance = 0.1;
+            }
+            if (pop.profession == Profession.ARISTOCRAT){
+                migrateChance /= 100;
             }
 
             // If the pop migrates

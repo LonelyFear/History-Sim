@@ -231,10 +231,25 @@ public partial class SimManager : Node2D
                 // }
             }
         }
+        BorderingRegions();
         InitPops();
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
     }
 
+    void BorderingRegions(){
+        Parallel.ForEach(regions, region =>{     
+            for (int dx = -1; dx < 2; dx++){
+                for (int dy = -1; dy < 2; dy++){
+                    if ((dx != 0  && dy != 0) || (dx == 0 && dy == 0)){
+                        continue;
+                    }  
+                    Region r = GetRegion(region.pos.X + dx, region.pos.Y + dy);       
+                    region.borderingRegions.Add(r);                 
+                }
+            }
+
+        });  
+    }
     void InitPops(){
         foreach (Region region in habitableRegions){
             double nodeChance = 0.0025;
@@ -263,9 +278,9 @@ public partial class SimManager : Node2D
                 if (region.owner != null){
                     region.PopWealth();
                     region.PopTaxes();
+                    region.NeutralConquest();
                 }
                 region.MovePops();
-                
             }         
         });
         Parallel.ForEach(habitableRegions, region =>{
@@ -286,12 +301,26 @@ public partial class SimManager : Node2D
 
         Parallel.ForEach(characters, character =>{
             character.age++;
-            if (character.state.leader == character && rng.NextSingle() <= 0.05/12 && character.age > 20 * 12){
+            character.existTime++;
+            if (character.existTime > 20*12 && character.role == Character.Role.CIVILIAN){
+                DeleteCharacter(character);
+            }        
+
+            if (character.state.leader == character){
+                character.role = Character.Role.LEADER;
+                Character heir = character.GetHeir();
+                if (heir != null){
+                    heir.role = Character.Role.HEIR;
+                }                
+            }
+       
+            if (character.state.leader == character && rng.NextSingle() <= 0.02/12 && character.age > 20 * 12){
                 character.HaveChild();
             }
             if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
                character.Die();
             }
+
         });
         Parallel.ForEach(states, state => {
             if (state.leader != null && state.leader.family != null){

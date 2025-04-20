@@ -8,6 +8,7 @@ public partial class Character : GodotObject
     public Culture culture;
     public State state;
     public int age;
+    public int existTime;
     public Pop pop;
     public Role role = Role.CIVILIAN;
     public Family family;
