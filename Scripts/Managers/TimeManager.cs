@@ -25,7 +25,7 @@ public partial class TimeManager : Node
     Task monthTask;
     Task yearTask;
     bool doYear = false;
-    public bool background = true;
+    public bool debuggerMode = false;
     public override void _Ready()
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
@@ -62,7 +62,7 @@ public partial class TimeManager : Node
         totalTicks += 1;
         month += 1;
 
-        if (background){
+        if (debuggerMode){
             monthTask = Task.Run(simManager.SimTick);
         } else {
             simManager.SimTick();
@@ -71,7 +71,7 @@ public partial class TimeManager : Node
         if (month > 12){
             month = 1;
             year += 1;
-            if (background){
+            if (debuggerMode){
                 doYear = true;
             } else {
                 // Insert year tick function here

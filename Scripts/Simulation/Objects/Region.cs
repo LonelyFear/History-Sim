@@ -148,7 +148,7 @@ public partial class Region : GodotObject
             double tribePower = Pop.FromNativePopulation(region.workforce) * 0.2;
             float winChance = (float)(armyPower / (tribePower + armyPower));
 
-            GD.Print(winChance);
+            //GD.Print(winChance);
             if (rng.NextDouble() < winChance){
                 owner.AddRegion(region);
             }
@@ -189,39 +189,34 @@ public partial class Region : GodotObject
         workforce = countedWorkforce;
     }
 
-    public void PopWealth(){
-        foreach (Pop pop in pops){
-            switch (pop.profession){
-                case Profession.FARMER: 
-                    pop.totalWealth += 1 * Pop.FromNativePopulation(pop.workforce);
-                break;
-                case Profession.MERCHANT:
-                    pop.totalWealth += 2 * Pop.FromNativePopulation(pop.workforce);;
-                break;
-                case Profession.ARISTOCRAT:
-                    pop.totalWealth += 3 * Pop.FromNativePopulation(pop.workforce);
-                break;
-            }
-            pop.CalcWealthPerCapita();
+    public void PopWealth(Pop pop){
+        switch (pop.profession){
+            case Profession.FARMER: 
+                pop.totalWealth += 1 * Pop.FromNativePopulation(pop.workforce);
+            break;
+            case Profession.MERCHANT:
+                pop.totalWealth += 2 * Pop.FromNativePopulation(pop.workforce);;
+            break;
+            case Profession.ARISTOCRAT:
+                pop.totalWealth += 3 * Pop.FromNativePopulation(pop.workforce);
+            break;
         }
-    }
-    public void PopTaxes(){
-        foreach (Pop pop in pops){
-            double taxesPerCapita = 0;
-            switch (pop.profession){
-                case Profession.FARMER: 
-                    taxesPerCapita = pop.wealthPerCapita * 0.2f;
-                break;
-                case Profession.MERCHANT:
-                    taxesPerCapita = pop.wealthPerCapita * 0.1f;
-                break;
-                case Profession.ARISTOCRAT:
-                    taxesPerCapita = pop.wealthPerCapita * 0.05f;
-                break;
-            }
-            double taxesCollected = taxesPerCapita * pop.population;
-            pop.totalWealth -= taxesCollected;
+        pop.CalcWealthPerCapita();
+
+        double taxesPerCapita = 0;
+        switch (pop.profession){
+            case Profession.FARMER: 
+                taxesPerCapita = pop.wealthPerCapita * 0.2f;
+            break;
+            case Profession.MERCHANT:
+                taxesPerCapita = pop.wealthPerCapita * 0.1f;
+            break;
+            case Profession.ARISTOCRAT:
+                taxesPerCapita = pop.wealthPerCapita * 0.05f;
+            break;
         }
+        double taxesCollected = taxesPerCapita * pop.population;
+        pop.totalWealth -= taxesCollected;            
     }
     #endregion
     #region PopActions
@@ -250,34 +245,25 @@ public partial class Region : GodotObject
     }
 
     #region PopGrowth
-    public void GrowPops(){
-        long twc = 0;
-        long tdc = 0;
-        foreach (Pop pop in pops.ToArray()){
-            pop.canMove = true;
+    public void GrowPop(Pop pop){
+        pop.canMove = true;
 
-            float bRate;
-            if (pop.population < Pop.ToNativePopulation(2)){
-                bRate = 0;
-            } else {
-                bRate = pop.birthRate;
-            }
-            if (population > maxPopulation){
-                bRate *= 0.75f;
-            }
-            
-            float NIR =  (bRate - pop.deathRate)/12f;
-            long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
-            long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
-            long workforceChange = change - dependentChange;
-            pop.ChangeWorkforce(workforceChange);
-            pop.ChangeDependents(dependentChange);
-
-            twc += workforceChange;
-            tdc += dependentChange;
-            
+        float bRate;
+        if (pop.population < Pop.ToNativePopulation(2)){
+            bRate = 0;
+        } else {
+            bRate = pop.birthRate;
         }
-        ChangePopulation(twc, tdc);
+        if (population > maxPopulation){
+            bRate *= 0.75f;
+        }
+        
+        float NIR =  (bRate - pop.deathRate)/12f;
+        long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
+        long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
+        long workforceChange = change - dependentChange;
+        pop.ChangeWorkforce(workforceChange);
+        pop.ChangeDependents(dependentChange);
     }
     #endregion
 
@@ -288,7 +274,7 @@ public partial class Region : GodotObject
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){
-                migrateChance = 0.1f;
+                migrateChance = 0.25f;
             }
             if (pop.profession == Profession.ARISTOCRAT){
                 migrateChance /= 100;
@@ -315,7 +301,42 @@ public partial class Region : GodotObject
         }
     }
 
+    public void MigratePop(Pop pop){
+        // Chance of pop to migrate
+        float migrateChance = 0.0005f;
+
+        // Pops are most likely to migrate if their region is overpopulated
+        if (population >= maxPopulation * 0.95f){
+            migrateChance = 0.25f;
+        }
+        if (pop.profession == Profession.ARISTOCRAT){
+            migrateChance /= 100;
+        }
+
+        // If the pop migrates
+        if (rng.NextSingle() <= migrateChance){
+            for (int dx = -1; dx < 2; dx++){
+                for (int dy = -1; dy < 2; dy++){
+                    // Removes our region to avoid any messy behavior
+                    if (dx == 0 && dy == 0 || dx != 0 && dy != 0){
+                        continue;
+                    }
+                    // Gets the tested region
+                    Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
+                    if (region.habitable && rng.NextDouble() <= 0.25d){
+                        MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
+                        return;
+                    }
+                    
+                }
+            } 
+        }
+    }
+
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
+        if (destination == null){
+            return;
+        }
         if (destination != this && movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1)){
             if (movedWorkforce > pop.workforce){
                 movedWorkforce = pop.workforce;
@@ -324,13 +345,13 @@ public partial class Region : GodotObject
                 movedDependents = pop.dependents;
             }
             Pop merger = null;
+            m.WaitOne();
             foreach (Pop resident in destination.pops.ToArray()){
                 if (Pop.CanPopsMerge(pop, merger)){
                     merger = resident;
                     break;
                 }
             }
-            m.WaitOne();
             if (merger != null){
                 merger.ChangePopulation(movedWorkforce, movedDependents);
                 merger.canMove = false;
@@ -349,7 +370,7 @@ public partial class Region : GodotObject
             double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, Pop.foodPerCapita, economy)/pop.GetConsumptionPopulation();
             if (unsatisfiedFoodPerCapita != 0){
                 float starvationPercentage = (float)(unsatisfiedFoodPerCapita/Pop.foodPerCapita);
-                //pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 1f, starvationPercentage);
+                pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 1f, starvationPercentage);
             }
         }            
     }

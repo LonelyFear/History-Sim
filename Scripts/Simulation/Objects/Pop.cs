@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Godot;
 using Godot.Collections;
@@ -96,15 +97,19 @@ public partial class Pop : GodotObject
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-        public void AddCharacter(Character character){
-        if (!characters.Contains(character)){
-            if (character.pop != null){
-                character.pop.RemoveCharacter(character);
-            } 
-            ChangePopulation(Pop.ToNativePopulation(1), 0);
-            character.state = region.owner;
-            character.pop = this;
-            characters.Add(character);
+    public void AddCharacter(Character character){
+        try {
+            if (!characters.Contains(character)){
+                if (character.pop != null){
+                    character.pop.RemoveCharacter(character);
+                } 
+                ChangePopulation(Pop.ToNativePopulation(1), 0);
+                character.state = region.owner;
+                character.pop = this;
+                characters.Add(character);
+            }
+        } catch (Exception e){
+            GD.Print(e);
         }
     }
     public void RemoveCharacter(Character character){

@@ -4,7 +4,7 @@ extends Label
 
 func _process(_delta: float) -> void:
 	if (simManager):
-		text = "World Population: " + thousands_sep(simManager.worldPopulation/simManager.simToPopMult) + "\nTotal Pops: " + thousands_sep(simManager.pops.size())
+		text = "World Population: " + thousands_sep(simManager.worldPopulation/simManager.simToPopMult) + "\nTotal Pops: " + thousands_sep(simManager.pops.size()) + "\nTotal Characters: " + thousands_sep(simManager.characters.size())
 	else:
 		visible = false
 	

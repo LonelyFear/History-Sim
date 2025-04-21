@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
@@ -144,7 +145,6 @@ public partial class SimManager : Node2D
 
         if (Directory.Exists(resourcesPath)){
             foreach (string subPath in Directory.GetFiles(resourcesPath)){
-                GD.Print(resourcesPath + subPath);
                 StreamReader reader = new StreamReader(subPath.Replace("\\", "/"));
                 string resourceData = reader.ReadToEnd();
                 SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
@@ -179,8 +179,6 @@ public partial class SimManager : Node2D
         LoadBuildings();
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
-        GD.Print(terrainSize); 
-        GD.Print(world.Scale);
         Scale = world.Scale * tilesPerRegion;
         regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
 
@@ -263,68 +261,79 @@ public partial class SimManager : Node2D
             }
         }
     }
-    #region SimTick
-    public void SimTick(){        
-        Parallel.ForEach(states, state =>{
-            state.borderingStates = new Array<State>();
-        });
+    public void UpdateRegions(){
+        long worldPop = 0;
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
-                region.GrowPops();
-
-                region.Farming();
-                region.PopConsumption();
-                
+                // region.Farming();
+                // region.PopConsumption();
+                foreach (Pop pop in region.pops){
+                    region.GrowPop(pop);
+                    if (region.owner != null){
+                        region.PopWealth(pop);
+                    }
+                    region.MigratePop(pop);
+                }
                 if (region.owner != null){
-                    region.PopWealth();
-                    region.PopTaxes();
                     if (region.frontier){
                         region.NeutralConquest();
                     }
                 }
-                region.MovePops();
-            }         
+                //region.MovePops();
+                region.RandomStateFormation();
+                if (region.owner != null){
+                    region.StateBordering();
+                }
+            }          
         });
+
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.MergePops();
                 region.CheckPopulation();                
             }       
-        });
-        long worldPop = 0;
-        foreach (Region region in habitableRegions){
-            if (region.pops.Count > 0){
-                if (region.pops.Count > 1){
-                    region.MergePops();
-                }
-            }
             worldPop += region.population;
-        }
+        });    
+        worldPopulation = worldPop;    
+    }
 
-        Parallel.ForEach(characters, character =>{
+    public void UpdateCharacters(){
+        Parallel.ForEach(characters.ToArray(), character =>{
             character.age++;
             character.existTime++;
+            bool exists = true;
+
             if (character.existTime > 20*12 && character.role == Character.Role.CIVILIAN){
+                m.WaitOne();
                 DeleteCharacter(character);
-            }        
+                exists = false;
+                m.ReleaseMutex();
+                
+            }
+            if (exists){
+                if (character.state.leader == character){
+                    character.role = Character.Role.LEADER;
+                    Character heir = character.GetHeir();
+                    if (heir != null){
+                        heir.role = Character.Role.HEIR;
+                    }                
+                }
+        
+                if (character.state.leader == character && rng.NextSingle() <= 0.02/12 && character.age > 20 * 12){
+                    character.HaveChild();
+                }
 
-            if (character.state.leader == character){
-                character.role = Character.Role.LEADER;
-                Character heir = character.GetHeir();
-                if (heir != null){
-                    heir.role = Character.Role.HEIR;
+                if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
+                    m.WaitOne();
+                    character.Die();
+                    m.ReleaseMutex();
                 }                
-            }
-       
-            if (character.state.leader == character && rng.NextSingle() <= 0.02/12 && character.age > 20 * 12){
-                character.HaveChild();
-            }
-            if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
-               character.Die();
-            }
-
-        });
+            } 
+        });        
+    }
+    public void UpdateStates(){
         Parallel.ForEach(states, state => {
+            state.CountPopulation();
             state.age++;
             if (state.leader != null && state.leader.family != null){
                 state.rulingFamily = state.leader.family;
@@ -332,24 +341,26 @@ public partial class SimManager : Node2D
                 state.rulingFamily = null;
             }
             state.UpdateCapital();
-            state.CountPopulation();
+            //state.CountPopulation();
             state.Recruitment();
             
         });
         foreach (State state in states.ToArray()){
             state.RulersCheck();
-        }
-
-
-
+        }        
+    }
+    #region SimTick
+    public void SimTick(){        
+        Parallel.ForEach(states, state =>{
+            state.borderingStates = new Array<State>();
+        });
+        UpdateRegions();
+        UpdateCharacters();
+        UpdateStates();
+        
         Parallel.ForEach(regions, region =>{
-            region.RandomStateFormation();
-            if (region.owner != null){
-                region.StateBordering();
-            }
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         });
-        worldPopulation = worldPop; 
     }
     #endregion
 
