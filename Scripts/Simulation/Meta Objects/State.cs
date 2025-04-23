@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
-using Godot.Collections;
 
-public partial class State : GodotObject
+public class State
 {
     public string name = "Nation";
     public string displayName = "Nation";
@@ -12,7 +12,7 @@ public partial class State : GodotObject
     public Color displayColor;
 
     public GovernmentTypes government = GovernmentTypes.MONARCHY;
-    public Array<Region> regions = new Array<Region>();
+    public List<Region> regions = new List<Region>();
     public Region capital;
     public long population;
     public long workforce;
@@ -20,11 +20,11 @@ public partial class State : GodotObject
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
     public long manpowerTarget;
     public long manpower;
-    Array<State> vassals;
+    List<State> vassals = new List<State>();
     State liege;
     Dictionary<State, Relation> relations;
-    public Array<State> wars = new Array<State>();
-    public Array<State> borderingStates = new Array<State>();
+    public List<State> wars = new List<State>();
+    public List<State> borderingStates = new List<State>();
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public Economy economy = new Economy();
     public SimManager simManager;
@@ -32,14 +32,14 @@ public partial class State : GodotObject
     public Character lastLeader = null;
     public Pop rulingPop;
     public Family rulingFamily;
-    public Array<Character> characters = new Array<Character>();
+    public List<Character> characters = new List<Character>();
     int monthsSinceElection = 0;
     Random rng = new Random();
     public Tech tech;
 
     public void UpdateCapital(){
         if (capital == null){
-            capital = regions.PickRandom();
+            capital = regions[0];
         }
     }
     public void RulersCheck(){
@@ -116,8 +116,11 @@ public partial class State : GodotObject
         }
     }
     public void Recruitment(){
-        manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.7);
-        manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);
+        if (professions.ContainsKey(Profession.FARMER) && professions.ContainsKey(Profession.MERCHANT)){
+            manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.7);
+            manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);            
+        }
+        //manpower = 400 * regions.Count;
     }
 
     public void SetLeader(Character newLeader){

@@ -1,13 +1,11 @@
-using Godot;
-using Godot.Collections;
-using System;
-public partial class Building : GodotObject
+using System.Collections.Generic;
+public class Building
 {
     public BuildingData data;
     public int level = 1;
     public long maxWorkforce;    
     public long workforce;
-    public Array<Pop> pops = new Array<Pop>();
+    public List<Pop> pops = new List<Pop>();
 
     public bool LevelUp(){
         if (level < data.maxLevel){

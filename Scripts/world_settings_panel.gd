@@ -12,13 +12,13 @@ func _on_seed_text_changed(new_text: String) -> void:
 
 
 func _on_start_pressed() -> void:
-	var seed : int = 0
+	var worldSeed : int = 0
 	if (lineEdit.text.is_empty()):
-		seed = randi_range(0, 999999999)
+		worldSeed = randi_range(0, 999999999)
 	else:
-		seed = lineEdit.text.to_int()
+		worldSeed = lineEdit.text.to_int()
 	var game : Node2D = load("res://Scenes/game.tscn").instantiate()
-	game.get_node("Loading Screen").seed = seed
+	game.get_node("Loading Screen").seed = worldSeed
 	game.get_node("Loading Screen").tilesPerRegionFactor = worldSizeDropdown.get_selected_id()
 	get_tree().root.add_child(game)
 	get_parent().queue_free()

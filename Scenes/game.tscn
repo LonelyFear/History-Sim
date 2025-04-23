@@ -11,10 +11,10 @@
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scripts/terrain_map.gd" id="5_nb51f"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="8_7t8sx"]
-[ext_resource type="Script" uid="uid://dway8iihrur67" path="res://Scripts/UI/population_label.gd" id="8_85qyi"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
+[ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scenes/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d1ilt"]
@@ -56,6 +56,7 @@ visible = false
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
 monthsPerTick = 1
+debuggerMode = true
 
 [node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "timeManager")]
 z_index = 10
@@ -74,7 +75,7 @@ tile_set = SubResource("TileSet_6iyac")
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
-worldSizeMult = 2
+worldSizeMult = 1
 seed = 48590
 mapScale = 1.0
 
@@ -111,7 +112,7 @@ theme_override_constants/outline_size = 10
 theme_override_fonts/font = ExtResource("8_7t8sx")
 theme_override_font_sizes/font_size = 20
 text = "World Population:"
-script = ExtResource("8_85qyi")
+script = ExtResource("11_nnt18")
 simManager = NodePath("../../../Simulation")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/Game UI"]

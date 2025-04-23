@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Collections;
 
-public partial class Pop : GodotObject
+public class Pop
 {
     public long population = 0;
     public long workforce = 0;
@@ -25,7 +25,7 @@ public partial class Pop : GodotObject
     public bool canMove = true;
     public const double foodPerCapita = 1.0;
     public const double dependentNeedMultiplier = .8;
-    public Array<Character> characters = new Array<Character>();
+    public List<Character> characters = new List<Character>();
 
     public void ChangeWorkforce(long amount){
         if (workforce + amount < 0){
@@ -99,7 +99,7 @@ public partial class Pop : GodotObject
     }
     public void AddCharacter(Character character){
         try {
-            if (!characters.Contains(character)){
+            if (!characters.Contains(character) && character != null){
                 if (character.pop != null){
                     character.pop.RemoveCharacter(character);
                 } 
@@ -107,6 +107,8 @@ public partial class Pop : GodotObject
                 character.state = region.owner;
                 character.pop = this;
                 characters.Add(character);
+            } else if (character == null){
+                GD.PushWarning("Error: Null character added, something is probably broken");
             }
         } catch (Exception e){
             GD.Print(e);

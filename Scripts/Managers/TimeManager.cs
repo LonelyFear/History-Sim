@@ -18,13 +18,14 @@ public partial class TimeManager : Node
     public int totalTicks = 0;
 
     public ulong tickStartTime = 0;
-    public double tickDelta = 1;
+    public float tickDelta = 1;
     public WorldGeneration world;
     public SimManager simManager;
     bool worldGenFinished = false;
     Task monthTask;
     Task yearTask;
     bool doYear = false;
+    [Export]
     public bool debuggerMode = false;
     public override void _Ready()
     {
@@ -42,7 +43,7 @@ public partial class TimeManager : Node
                 //yearTask = Task.Run();
             }
             if (yearTask == null || yearTask.IsCompleted){
-                tickDelta = (double)(Time.GetTicksMsec() - tickStartTime)/1000;
+                tickDelta = (Time.GetTicksMsec() - tickStartTime)/1000f;
                 TickGame();
                 if (simManager.mapUpdate){
                     simManager.UpdateMap();
@@ -62,7 +63,7 @@ public partial class TimeManager : Node
         totalTicks += 1;
         month += 1;
 
-        if (debuggerMode){
+        if (!debuggerMode){
             monthTask = Task.Run(simManager.SimTick);
         } else {
             simManager.SimTick();
@@ -71,7 +72,7 @@ public partial class TimeManager : Node
         if (month > 12){
             month = 1;
             year += 1;
-            if (debuggerMode){
+            if (!debuggerMode){
                 doYear = true;
             } else {
                 // Insert year tick function here

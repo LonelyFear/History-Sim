@@ -1,8 +1,8 @@
 using Godot;
-using Godot.Collections;
 using System;
+using System.Collections.Generic;
 
-public partial class BuildingData : GodotObject
+public class BuildingData
 {
     public string name {get; set;} = "Building";
     public string id {get; set;} = "building";

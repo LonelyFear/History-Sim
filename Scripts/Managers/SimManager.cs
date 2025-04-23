@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
@@ -8,7 +9,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
-using Godot.Collections;
 
 public partial class SimManager : Node2D
 {
@@ -21,8 +21,8 @@ public partial class SimManager : Node2D
     public TimeManager timeManager { get; set; }
 
     public Tile[,] tiles;
-    public Array<Region> regions = new Array<Region>();
-    public Array<Region> habitableRegions = new Array<Region>();
+    public List<Region> regions = new List<Region>();
+    public List<Region> habitableRegions = new List<Region>();
     public Vector2I terrainSize;   
     public Vector2I worldSize;
     public MapModes mapMode = MapModes.POLITIY;
@@ -31,15 +31,15 @@ public partial class SimManager : Node2D
     Image regionImage;
 
     // Population
-    public Array<Pop> pops = new Array<Pop>();
+    public List<Pop> pops = new List<Pop>();
     public long worldPopulation = 0;
     public long worldWorkforce = 0;
     public long worldDependents = 0;
     public long workforceChange = 0;
     public long dependentsChange = 0;
-    public Array<Culture> cultures = new Array<Culture>();
-    public Array<State> states = new Array<State>();
-    public Array<Character> characters = new Array<Character>();
+    public List<Culture> cultures = new List<Culture>();
+    public List<State> states = new List<State>();
+    public List<Character> characters = new List<Character>();
 
     public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
@@ -265,24 +265,17 @@ public partial class SimManager : Node2D
         long worldPop = 0;
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
-                // region.Farming();
-                // region.PopConsumption();
-                foreach (Pop pop in region.pops){
+                foreach (Pop pop in region.pops.ToArray()){
                     region.GrowPop(pop);
-                    if (region.owner != null){
-                        region.PopWealth(pop);
-                    }
                     region.MigratePop(pop);
                 }
-                if (region.owner != null){
-                    if (region.frontier){
-                        region.NeutralConquest();
-                    }
-                }
-                //region.MovePops();
+
                 region.RandomStateFormation();
                 if (region.owner != null){
                     region.StateBordering();
+                    if (region.frontier){
+                        region.NeutralConquest();
+                    }
                 }
             }          
         });
@@ -290,7 +283,12 @@ public partial class SimManager : Node2D
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 region.MergePops();
-                region.CheckPopulation();                
+                region.CheckPopulation();     
+                foreach (Pop pop in region.pops.ToArray()){
+                    if (region.owner != null){
+                        region.PopWealth(pop);
+                    }
+                }           
             }       
             worldPop += region.population;
         });    
@@ -333,7 +331,7 @@ public partial class SimManager : Node2D
     }
     public void UpdateStates(){
         Parallel.ForEach(states, state => {
-            state.CountPopulation();
+            //state.CountPopulation();
             state.age++;
             if (state.leader != null && state.leader.family != null){
                 state.rulingFamily = state.leader.family;
@@ -341,7 +339,7 @@ public partial class SimManager : Node2D
                 state.rulingFamily = null;
             }
             state.UpdateCapital();
-            //state.CountPopulation();
+            state.CountPopulation();
             state.Recruitment();
             
         });
@@ -352,10 +350,10 @@ public partial class SimManager : Node2D
     #region SimTick
     public void SimTick(){        
         Parallel.ForEach(states, state =>{
-            state.borderingStates = new Array<State>();
+            state.borderingStates = new List<State>();
         });
         UpdateRegions();
-        UpdateCharacters();
+        //UpdateCharacters();
         UpdateStates();
         
         Parallel.ForEach(regions, region =>{
@@ -450,7 +448,15 @@ public partial class SimManager : Node2D
         if (family != null){
             family.AddCharacter(character);                
         }
-        pop.region.owner.AddCharacter(character);
+        if (pop == null){
+            GD.PushError("No pop to add character to");
+        } else if (pop.region == null){
+            GD.PushError("No region to add character to");
+        } else if (pop.region.owner == null){
+            GD.PushError("No state to add character to");
+        } else {
+            pop.region.owner.AddCharacter(character);            
+        }
         characters.Add(character);
         return character;
     }
@@ -462,6 +468,9 @@ public partial class SimManager : Node2D
             character.state.RemoveCharacter(character);
             if (character.family != null){
                 character.family.RemoveCharacter(character);                
+            }
+            if (character.parent != null){
+                character.parent.children.Remove(character);
             }
 
             characters.Remove(character);            

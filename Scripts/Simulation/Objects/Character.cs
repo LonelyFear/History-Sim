@@ -1,7 +1,7 @@
 using System;
-using Godot;
+using System.Collections.Generic;
 
-public partial class Character : GodotObject
+public class Character
 {
     public string name = "John";
     public float wealth;
@@ -15,6 +15,7 @@ public partial class Character : GodotObject
     public Character parent;
     public SimManager simManager;
     public TraitLevel agression = TraitLevel.MEDIUM;
+    public List<Character> children = new List<Character>();
 
     public void Die(){
         if (state.leader == this){
@@ -24,32 +25,18 @@ public partial class Character : GodotObject
     }
 
     public void HaveChild(){
-        if (family == null){
-            family = new Family();
-            if (state.leader == this){
-                state.rulingFamily = family;
-            }            
-        }
-        if (family.members.Count <= 12){
+        if (children.Count <= 12){
             Character child = simManager.CreateCharacter(pop, family, 0, 0);
             child.parent = this;
-            if (state.leader == this){
-            }         
+            children.Add(child);
         }
     }
 
     public Character GetHeir(){
-        uint eldestAge = 0;
-        Character heir = null;
-        if (family != null){
-            foreach (Character member in family.members){
-                if ((member.parent == this || member.state == state) && member.state.leader != member && member.age > eldestAge){
-                    eldestAge = member.age;
-                    heir = member;
-                }
-            }
+        if (children.Count > 0){
+            return children[0];
         }
-        return heir;
+        return null;
     }
 
     public void FoundFamily(){

@@ -1,8 +1,8 @@
 using System;
 using Godot;
-using Godot.Collections;
+using System.Collections.Generic;
 
-public partial class Culture : GodotObject
+public class Culture
 {
     public Color color;
 
@@ -11,11 +11,11 @@ public partial class Culture : GodotObject
     
     // Decreases descrimination by units of this culture
     public TraitLevel acceptance = TraitLevel.MEDIUM;
-    public Array<Culture> hatedCultures = new Array<Culture>();
+    public List<Culture> hatedCultures = new List<Culture>();
 
     public string name = "Culturism";
     public long population = 0;
-    public Array<Pop> pops = new Array<Pop>();
+    public List<Pop> pops = new List<Pop>();
 
     public void ChangePopulation(long amount){
         population += amount;

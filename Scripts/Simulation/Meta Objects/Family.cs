@@ -1,12 +1,12 @@
 using Godot;
-using Godot.Collections;
 using System;
+using System.Collections.Generic;
 
-public partial class Family : GodotObject
+public class Family
 {
     public string name = "Regal";
     public Character head;
-    public Array<Character> members = new Array<Character>();
+    public List<Character> members = new List<Character>();
     public Culture culture;
     public void AddCharacter(Character character){
         if (!members.Contains(character)){

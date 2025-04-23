@@ -1,18 +1,17 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
-using Godot;
-using Godot.Collections;
-using Dictionary = Godot.Collections.Dictionary;
 using Mutex = System.Threading.Mutex;
+using Godot;
 
-public partial class Region : GodotObject
+public class Region
 {
 	public Tile[,] tiles;
     public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
-    public Array<Pop> pops = new Array<Pop> ();
+    public List<Pop> pops = new List<Pop> ();
 
     public Vector2I pos;
     public float avgFertility;
@@ -30,7 +29,7 @@ public partial class Region : GodotObject
 
     Random rng = new Random();
     public Economy economy = new Economy();
-    public Array<Region> borderingRegions = new Array<Region>();
+    public List<Region> borderingRegions = new List<Region>();
     Mutex m = new Mutex();
 
     public int currentMonth;
@@ -142,7 +141,7 @@ public partial class Region : GodotObject
     }
 
     public void NeutralConquest(){
-        Region region = borderingRegions.PickRandom();
+        Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f){
             double armyPower = owner.GetArmyPower();
             double tribePower = Pop.FromNativePopulation(region.workforce) * 0.2;
@@ -168,12 +167,6 @@ public partial class Region : GodotObject
         }
 
         foreach (Pop pop in pops.ToArray()){
-            if (pop.population <= Pop.ToNativePopulation(1)){
-                m.WaitOne();
-                simManager.DestroyPop(pop);
-                m.ReleaseMutex();
-                continue;
-            }
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
@@ -246,6 +239,12 @@ public partial class Region : GodotObject
 
     #region PopGrowth
     public void GrowPop(Pop pop){
+        if (pop.population <= Pop.ToNativePopulation(1)){
+            m.WaitOne();
+            simManager.DestroyPop(pop);
+            m.ReleaseMutex();
+            return;
+        }
         pop.canMove = true;
 
         float bRate;
@@ -323,7 +322,12 @@ public partial class Region : GodotObject
                     }
                     // Gets the tested region
                     Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
-                    if (region.habitable && rng.NextDouble() <= 0.25d){
+                    bool canMigrate = pop.profession == Profession.FARMER || region.owner != null;
+                    if (owner != null && owner.rulingPop == pop){
+                        canMigrate = region.owner == owner;
+                    }
+
+                    if (region.habitable && rng.NextDouble() <= 0.25d && canMigrate){
                         MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
                         return;
                     }
