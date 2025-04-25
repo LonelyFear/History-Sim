@@ -262,11 +262,22 @@ public partial class SimManager : Node2D
         }
     }
     public void UpdateRegions(){
+        int maxPops = 0;
+        int avgPops = 0;
+        float populatedRegions = 0;
         long worldPop = 0;
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
                 foreach (Pop pop in region.pops.ToArray()){
-                    region.GrowPop(pop);
+
+                    if (pop.population <= Pop.ToNativePopulation(1)){
+                        m.WaitOne();
+                        DestroyPop(pop);
+                        m.ReleaseMutex();
+                    } else if (month == pop.batchId) {
+                        region.GrowPop(pop);
+                    }  
+                    
                     region.MigratePop(pop);
                 }
 
@@ -277,8 +288,17 @@ public partial class SimManager : Node2D
                         region.NeutralConquest();
                     }
                 }
+                m.WaitOne();
+                populatedRegions += 1;
+                if (region.pops.Count > maxPops){
+                    maxPops = region.pops.Count;
+                }
+                avgPops += region.pops.Count;
+                m.ReleaseMutex();
             }          
         });
+        GD.Print("Average Pops: " + (avgPops/populatedRegions));
+        GD.Print("Max Pops: " + maxPops);
 
         Parallel.ForEach(habitableRegions, region =>{
             if (region.pops.Count > 0){
@@ -292,6 +312,7 @@ public partial class SimManager : Node2D
             }       
             worldPop += region.population;
         });    
+
         worldPopulation = worldPop;    
     }
 
@@ -349,6 +370,8 @@ public partial class SimManager : Node2D
     }
     #region SimTick
     public void SimTick(){        
+        month = timeManager.month;
+
         Parallel.ForEach(states, state =>{
             state.borderingStates = new List<State>();
         });

@@ -173,9 +173,11 @@ public class Region
 
             countedProfessions[pop.profession] += pop.workforce;
         }
+
         if (countedPopulation < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
+
         professions = countedProfessions;
         population = countedPopulation;
         dependents = countedDependents;
@@ -215,7 +217,7 @@ public class Region
     #region PopActions
 
     public void MergePops(){
-        foreach (Pop pop in pops){
+        foreach (Pop pop in pops.ToArray()){
             if (pop.population >= Pop.ToNativePopulation(1)){
                 foreach (Pop merger in pops.ToArray()){
                     if (Pop.CanPopsMerge(pop, merger)){
@@ -239,12 +241,6 @@ public class Region
 
     #region PopGrowth
     public void GrowPop(Pop pop){
-        if (pop.population <= Pop.ToNativePopulation(1)){
-            m.WaitOne();
-            simManager.DestroyPop(pop);
-            m.ReleaseMutex();
-            return;
-        }
         pop.canMove = true;
 
         float bRate;
@@ -257,7 +253,7 @@ public class Region
             bRate *= 0.75f;
         }
         
-        float NIR =  (bRate - pop.deathRate)/12f;
+        float NIR =  (bRate - pop.deathRate);///12f;
         long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
         long workforceChange = change - dependentChange;
