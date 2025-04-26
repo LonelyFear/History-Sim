@@ -47,7 +47,7 @@ public partial class WorldGeneration : Node2D
     public delegate void worldgenFinishedEventHandler();
 
     public Vector2I worldSize = new Vector2I(360, 180);
-    [Export(PropertyHint.Range, "1, 4, 1")] public int worldSizeMult = 4;
+    [Export] public float worldSizeMult = 4;
     public float seaLevel = 0.6f;
 
     [ExportCategory("Noise Settings")]
@@ -67,7 +67,7 @@ public partial class WorldGeneration : Node2D
 
     public void Init(){
         tileMap = GetNode<TileMapLayer>("Terrain Map");
-        worldSize *= worldSizeMult;
+        worldSize = (Vector2I)((Vector2)worldSize * worldSizeMult);
         mapScale *= worldSizeMult;
 
         rng = new Random(seed);

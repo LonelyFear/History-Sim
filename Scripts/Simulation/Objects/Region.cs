@@ -217,12 +217,12 @@ public class Region
     #region PopActions
 
     public void MergePops(){
-        foreach (Pop pop in pops.ToArray()){
+        foreach (Pop pop in pops){
             if (pop.population >= Pop.ToNativePopulation(1)){
-                foreach (Pop merger in pops.ToArray()){
+                foreach (Pop merger in pops){
                     if (Pop.CanPopsMerge(pop, merger)){
-                        merger.ChangePopulation(pop.workforce, pop.dependents);
-                        pop.ChangePopulation(-pop.workforce, -pop.dependents);
+                        pop.ChangePopulation(merger.workforce, merger.dependents);
+                        merger.ChangePopulation(-merger.workforce, -merger.dependents);
                         break;
                     }
                 }                
@@ -253,7 +253,7 @@ public class Region
             bRate *= 0.75f;
         }
         
-        float NIR =  (bRate - pop.deathRate);///12f;
+        float NIR =  (bRate - pop.deathRate)*12;///12f;
         long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
         long workforceChange = change - dependentChange;

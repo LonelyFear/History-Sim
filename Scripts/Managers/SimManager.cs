@@ -262,25 +262,18 @@ public partial class SimManager : Node2D
         }
     }
     public void UpdateRegions(){
-        int maxPops = 0;
-        int avgPops = 0;
-        float populatedRegions = 0;
         long worldPop = 0;
-        Parallel.ForEach(habitableRegions, region =>{
+        foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
                 foreach (Pop pop in region.pops.ToArray()){
-
                     if (pop.population <= Pop.ToNativePopulation(1)){
-                        m.WaitOne();
                         DestroyPop(pop);
-                        m.ReleaseMutex();
-                    } else if (month == pop.batchId) {
+                    } else {
                         region.GrowPop(pop);
-                    }  
+                        region.MigratePop(pop);
+                    }
                     
-                    region.MigratePop(pop);
                 }
-
                 region.RandomStateFormation();
                 if (region.owner != null){
                     region.StateBordering();
@@ -288,19 +281,9 @@ public partial class SimManager : Node2D
                         region.NeutralConquest();
                     }
                 }
-                m.WaitOne();
-                populatedRegions += 1;
-                if (region.pops.Count > maxPops){
-                    maxPops = region.pops.Count;
-                }
-                avgPops += region.pops.Count;
-                m.ReleaseMutex();
-            }          
-        });
-        GD.Print("Average Pops: " + (avgPops/populatedRegions));
-        GD.Print("Max Pops: " + maxPops);
-
-        Parallel.ForEach(habitableRegions, region =>{
+            }             
+        }
+        foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
                 region.MergePops();
                 region.CheckPopulation();     
@@ -310,8 +293,8 @@ public partial class SimManager : Node2D
                     }
                 }           
             }       
-            worldPop += region.population;
-        });    
+            worldPop += region.population;            
+        }
 
         worldPopulation = worldPop;    
     }
@@ -351,7 +334,7 @@ public partial class SimManager : Node2D
         });        
     }
     public void UpdateStates(){
-        Parallel.ForEach(states, state => {
+        foreach (State state in states){
             //state.CountPopulation();
             state.age++;
             if (state.leader != null && state.leader.family != null){
@@ -361,12 +344,9 @@ public partial class SimManager : Node2D
             }
             state.UpdateCapital();
             state.CountPopulation();
-            state.Recruitment();
-            
-        });
-        foreach (State state in states.ToArray()){
-            state.RulersCheck();
-        }        
+            state.Recruitment();    
+            state.RulersCheck();       
+        }     
     }
     #region SimTick
     public void SimTick(){        
@@ -416,9 +396,7 @@ public partial class SimManager : Node2D
     }
 
     public void DestroyPop(Pop pop){
-        if (pop.region != null){
-            pop.region.RemovePop(pop);
-        }
+        pop.region.RemovePop(pop);
         pop.culture.ChangePopulation(-pop.population);
         pops.Remove(pop);
     }
@@ -447,9 +425,9 @@ public partial class SimManager : Node2D
     }
     public void CreateNation(Region region){
         if (region.owner == null){
-            float r = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
-            float g = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());
-            float b = Mathf.InverseLerp(0.2f, 1f, rng.NextSingle());    
+            float r = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());
+            float g = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());
+            float b = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());    
             State state = new State(){
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
