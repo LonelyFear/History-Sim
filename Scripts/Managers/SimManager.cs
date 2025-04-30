@@ -221,10 +221,10 @@ public partial class SimManager : Node2D
                 }
                 // Calc max populaiton
                 newRegion.CalcMaxPopulation();
-                // // Adds pops
+                // Adds pops
                 // if (newRegion.habitable){
                 //     // Add pops here
-                //     long startingPopulation = Pop.toNativePopulation(rng.NextInt64(20, 100));
+                //     long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(20, 100));
                 //     CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
                 // }
             }
@@ -269,7 +269,9 @@ public partial class SimManager : Node2D
                     if (pop.population <= Pop.ToNativePopulation(1)){
                         DestroyPop(pop);
                     } else {
-                        region.GrowPop(pop);
+                        if (pop.batchId == month){
+                            region.GrowPop(pop);
+                        }
                         region.MigratePop(pop);
                     }
                     
@@ -335,7 +337,7 @@ public partial class SimManager : Node2D
     }
     public void UpdateStates(){
         foreach (State state in states){
-            //state.CountPopulation();
+            state.borderingStates = new List<State>();
             state.age++;
             if (state.leader != null && state.leader.family != null){
                 state.rulingFamily = state.leader.family;
@@ -351,16 +353,14 @@ public partial class SimManager : Node2D
     #region SimTick
     public void SimTick(){        
         month = timeManager.month;
-
-        Parallel.ForEach(states, state =>{
-            state.borderingStates = new List<State>();
-        });
         UpdateRegions();
         //UpdateCharacters();
         UpdateStates();
-        
-        Parallel.ForEach(regions, region =>{
+        foreach (Region region in regions){
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
+        }
+        Parallel.ForEach(regions, region =>{
+            
         });
     }
     #endregion
@@ -519,7 +519,7 @@ public partial class SimManager : Node2D
             break;
             case MapModes.CULTURE:
                 if (region.habitable && region.pops.Count > 0){
-                    color = region.pops[0].culture.color;
+                    color = region.cultures.ElementAt(0).Key.color;
                 } else if (region.habitable) {
                     color = new Color(0, 0, 0, 1);
                 }

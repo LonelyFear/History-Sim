@@ -25,6 +25,7 @@ public class Region
     public long dependents = 0;    
     public long workforce = 0;
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
+    public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public double wealth;
 
     Random rng = new Random();
@@ -161,6 +162,7 @@ public class Region
         long countedDependents = 0;
         long countedWorkforce = 0;
 
+        cultures = new Dictionary<Culture, long>();
         Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
         foreach (Profession profession in Enum.GetValues(typeof(Profession))){
             countedProfessions.Add(profession, 0);
@@ -172,8 +174,13 @@ public class Region
             countedDependents += pop.dependents;
 
             countedProfessions[pop.profession] += pop.workforce;
+            if (!cultures.ContainsKey(pop.culture)){
+                cultures.Add(pop.culture, pop.population);
+            } else {
+                cultures[pop.culture] += pop.population;
+            }
         }
-
+        cultures = cultures.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
         if (countedPopulation < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
@@ -253,7 +260,7 @@ public class Region
             bRate *= 0.75f;
         }
         
-        float NIR =  (bRate - pop.deathRate)*12;///12f;
+        float NIR =  (bRate - pop.deathRate);///12f;
         long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
         long workforceChange = change - dependentChange;
