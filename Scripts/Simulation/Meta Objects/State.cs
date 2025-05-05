@@ -11,7 +11,7 @@ public class State
     public Color color;
     public Color displayColor;
 
-    public GovernmentTypes government = GovernmentTypes.REPUBLIC;
+    public GovernmentTypes government = GovernmentTypes.MONARCHY;
     public List<Region> regions = new List<Region>();
     public Region capital;
     public long population;
@@ -136,7 +136,6 @@ public class State
         if (leader != null){
             leader.role = Character.Role.CIVILIAN;
         }
-        
         if (newLeader != null){
             newLeader.role = Character.Role.LEADER;
             if (!characters.Contains(newLeader)){

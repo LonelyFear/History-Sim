@@ -296,7 +296,7 @@ public partial class SimManager : Node2D
                 region.RandomStateFormation();
                 if (region.owner != null){
                     region.StateBordering();
-                    if (region.frontier){
+                    if (region.frontier && region.owner.rulingPop != null){
                         region.NeutralConquest();
                     }
                 } 
@@ -316,7 +316,7 @@ public partial class SimManager : Node2D
             character.childCooldown--;
             bool exists = true;
 
-            if (character.existTime > 20*12 && character.role == Character.Role.CIVILIAN || character.state == null){
+            if (character.existTime > 10*12 && character.role == Character.Role.CIVILIAN || character.state == null){
                 DeleteCharacter(character);
                 exists = false;
             }
@@ -360,7 +360,7 @@ public partial class SimManager : Node2D
                 state.RulersCheck();
             } else {
                 // State Collapse or Smth
-                if (rng.NextSingle() < 0.05f){
+                if (rng.NextSingle() < 0.2f){
                     Region r = state.regions[rng.Next(0, state.regions.Count)];
                     state.RemoveRegion(r);                    
                 }
@@ -419,6 +419,9 @@ public partial class SimManager : Node2D
         pop.region.RemovePop(pop);
         pop.culture.ChangePopulation(-pop.population);
         pops.Remove(pop);
+        foreach (Character character in pop.characters.ToArray()){
+            DeleteCharacter(character);
+        }
     }
     #endregion
 
@@ -493,6 +496,7 @@ public partial class SimManager : Node2D
     public void DeleteCharacter(Character character){
         //GD.Print("Character Deleted");
         try {
+            if (character.pop != null)
             character.pop.RemoveCharacter(character);
             if (character.state != null){
                 character.state.RemoveCharacter(character);
