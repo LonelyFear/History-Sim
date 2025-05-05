@@ -56,6 +56,7 @@ visible = false
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
 monthsPerTick = 1
+debuggerMode = true
 
 [node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "timeManager")]
 z_index = 10

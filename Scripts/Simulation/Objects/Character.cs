@@ -11,11 +11,11 @@ public class Character
     public int existTime;
     public Pop pop;
     public Role role = Role.CIVILIAN;
-    public Family family;
     public Character parent;
     public SimManager simManager;
     public TraitLevel agression = TraitLevel.MEDIUM;
     public List<Character> children = new List<Character>();
+    public int childCooldown = 12;
 
     public void Die(){
         if (state.leader == this){
@@ -26,7 +26,7 @@ public class Character
 
     public void HaveChild(){
         if (children.Count <= 12){
-            Character child = simManager.CreateCharacter(pop, family, 0, 0);
+            Character child = simManager.CreateCharacter(pop, 0, 0);
             child.parent = this;
             children.Add(child);
         }
@@ -37,16 +37,6 @@ public class Character
             return children[0];
         }
         return null;
-    }
-
-    public void FoundFamily(){
-        if (family != null){
-            family.RemoveCharacter(this);
-        }
-        family = new Family();
-        if (state.leader == this){
-            state.rulingFamily = family;
-        }     
     }
     public enum Role {
         LEADER,

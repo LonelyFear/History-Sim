@@ -99,26 +99,26 @@ public class Pop
     }
     public void AddCharacter(Character character){
         try {
-            if (!characters.Contains(character) && character != null){
+            if (character == null){
+                GD.PushError("Error: Null character added, something is probably broken");
+            } else if (character != null && !characters.Contains(character)){
                 if (character.pop != null){
                     character.pop.RemoveCharacter(character);
                 } 
-                ChangePopulation(Pop.ToNativePopulation(1), 0);
+                if (region == null){
+                    GD.Print("wtf");
+                    GD.Print(Enum.GetName(typeof(Profession), profession));
+                }
                 character.state = region.owner;
                 character.pop = this;
                 characters.Add(character);
-            } else if (character == null){
-                GD.PushWarning("Error: Null character added, something is probably broken");
             }
         } catch (Exception e){
-            GD.Print(e);
+            GD.PushError(e);
         }
     }
     public void RemoveCharacter(Character character){
         if (characters.Contains(character)){
-            if (workforce >= Pop.ToNativePopulation(1)){
-                ChangePopulation(Pop.ToNativePopulation(-1), 0);
-            }
             characters.Remove(character);
             character.pop = null;
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -266,7 +267,10 @@ public partial class SimManager : Node2D
         foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
                 foreach (Pop pop in region.pops.ToArray()){
-                    if (pop.population <= Pop.ToNativePopulation(1)){
+                    if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count)){
+                        if (pop.profession == Profession.ARISTOCRAT){
+                            GD.Print("Deleted a " + Enum.GetName(typeof(Profession), pop.profession) + " pop");
+                        }
                         DestroyPop(pop);
                     } else {
                         if (pop.batchId == month){
@@ -276,24 +280,28 @@ public partial class SimManager : Node2D
                     }
                     
                 }
+            }             
+        }
+        foreach (Region region in habitableRegions){
+            if (region.pops.Count > 0){
+                region.MergePops();
+                region.CheckPopulation();  
+                
+                foreach (Pop pop in region.pops.ToArray()){
+                    if (region.owner != null){
+                        region.PopWealth(pop);
+                    }
+                } 
+
                 region.RandomStateFormation();
                 if (region.owner != null){
                     region.StateBordering();
                     if (region.frontier){
                         region.NeutralConquest();
                     }
-                }
-            }             
-        }
-        foreach (Region region in habitableRegions){
-            if (region.pops.Count > 0){
-                region.MergePops();
-                region.CheckPopulation();     
-                foreach (Pop pop in region.pops.ToArray()){
-                    if (region.owner != null){
-                        region.PopWealth(pop);
-                    }
-                }           
+                } 
+
+          
             }       
             worldPop += region.population;            
         }
@@ -302,19 +310,20 @@ public partial class SimManager : Node2D
     }
 
     public void UpdateCharacters(){
-        Parallel.ForEach(characters.ToArray(), character =>{
+        foreach (Character character in characters.ToArray()){
             character.age++;
             character.existTime++;
+            character.childCooldown--;
             bool exists = true;
 
-            if (character.existTime > 20*12 && character.role == Character.Role.CIVILIAN){
-                m.WaitOne();
+            if (character.existTime > 20*12 && character.role == Character.Role.CIVILIAN || character.state == null){
                 DeleteCharacter(character);
                 exists = false;
-                m.ReleaseMutex();
-                
             }
             if (exists){
+                if (character.childCooldown <= 0){
+                    character.childCooldown = 0;
+                }
                 if (character.state.leader == character){
                     character.role = Character.Role.LEADER;
                     Character heir = character.GetHeir();
@@ -323,39 +332,49 @@ public partial class SimManager : Node2D
                     }                
                 }
         
-                if (character.state.leader == character && rng.NextSingle() <= 0.02/12 && character.age > 20 * 12){
+                if (character.state.leader == character && rng.NextSingle() <= 0.02/12 && character.age > 20 * 12 && character.childCooldown < 1){
                     character.HaveChild();
+                    character.childCooldown = 12;
                 }
 
                 if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
-                    m.WaitOne();
                     character.Die();
-                    m.ReleaseMutex();
                 }                
             } 
-        });        
+        }        
     }
     public void UpdateStates(){
-        foreach (State state in states){
+        foreach (State state in states.ToArray()){
+
+            if (state.regions.Count < 1){
+                DeleteState(state);
+                continue;
+            }
+
             state.borderingStates = new List<State>();
             state.age++;
-            if (state.leader != null && state.leader.family != null){
-                state.rulingFamily = state.leader.family;
-            } else {
-                state.rulingFamily = null;
-            }
             state.UpdateCapital();
             state.CountPopulation();
             state.Recruitment();    
-            state.RulersCheck();       
+            if (state.rulingPop != null){
+                state.RulersCheck();
+            } else {
+                // State Collapse or Smth
+                if (rng.NextSingle() < 0.05f){
+                    Region r = state.regions[rng.Next(0, state.regions.Count)];
+                    state.RemoveRegion(r);                    
+                }
+            }   
         }     
     }
     #region SimTick
     public void SimTick(){        
         month = timeManager.month;
+
         UpdateRegions();
-        //UpdateCharacters();
-        UpdateStates();
+        UpdateStates();        
+        UpdateCharacters();
+
         foreach (Region region in regions){
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         }
@@ -379,23 +398,24 @@ public partial class SimManager : Node2D
             currentBatch = 1;
         }
 
-        Pop pop = new Pop();
-        pop.batchId = currentBatch;
+        Pop pop = new Pop(){
+            batchId = currentBatch,
+            tech = tech,
+            profession = profession
+        };
 
         pop.ChangePopulation(workforce, dependents);
 
         pops.Add(pop);
         region.AddPop(pop);       
         culture.AddPop(pop);
-
-        pop.tech = tech;
-        pop.profession = profession;
-        pop.tech.industryLevel = tech.industryLevel;
-
         return pop;
     }
 
     public void DestroyPop(Pop pop){
+        if (pop.region.owner != null && pop.region.owner.rulingPop == pop){
+            pop.region.owner.rulingPop = null;
+        }
         pop.region.RemovePop(pop);
         pop.culture.ChangePopulation(-pop.population);
         pops.Remove(pop);
@@ -423,7 +443,7 @@ public partial class SimManager : Node2D
 
         return culture;
     }
-    public void CreateNation(Region region){
+    public void CreateState(Region region){
         if (region.owner == null){
             float r = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());
             float g = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());
@@ -431,13 +451,24 @@ public partial class SimManager : Node2D
             State state = new State(){
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
-                capital = region
+                capital = region,
+                simManager = this
             };
             states.Add(state);       
             state.AddRegion(region);
         }
     }
-    public Character CreateCharacter(Pop pop, Family family = null, int minAge = 0, int maxAge = 30){
+
+    public void DeleteState(State state){
+        states.Remove(state);
+        foreach (Region region in state.regions.ToArray()){
+            state.RemoveRegion(region);
+        }
+        foreach (Character character in state.characters.ToArray()){
+            DeleteCharacter(character);
+        }
+    }
+    public Character CreateCharacter(Pop pop, int minAge = 0, int maxAge = 30){
         Character character = new Character(){
             name = NameGenerator.GenerateCharacterName(),
             culture = pop.culture,
@@ -446,9 +477,6 @@ public partial class SimManager : Node2D
             simManager = this
         };
         pop.AddCharacter(character);
-        if (family != null){
-            family.AddCharacter(character);                
-        }
         if (pop == null){
             GD.PushError("No pop to add character to");
         } else if (pop.region == null){
@@ -466,9 +494,8 @@ public partial class SimManager : Node2D
         //GD.Print("Character Deleted");
         try {
             character.pop.RemoveCharacter(character);
-            character.state.RemoveCharacter(character);
-            if (character.family != null){
-                character.family.RemoveCharacter(character);                
+            if (character.state != null){
+                character.state.RemoveCharacter(character);
             }
             if (character.parent != null){
                 character.parent.children.Remove(character);

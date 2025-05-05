@@ -11,7 +11,7 @@ public class State
     public Color color;
     public Color displayColor;
 
-    public GovernmentTypes government = GovernmentTypes.MONARCHY;
+    public GovernmentTypes government = GovernmentTypes.REPUBLIC;
     public List<Region> regions = new List<Region>();
     public Region capital;
     public long population;
@@ -31,7 +31,6 @@ public class State
     public Character leader;
     public Character lastLeader = null;
     public Pop rulingPop;
-    public Family rulingFamily;
     public List<Character> characters = new List<Character>();
     int monthsSinceElection = 0;
     Random rng = new Random();
@@ -61,7 +60,8 @@ public class State
     }
 
     public void RunElection(){
-        Character newLeader = simManager.CreateCharacter(rulingPop, null, 20, 50);
+        monthsSinceElection = 0;
+        Character newLeader = simManager.CreateCharacter(rulingPop, 20, 50);
         if (characters.Count > 0){
             newLeader = characters[rng.Next(0, characters.Count - 1)];
         }
@@ -211,6 +211,7 @@ public class State
     public double GetArmyPower(){
         return Pop.FromNativePopulation(manpower) * ((tech.militaryLevel + 1) / 20d)/regions.Count;
     }
+
 }
 
 public enum GovernmentTypes {

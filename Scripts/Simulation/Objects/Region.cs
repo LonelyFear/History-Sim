@@ -107,19 +107,17 @@ public class Region
     #region Nations
     public void RandomStateFormation(){
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
-            simManager.CreateNation(this);
+            simManager.CreateState(this);
+
             owner.population = population;
             owner.workforce = workforce;
             Pop basePop = pops[0];
             Pop rulingPop = simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, basePop.tech, basePop.culture, Profession.ARISTOCRAT);
             basePop.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
+            AddPop(rulingPop);
             
             owner.rulingPop = rulingPop;
-            try {
-                owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
-            } catch (Exception e) {
-                GD.PushError(e);
-            }    
+            owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
             owner.UpdateDisplayName();
             owner.leader.role = Character.Role.LEADER;
         }
@@ -192,6 +190,7 @@ public class Region
     }
 
     public void PopWealth(Pop pop){
+        pop.totalWealth = 0;
         switch (pop.profession){
             case Profession.FARMER: 
                 pop.totalWealth += 1 * Pop.FromNativePopulation(pop.workforce);
@@ -235,14 +234,6 @@ public class Region
                 }                
             }
 
-        }
-    }
-
-    public void ClearEmptyPops(){
-        foreach (Pop pop in pops.ToArray()){
-            if (pop.population < Pop.ToNativePopulation(1)){
-                simManager.DestroyPop(pop);
-            }
         }
     }
 
@@ -312,7 +303,7 @@ public class Region
             migrateChance = 0.25f;
         }
         if (pop.profession == Profession.ARISTOCRAT){
-            migrateChance /= 100;
+            migrateChance *= 0;
         }
 
         // If the pop migrates
@@ -351,23 +342,24 @@ public class Region
             if (movedDependents > pop.dependents){
                 movedDependents = pop.dependents;
             }
-            Pop merger = null;
-            m.WaitOne();
-            foreach (Pop resident in destination.pops.ToArray()){
-                if (Pop.CanPopsMerge(pop, merger)){
-                    merger = resident;
-                    break;
-                }
-            }
-            if (merger != null){
-                merger.ChangePopulation(movedWorkforce, movedDependents);
-                merger.canMove = false;
-            } else {
-                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
-                npop.canMove = false;
-            }
+            // Pop merger = null;
+
+            // foreach (Pop resident in destination.pops.ToArray()){
+            //     if (Pop.CanPopsMerge(pop, merger)){
+            //         merger = resident;
+            //         break;
+            //     }
+            // }
+            // if (merger != null){
+            //     merger.ChangePopulation(movedWorkforce, movedDependents);
+            //     merger.canMove = false;
+            // } else {
+
+            // }
+            Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
+            npop.canMove = false;            
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     
-            m.ReleaseMutex();
+
         }
     }
     #region Food & Consumption
