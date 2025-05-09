@@ -48,7 +48,8 @@ offset_right = 900.0
 offset_bottom = 735.0
 theme_override_fonts/font = ExtResource("8_7t8sx")
 theme_override_font_sizes/font_size = 62
-text = "History Simulator"
+text = "Pixel History"
+horizontal_alignment = 1
 
 [node name="Loading Screen" parent="." instance=ExtResource("2_nb51f")]
 visible = false

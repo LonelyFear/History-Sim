@@ -76,6 +76,7 @@ layout_mode = 2
 tooltip_text = "The seed of the world. Must be in numbers only."
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 32
+text = "1"
 placeholder_text = "Leave Empty for Random"
 context_menu_enabled = false
 emoji_menu_enabled = false

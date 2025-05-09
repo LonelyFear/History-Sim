@@ -250,22 +250,24 @@ public partial class SimManager : Node2D
         });  
     }
     void InitPops(){
+        
         foreach (Region region in habitableRegions){
-            double nodeChance = 0.0025;
+            double nodeChance = 0.005;
             nodeChance *= region.avgFertility;
-            if (region.coastal){
-                nodeChance *= 10;
-            }
-            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.2){
+
+            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.0){
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
-                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), CreateCulture(region));
+                Culture c = CreateCulture();
+                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), c);
             }
         }
     }
     public void UpdateRegions(){
         long worldPop = 0;
+        int populatedRegions = 0;
         foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
+                populatedRegions++;
                 foreach (Pop pop in region.pops.ToArray()){
                     if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count)){
                         if (pop.profession == Profession.ARISTOCRAT){
@@ -273,21 +275,20 @@ public partial class SimManager : Node2D
                         }
                         DestroyPop(pop);
                     } else {
-                        if (pop.batchId == month){
-                            region.GrowPop(pop);
-                        }
                         region.MigratePop(pop);
+                        region.GrowPop(pop);
                     }
                     
                 }
-            }             
+            }        
         }
+
         foreach (Region region in habitableRegions){
             if (region.pops.Count > 0){
                 region.MergePops();
                 region.CheckPopulation();  
                 
-                foreach (Pop pop in region.pops.ToArray()){
+                foreach (Pop pop in region.pops){
                     if (region.owner != null){
                         region.PopWealth(pop);
                     }
@@ -401,14 +402,17 @@ public partial class SimManager : Node2D
         Pop pop = new Pop(){
             batchId = currentBatch,
             tech = tech,
-            profession = profession
+            profession = profession,
+            workforce = workforce,
+            dependents = dependents,
+            population = workforce + dependents
         };
-
-        pop.ChangePopulation(workforce, dependents);
+        //pop.ChangePopulation(workforce, dependents);
 
         pops.Add(pop);
         region.AddPop(pop);       
         culture.AddPop(pop);
+
         return pop;
     }
 
@@ -417,7 +421,7 @@ public partial class SimManager : Node2D
             pop.region.owner.rulingPop = null;
         }
         pop.region.RemovePop(pop);
-        pop.culture.ChangePopulation(-pop.population);
+        pop.culture.RemovePop(pop);
         pops.Remove(pop);
         foreach (Character character in pop.characters.ToArray()){
             DeleteCharacter(character);
@@ -433,7 +437,7 @@ public partial class SimManager : Node2D
         return regions[index];
     }
     #region Creation
-    public Culture CreateCulture(Region region){
+    public Culture CreateCulture(){
         float r = rng.NextSingle();
         float g = rng.NextSingle();
         float b = rng.NextSingle();        

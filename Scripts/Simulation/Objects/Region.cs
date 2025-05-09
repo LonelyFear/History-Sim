@@ -251,7 +251,7 @@ public class Region
             bRate *= 0.75f;
         }
         
-        float NIR =  (bRate - pop.deathRate);///12f;
+        float NIR =  (bRate - pop.deathRate) / 12f;
         long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
         long workforceChange = change - dependentChange;
@@ -263,7 +263,7 @@ public class Region
     public void MovePops(){
         foreach (Pop pop in pops.ToArray()){
             // Chance of pop to migrate
-            float migrateChance = 0.0005f;
+            float migrateChance = 0.006f;
 
             // Pops are most likely to migrate if their region is overpopulated
             if (population >= maxPopulation * 0.95f){
@@ -332,10 +332,10 @@ public class Region
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
-        if (destination == null){
+        if (destination == null || destination == this){
             return;
         }
-        if (destination != this && movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1)){
+        if (movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1)){
             if (movedWorkforce > pop.workforce){
                 movedWorkforce = pop.workforce;
             }
