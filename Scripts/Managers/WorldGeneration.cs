@@ -83,16 +83,17 @@ public partial class WorldGeneration : Node2D
     {
         if (tectonicTest){
             Init();
+            if (tectonics == null){
+                tectonics = new Tectonics();
+                tectonics.InitSim(this, 16, true, debugDisplay);
+            }
+            tectonics.SimStep();            
         }
     }
 
     public override void _Process(double delta)
     {
-        if (tectonicTest){
-            if (tectonics == null){
-                tectonics = new Tectonics();
-                tectonics.InitSim(this, 4, true, debugDisplay);
-            }
+        if (tectonicTest && tectonics != null){
             tectonics.SimStep();
         }
     }

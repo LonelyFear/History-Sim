@@ -28,6 +28,7 @@ public class Tectonics
     public float[,] RunSimulation(WorldGeneration w, int plateCount, bool advanced = false, Sprite2D display = null){
         InitSim(w, plateCount, advanced, display);
         if (advancedGeneration){
+            crusts = null;
             SimStep();
         } else {
             foreach (Crust crust in crusts){
@@ -69,10 +70,12 @@ public class Tectonics
                     plate = null,
                     pos = new Vector2I(x,y)
                 };
-                segment.crusts.Add(crust);
-                
+                segment.AddCrust(crust);
+                segment.topCrust = crust;
+
                 crusts[(worldSize.Y * x) + y] = crust;
                 tiles[(worldSize.Y * x) + y] = segment;
+                //GD.Print(segment.crusts.Count);
             }
         }
         CreatePlates(plateCount);
@@ -101,7 +104,7 @@ public class Tectonics
                    crust = GetCrust(x, y);
                 }
                 
-                if (elevation <= seaLevel){
+                if (elevation <= seaLevel + 0.05){
                     crust.crustType = CrustTypes.OCEANIC;
                     elevation = Mathf.Lerp(seaLevel - oceanDepth, seaLevel, 1f - Falloff.Evaluate(Mathf.InverseLerp(seaLevel, 0, elevation), 0.15f, 3f));
                 } else {
@@ -119,22 +122,94 @@ public class Tectonics
     public void SimStep(){
         // Moves Crust
         MoveAllCrust();
+        CheckCollisions();
         ColorDisplay();
     }
 
     void MoveAllCrust(){
         foreach (TectonicTile tile in tiles){
+            tile.lastPlate = tile.topCrust.plate; 
             Vector2I pos = tile.pos;
+
             foreach (Crust crust in tile.crusts.ToArray()){
-                crust.moveStep += crust.plate.vel;
-                int mx = (int)crust.moveStep.X;
-                crust.moveStep.X -= mx;
-                int my = (int)crust.moveStep.Y;
-                crust.moveStep.Y -= my;
-                
-                tile.MoveCrust(crust, mx, my);
+                //GD.Print(crust);
+                crust.age++;
+                if (crust.canMove){
+                    crust.canMove = false;
+
+                    crust.moveStep += crust.plate.vel;
+                    int mx = (int)Math.Truncate(crust.moveStep.X);
+                    if (mx != 0){
+                        crust.moveStep.X %= 1;
+                    }
+                    
+                    int my = (int)Math.Truncate(crust.moveStep.Y);
+                    if (my != 0){
+                        crust.moveStep.Y %= 1;
+                    }
+
+                    tile.MoveCrust(crust, crust.pos.X + mx, crust.pos.Y + my);     
+                }
+
             }
         }
+        foreach (TectonicTile tile in tiles){
+            foreach (Crust crust in tile.crusts){
+                crust.canMove = true;
+            }
+        }
+    }
+
+    void CheckCollisions(){
+        foreach (TectonicTile tile in tiles){
+            if (tile.crusts.Count < 1){
+                Crust newCrust = new Crust(){
+                    elevation = seaLevel - oceanDepth,
+                    crustType = CrustTypes.OCEANIC
+                };
+                tile.AddCrust(newCrust);
+                tile.lastPlate.AddCrust(newCrust);
+            }
+            tile.topCrust = tile.getTopCrust();
+
+            foreach (Crust crust in tile.crusts.ToArray()){
+                if (crust != tile.topCrust){
+                    // Oceanic subduction
+                    if (crust.crustType == CrustTypes.OCEANIC){
+                        crust.pressure += NextFloatInRange(0.1f, 0.2f);
+
+                        if (crust.pressure >= crust.elevation){
+                            // Volcanoes
+                            if (tile.topCrust.crustType == CrustTypes.OCEANIC){
+                                tile.topCrust.elevation += NextFloatInRange(0.01f, 0.04f);
+                            } else {
+                                tile.topCrust.elevation += NextFloatInRange(0.005f, 0.01f);
+                            }
+                            
+                            DeleteCrust(tile, crust);
+                        }                                
+                    } else {
+                        // Continental Collision
+                        // if (!crust.plate.velChanged){
+                        //     crust.plate.velChanged = true;
+                        //     crust.plate.vel = Vector2.Lerp(crust.plate.vel, topCrust.plate.dir, NextFloatInRange(0.1f, 0.5f));
+                        // }
+                        
+                        tile.topCrust.elevation += NextFloatInRange(0.005f, 0.025f);
+                        crust.pressure += NextFloatInRange(0.01f, 0.02f);
+
+                        if (crust.pressure >= crust.elevation){
+                            DeleteCrust(tile, crust);
+                        }
+                    }
+                }
+            }            
+        }
+    }
+
+    void DeleteCrust(TectonicTile tile, Crust crust){
+        tile.RemoveCrust(crust);
+        crust.plate.RemoveCrust(crust);
     }
 
     #endregion
@@ -199,7 +274,7 @@ public class Tectonics
                     Crust crust = null;
                     TectonicTile tile = GetTectonicTile(x,y);
                     if (tile.crusts.Count > 0){
-                        crust = tile.crusts[0];
+                        crust = tile.topCrust;
                     }
 
                     if (crust != null){
@@ -214,7 +289,7 @@ public class Tectonics
                             Color highColor = new Color(0.82f, 0.7f, 0.55f);
                             color = new Color((lowColor * (1 - lerped)) + (highColor * lerped));
                         }
-                                               
+                        color = crust.plate.color;                    
                     } else {
                         color = new Color((float)tile.pos.X / worldSize.X,(float)tile.pos.Y / worldSize.Y, 0);
                     }
@@ -227,6 +302,7 @@ public class Tectonics
     }
 
     public void CreatePlates(int amount){
+        List<int> pickedDensities = new List<int>();
         plates = new Plate[amount];
         
         Vector2I[] points = new Vector2I[amount];
@@ -242,6 +318,12 @@ public class Tectonics
                 vel = new Vector2(NextFloatInRange(-1f, 1f), NextFloatInRange(-1f, 1f)),
                 color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle())
             };
+            newPlate.density = rng.Next(0, amount + 1);
+            while (pickedDensities.Contains(newPlate.density)){
+                newPlate.density = rng.Next(0, amount + 1);
+            }
+            pickedDensities.Add(newPlate.density);
+            
             
             plates[i] = newPlate;
         }
@@ -277,7 +359,7 @@ public class Tectonics
                         if (crust.plate == null){
                             border = true;
                             if (rng.NextDouble() <= 0.5){
-                                crust.plate = plate;
+                                plate.AddCrust(crust);
                                 fullPositions.Add(nPos);
                                 freeTiles -= 1;                                
                             }
@@ -292,13 +374,12 @@ public class Tectonics
         }
     }
 
-    Vector2I GetNewPos(Vector2I pos, Vector2I dir){
+    internal Vector2I GetNewPos(Vector2I pos, Vector2I dir){
         Vector2I nPos = pos + dir;
         return new Vector2I(Mathf.PosMod(nPos.X ,worldSize.X), Mathf.PosMod(nPos.Y ,worldSize.Y));
     }
-    Vector2I GetNewPos(Vector2I pos){
-        Vector2I nPos = pos;
-        return new Vector2I(Mathf.PosMod(nPos.X ,worldSize.X), Mathf.PosMod(nPos.Y ,worldSize.Y));
+    internal Vector2I GetNewPos(Vector2I pos){
+        return new Vector2I(Mathf.PosMod(pos.X ,worldSize.X), Mathf.PosMod(pos.Y ,worldSize.Y));
     }
 
     internal Crust GetCrust(int x, int y){
@@ -331,40 +412,78 @@ public class Tectonics
     // TODO: Reimplement Tectonics in C#
 }
 internal class Plate{
+    public int density;
     public Vector2 vel = new Vector2();
     public Color color;
+    public List<Crust> crusts = new List<Crust>();
+
+    public void AddCrust(Crust crust){
+        if (crust.plate != null){
+            crust.plate.RemoveCrust(crust);
+        }
+        crust.plate = this;
+        crusts.Add(crust);
+    }
+    public void RemoveCrust(Crust crust){
+        crusts.Remove(crust);
+    }
 }
 
 internal class TectonicTile{
+    public Plate lastPlate;
     public Vector2I pos;
     public Crust topCrust = null;
     public List<Crust> crusts = new List<Crust>();
     public Tectonics sim;
 
     public void MoveCrust(Crust crust, Vector2I npos){
-        crusts.Remove(crust);
-        crust.pos = npos;
+        npos = sim.GetNewPos(npos);
 
         TectonicTile newTile = sim.GetTectonicTile(npos);
-        newTile.crusts.Add(crust);
+        newTile.AddCrust(crust);
+        RemoveCrust(crust);
     }
     public void MoveCrust(Crust crust, int x, int y){
-        Vector2I npos = new Vector2I(x,y);
-        crusts.Remove(crust);
-        crust.pos = npos;
-
+        Vector2I npos = sim.GetNewPos(new Vector2I(x, y));
         TectonicTile newTile = sim.GetTectonicTile(npos);
-        newTile.crusts.Add(crust);
+        newTile.AddCrust(crust);
+        RemoveCrust(crust);
+    }
+
+    public void AddCrust(Crust crust){
+        crust.pos = pos;
+        crusts.Add(crust);
+    }
+    public void RemoveCrust(Crust crust){
+        crusts.Remove(crust);
+    }
+
+    public Crust getTopCrust(){
+        Crust newTop = null;
+        int lowDensity = 2000000000;
+        foreach (Crust crust in crusts){
+            int relDensity = crust.plate.density + crust.age;
+            if (crust.crustType == CrustTypes.CONTINENTAL){
+                relDensity -= 1000000;
+            }
+            if (relDensity < lowDensity){
+                lowDensity = relDensity;
+                newTop = crust;
+            }
+        }
+        return newTop;
     }
 }
 
 internal class Crust{
+    public bool canMove = true;
     public float elevation = 0;
     public float pressure = 0;
+    public int age = 0;
     public Plate plate;
     public Vector2I pos;
     public Vector2 moveStep;
-    public CrustTypes crustType = CrustTypes.CONTINENTAL;
+    public CrustTypes crustType = CrustTypes.OCEANIC;
 }
 
 enum CrustTypes{

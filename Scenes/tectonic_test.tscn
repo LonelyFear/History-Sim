@@ -8,7 +8,8 @@
 script = ExtResource("1_ju75o")
 tectonicTest = true
 debugDisplay = NodePath("Sprite2D")
-worldSizeMult = 0.5
+worldSizeMult = 1.0
+seed = 678423
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(16, 16)
