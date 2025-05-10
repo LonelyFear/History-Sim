@@ -9,7 +9,7 @@ public class Tectonics
 {
     WorldGeneration world;
     Sprite2D textureDisplay;
-    [Export] float oceanDepth = 0.45f;
+    public static float oceanDepth = 0.45f;
     Image image;
     Plate[] plates;
     Crust[] crusts;

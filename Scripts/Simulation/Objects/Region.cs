@@ -300,10 +300,10 @@ public class Region
 
         // Pops are most likely to migrate if their region is overpopulated
         if (population >= maxPopulation * 0.95f){
-            migrateChance = 0.25f;
+            migrateChance = 1f;
         }
         if (pop.profession == Profession.ARISTOCRAT){
-            migrateChance *= 0;
+            migrateChance *= 0.1f;
         }
 
         // If the pop migrates

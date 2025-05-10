@@ -252,13 +252,18 @@ public partial class SimManager : Node2D
     void InitPops(){
         
         foreach (Region region in habitableRegions){
-            double nodeChance = 0.005;
+            double nodeChance = 0.01/world.worldSizeMult;
             nodeChance *= region.avgFertility;
 
             if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.0){
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
-                Culture c = CreateCulture();
-                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), c);
+                Culture culture = CreateCulture();
+                foreach (Region testRegion in habitableRegions){
+                    if (testRegion.pops.Count > 0 && testRegion.pos.DistanceTo(region.pos) <= 7 * world.worldSizeMult){
+                        culture = testRegion.pops[0].culture;
+                    }
+                }
+                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture);
             }
         }
     }
@@ -270,13 +275,12 @@ public partial class SimManager : Node2D
                 populatedRegions++;
                 foreach (Pop pop in region.pops.ToArray()){
                     if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count)){
-                        if (pop.profession == Profession.ARISTOCRAT){
-                            GD.Print("Deleted a " + Enum.GetName(typeof(Profession), pop.profession) + " pop");
-                        }
                         DestroyPop(pop);
                     } else {
-                        region.MigratePop(pop);
                         region.GrowPop(pop);
+                        if (pop.batchId == month){
+                            region.MigratePop(pop);
+                        }
                     }
                     
                 }
@@ -541,7 +545,7 @@ public partial class SimManager : Node2D
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
                     }
                     if (region.owner.capital == region){
-                        color = new Color(1,0,0);
+                        //color = new Color(1,0,0);
                     }
                 }
             break;

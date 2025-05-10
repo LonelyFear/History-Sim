@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -149,7 +150,7 @@ public partial class WorldGeneration : Node2D
         tileBiomes = new string[worldSize.X,worldSize.Y];
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
-                tileBiomes[x,y] = GetBiome(x,y);
+                tileBiomes[x,y] = GetEnvironment(x,y);
             }
         }
         GD.Print("Biome Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
@@ -164,27 +165,37 @@ public partial class WorldGeneration : Node2D
         loadedBiomes = LoadBiomes();
         biomes = new Biome[worldSize.X, worldSize.Y]; 
 
-        terrainImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
+        terrainImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgb8);
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
                 preparationProgress++;
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
                         tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
-                        //tileMap.CallDeferred("set_cell", [new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY)]);
-                        terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
-                        //terrainImage.CallDeferred("set_pixel", [x, y, Color.FromString(biome.color, new Color(1, 1, 1))]);
                         biomes[x,y] = biome;
                     }
                 }
             }
         }
+        for (int x = 0; x < worldSize.X; x++){
+            for (int y = 0; y < worldSize.Y; y++){
+                preparationProgress++;
+                Biome biome = biomes[x,y];
+                if (biome.terrainType == Biome.TerrainType.WATER){
+                    Color oceanColor = Color.FromString(GetBiome("shallow ocean").color, new Color(1, 1, 1));
+                    //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
+                    terrainImage.SetPixel(x,y, oceanColor);
+                } else {
+                    terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                }
+            }
+        }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
         worldCreated = true;
-        CallDeferred("emit_signal", SignalName.worldgenFinished);                    
+        EmitSignal(SignalName.worldgenFinished);                   
     }
 
-    string GetBiome(int x, int y){
+    string GetEnvironment(int x, int y){
         float altitude = heightmap[x,y];
         string biome = "rock";
 
@@ -409,6 +420,15 @@ public partial class WorldGeneration : Node2D
             return biomeList;
         }
         //GD.Print("Biomes.json not found at path '" + biomesPath + "'");  
+        return null;
+    }
+
+    public Biome GetBiome(string id){
+        foreach (Biome biome in loadedBiomes){
+            if (biome.id == id){
+                return biome;
+            }
+        }
         return null;
     }
 }
