@@ -14,17 +14,19 @@ var showMapId : int
 
 func _ready() -> void:
 	world = get_parent()
-	camera = get_node("/root/Game/PlayerCamera")
+	if (!world.tectonicTest):
+		camera = get_node("/root/Game/PlayerCamera")
 
 func _process(_delta: float) -> void:
-	manageMaps()
-	# Makes our region map more transparent as we zoom in
-	if (camera.zoom.x >= regionMapLerpZoom && regionSprite):
-		# Slowly makes region map transparent
-		regionSprite.self_modulate.a = lerp(regionMinOpacity, baseRegionOpacity, clampf(inverse_lerp(10, regionMapLerpZoom, camera.zoom.x), 0, 1))
-	elif (regionSprite):
+	if (!world.tectonicTest):
+		manageMaps()
+		# Makes our region map more transparent as we zoom in
+		if (camera.zoom.x >= regionMapLerpZoom && regionSprite):
+			# Slowly makes region map transparent
+			regionSprite.self_modulate.a = lerp(regionMinOpacity, baseRegionOpacity, clampf(inverse_lerp(10, regionMapLerpZoom, camera.zoom.x), 0, 1))
+		elif (regionSprite):
+			regionSprite.self_modulate.a = baseRegionOpacity
 		regionSprite.self_modulate.a = baseRegionOpacity
-	regionSprite.self_modulate.a = baseRegionOpacity
 
 func manageMaps() -> void:
 	if (world.worldCreated):

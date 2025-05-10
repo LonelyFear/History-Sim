@@ -10,6 +10,8 @@ using System.Text.Json.Serialization;
 
 public partial class WorldGeneration : Node2D
 {
+    [Export] public bool tectonicTest;
+    [Export] public Sprite2D debugDisplay;
     TileMapLayer tileMap;
     public string[,] tileBiomes;
     public Biome[,] biomes;
@@ -66,6 +68,7 @@ public partial class WorldGeneration : Node2D
     public float preparationProgress;
     //[ExportCategory("Rivers Settings")]
 
+    Tectonics tectonics = null;
     public void Init(){
         tileMap = GetNode<TileMapLayer>("Terrain Map");
         worldSize = (Vector2I)((Vector2)worldSize * worldSizeMult);
@@ -75,6 +78,26 @@ public partial class WorldGeneration : Node2D
         Scale = new Vector2(1,1) * 80f/worldSize.X;
         tileMap.Scale = new Vector2(1,1) * 16f/tileMap.TileSet.TileSize.X;        
     }
+
+    public override void _Ready()
+    {
+        if (tectonicTest){
+            Init();
+        }
+    }
+
+    public override void _Process(double delta)
+    {
+        if (tectonicTest){
+            if (tectonics == null){
+                tectonics = new Tectonics();
+                tectonics.InitSim(this, 4, true, debugDisplay);
+            }
+            tectonics.SimStep();
+        }
+    }
+
+
 
     float[,] GenerateTempMap(float scale){
         float[,] map = new float[worldSize.X, worldSize.Y];
@@ -123,7 +146,6 @@ public partial class WorldGeneration : Node2D
         }
         return map;
     }  
-
     public void GenerateWorld(){      
         worldGenStage++;
         GD.Print("Heightmap Generation Started");
