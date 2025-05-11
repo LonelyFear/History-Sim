@@ -2,7 +2,7 @@ using System;
 using Godot;
 using System.Collections.Generic;
 
-public class Culture
+public class Culture : PopObject
 {
     public Color color;
 
@@ -11,11 +11,12 @@ public class Culture
     
     // Decreases descrimination by units of this culture
     public TraitLevel acceptance = TraitLevel.MEDIUM;
+
+    // Determines if female characters can become leaders
+    public TraitLevel equity = TraitLevel.MEDIUM;
     public List<Culture> hatedCultures = new List<Culture>();
 
     public string name = "Culturism";
-    public long population = 0;
-    public List<Pop> pops = new List<Pop>();
 
     public void ChangePopulation(long amount){
         population += amount;

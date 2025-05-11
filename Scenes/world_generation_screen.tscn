@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://imk426fj4x3a"]
 
-[ext_resource type="Texture2D" uid="uid://dfdnrw2dp1lsf" path="res://Sprites/World.png" id="1_swl4w"]
 [ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="2_4g6c4"]
 [ext_resource type="Script" uid="uid://dswesovn1w4te" path="res://Scripts/world_settings_panel.gd" id="2_8327h"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_ktv3r"]
+[ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="4_4g6c4"]
 
 [node name="World Generation Screen" type="Control"]
 layout_mode = 3
@@ -13,21 +13,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="."]
-modulate = Color(0.49, 0.49, 0.49, 1)
+[node name="TextureRect2" parent="." instance=ExtResource("4_4g6c4")]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -838.5
-offset_top = -418.0
-offset_right = 838.5
-offset_bottom = 418.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("1_swl4w")
+offset_left = -719.0
+offset_top = -360.0
+offset_right = 958.0
+offset_bottom = 477.0
 
 [node name="WorldSettingsPanel" type="Panel" parent="."]
 layout_mode = 1

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
@@ -41,6 +42,10 @@ public partial class SimManager : Node2D
     public List<Culture> cultures = new List<Culture>();
     public List<State> states = new List<State>();
     public List<Character> characters = new List<Character>();
+    public List<Conflict> conflicts = new List<Conflict>();
+    public List<War> wars = new List<War>(); 
+    public List<Conflict> resolvedConflicts = new List<Conflict>();
+    public List<War> endedWars = new List<War>(); 
 
     public int maxPopsPerRegion = 50;
     public bool mapUpdate = false;
@@ -321,7 +326,7 @@ public partial class SimManager : Node2D
             character.childCooldown--;
             bool exists = true;
 
-            if (character.existTime > 10*12 && character.role == Character.Role.CIVILIAN || character.state == null){
+            if (character.existTime > 30*12 && character.role == Character.Role.CIVILIAN || character.state == null){
                 DeleteCharacter(character);
                 exists = false;
             }
@@ -479,9 +484,13 @@ public partial class SimManager : Node2D
             DeleteCharacter(character);
         }
     }
-    public Character CreateCharacter(Pop pop, int minAge = 0, int maxAge = 30){
+    public Character CreateCharacter(Pop pop, int minAge = 0, int maxAge = 30, Character.Gender gender = Character.Gender.MALE){
+        string charName = NameGenerator.GenerateCharacterName();
+        if (gender == Character.Gender.FEMALE){
+            charName = NameGenerator.GenerateCharacterName(true);
+        }
         Character character = new Character(){
-            name = NameGenerator.GenerateCharacterName(),
+            name = charName,
             culture = pop.culture,
             agression = (TraitLevel)rng.Next(-2, 3),
             age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
@@ -518,6 +527,29 @@ public partial class SimManager : Node2D
             GD.PushError(e);
         }
 
+    }
+
+    public void StartConflict(State agressor, State defender, List<State> agressorSupporters, List<State> defenderSupporters, Conflict.Type type){
+        Conflict conflict = new Conflict(){
+            type = type,
+            simManager = this
+        };
+        
+        conflict.AddParticipant(agressor, Conflict.Side.AGRESSOR);
+        conflict.AddParticipant(defender, Conflict.Side.DEFENDER);
+
+        foreach (State state in agressorSupporters){
+            conflict.AddParticipant(state, Conflict.Side.AGRESSOR);
+        }
+        foreach (State state in defenderSupporters){
+            conflict.AddParticipant(state, Conflict.Side.AGRESSOR);
+        }
+
+        conflicts.Add(conflict);
+    }
+
+    public void StartWar(Conflict conflict){
+        
     }
     #endregion
     

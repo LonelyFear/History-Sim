@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 
-public class State
+public class State : PopObject
 {
     public string name = "Nation";
     public string displayName = "Nation";
@@ -14,16 +14,12 @@ public class State
     public GovernmentTypes government = GovernmentTypes.MONARCHY;
     public List<Region> regions = new List<Region>();
     public Region capital;
-    public long population;
-    public long workforce;
     public uint age;
-    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
     public long manpowerTarget;
     public long manpower;
     List<State> vassals = new List<State>();
     State liege;
     Dictionary<State, Relation> relations;
-    public List<State> wars = new List<State>();
     public List<State> borderingStates = new List<State>();
     Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public Economy economy = new Economy();
@@ -35,6 +31,9 @@ public class State
     int monthsSinceElection = 0;
     Random rng = new Random();
     public Tech tech;
+
+    public List<Conflict> conflicts = new List<Conflict>();
+    public List<War> wars = new List<War>();
 
     public void UpdateCapital(){
         if (capital == null){
@@ -93,6 +92,8 @@ public class State
         foreach (Profession profession in Enum.GetValues(typeof(Profession))){
             countedProfessions.Add(profession, 0);
         }
+        Dictionary<Culture, long> cCultures = new Dictionary<Culture, long>();
+
         foreach (Region region in regions.ToArray()){
             countedP += region.population;
             countedW += region.workforce;
@@ -100,21 +101,16 @@ public class State
             foreach (Profession profession in region.professions.Keys){
                 countedProfessions[profession] += region.professions[profession];            
             }
-
+            foreach (Culture culture in region.cultures.Keys){
+                cCultures[culture] += region.cultures[culture];            
+            }
         }
         professions = countedProfessions;
+        cultures = cCultures;
         population = countedP;
         workforce = countedW;
     }
-    public void AddRegion(Region region){
-        if (!regions.Contains(region)){
-            if (region.owner != null){
-                region.owner.RemoveRegion(region);
-            }
-            region.owner = this;
-            regions.Add(region);
-        }
-    }
+
     public void Recruitment(){
         if (professions.ContainsKey(Profession.FARMER) && professions.ContainsKey(Profession.MERCHANT)){
             manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.7);
@@ -144,7 +140,16 @@ public class State
         }
         leader = newLeader;
     }
-
+    public void AddRegion(Region region){
+        if (!regions.Contains(region)){
+            if (region.owner != null){
+                region.owner.RemoveRegion(region);
+            }
+            region.owner = this;
+            regions.Add(region);
+            pops.AddRange(region.pops);
+        }
+    }
     public void RemoveRegion(Region region){
         if (regions.Contains(region)){
             region.owner = null;

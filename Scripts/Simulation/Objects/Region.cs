@@ -5,13 +5,12 @@ using System.Threading;
 using Mutex = System.Threading.Mutex;
 using Godot;
 
-public class Region
+public class Region: PopObject
 {
 	public Tile[,] tiles;
     public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
-    public List<Pop> pops = new List<Pop> ();
 
     public Vector2I pos;
     public float avgFertility;
@@ -21,17 +20,11 @@ public class Region
 
     // Demographics
     public long maxPopulation = 0;
-    public long population = 0;
-    public long dependents = 0;    
-    public long workforce = 0;
-    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
-    public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public double wealth;
 
     Random rng = new Random();
     public Economy economy = new Economy();
     public List<Region> borderingRegions = new List<Region>();
-    Mutex m = new Mutex();
 
     public int currentMonth;
     public bool border;
@@ -39,7 +32,6 @@ public class Region
     public bool needsJobs {private set; get;}
     public bool needsWorkers {private set; get;}
     public void CalcAvgFertility(){
-        m = simManager.m;
         landCount = 0;
         float f = 0;
         for (int x = 0; x < simManager.tilesPerRegion; x++){
