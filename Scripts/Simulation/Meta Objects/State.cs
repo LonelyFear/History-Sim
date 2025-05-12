@@ -84,10 +84,11 @@ public class State : PopObject
         }
         displayName = govtName + " of " + name;
     }
-    public void CountPopulation(){
+    public void CountStatePopulation(){
         long countedP = 0;
         long countedW = 0;
 
+        List<Pop> countedPops = new List<Pop>();
         Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
         foreach (Profession profession in Enum.GetValues(typeof(Profession))){
             countedProfessions.Add(profession, 0);
@@ -97,26 +98,51 @@ public class State : PopObject
         foreach (Region region in regions.ToArray()){
             countedP += region.population;
             countedW += region.workforce;
+            countedPops.AddRange(region.pops);
             
             foreach (Profession profession in region.professions.Keys){
                 countedProfessions[profession] += region.professions[profession];            
             }
             foreach (Culture culture in region.cultures.Keys){
-                cCultures[culture] += region.cultures[culture];            
+                if (cCultures.ContainsKey(culture)){
+                    cCultures[culture] += region.cultures[culture];
+                } else {
+                    cCultures.Add(culture, region.cultures[culture]);
+                }            
             }
         }
         professions = countedProfessions;
         cultures = cCultures;
         population = countedP;
         workforce = countedW;
+        pops = countedPops;
     }
 
     public void Recruitment(){
+        if (manpower > workforce){
+            manpower = workforce;
+        }
         if (professions.ContainsKey(Profession.FARMER) && professions.ContainsKey(Profession.MERCHANT)){
-            manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.7);
+            manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.5);
             manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);            
         }
         //manpower = 400 * regions.Count;
+    }
+
+    public void TakeLosses(long amount){
+        while (amount > 0){
+            Pop pop = pops[rng.Next(0, pops.Count - 1)];
+            if (pop.profession != Profession.ARISTOCRAT){
+                if (pop.workforce >= amount){
+                    amount = 0;
+                    pop.ChangeWorkforce(-amount);
+                } else {
+                    amount -= pop.workforce;
+                    pop.ChangeWorkforce(-pop.workforce);
+                }
+            }
+        }
+        manpower -= amount;
     }
 
     public void SetLeader(Character newLeader){

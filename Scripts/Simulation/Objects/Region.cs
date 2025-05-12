@@ -72,30 +72,16 @@ public class Region: PopObject
         }
     }
 
-    public void ChangePopulation(long workforceChange, long dependentChange){
-        workforce += workforceChange;
-        dependents += dependentChange;
-        population += workforceChange + dependentChange;
-    }
-
-
-    public void RemovePop(Pop pop){
-        if (pops.Contains(pop)){
-            pops.Remove(pop);
-            pop.region = null;            
-            ChangePopulation(-pop.workforce, -pop.dependents);
-        }
-    }
-    public void AddPop(Pop pop){
-        if (!pops.Contains(pop)){
-            if (pop.region != null){
-                pop.region.RemovePop(pop);
-            }
-            pops.Add(pop);
-            pop.region = this;            
-            ChangePopulation(pop.workforce, pop.dependents);
-        }
-    }
+    // public void AddPop(Pop pop){
+    //     if (!pops.Contains(pop)){
+    //         if (pop.region != null){
+    //             pop.region.RemovePop(pop);
+    //         }
+    //         pops.Add(pop);
+    //         pop.region = this;            
+    //         ChangePopulation(pop.workforce, pop.dependents);
+    //     }
+    // }
     #region Nations
     public void RandomStateFormation(){
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
@@ -106,7 +92,7 @@ public class Region: PopObject
             Pop basePop = pops[0];
             Pop rulingPop = simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, basePop.tech, basePop.culture, Profession.ARISTOCRAT);
             basePop.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
-            AddPop(rulingPop);
+            AddPop(rulingPop, this);
             
             owner.rulingPop = rulingPop;
             owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
@@ -148,37 +134,38 @@ public class Region: PopObject
     #endregion
     #region Checks & Taxes
     public void CheckPopulation(){
-        long countedPopulation = 0;
-        long countedDependents = 0;
-        long countedWorkforce = 0;
+        // long countedPopulation = 0;
+        // long countedDependents = 0;
+        // long countedWorkforce = 0;
 
-        cultures = new Dictionary<Culture, long>();
-        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
-        foreach (Profession profession in Enum.GetValues(typeof(Profession))){
-            countedProfessions.Add(profession, 0);
-        }
+        // cultures = new Dictionary<Culture, long>();
+        // Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
+        // foreach (Profession profession in Enum.GetValues(typeof(Profession))){
+        //     countedProfessions.Add(profession, 0);
+        // }
 
-        foreach (Pop pop in pops.ToArray()){
-            countedPopulation += pop.population;
-            countedWorkforce += pop.workforce;
-            countedDependents += pop.dependents;
+        // foreach (Pop pop in pops.ToArray()){
+        //     countedPopulation += pop.population;
+        //     countedWorkforce += pop.workforce;
+        //     countedDependents += pop.dependents;
 
-            countedProfessions[pop.profession] += pop.workforce;
-            if (!cultures.ContainsKey(pop.culture)){
-                cultures.Add(pop.culture, pop.population);
-            } else {
-                cultures[pop.culture] += pop.population;
-            }
-        }
-        cultures = cultures.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-        if (countedPopulation < Pop.ToNativePopulation(1) && owner != null){
+        //     countedProfessions[pop.profession] += pop.workforce;
+        //     if (!cultures.ContainsKey(pop.culture)){
+        //         cultures.Add(pop.culture, pop.population);
+        //     } else {
+        //         cultures[pop.culture] += pop.population;
+        //     }
+        // }
+        // cultures = cultures.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+        CountPopulation();
+        if (population < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
 
-        professions = countedProfessions;
-        population = countedPopulation;
-        dependents = countedDependents;
-        workforce = countedWorkforce;
+        // professions = countedProfessions;
+        // population = countedPopulation;
+        // dependents = countedDependents;
+        // workforce = countedWorkforce;
     }
 
     public void PopWealth(Pop pop){

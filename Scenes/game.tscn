@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=20 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scenes/Game.cs" id="1_rku1e"]
@@ -16,6 +16,7 @@
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scenes/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
+[ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scenes/ObjectInfo.cs" id="15_ewbju"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d1ilt"]
 texture = ExtResource("2_rku1e")
@@ -57,6 +58,7 @@ visible = false
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
 monthsPerTick = 1
+debuggerMode = true
 
 [node name="Simulation" type="Node2D" parent="." node_paths=PackedStringArray("world", "timeManager")]
 z_index = 10
@@ -75,7 +77,7 @@ tile_set = SubResource("TileSet_6iyac")
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
-worldSizeMult = 3.0
+worldSizeMult = 1.0
 seed = 48590
 mapScale = 1.0
 
@@ -146,6 +148,39 @@ Fps: 300"
 horizontal_alignment = 2
 script = ExtResource("11_exi56")
 timeManager = NodePath("../../../../Time Manager")
+
+[node name="ObjectInfo" type="Panel" parent="UI/Game UI"]
+layout_mode = 0
+offset_top = 546.0
+offset_right = 175.0
+offset_bottom = 720.0
+script = ExtResource("15_ewbju")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Game UI/ObjectInfo"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Name" type="Label" parent="UI/Game UI/ObjectInfo/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "Nation Name"
+
+[node name="Type" type="Label" parent="UI/Game UI/ObjectInfo/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 14
+text = "Nation"
+
+[node name="Population" type="Label" parent="UI/Game UI/ObjectInfo/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "Population: 1,000"
+
+[node name="Manpower" type="Label" parent="UI/Game UI/ObjectInfo/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "UniqueStat: 1000"
 
 [node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("sim")]
 offset_left = 109.0

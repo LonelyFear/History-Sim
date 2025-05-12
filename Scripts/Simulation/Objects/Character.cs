@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Net.NetworkInformation;
 
 public class Character
 {
@@ -44,6 +45,10 @@ public class Character
         }
         return null;
     }
+
+    // public float GetDeathChance(){
+
+    // }
     public enum Role {
         LEADER,
         HEIR,

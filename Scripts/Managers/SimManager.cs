@@ -65,6 +65,9 @@ public partial class SimManager : Node2D
     public Region hoveredRegion = null;
     public State hoveredState = null;
 
+    public PopObject selectedMetaObj;
+    public MapModes selectedMode;
+
     // Events
     public delegate void SimulationInitializedEventHandler();
 
@@ -99,7 +102,8 @@ public partial class SimManager : Node2D
             hoveredState = null;
         }
         CheckMapmodeChange();
-    }
+        Selection();
+    }   
     void CheckMapmodeChange(){
         if (mapmodeTask == null || mapmodeTask.IsCompleted){
             if (Input.IsActionJustPressed("MapMode_Polity")){
@@ -112,6 +116,30 @@ public partial class SimManager : Node2D
                 mapmodeTask = Task.Run(() => SetMapMode(MapModes.POPULATION));
             }   
         }        
+    }
+
+    void Selection(){
+        if (selectedMode != mapMode){
+            selectedMetaObj = null;
+        }
+        if (Input.IsMouseButtonPressed(MouseButton.Left)){
+            switch (mapMode){
+                case MapModes.POLITIY:
+                    if (hoveredRegion.habitable){
+                        selectedMetaObj = hoveredRegion;
+                    } else {
+                        selectedMetaObj = null;
+                    }
+                    break;
+                case MapModes.CULTURE:
+                    if (hoveredRegion.cultures.Keys.Count > 0){
+                        selectedMetaObj = hoveredRegion.cultures.ToArray()[0].Key;
+                    } else {
+                        selectedMetaObj = null;
+                    }
+                    break;
+            }
+        }
     }
 
     public Vector2I GlobalToRegionPos(Vector2 pos){
@@ -326,7 +354,7 @@ public partial class SimManager : Node2D
             character.childCooldown--;
             bool exists = true;
 
-            if (character.existTime > 30*12 && character.role == Character.Role.CIVILIAN || character.state == null){
+            if (character.existTime > 1000*12 && character.role == Character.Role.CIVILIAN || character.state == null){
                 DeleteCharacter(character);
                 exists = false;
             }
@@ -342,12 +370,12 @@ public partial class SimManager : Node2D
                     }                
                 }
         
-                if (character.state.leader == character && rng.NextSingle() <= 0.02/12 && character.age > 20 * 12 && character.childCooldown < 1){
+                if (character.state.leader == character && rng.NextSingle() <= 0.01/12 && character.age > 20 * 12 && character.childCooldown < 1){
                     character.HaveChild();
                     character.childCooldown = 12;
                 }
 
-                if (character.age > (60 * 12) && rng.NextSingle() <= 0.05/12){
+                if (character.age > (60 * 12) && rng.NextSingle() <= (1f - Mathf.Pow(1f - 0.01f, 1f/12f))){
                     character.Die();
                 }                
             } 
@@ -364,7 +392,7 @@ public partial class SimManager : Node2D
             state.borderingStates = new List<State>();
             state.age++;
             state.UpdateCapital();
-            state.CountPopulation();
+            state.CountStatePopulation();
             state.Recruitment();    
             if (state.rulingPop != null){
                 state.RulersCheck();
@@ -419,8 +447,8 @@ public partial class SimManager : Node2D
         //pop.ChangePopulation(workforce, dependents);
 
         pops.Add(pop);
-        region.AddPop(pop);       
-        culture.AddPop(pop);
+        region.AddPop(pop, region);       
+        culture.AddPop(pop, culture);
 
         return pop;
     }
@@ -429,8 +457,8 @@ public partial class SimManager : Node2D
         if (pop.region.owner != null && pop.region.owner.rulingPop == pop){
             pop.region.owner.rulingPop = null;
         }
-        pop.region.RemovePop(pop);
-        pop.culture.RemovePop(pop);
+        pop.region.RemovePop(pop, pop.region);
+        pop.culture.RemovePop(pop, pop.culture);
         pops.Remove(pop);
         foreach (Character character in pop.characters.ToArray()){
             DeleteCharacter(character);
