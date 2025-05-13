@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Godot;
 
 public class PopObject {
+    public string name;
     public long population = 0;
     public long dependents = 0;    
     public long workforce = 0;

@@ -6,6 +6,11 @@ public partial class PopulationLabel : Label
     [Export]
     SimManager simManager;
 
+    public override void _Ready()
+    {
+        simManager = GetNode<SimManager>("/root/Game/Simulation");
+    }
+
     public override void _Process(double delta)
     {
         if (simManager != null){

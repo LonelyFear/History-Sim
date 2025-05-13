@@ -36,6 +36,13 @@ public class Character
         }
     }
 
+    public bool CanHaveChild(){
+        if (state.leader == this || state.leader == parent && age > 240 && childCooldown < 1){
+            return true;
+        }
+        return false;
+    }
+
     public Character GetHeir(){
         bool femaleHeirs = culture.equity > 0;
         foreach (Character child in children){
@@ -46,9 +53,15 @@ public class Character
         return null;
     }
 
-    // public float GetDeathChance(){
-
-    // }
+    public float GetDeathChance(){
+        if (age < 60){
+            return 0.001f;
+        } else if (age < 90){
+            return 0.01f;
+        } else {
+            return 0.1f;
+        }
+    }
     public enum Role {
         LEADER,
         HEIR,

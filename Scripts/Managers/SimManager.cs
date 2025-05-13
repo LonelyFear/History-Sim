@@ -1,24 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 
-public partial class SimManager : Node2D
+public partial class SimManager : Node
 {
     [Export]
     public WorldGeneration world {private set; get;}
     [Export]
     public int tilesPerRegion = 4;
-    Sprite2D regionOverlay;
     [Export(PropertyHint.Range, "4,16,4")]
     public TimeManager timeManager { get; set; }
 
@@ -27,10 +20,7 @@ public partial class SimManager : Node2D
     public List<Region> habitableRegions = new List<Region>();
     public Vector2I terrainSize;   
     public Vector2I worldSize;
-    public MapModes mapMode = MapModes.POLITIY;
-    public System.Threading.Mutex m = new System.Threading.Mutex();
-
-    Image regionImage;
+    MapManager mapManager;
 
     // Population
     public List<Pop> pops = new List<Pop>();
@@ -48,25 +38,13 @@ public partial class SimManager : Node2D
     public List<War> endedWars = new List<War>(); 
 
     public int maxPopsPerRegion = 50;
-    public bool mapUpdate = false;
     public long popTaskId = 0;
 
     int currentBatch = 0;
-    int month = 1;
 
     public long simToPopMult;
-    public Task task;
     public Task mapmodeTask;
     Random rng = new Random();
-    public Vector2 mousePos;
-
-    // Hovering
-    public Vector2I hoveredRegionPos;
-    public Region hoveredRegion = null;
-    public State hoveredState = null;
-
-    public PopObject selectedMetaObj;
-    public MapModes selectedMode;
 
     // Events
     public delegate void SimulationInitializedEventHandler();
@@ -81,65 +59,13 @@ public partial class SimManager : Node2D
             //GD.Print(NameGenerator.GenerateCharacterName(true));
         }
         simToPopMult = Pop.simPopulationMultiplier;
-        regionOverlay = GetNode<Sprite2D>("RegionOverlay");
         world = (WorldGeneration)GetParent().GetNode<Node2D>("World");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
+        mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
 
         // Connection
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
         timeManager.Tick += SimTick;
-    }
-
-    public override void _Process(double delta)
-    {
-        mousePos = GetGlobalMousePosition();
-        hoveredRegionPos = GlobalToRegionPos(mousePos);
-        if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y){
-            hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
-            hoveredState = hoveredRegion.owner;
-        } else {
-            hoveredRegion = null;
-            hoveredState = null;
-        }
-        CheckMapmodeChange();
-        Selection();
-    }   
-    void CheckMapmodeChange(){
-        if (mapmodeTask == null || mapmodeTask.IsCompleted){
-            if (Input.IsActionJustPressed("MapMode_Polity")){
-                mapmodeTask = Task.Run(() => SetMapMode(MapModes.POLITIY));
-            }         
-            else if (Input.IsActionJustPressed("MapMode_Culture")){
-                mapmodeTask = Task.Run(() => SetMapMode(MapModes.CULTURE));
-            }      
-            else if (Input.IsActionJustPressed("MapMode_Population")){
-                mapmodeTask = Task.Run(() => SetMapMode(MapModes.POPULATION));
-            }   
-        }        
-    }
-
-    void Selection(){
-        if (selectedMode != mapMode){
-            selectedMetaObj = null;
-        }
-        if (Input.IsMouseButtonPressed(MouseButton.Left)){
-            switch (mapMode){
-                case MapModes.POLITIY:
-                    if (hoveredRegion.habitable){
-                        selectedMetaObj = hoveredRegion;
-                    } else {
-                        selectedMetaObj = null;
-                    }
-                    break;
-                case MapModes.CULTURE:
-                    if (hoveredRegion.cultures.Keys.Count > 0){
-                        selectedMetaObj = hoveredRegion.cultures.ToArray()[0].Key;
-                    } else {
-                        selectedMetaObj = null;
-                    }
-                    break;
-            }
-        }
     }
 
     public Vector2I GlobalToRegionPos(Vector2 pos){
@@ -213,8 +139,6 @@ public partial class SimManager : Node2D
         LoadBuildings();
         terrainSize = world.worldSize;
         worldSize = terrainSize/tilesPerRegion;
-        Scale = world.Scale * tilesPerRegion;
-        regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
 
         tiles = new Tile[terrainSize.X, terrainSize.Y];
         for (int x = 0; x < terrainSize.X; x++){
@@ -227,7 +151,6 @@ public partial class SimManager : Node2D
 
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
-                regionImage.SetPixel(x, y, Color.Color8(0,255,0,1));
                 // Creates a region
                 Region newRegion = new Region();
 
@@ -265,7 +188,7 @@ public partial class SimManager : Node2D
         }
         BorderingRegions();
         InitPops();
-        regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
+        mapManager.InitMapManager();
     }
 
     void BorderingRegions(){
@@ -311,7 +234,7 @@ public partial class SimManager : Node2D
                         DestroyPop(pop);
                     } else {
                         region.GrowPop(pop);
-                        if (pop.batchId == month){
+                        if (pop.batchId == timeManager.month){
                             region.MigratePop(pop);
                         }
                     }
@@ -370,12 +293,13 @@ public partial class SimManager : Node2D
                     }                
                 }
         
-                if (character.state.leader == character && rng.NextSingle() <= 0.01/12 && character.age > 20 * 12 && character.childCooldown < 1){
+                if (character.CanHaveChild() && rng.NextSingle() <= 0.01/12){
                     character.HaveChild();
                     character.childCooldown = 12;
                 }
-
-                if (character.age > (60 * 12) && rng.NextSingle() <= (1f - Mathf.Pow(1f - 0.01f, 1f/12f))){
+                // Gets Death Chance Per Month
+                float realDeathChance = 1f - Mathf.Pow(1f - character.GetDeathChance(), 1f/12f);
+                if (rng.NextSingle() <= realDeathChance){
                     character.Die();
                 }                
             } 
@@ -407,18 +331,11 @@ public partial class SimManager : Node2D
     }
     #region SimTick
     public void SimTick(){        
-        month = timeManager.month;
-
         UpdateRegions();
         UpdateStates();        
         UpdateCharacters();
 
-        foreach (Region region in regions){
-            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
-        }
-        Parallel.ForEach(regions, region =>{
-            
-        });
+        mapManager.UpdateRegionColors();
     }
     #endregion
 
@@ -489,9 +406,9 @@ public partial class SimManager : Node2D
     }
     public void CreateState(Region region){
         if (region.owner == null){
-            float r = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());
-            float g = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());
-            float b = Mathf.InverseLerp(0.3f, 1f, rng.NextSingle());    
+            float r = Mathf.Lerp(0.2f, 1f, rng.NextSingle());
+            float g = Mathf.Lerp(0.2f, 1f, rng.NextSingle());
+            float b = Mathf.Lerp(0.2f, 1f, rng.NextSingle());    
             State state = new State(){
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
@@ -580,78 +497,4 @@ public partial class SimManager : Node2D
         
     }
     #endregion
-    
-    #region Map Stuff
-    public void SetMapMode(MapModes mode){
-        mapMode = mode;
-        foreach (Region region in regions){
-            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
-        }
-        // Parallel.ForEach(regions, region =>{
-        //     SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
-        // });
-    }
-
-    public Color GetRegionColor(Region region){
-        Color color = new Color(0, 0, 0, 0);
-        switch (mapMode){
-            case MapModes.POLITIY:  
-                if (region.pops.Count > 0){
-                    color = new Color(0.2f, 0.2f, 0.2f);
-                }
-                if (region.owner != null){
-                    color = region.owner.color;
-                    if (region.border || region.frontier){
-                        color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
-                    }
-                    if (region.owner.capital == region){
-                        //color = new Color(1,0,0);
-                    }
-                }
-            break;
-            case MapModes.POPULATION:
-                if (region.habitable && region.pops.Count > 0){
-                    color = new Color(0, (float)region.population/Pop.ToNativePopulation(1000 * (int)Mathf.Pow(tilesPerRegion, 2)), 0, 1);
-                } else if (region.habitable) {
-                    color = new Color(0, 0, 0, 1);
-                }
-            break;
-            case MapModes.CULTURE:
-                if (region.habitable && region.pops.Count > 0){
-                    color = region.cultures.ElementAt(0).Key.color;
-                } else if (region.habitable) {
-                    color = new Color(0, 0, 0, 1);
-                }
-            break;
-            case MapModes.POPS:
-                if (region.habitable && region.pops.Count > 0){
-                    color = new Color(0, 0,(float)region.pops.Count/10, 1);
-                } else if (region.habitable) {
-                    color = new Color(0, 0, 0, 1);
-                }
-                
-            break;
-        }
-        return color;
-    }
-
-    public void SetRegionColor(int x, int y, Color color){
-        if (regionImage.GetPixel(x,y) != color){
-            regionImage.SetPixel(x, y, color);
-            mapUpdate = true;            
-        }
-    }
-
-    public void UpdateMap(){
-        mapUpdate = false;
-        regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
-    }
-    #endregion
-}
-
-public enum MapModes {
-    POLITIY,
-    POPULATION,
-    CULTURE,
-    POPS
 }

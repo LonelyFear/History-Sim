@@ -16,8 +16,6 @@ public class Culture : PopObject
     public TraitLevel equity = TraitLevel.MEDIUM;
     public List<Culture> hatedCultures = new List<Culture>();
 
-    public string name = "Culturism";
-
     // public void AddPop(Pop pop){
     //     if (!pops.Contains(pop)){
     //         if (pop.culture != null){

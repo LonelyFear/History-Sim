@@ -21,6 +21,7 @@ public partial class TimeManager : Node
     public float tickDelta = 1;
     public WorldGeneration world;
     public SimManager simManager;
+    public MapManager mapManager;
     bool worldGenFinished = false;
     Task monthTask;
     Task yearTask;
@@ -31,6 +32,7 @@ public partial class TimeManager : Node
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
         simManager = GetNode<SimManager>("/root/Game/Simulation");
+        mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         // Connection
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
     }
@@ -45,8 +47,8 @@ public partial class TimeManager : Node
             if (yearTask == null || yearTask.IsCompleted){
                 tickDelta = (Time.GetTicksMsec() - tickStartTime)/1000f;
                 TickGame();
-                if (simManager.mapUpdate){
-                    simManager.UpdateMap();
+                if (mapManager.mapUpdate){
+                    mapManager.UpdateMap();
                 }                
             }
 

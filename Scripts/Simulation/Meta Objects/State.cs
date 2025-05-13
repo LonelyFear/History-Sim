@@ -6,7 +6,6 @@ using Godot;
 
 public class State : PopObject
 {
-    public string name = "Nation";
     public string displayName = "Nation";
     public Color color;
     public Color displayColor;

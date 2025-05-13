@@ -32,6 +32,7 @@ public class Region: PopObject
     public bool needsJobs {private set; get;}
     public bool needsWorkers {private set; get;}
     public void CalcAvgFertility(){
+        name = "Region";
         landCount = 0;
         float f = 0;
         for (int x = 0; x < simManager.tilesPerRegion; x++){

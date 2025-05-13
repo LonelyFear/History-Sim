@@ -3,11 +3,11 @@ using System;
 
 public partial class DebugLabel : Label
 {
-    [Export] SimManager sim;
+    [Export] MapManager map;
     public override void _Process(double delta)
     {
         Position = GetGlobalMousePosition();
-        Region region = sim.hoveredRegion;
+        Region region = map.hoveredRegion;
         if (region != null && region.owner != null){
             State state = region.owner;
             string leaderText = "Leader: None";
