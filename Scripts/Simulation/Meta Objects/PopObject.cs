@@ -12,6 +12,7 @@ public class PopObject {
     public List<Pop> pops = new List<Pop>();
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
+    public static Random rng = new Random();
 
     public void CountPopulation(){
         long countedPopulation = 0;
@@ -93,5 +94,25 @@ public class PopObject {
         workforce += workforceChange;
         dependents += dependentChange;
         population += workforceChange + dependentChange;
+    }
+    public void TakeLosses(long amount, State state = null){
+        pops.Shuffle();
+        foreach (Pop pop in pops){
+            if (pop.profession != Profession.ARISTOCRAT){
+                if (pop.workforce >= amount){
+                    amount = 0;
+                    pop.ChangeWorkforce(-amount);
+                } else {
+                    amount -= pop.workforce;
+                    pop.ChangeWorkforce(-pop.workforce);
+                }
+            }    
+            if (amount < 1){
+                break;
+            } 
+        }
+        if (state != null){
+            state.manpower -= amount;
+        }
     }
 }

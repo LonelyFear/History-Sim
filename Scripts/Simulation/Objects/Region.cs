@@ -22,7 +22,6 @@ public class Region: PopObject
     public long maxPopulation = 0;
     public double wealth;
 
-    Random rng = new Random();
     public Economy economy = new Economy();
     public List<Region> borderingRegions = new List<Region>();
 
@@ -72,17 +71,6 @@ public class Region: PopObject
             }
         }
     }
-
-    // public void AddPop(Pop pop){
-    //     if (!pops.Contains(pop)){
-    //         if (pop.region != null){
-    //             pop.region.RemovePop(pop);
-    //         }
-    //         pops.Add(pop);
-    //         pop.region = this;            
-    //         ChangePopulation(pop.workforce, pop.dependents);
-    //     }
-    // }
     #region Nations
     public void RandomStateFormation(){
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
@@ -98,7 +86,6 @@ public class Region: PopObject
             owner.rulingPop = rulingPop;
             owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
             owner.UpdateDisplayName();
-            owner.leader.role = Character.Role.LEADER;
         }
     }
 
@@ -121,52 +108,22 @@ public class Region: PopObject
     public void NeutralConquest(){
         Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f){
-            double armyPower = owner.GetArmyPower();
-            double tribePower = Pop.FromNativePopulation(region.workforce) * 0.2;
-            float winChance = (float)(armyPower / (tribePower + armyPower));
-
-            //GD.Print(winChance);
-            if (rng.NextDouble() < winChance){
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), (long)(Pop.FromNativePopulation(region.workforce) * 0.5));
+            if (result.victor == Conflict.Side.AGRESSOR){
                 owner.AddRegion(region);
             }
+            owner.TakeLosses(result.attackerLosses, owner);
+            region.TakeLosses(result.defenderLosses);
         }
     }
     
     #endregion
     #region Checks & Taxes
     public void CheckPopulation(){
-        // long countedPopulation = 0;
-        // long countedDependents = 0;
-        // long countedWorkforce = 0;
-
-        // cultures = new Dictionary<Culture, long>();
-        // Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
-        // foreach (Profession profession in Enum.GetValues(typeof(Profession))){
-        //     countedProfessions.Add(profession, 0);
-        // }
-
-        // foreach (Pop pop in pops.ToArray()){
-        //     countedPopulation += pop.population;
-        //     countedWorkforce += pop.workforce;
-        //     countedDependents += pop.dependents;
-
-        //     countedProfessions[pop.profession] += pop.workforce;
-        //     if (!cultures.ContainsKey(pop.culture)){
-        //         cultures.Add(pop.culture, pop.population);
-        //     } else {
-        //         cultures[pop.culture] += pop.population;
-        //     }
-        // }
-        // cultures = cultures.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
         CountPopulation();
         if (population < Pop.ToNativePopulation(1) && owner != null){
             owner.RemoveRegion(this);
         }
-
-        // professions = countedProfessions;
-        // population = countedPopulation;
-        // dependents = countedDependents;
-        // workforce = countedWorkforce;
     }
 
     public void PopWealth(Pop pop){
@@ -322,20 +279,6 @@ public class Region: PopObject
             if (movedDependents > pop.dependents){
                 movedDependents = pop.dependents;
             }
-            // Pop merger = null;
-
-            // foreach (Pop resident in destination.pops.ToArray()){
-            //     if (Pop.CanPopsMerge(pop, merger)){
-            //         merger = resident;
-            //         break;
-            //     }
-            // }
-            // if (merger != null){
-            //     merger.ChangePopulation(movedWorkforce, movedDependents);
-            //     merger.canMove = false;
-            // } else {
-
-            // }
             Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
             npop.canMove = false;            
             pop.ChangePopulation(-movedWorkforce, -movedDependents);     

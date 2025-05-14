@@ -205,8 +205,7 @@ public partial class SimManager : Node
 
         });  
     }
-    void InitPops(){
-        
+    void InitPops(){    
         foreach (Region region in habitableRegions){
             double nodeChance = 0.01/world.worldSizeMult;
             nodeChance *= region.avgFertility;
@@ -275,31 +274,25 @@ public partial class SimManager : Node
             character.age++;
             character.existTime++;
             character.childCooldown--;
+
             bool exists = true;
 
-            if (character.existTime > 1000*12 && character.role == Character.Role.CIVILIAN || character.state == null){
-                DeleteCharacter(character);
-                exists = false;
-            }
             if (exists){
                 if (character.childCooldown <= 0){
                     character.childCooldown = 0;
                 }
-                if (character.state.leader == character){
-                    character.role = Character.Role.LEADER;
-                    Character heir = character.GetHeir();
-                    if (heir != null){
-                        heir.role = Character.Role.HEIR;
-                    }                
+                if (character.age < Character.maturityAge){
+                    character.ChildUpdate();            
                 }
-        
-                if (character.CanHaveChild() && rng.NextSingle() <= 0.01/12){
+
+                if (character.CanHaveChild() && rng.NextDouble() <= 1d - Mathf.Pow(1d - 0.05, 1d/12d)){
                     character.HaveChild();
                     character.childCooldown = 12;
                 }
                 // Gets Death Chance Per Month
-                float realDeathChance = 1f - Mathf.Pow(1f - character.GetDeathChance(), 1f/12f);
-                if (rng.NextSingle() <= realDeathChance){
+                double realDeathChance = 1d - Mathf.Pow(1d - character.GetDeathChance(), 1d/12d);
+                //GD.Print(realDeathChance);
+                if (rng.NextDouble() <= realDeathChance){
                     character.Die();
                 }                
             } 
@@ -437,7 +430,7 @@ public partial class SimManager : Node
         Character character = new Character(){
             name = charName,
             culture = pop.culture,
-            agression = (TraitLevel)rng.Next(-2, 3),
+            agression = rng.Next(0, 101),
             age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
             simManager = this
         };
@@ -474,7 +467,7 @@ public partial class SimManager : Node
 
     }
 
-    public void StartConflict(State agressor, State defender, List<State> agressorSupporters, List<State> defenderSupporters, Conflict.Type type){
+    public Conflict StartConflict(State agressor, State defender, List<State> agressorSupporters, List<State> defenderSupporters, Conflict.Type type){
         Conflict conflict = new Conflict(){
             type = type,
             simManager = this
@@ -491,6 +484,7 @@ public partial class SimManager : Node
         }
 
         conflicts.Add(conflict);
+        return conflict;
     }
 
     public void StartWar(Conflict conflict){

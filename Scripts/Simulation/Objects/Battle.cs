@@ -9,7 +9,7 @@ public class Battle{
     public long defenderStrength;
     public long attackerLosses;
     public long defenderLosses;
-    public Victor victor = Victor.DEFENDER;
+    public Conflict.Side victor = Conflict.Side.DEFENDER;
     static Random rng = new Random();
     public static Battle CalcBattle(Region loc, State atk, State def, long attackers, long defenders){
         Battle result = new Battle(){
@@ -22,16 +22,20 @@ public class Battle{
 
         long attackPower = (long)(Pop.FromNativePopulation(attackers) * Mathf.Lerp(0.9f, 1.1f, rng.NextSingle()));
         long defendPower = (long)(Pop.FromNativePopulation(defenders) * Mathf.Lerp(0.9f, 1.1f, rng.NextSingle()));
-        defendPower = (long)(defendPower * 1.2);
+        
+        // Disorganized people lack defenders advantage
+        if (def != null){
+            defendPower = (long)(defendPower * 1.2);
+        }
 
         long totalPower = attackPower + defendPower;
         if (rng.NextSingle() >= (float)attackPower/totalPower){
-            result.victor = Victor.ATTACKER;
+            result.victor = Conflict.Side.AGRESSOR;
         }
         float attackerLossRatio = (float)defendPower / totalPower;
         float defenderLossRatio = (float)attackPower / defendPower;
 
-        if (result.victor == Victor.ATTACKER){
+        if (result.victor == Conflict.Side.AGRESSOR){
             defenderLossRatio += Mathf.Lerp(0.01f, 0.1f, rng.NextSingle());
         } else {
             attackerLossRatio += Mathf.Lerp(0.01f, 0.1f, rng.NextSingle());
@@ -43,10 +47,5 @@ public class Battle{
         result.attackerLosses = (long)(attackers * attackerLossRatio);
 
         return result;
-    }
-
-    public enum Victor{
-        ATTACKER,
-        DEFENDER
     }
 }

@@ -53,7 +53,7 @@ public partial class MapManager : Node2D
                 hoveredState = null;
             }
             CheckMapmodeChange();
-            Selection();            
+            Selection();    
         }
 
     }
@@ -142,9 +142,9 @@ public partial class MapManager : Node2D
                 
             break;
         }
-        if (hoveredRegion == region){
-            color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
-        }
+        // if (hoveredRegion == region){
+        //     color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+        // }
         return color;
     }
     public Region GetRegion(int x, int y){

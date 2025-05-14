@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Godot;
@@ -28,6 +29,9 @@ public partial class TimeManager : Node
     bool doYear = false;
     [Export]
     public bool debuggerMode = false;
+    double waitTime;
+    double currentTime;
+    [Export] public GameSpeed gameSpeed = GameSpeed.YEAR_PER_SECOND;
     public override void _Ready()
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
@@ -39,20 +43,39 @@ public partial class TimeManager : Node
 
     public override void _Process(double delta)
     {
-        if (worldGenFinished && (monthTask == null || monthTask.IsCompleted)){
-            if (doYear){
-                doYear = false;
-                //yearTask = Task.Run();
-            }
-            if (yearTask == null || yearTask.IsCompleted){
-                tickDelta = (Time.GetTicksMsec() - tickStartTime)/1000f;
-                TickGame();
-                if (mapManager.mapUpdate){
-                    mapManager.UpdateMap();
-                }                
-            }
+        switch (gameSpeed){
+            case GameSpeed.MONTH_PER_SECOND:
+                waitTime = 1;
+                break;
+            case GameSpeed.YEAR_PER_SECOND:
+                waitTime = 1d/12d;
+                break;
+            case GameSpeed.DECADE_PER_SECOND:
+                waitTime = 1d/120d;
+                break;
+            case GameSpeed.UNLIMITED:
+                waitTime = 0;
+                break;
 
         }
+        currentTime += delta;
+        if (currentTime >= waitTime){
+            currentTime = 0;
+            if (worldGenFinished && (monthTask == null || monthTask.IsCompleted)){
+                if (doYear){
+                    doYear = false;
+                    //yearTask = Task.Run();
+                }
+                if (yearTask == null || yearTask.IsCompleted){
+                    tickDelta = (Time.GetTicksMsec() - tickStartTime)/1000f;
+                    TickGame();
+                    if (mapManager.mapUpdate){
+                        mapManager.UpdateMap();
+                    }                
+                }
+            }            
+        }
+
     }
 
     public void OnWorldgenFinished(){
@@ -80,5 +103,12 @@ public partial class TimeManager : Node
                 // Insert year tick function here
             }
         }
+    }
+
+    public enum GameSpeed{
+        MONTH_PER_SECOND,
+        YEAR_PER_SECOND,
+        DECADE_PER_SECOND,
+        UNLIMITED
     }
 }

@@ -14,29 +14,36 @@ public class State : PopObject
     public List<Region> regions = new List<Region>();
     public Region capital;
     public uint age;
-    public long manpowerTarget;
     public long manpower;
+    public long manpowerTarget;
     List<State> vassals = new List<State>();
     State liege;
-    Dictionary<State, Relation> relations;
+    public Dictionary<State, Relation> relations;
     public List<State> borderingStates = new List<State>();
-    Sovereignty sovereignty = Sovereignty.INDEPENDENT;
-    public Economy economy = new Economy();
+    public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public SimManager simManager;
-    public Character leader;
-    public Character lastLeader = null;
-    public Pop rulingPop;
+
+
     public List<Character> characters = new List<Character>();
     int monthsSinceElection = 0;
-    Random rng = new Random();
     public Tech tech;
-
     public List<Conflict> conflicts = new List<Conflict>();
     public List<War> wars = new List<War>();
 
+    // Government
+    public long wealth;
+    public Character leader;
+    public Pop rulingPop;    
+    public Character heir;
     public void UpdateCapital(){
         if (capital == null){
             capital = regions[0];
+        }
+    }
+
+    public void EstablishRelations(State state){
+        if (!relations.Keys.Contains(state)){
+            relations.Add(state, new Relation());
         }
     }
     public void RulersCheck(){
@@ -44,9 +51,11 @@ public class State : PopObject
         monthsSinceElection++;
         switch (government){
             case GovernmentTypes.MONARCHY:
-                if (lastLeader != leader && leader == null){
-                    SetLeader(lastLeader.GetHeir());
-                    lastLeader = null;
+                if (leader != null){
+                    heir = leader.GetHeir();
+                }
+                if (leader == null){
+                    SetLeader(heir);
                 }
                 break;
             case GovernmentTypes.REPUBLIC:
@@ -128,42 +137,17 @@ public class State : PopObject
         //manpower = 400 * regions.Count;
     }
 
-    public void TakeLosses(long amount){
-        while (amount > 0){
-            Pop pop = pops[rng.Next(0, pops.Count - 1)];
-            if (pop.profession != Profession.ARISTOCRAT){
-                if (pop.workforce >= amount){
-                    amount = 0;
-                    pop.ChangeWorkforce(-amount);
-                } else {
-                    amount -= pop.workforce;
-                    pop.ChangeWorkforce(-pop.workforce);
-                }
-            }
-        }
-        manpower -= amount;
-    }
-
     public void SetLeader(Character newLeader){
-        // string newName = "nobody";
-        // if (newLeader != null){
-        //     newName = newLeader.name;
-        // }
-        // if (leader != null){
-        //     GD.Print("Leader of " + name + " changed from " + leader.name + " to " + newName);
-        // } else {
-        //     GD.Print("Leader of " + name + " changed nobody to " + newName);
-        // }
-        if (leader != null){
-            leader.role = Character.Role.CIVILIAN;
-        }
         if (newLeader != null){
-            newLeader.role = Character.Role.LEADER;
             if (!characters.Contains(newLeader)){
                 AddCharacter(newLeader);
             }            
         }
         leader = newLeader;
+        // Removes our heir if the new leader was the heir.
+        if (newLeader == heir && newLeader != null){
+            heir = null;
+        }        
     }
     public void AddRegion(Region region){
         if (!regions.Contains(region)){
@@ -232,13 +216,16 @@ public class State : PopObject
             if (leader == character){
                 SetLeader(null);
             }
+            if (heir == character){
+                heir = null;
+            }
             characters.Remove(character);
             character.state = null;
         }
     }
 
-    public double GetArmyPower(){
-        return Pop.FromNativePopulation(manpower) * ((tech.militaryLevel + 1) / 20d)/regions.Count;
+    public long GetArmyPower(){
+        return Pop.FromNativePopulation(manpower)/regions.Count;
     }
 
 }

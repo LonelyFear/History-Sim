@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.NetworkInformation;
+using Godot;
 
 public class Character
 {
@@ -12,22 +13,26 @@ public class Character
     public uint age;
     public int existTime;
     public Pop pop;
-    public Role role = Role.CIVILIAN;
     public Gender gender = Gender.MALE;
-    public Character parent;
     public SimManager simManager;
-    public TraitLevel agression = TraitLevel.MEDIUM;
-    public List<Character> children = new List<Character>();
+    
     public Random rng = new Random();
     public int childCooldown = 12;
 
-    public void Die(){
-        if (state.leader == this){
-            state.lastLeader = this;
-        }    
+    // Family 
+    public Character parent;
+    public Character spouse;    
+    public List<Character> children = new List<Character>();    
+
+    // Traits
+    public int agression = 0;
+    public int wisdom = 0;
+
+    public const int maturityAge = 18*12;
+
+    public void Die(){  
         simManager.DeleteCharacter(this);
     }
-
     public void HaveChild(){
         if (children.Count <= 20){
             Character child = simManager.CreateCharacter(pop, 0, 0, (Character.Gender)rng.Next(0, 2));
@@ -36,36 +41,38 @@ public class Character
         }
     }
 
-    public bool CanHaveChild(){
-        if (state.leader == this || state.leader == parent && age > 240 && childCooldown < 1){
-            return true;
+    public void ChildUpdate(){
+        if (parent != null){
+            agression = (int)Mathf.Lerp(agression, parent.agression, rng.Next(0,2));
         }
-        return false;
     }
-
     public Character GetHeir(){
-        bool femaleHeirs = culture.equity > 0;
         foreach (Character child in children){
-            if (child.gender == Gender.MALE || femaleHeirs){
+            if (child.gender == Gender.MALE){
                 return child;
+            }
+        }
+        if (parent != null){
+            foreach (Character sibling in parent.children){
+                if (sibling.gender == Gender.MALE){
+                    return sibling;
+                }
             }
         }
         return null;
     }
 
-    public float GetDeathChance(){
-        if (age < 60){
-            return 0.001f;
-        } else if (age < 90){
-            return 0.01f;
-        } else {
-            return 0.1f;
-        }
+    public bool CanHaveChild(){
+        return (state.leader == this || state.leader == parent) && age > maturityAge && childCooldown < 1;
     }
-    public enum Role {
-        LEADER,
-        HEIR,
-        CIVILIAN,
+    public double GetDeathChance(){
+        if (age < 60*12){
+            return 0.0001;
+        } else if (age < 90*12){
+            return 0.01;
+        } else {
+            return 0.1;
+        }
     }
 
     public enum Gender{
