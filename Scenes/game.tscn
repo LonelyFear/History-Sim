@@ -60,7 +60,6 @@ visible = false
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
 monthsPerTick = 1
-debuggerMode = true
 gameSpeed = 3
 
 [node name="Map Manager" type="Node2D" parent="."]
