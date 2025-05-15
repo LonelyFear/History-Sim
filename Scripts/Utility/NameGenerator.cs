@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.IO;
 using System.Linq;
+using FileAccess = Godot.FileAccess;
 
 public class NameGenerator
 {
@@ -10,9 +11,9 @@ public class NameGenerator
         Random rng = new Random();
 
         string name = "";
-        string[] prefixes = File.ReadAllLines("Data/Names/NationPrefixes.txt");
-        string[] roots = File.ReadAllLines("Data/Names/NationRoots.txt");
-        string[] suffixes = File.ReadAllLines("Data/Names/NationSuffixes.txt");
+        string[] prefixes = FileAccess.Open(@"Data/Names/NationPrefixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
+        string[] roots = FileAccess.Open(@"Data/Names/NationRoots.txt", FileAccess.ModeFlags.Read).GetAsArray();
+        string[] suffixes = FileAccess.Open(@"Data/Names/NationSuffixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
         
         string InsertVowel(string root){
             if (!vowels.ToCharArray().Contains(name[name.Length - 1]) && !vowels.ToCharArray().Contains(root[0])){

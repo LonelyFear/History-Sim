@@ -27,4 +27,13 @@ public static class Utility
         }
         return PopObject.ObjectType.IDK;
     }
+
+    public static string[] GetAsArray(this Godot.FileAccess f){
+        List<string> result = new List<string>();
+        while (!f.EofReached()){
+            result.Add(f.GetLine());
+        }
+        f.Close();
+        return result.ToArray();
+    }
 }

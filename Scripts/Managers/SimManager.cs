@@ -78,11 +78,11 @@ public partial class SimManager : Node
     }
 
     void LoadBuildings(){
-        string buildingsPath = @"Data/Buildings";
+        string buildingsPath = @"Data/Buildings/";
         DirAccess buildingDir = DirAccess.Open(buildingsPath);
         if (buildingDir != null){
             foreach (string buildingFile in buildingDir.GetFiles()){
-                string path = buildingsPath + "/" + buildingFile;
+                string path = buildingsPath + buildingFile;
 
                 string buildingData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
 
@@ -91,7 +91,7 @@ public partial class SimManager : Node
                 buildings.Add(building.id, building);
                 foreach (string id in building.resourcesProducedIds.Keys){
                     if (GetResource(id) == null){
-                        GD.PrintErr("Building couldnt load resource '" + id + "'");
+                        GD.PushError("Building couldnt load resource '" + id + "'");
                         return;
                     }
                     building.resourcesProduced.Add(GetResource(id), building.resourcesProducedIds[id]);
@@ -99,16 +99,16 @@ public partial class SimManager : Node
             }
 
         } else {
-            GD.PrintErr("Buildings directory not found at path '" + buildingsPath + "'"); 
+            GD.PushError("Buildings directory not found at path '" + buildingsPath + "'"); 
         }
     }
     void LoadResources(){
-        string resourcesPath = @"Data/Resources";
+        string resourcesPath = @"Data/Resources/";
         
         DirAccess resourcesDir = DirAccess.Open(resourcesPath);
         if (resourcesDir != null){
             foreach (string resourcesFile in resourcesDir.GetFiles()){
-                string path = resourcesPath + "/" + resourcesFile;
+                string path = resourcesPath + resourcesFile;
 
                 string resourceData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
                 SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
@@ -117,14 +117,14 @@ public partial class SimManager : Node
             }
 
         } else {
-            GD.PrintErr("Resources directory not found at path '" + resourcesPath + "'"); 
+            GD.PushError("Resources directory not found at path '" + resourcesPath + "'"); 
         }
     }
     public SimResource GetResource(string id){
         if (resources.ContainsKey(id)){
             return resources[id];
         } else {
-            GD.PrintErr("Resource not found with ID '" + id + "'");
+            GD.PushError("Resource not found with ID '" + id + "'");
             return null;
         }
     }
@@ -132,7 +132,7 @@ public partial class SimManager : Node
         if (buildings.ContainsKey(id)){
             return buildings[id];
         } else {
-            GD.PrintErr("Building not found with ID '" + id + "'");
+            GD.PushError("Building not found with ID '" + id + "'");
             return null;
         }
     }
