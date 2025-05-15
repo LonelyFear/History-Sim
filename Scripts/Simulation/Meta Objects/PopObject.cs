@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Godot;
 
@@ -114,5 +115,12 @@ public class PopObject {
         if (state != null){
             state.manpower -= amount;
         }
+    }
+
+    public enum ObjectType{
+        STATE,
+        REGION,
+        CULTURE,
+        IDK
     }
 }

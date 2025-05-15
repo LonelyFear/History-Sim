@@ -1,17 +1,16 @@
 using Godot;
-using Godot.Collections;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using FileAccess = Godot.FileAccess;
 
 public partial class WorldGeneration : Node2D
 {
     [Export] public bool tectonicTest;
     [Export] public Sprite2D debugDisplay;
+    [Export] Json biomesJson;
     TileMapLayer tileMap;
     public string[,] tileBiomes;
     public Biome[,] biomes;
@@ -435,14 +434,15 @@ public partial class WorldGeneration : Node2D
     }
 
     List<Biome> LoadBiomes(){
-        string biomesPath = "Data/biomes.json";
-        if (File.Exists(biomesPath)){
-            StreamReader reader = new StreamReader(biomesPath);
-            string biomeData = reader.ReadToEnd();
+        string biomesPath = @"Data/biomes.json";
+        FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
+        if (bio != null){       
+            string biomeData = bio.GetAsText();
+
             List<Biome> biomeList = JsonSerializer.Deserialize<List<Biome>>(biomeData);
             return biomeList;
         }
-        //GD.Print("Biomes.json not found at path '" + biomesPath + "'");  
+        GD.Print("Biomes.json not found at path '" + biomesPath + "'");  
         return null;
     }
 

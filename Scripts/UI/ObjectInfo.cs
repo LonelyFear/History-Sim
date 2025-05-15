@@ -29,9 +29,25 @@ public partial class ObjectInfo : Control
             PopObject metaObject = mapManager.selectedMetaObj;
 
             panel.Visible = true;
-            nameLabel.Text = metaObject.name;
             typeLabel.Text = metaObject.GetType().ToString();
             populationLabel.Text = "Population: " + Pop.FromNativePopulation(metaObject.population).ToString("#,###0");
+            switch (metaObject.GetObjectType()){
+                case PopObject.ObjectType.STATE:
+                    State state = (State)metaObject;
+                    nameLabel.Text = state.displayName;
+                    specialLabel.Text = "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0");
+                    break;
+                case PopObject.ObjectType.REGION:
+                    Region region = (Region)metaObject;
+                    nameLabel.Text = "Region";
+                    specialLabel.Text = "Fertility: " + region.avgFertility.ToString("0.00");
+                    break;
+                case PopObject.ObjectType.CULTURE:
+                    Culture culture = (Culture)metaObject;
+                    nameLabel.Text = culture.name;
+                    specialLabel.Text = "Pops: " + culture.pops.Count.ToString("#,###0");
+                    break;
+            }
         }
     }
 

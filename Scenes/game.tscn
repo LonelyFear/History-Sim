@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=22 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scenes/Game.cs" id="1_rku1e"]
@@ -14,6 +14,7 @@
 [ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="8_7t8sx"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
+[ext_resource type="JSON" path="res://Data/biomes.json" id="10_iivbl"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scenes/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
@@ -80,6 +81,7 @@ timeManager = NodePath("../Time Manager")
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
+biomesJson = ExtResource("10_iivbl")
 worldSizeMult = 2.0
 seed = 48590
 mapScale = 1.0

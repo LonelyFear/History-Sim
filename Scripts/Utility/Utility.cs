@@ -17,4 +17,14 @@ public static class Utility
             list[n] = value;  
         }  
     }
+    public static PopObject.ObjectType GetObjectType(this PopObject popObject){
+        if (popObject.GetType() == typeof(Culture)){
+            return PopObject.ObjectType.CULTURE;
+        } else if (popObject.GetType() == typeof(Region)){
+            return PopObject.ObjectType.REGION;
+        } else if (popObject.GetType() == typeof(State)){
+            return PopObject.ObjectType.STATE;
+        }
+        return PopObject.ObjectType.IDK;
+    }
 }

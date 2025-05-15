@@ -69,12 +69,13 @@ public partial class TimeManager : Node
                 if (yearTask == null || yearTask.IsCompleted){
                     tickDelta = (Time.GetTicksMsec() - tickStartTime)/1000f;
                     TickGame();
-                    if (mapManager.mapUpdate){
-                        mapManager.UpdateMap();
-                    }                
+         
                 }
             }            
         }
+        if (mapManager.mapUpdate){
+            mapManager.UpdateMap();
+        }               
 
     }
 

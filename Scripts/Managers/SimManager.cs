@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Godot;
+using FileAccess = Godot.FileAccess;
 
 public partial class SimManager : Node
 {
@@ -77,13 +78,14 @@ public partial class SimManager : Node
     }
 
     void LoadBuildings(){
-        string buildingPath = "Data/Buildings";
+        string buildingsPath = @"Data/Buildings";
+        DirAccess buildingDir = DirAccess.Open(buildingsPath);
+        if (buildingDir != null){
+            foreach (string buildingFile in buildingDir.GetFiles()){
+                string path = buildingsPath + "/" + buildingFile;
 
-        if (Directory.Exists(buildingPath)){
-            foreach (string subPath in Directory.GetFiles(buildingPath)){
+                string buildingData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
 
-                StreamReader reader = new StreamReader(subPath.Replace("\\", "/"));
-                string buildingData = reader.ReadToEnd();
                 BuildingData building = JsonSerializer.Deserialize<BuildingData>(buildingData);
 
                 buildings.Add(building.id, building);
@@ -97,16 +99,18 @@ public partial class SimManager : Node
             }
 
         } else {
-            GD.PrintErr("Buildings directory not found at path '" + buildingPath + "'"); 
+            GD.PrintErr("Buildings directory not found at path '" + buildingsPath + "'"); 
         }
     }
     void LoadResources(){
-        string resourcesPath = "Data/Resources/";
+        string resourcesPath = @"Data/Resources";
+        
+        DirAccess resourcesDir = DirAccess.Open(resourcesPath);
+        if (resourcesDir != null){
+            foreach (string resourcesFile in resourcesDir.GetFiles()){
+                string path = resourcesPath + "/" + resourcesFile;
 
-        if (Directory.Exists(resourcesPath)){
-            foreach (string subPath in Directory.GetFiles(resourcesPath)){
-                StreamReader reader = new StreamReader(subPath.Replace("\\", "/"));
-                string resourceData = reader.ReadToEnd();
+                string resourceData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
                 SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
 
                 resources.Add(resource.id, resource);            

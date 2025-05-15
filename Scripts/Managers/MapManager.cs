@@ -61,26 +61,30 @@ public partial class MapManager : Node2D
     void CheckMapmodeChange(){
         if (mapmodeTask == null || mapmodeTask.IsCompleted){
             if (Input.IsActionJustPressed("MapMode_Polity")){
-                mapmodeTask = Task.Run(() => SetMapMode(MapModes.POLITIY));
+                SetMapMode(MapModes.POLITIY);
             }         
             else if (Input.IsActionJustPressed("MapMode_Culture")){
-                mapmodeTask = Task.Run(() => SetMapMode(MapModes.CULTURE));
+                SetMapMode(MapModes.CULTURE);
             }      
             else if (Input.IsActionJustPressed("MapMode_Population")){
-                mapmodeTask = Task.Run(() => SetMapMode(MapModes.POPULATION));
+                SetMapMode(MapModes.POPULATION);
             }   
         }        
     }
 
     void Selection(){
+        PopObject smo = selectedMetaObj;
         if (selectedMode != mapMode){
             selectedMetaObj = null;
         }
-        if (Input.IsMouseButtonPressed(MouseButton.Left)){
+        if (Input.IsActionJustPressed("Select")){
             switch (mapMode){
                 case MapModes.POLITIY:
                     if (hoveredRegion.habitable){
                         selectedMetaObj = hoveredRegion;
+                        if (hoveredState != null){
+                            selectedMetaObj = hoveredState;
+                        }
                     } else {
                         selectedMetaObj = null;
                     }
@@ -94,13 +98,20 @@ public partial class MapManager : Node2D
                     break;
             }
         }
+        if (selectedMetaObj != smo){
+            UpdateAllRegions();
+        }
     }
 
     public void SetMapMode(MapModes mode){
         mapMode = mode;
+        UpdateAllRegions();
+    }
+
+    void UpdateAllRegions(){
         foreach (Region region in simManager.regions){
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
-        }
+        }        
     }
     public Color GetRegionColor(Region region){
         Color color = new Color(0, 0, 0, 0);
@@ -117,7 +128,23 @@ public partial class MapManager : Node2D
                     if (region.owner.capital == region){
                         //color = new Color(1,0,0);
                     }
+
                 }
+                if (selectedMetaObj != null){
+                    switch (selectedMetaObj.GetObjectType()){
+                        case PopObject.ObjectType.REGION:
+                            if (region != selectedMetaObj){
+                                color = (color * 0.6f) + (new Color(0, 0, 0) * 0.4f);
+                            }
+                            break;
+                        case PopObject.ObjectType.STATE:
+                            if (region.owner != selectedMetaObj){
+                                color = (color * 0.6f) + (new Color(0, 0, 0) * 0.4f);
+                            }
+                            break;
+                    }                     
+                }
+               
             break;
             case MapModes.POPULATION:
                 if (region.habitable && region.pops.Count > 0){
