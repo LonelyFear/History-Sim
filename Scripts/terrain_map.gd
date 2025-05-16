@@ -1,6 +1,6 @@
 extends TileMapLayer
 
-@export var camera : CameraController
+var camera 
 @export var lodMap : Sprite2D
 @export var regionSprite : Sprite2D
 @export var highQualityMaxZoom : float = 3

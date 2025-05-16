@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://cughui510kviu"]
 
 [ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="1_ju75o"]
-[ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://Scenes/main.tres" id="2_b2cq6"]
+[ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://main.tres" id="2_b2cq6"]
 [ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scripts/terrain_map.gd" id="3_77b2j"]
 
 [node name="TectonicTest" type="Node2D" node_paths=PackedStringArray("debugDisplay")]

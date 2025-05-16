@@ -26,7 +26,7 @@ public class Battle{
         defendPower = defendPower * 1.2;
 
         double totalPower = attackPower + defendPower;
-        GD.Print(attackPower/totalPower);
+
         if (rng.NextDouble() <= attackPower/totalPower){
             result.victor = Conflict.Side.AGRESSOR;
         }
