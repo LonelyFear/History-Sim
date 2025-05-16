@@ -20,26 +20,25 @@ public class Battle{
             defenderStrength = defenders
         };
 
-        long attackPower = (long)(Pop.FromNativePopulation(attackers) * Mathf.Lerp(0.9f, 1.1f, rng.NextSingle()));
-        long defendPower = (long)(Pop.FromNativePopulation(defenders) * Mathf.Lerp(0.9f, 1.1f, rng.NextSingle()));
+        double attackPower = Mathf.Round(Pop.FromNativePopulation(attackers) * Mathf.Lerp(0.9, 1.1, rng.NextDouble()));
+        double defendPower = Mathf.Round(Pop.FromNativePopulation(defenders) * Mathf.Lerp(0.9, 1.1, rng.NextDouble()));
         
-        // Disorganized people lack defenders advantage
-        if (def != null){
-            defendPower = (long)(defendPower * 1.2);
-        }
+        defendPower = defendPower * 1.2;
 
-        long totalPower = attackPower + defendPower;
-        if (rng.NextSingle() >= (float)attackPower/totalPower){
+        double totalPower = attackPower + defendPower;
+        GD.Print(attackPower/totalPower);
+        if (rng.NextDouble() <= attackPower/totalPower){
             result.victor = Conflict.Side.AGRESSOR;
         }
-        float attackerLossRatio = (float)defendPower / totalPower;
-        float defenderLossRatio = (float)attackPower / defendPower;
+        float attackerLossRatio = (float)(defendPower / totalPower);
+        float defenderLossRatio = (float)(attackPower / totalPower);
 
         if (result.victor == Conflict.Side.AGRESSOR){
-            defenderLossRatio += Mathf.Lerp(0.01f, 0.1f, rng.NextSingle());
+            defenderLossRatio += Mathf.Lerp(0.1f, 0.2f, rng.NextSingle());
         } else {
-            attackerLossRatio += Mathf.Lerp(0.01f, 0.1f, rng.NextSingle());
+            attackerLossRatio += Mathf.Lerp(0.1f, 0.2f, rng.NextSingle());
         }
+
         attackerLossRatio = Mathf.Clamp(attackerLossRatio, 0f, 1f);
         defenderLossRatio = Mathf.Clamp(defenderLossRatio, 0f, 1f);
         

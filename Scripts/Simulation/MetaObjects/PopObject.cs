@@ -7,6 +7,8 @@ using Godot;
 
 public class PopObject {
     public string name;
+    public uint foundTick;
+    public uint age;
     public long population = 0;
     public long dependents = 0;    
     public long workforce = 0;
@@ -98,24 +100,28 @@ public class PopObject {
     }
     public void TakeLosses(long amount, State state = null){
         pops.Shuffle();
+        long lossesTaken = amount;
         foreach (Pop pop in pops){
             if (pop.profession != Profession.ARISTOCRAT){
-                if (pop.workforce >= amount){
-                    amount = 0;
-                    pop.ChangeWorkforce(-amount);
+                if (pop.workforce >= lossesTaken){
+                    lossesTaken = 0;
+                    pop.ChangeWorkforce(-lossesTaken);
                 } else {
-                    amount -= pop.workforce;
+                    lossesTaken -= pop.workforce;
                     pop.ChangeWorkforce(-pop.workforce);
                 }
             }    
-            if (amount < 1){
+            if (lossesTaken < 1){
+                lossesTaken = 0;
                 break;
             } 
         }
+
         if (state != null){
-            state.manpower -= amount;
+            state.manpower -= amount - lossesTaken;
         }
     }
+
 
     public enum ObjectType{
         STATE,

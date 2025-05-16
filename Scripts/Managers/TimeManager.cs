@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -12,12 +13,8 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
 
     [Export]
-    public int monthsPerTick;
-    public int day;
-    public int month;
-    public int year;
-    public int totalTicks = 0;
-
+    public uint monthsPerTick;
+    public uint ticks = 0;
     public ulong tickStartTime = 0;
     public float tickDelta = 1;
     public WorldGeneration world;
@@ -86,8 +83,7 @@ public partial class TimeManager : Node
 
     private void TickGame(){
         tickStartTime = Time.GetTicksMsec();
-        totalTicks += 1;
-        month += 1;
+        ticks += 1;
 
         if (!debuggerMode){
             monthTask = Task.Run(simManager.SimTick);
@@ -95,9 +91,7 @@ public partial class TimeManager : Node
             simManager.SimTick();
         }
         
-        if (month > 12){
-            month = 1;
-            year += 1;
+        if (ticks == ticks % 12){
             if (!debuggerMode){
                 doYear = true;
             } else {
@@ -111,5 +105,27 @@ public partial class TimeManager : Node
         YEAR_PER_SECOND,
         DECADE_PER_SECOND,
         UNLIMITED
+    }
+    
+    public uint GetMonth(uint tick = 0){
+        if (tick == 0){
+            tick = ticks;
+        }
+        return (uint)Mathf.PosMod(tick, 12) + 1;
+    }
+    public uint GetYear(uint tick = 0){
+        if (tick == 0){
+            tick = ticks;
+        }
+        return tick/12;
+    }
+    public string GetStringDate(uint tick = 0){
+        if (tick == 0){
+            tick = ticks;
+        }
+        string month = GetMonth(tick).ToString("00");
+        string year = GetYear(tick).ToString("0000");
+        string date = $"{month}/{year}";
+        return date;
     }
 }

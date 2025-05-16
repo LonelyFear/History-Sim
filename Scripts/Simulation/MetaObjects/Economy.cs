@@ -3,7 +3,7 @@ using Godot.Collections;
 using System;
 using System.Linq;
 
-public partial class Economy : GodotObject
+public class Economy
 {
     public Dictionary<SimResource, double> resources = new Dictionary<SimResource, double>();
     

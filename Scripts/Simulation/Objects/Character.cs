@@ -11,6 +11,7 @@ public class Character
     public Culture culture;
     public State state;
     public uint age;
+    public uint birthTick;
     public int existTime;
     public Pop pop;
     public Gender gender = Gender.MALE;

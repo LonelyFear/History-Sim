@@ -237,7 +237,7 @@ public partial class SimManager : Node
                         DestroyPop(pop);
                     } else {
                         region.GrowPop(pop);
-                        if (pop.batchId == timeManager.month){
+                        if (pop.batchId == timeManager.GetMonth()){
                             region.MigratePop(pop);
                         }
                     }
@@ -257,15 +257,13 @@ public partial class SimManager : Node
                     }
                 } 
 
+                if (region.owner != null && region.frontier && region.owner.rulingPop != null){
+                    region.NeutralConquest();
+                } 
                 region.RandomStateFormation();
                 if (region.owner != null){
                     region.StateBordering();
-                    if (region.frontier && region.owner.rulingPop != null){
-                        region.NeutralConquest();
-                    }
-                } 
-
-          
+                }
             }       
             worldPop += region.population;            
         }
@@ -304,14 +302,14 @@ public partial class SimManager : Node
     }
     public void UpdateStates(){
         foreach (State state in states.ToArray()){
-
+            state.age++;
             if (state.regions.Count < 1){
                 DeleteState(state);
                 continue;
             }
 
             state.borderingStates = new List<State>();
-            state.age++;
+            
             state.UpdateCapital();
             state.CountStatePopulation();
             state.Recruitment();    
@@ -326,11 +324,18 @@ public partial class SimManager : Node
             }   
         }     
     }
+
+    public void UpdateCultures(){
+        foreach (Culture culture in cultures.ToArray()){
+            culture.age++;
+        }
+    }
     #region SimTick
     public void SimTick(){        
         UpdateRegions();
         UpdateStates();        
         UpdateCharacters();
+        UpdateCultures();
 
         mapManager.UpdateRegionColors();
     }
@@ -394,7 +399,8 @@ public partial class SimManager : Node
         float b = rng.NextSingle();        
         Culture culture = new Culture(){
             name = "Culturism",
-            color = new Color(r,g,b)
+            color = new Color(r,g,b),
+            foundTick = timeManager.ticks
         };
 
         cultures.Append(culture);
@@ -410,7 +416,8 @@ public partial class SimManager : Node
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
-                simManager = this
+                simManager = this,
+                foundTick = timeManager.ticks
             };
             states.Add(state);       
             state.AddRegion(region);

@@ -13,7 +13,6 @@ public class State : PopObject
     public GovernmentTypes government = GovernmentTypes.MONARCHY;
     public List<Region> regions = new List<Region>();
     public Region capital;
-    public uint age;
     public long manpower;
     public long manpowerTarget;
     List<State> vassals = new List<State>();
@@ -131,7 +130,7 @@ public class State : PopObject
             manpower = workforce;
         }
         if (professions.ContainsKey(Profession.FARMER) && professions.ContainsKey(Profession.MERCHANT)){
-            manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.5);
+            manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.25);
             manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);            
         }
         //manpower = 400 * regions.Count;
@@ -225,7 +224,7 @@ public class State : PopObject
     }
 
     public long GetArmyPower(){
-        return Pop.FromNativePopulation(manpower)/regions.Count;
+        return (long)(manpower/(float)regions.Count);
     }
 
 }

@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Threading;
 using Mutex = System.Threading.Mutex;
 using Godot;
+using System.Runtime.InteropServices;
 
-public class Region: PopObject
+public class Region : PopObject
 {
 	public Tile[,] tiles;
     public Biome[,] biomes;
@@ -107,11 +108,14 @@ public class Region: PopObject
 
     public void NeutralConquest(){
         Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f){
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), (long)(Pop.FromNativePopulation(region.workforce) * 0.5));
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f){
+            GD.Print(Pop.FromNativePopulation(owner.GetArmyPower()).ToString("Attackers: #,##0"));
+            //GD.Print(Pop.FromNativePopulation((long)(region.workforce * 0.95f)).ToString("Defenders: #,##0"));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower()/2, (long)(region.workforce * 0.95f));
             if (result.victor == Conflict.Side.AGRESSOR){
                 owner.AddRegion(region);
             }
+
             owner.TakeLosses(result.attackerLosses, owner);
             region.TakeLosses(result.defenderLosses);
         }
