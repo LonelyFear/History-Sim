@@ -7,7 +7,7 @@ public partial class LoadingScreen : Control
     Task task;
     WorldGeneration world;
     SimManager sim;
-    Control ui;
+    CanvasLayer ui;
     Label splash;
     Camera2D camera;
 
@@ -18,7 +18,7 @@ public partial class LoadingScreen : Control
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
         sim = GetNode<SimManager>("/root/Game/Simulation");
-        ui = GetNode<Control>("/root/Game/UI/Game UI");
+        ui = GetNode<CanvasLayer>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
         camera = GetNode<Camera2D>("/root/Game/PlayerCamera");
         ui.Visible = false;

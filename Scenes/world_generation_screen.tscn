@@ -113,12 +113,6 @@ theme_override_font_sizes/font_size = 46
 text = "World Generation Settings"
 horizontal_alignment = 1
 
-[node name="VSplitContainer" type="VSplitContainer" parent="WorldSettingsPanel"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-split_offset = 7
-
 [node name="HBoxContainer" type="HBoxContainer" parent="WorldSettingsPanel"]
 layout_mode = 0
 offset_top = 588.0
@@ -142,4 +136,5 @@ action_mode = 0
 text = "Start Simulation"
 
 [connection signal="text_changed" from="WorldSettingsPanel/VBoxContainer/SeedContainer/Seed" to="WorldSettingsPanel" method="_on_seed_text_changed"]
+[connection signal="pressed" from="WorldSettingsPanel/HBoxContainer/Back" to="WorldSettingsPanel" method="_on_back_pressed"]
 [connection signal="pressed" from="WorldSettingsPanel/HBoxContainer/Start" to="WorldSettingsPanel" method="_on_start_pressed"]

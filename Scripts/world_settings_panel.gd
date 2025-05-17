@@ -18,7 +18,11 @@ func _on_start_pressed() -> void:
 	else:
 		worldSeed = lineEdit.text.to_int()
 	var game : Node2D = load("res://Scenes/game.tscn").instantiate()
-	game.get_node("UI/Loading Screen").seed = worldSeed
-	game.get_node("UI/Loading Screen").tilesPerRegionFactor = worldSizeDropdown.get_selected_id()
+	game.get_node("Loading/Loading Screen").seed = worldSeed
+	game.get_node("Loading/Loading Screen").tilesPerRegionFactor = worldSizeDropdown.get_selected_id()
 	get_tree().root.add_child(game)
 	get_parent().queue_free()
+
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_packed(load("res://Scenes/main_menu.tscn"))

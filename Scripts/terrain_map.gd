@@ -11,9 +11,11 @@ var camera
 @export var baseRegionOpacity : float = 0.5
 var world : Node
 var showMapId : int
+var reliefs : TileMapLayer
 
 func _ready() -> void:
 	world = get_parent()
+	reliefs = get_parent().get_node("Reliefs")
 	if (!world.tectonicTest):
 		camera = get_node("/root/Game/PlayerCamera")
 
@@ -40,9 +42,11 @@ func manageMaps() -> void:
 
 func hideMap() -> void:
 	visible = false
+	reliefs.visible = false
 	lodMap.texture = ImageTexture.create_from_image(world.terrainImage)
 	lodMap.visible = true
 
 func showMap() -> void:
 	lodMap.call_deferred("set_visible", false)
 	call_deferred("set_visible", true)
+	reliefs.call_deferred("set_visible", true)

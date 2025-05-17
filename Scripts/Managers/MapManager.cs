@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-public partial class MapManager : Node2D
+public partial class MapManager : Area2D
 {
     Task mapmodeTask;
     SimManager simManager;
@@ -21,11 +21,16 @@ public partial class MapManager : Node2D
     public bool mapUpdate = false;
     public bool initialized = false;
 
+    OptionButton mapModeUI;
+    CheckBox showRegionsCheckbox;
+
 
     public override void _Ready()
     {
         simManager = GetNode<SimManager>("/root/Game/Simulation");
         regionOverlay = GetNode<Sprite2D>("RegionOverlay");
+        mapModeUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/MapModeHolder/MapMode");
+        showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");
     }
     public void InitMapManager(){
         Scale = simManager.world.Scale * simManager.tilesPerRegion;
@@ -43,32 +48,72 @@ public partial class MapManager : Node2D
     public override void _Process(double delta)
     {
         if (initialized){
+            UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
             mousePos = GetGlobalMousePosition();
             hoveredRegionPos = simManager.GlobalToRegionPos(mousePos);
-            if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y){
+            if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible){
                 hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
                 hoveredState = hoveredRegion.owner;
             } else {
                 hoveredRegion = null;
                 hoveredState = null;
             }
-            CheckMapmodeChange();
-            Selection();    
+
+            if (regionOverlay.Visible)
+            {
+                CheckMapmodeChange();
+                Selection();
+            }
         }
 
     }
 
+    void UpdateRegionVisibility(bool value) {
+        if (value != regionOverlay.Visible)
+        {
+            regionOverlay.Visible = value;
+            if (!value)
+            {
+                hoveredRegion = null;
+                hoveredState = null;              
+            }            
+        }
+
+    }
+
+    void ShowRegions()
+    {
+        regionOverlay.Visible = true;
+    }
+
+    void HideRegions()
+    {
+        regionOverlay.Visible = false;
+        hoveredRegion = null;
+        hoveredState = null;       
+    }
+
     void CheckMapmodeChange(){
-        if (mapmodeTask == null || mapmodeTask.IsCompleted){
-            if (Input.IsActionJustPressed("MapMode_Polity")){
+        MapModes lastMode = mapMode;
+        mapMode = (MapModes)mapModeUI.Selected;
+        if (mapmodeTask == null || mapmodeTask.IsCompleted )
+        {
+            if (Input.IsActionJustPressed("MapMode_Polity"))
+            {
                 SetMapMode(MapModes.POLITIY);
-            }         
-            else if (Input.IsActionJustPressed("MapMode_Culture")){
+            }
+            else if (Input.IsActionJustPressed("MapMode_Culture"))
+            {
                 SetMapMode(MapModes.CULTURE);
-            }      
-            else if (Input.IsActionJustPressed("MapMode_Population")){
+            }
+            else if (Input.IsActionJustPressed("MapMode_Population"))
+            {
                 SetMapMode(MapModes.POPULATION);
-            }   
+            }
+            else if (lastMode != mapMode)
+            {
+                SetMapMode(mapMode);
+            }
         }        
     }
 
@@ -77,34 +122,71 @@ public partial class MapManager : Node2D
         if (selectedMode != mapMode){
             selectedMetaObj = null;
         }
-        if (Input.IsActionJustPressed("Select")){
-            switch (mapMode){
+        // if (Input.IsActionJustPressed("Select") && hoveredRegion != null){
+        //     switch (mapMode){
+        //         case MapModes.POLITIY:
+        //             if (hoveredRegion.habitable){
+        //                 selectedMetaObj = hoveredRegion;
+        //                 if (hoveredState != null){
+        //                     selectedMetaObj = hoveredState;
+        //                 }
+        //             } else {
+        //                 selectedMetaObj = null;
+        //             }
+        //             break;
+        //         case MapModes.CULTURE:
+        //             if (hoveredRegion.cultures.Keys.Count > 0){
+        //                 selectedMetaObj = hoveredRegion.cultures.ToArray()[0].Key;
+        //             } else {
+        //                 selectedMetaObj = null;
+        //             }
+        //             break;
+        //     }
+        // }
+        if (selectedMetaObj != smo){
+            UpdateAllRegions();
+        }
+    }
+    
+    public override void _UnhandledInput(InputEvent evnt)
+    {
+
+        if (evnt.IsAction("Select") && hoveredRegion != null)
+        {
+            switch (mapMode)
+            {
                 case MapModes.POLITIY:
-                    if (hoveredRegion.habitable){
+                    if (hoveredRegion.habitable && hoveredRegion.pops.Count > 0)
+                    {
                         selectedMetaObj = hoveredRegion;
-                        if (hoveredState != null){
+                        if (hoveredState != null)
+                        {
                             selectedMetaObj = hoveredState;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         selectedMetaObj = null;
                     }
                     break;
                 case MapModes.CULTURE:
-                    if (hoveredRegion.cultures.Keys.Count > 0){
+                    if (hoveredRegion.cultures.Keys.Count > 0)
+                    {
                         selectedMetaObj = hoveredRegion.cultures.ToArray()[0].Key;
-                    } else {
+                    }
+                    else
+                    {
                         selectedMetaObj = null;
                     }
                     break;
             }
         }
-        if (selectedMetaObj != smo){
-            UpdateAllRegions();
-        }
     }
 
-    public void SetMapMode(MapModes mode){
+    public void SetMapMode(MapModes mode)
+    {
         mapMode = mode;
+        mapModeUI.Selected = (int)mode;
         UpdateAllRegions();
     }
 
@@ -160,6 +242,8 @@ public partial class MapManager : Node2D
                     color = new Color(0, 0, 0, 1);
                 }
             break;
+            case MapModes.TECH:
+                break;
             case MapModes.POPS:
                 if (region.habitable && region.pops.Count > 0){
                     color = new Color(0, 0,(float)region.pops.Count/10, 1);
@@ -195,7 +279,8 @@ public partial class MapManager : Node2D
 
 public enum MapModes {
     POLITIY,
-    POPULATION,
     CULTURE,
+    POPULATION,
+    TECH,
     POPS
 }

@@ -1,10 +1,9 @@
-[gd_scene load_steps=22 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=24 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="2_nnt18"]
-[ext_resource type="Texture2D" uid="uid://cijdk3pvlrko" path="res://Sprites/Borders.png" id="2_rku1e"]
 [ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_rfjv2"]
 [ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://main.tres" id="4_1phco"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="4_exi56"]
@@ -16,21 +15,38 @@
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
 [ext_resource type="JSON" path="res://Data/biomes.json" id="10_iivbl"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
+[ext_resource type="Texture2D" uid="uid://08k8n8y0qyiv" path="res://Sprites/Reliefs.png" id="11_iivbl"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/ObjectInfo.cs" id="15_ewbju"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d1ilt"]
-texture = ExtResource("2_rku1e")
-texture_region_size = Vector2i(8, 8)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7nbq1"]
+size = Vector2(1280, 639)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iivbl"]
+texture = ExtResource("11_iivbl")
 0:0/0 = 0
 1:0/0 = 0
 1:1/0 = 0
 0:1/0 = 0
+0:2/0 = 0
+0:3/0 = 0
+1:3/0 = 0
+1:2/0 = 0
+2:3/0 = 0
+2:2/0 = 0
+2:1/0 = 0
+3:0/0 = 0
+2:0/0 = 0
+3:1/0 = 0
+3:2/0 = 0
+4:1/0 = 0
+4:0/0 = 0
 
-[sub_resource type="TileSet" id="TileSet_6iyac"]
-tile_size = Vector2i(8, 8)
-sources/0 = SubResource("TileSetAtlasSource_d1ilt")
+[sub_resource type="TileSet" id="TileSet_7nbq1"]
+sources/0 = SubResource("TileSetAtlasSource_iivbl")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_iivbl"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_rku1e")
@@ -59,15 +75,17 @@ script = ExtResource("7_ewbju")
 monthsPerTick = 1
 gameSpeed = 3
 
-[node name="Map Manager" type="Node2D" parent="."]
+[node name="Map Manager" type="Area2D" parent="."]
+z_index = 2
 script = ExtResource("6_85qyi")
 
 [node name="RegionOverlay" type="Sprite2D" parent="Map Manager"]
 scale = Vector2(16, 16)
 centered = false
 
-[node name="TileMapLayer" type="TileMapLayer" parent="Map Manager"]
-tile_set = SubResource("TileSet_6iyac")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Map Manager"]
+position = Vector2(640, 319.5)
+shape = SubResource("RectangleShape2D_7nbq1")
 
 [node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("world", "timeManager")]
 script = ExtResource("1_o5yvi")
@@ -79,7 +97,7 @@ z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
 biomesJson = ExtResource("10_iivbl")
-worldSizeMult = 2.0
+worldSizeMult = 1.0
 seed = 48590
 mapScale = 1.0
 
@@ -89,7 +107,11 @@ tile_set = ExtResource("4_1phco")
 script = ExtResource("5_nb51f")
 lodMap = NodePath("../LOD Map")
 regionSprite = NodePath("../../Map Manager/RegionOverlay")
-baseRegionOpacity = 1.0
+baseRegionOpacity = 0.9
+
+[node name="Reliefs" type="TileMapLayer" parent="World"]
+z_index = 10
+tile_set = SubResource("TileSet_7nbq1")
 
 [node name="LOD Map" type="Sprite2D" parent="World"]
 scale = Vector2(16, 16)
@@ -97,24 +119,12 @@ centered = false
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Loading Screen" parent="UI" instance=ExtResource("2_nb51f")]
-visible = false
-z_index = 100
-
-[node name="Game UI" type="Control" parent="UI"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Population Label" type="Label" parent="UI/Game UI"]
-layout_mode = 0
+[node name="Population Label" type="Label" parent="UI"]
 offset_left = 3.0
 offset_top = 3.0
 offset_right = 169.0
 offset_bottom = 26.0
+mouse_filter = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
 theme_override_fonts/font = ExtResource("8_7t8sx")
@@ -122,16 +132,16 @@ theme_override_font_sizes/font_size = 20
 text = "World Population:"
 script = ExtResource("11_nnt18")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Game UI"]
-layout_mode = 1
+[node name="VBoxContainer" type="VBoxContainer" parent="UI"]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -107.0
 offset_bottom = 67.0
 grow_horizontal = 0
+mouse_filter = 0
 
-[node name="Date Label" type="Label" parent="UI/Game UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
+[node name="Date Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -140,9 +150,9 @@ theme_override_font_sizes/font_size = 20
 text = "01/01/0000"
 horizontal_alignment = 2
 script = ExtResource("10_7nbq1")
-timeManager = NodePath("../../../../Time Manager")
+timeManager = NodePath("../../../Time Manager")
 
-[node name="TPS Label" type="Label" parent="UI/Game UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
+[node name="TPS Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -152,51 +162,148 @@ text = "TPS: 30
 Fps: 300"
 horizontal_alignment = 2
 script = ExtResource("11_exi56")
-timeManager = NodePath("../../../../Time Manager")
+timeManager = NodePath("../../../Time Manager")
 
-[node name="InfoHolder" type="Control" parent="UI/Game UI"]
+[node name="InfoHolder" type="Control" parent="UI"]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 1173.0
-offset_top = 71.0
-offset_right = 1280.0
-offset_bottom = 71.0
+offset_top = 494.0
+offset_right = 264.0
+offset_bottom = 640.0
 script = ExtResource("15_ewbju")
 
-[node name="ObjectInfo" type="Panel" parent="UI/Game UI/InfoHolder"]
-layout_mode = 0
-offset_left = -1173.0
-offset_top = 475.0
-offset_right = -998.0
-offset_bottom = 649.0
+[node name="ObjectInfo" type="Panel" parent="UI/InfoHolder"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -132.0
+offset_top = -72.5
+offset_right = 132.0
+offset_bottom = 72.5
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Game UI/InfoHolder/ObjectInfo"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/ObjectInfo"]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 5.0
+offset_top = 4.0
+offset_right = 139.0
+offset_bottom = 107.0
+theme_override_constants/separation = 6
 
-[node name="Name" type="Label" parent="UI/Game UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Name" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "Nation Name"
 
-[node name="Type" type="Label" parent="UI/Game UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Type" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 14
 text = "Nation"
 
-[node name="Population" type="Label" parent="UI/Game UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Population" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "Population: 1,000"
 
-[node name="Manpower" type="Label" parent="UI/Game UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Manpower" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "UniqueStat: 1000"
 
+[node name="Action Panel" type="Panel" parent="UI"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -81.0
+offset_right = 1280.0
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/Action Panel"]
+layout_mode = 0
+offset_left = 10.0
+offset_right = 1274.0
+offset_bottom = 82.0
+theme_override_constants/separation = 20
+
+[node name="TimeSpeedHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "Game Speed:"
+
+[node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+selected = 5
+item_count = 6
+popup/item_0/text = "1 Month Per Second"
+popup/item_0/id = 0
+popup/item_1/text = "6 Months Per Second"
+popup/item_1/id = 1
+popup/item_2/text = "1 Year Per Second"
+popup/item_2/id = 2
+popup/item_3/text = "5 Years Per Second"
+popup/item_3/id = 3
+popup/item_4/text = "10 Years Per Second"
+popup/item_4/id = 4
+popup/item_5/text = "Unlimited"
+popup/item_5/id = 5
+
+[node name="MapModeHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="UI/Action Panel/HBoxContainer/MapModeHolder"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "Map Mode:"
+
+[node name="MapMode" type="OptionButton" parent="UI/Action Panel/HBoxContainer/MapModeHolder"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+selected = 0
+item_count = 4
+popup/item_0/text = "Polities"
+popup/item_0/id = 0
+popup/item_1/text = "Cultures"
+popup/item_1/id = 1
+popup/item_2/text = "Population"
+popup/item_2/id = 2
+popup/item_3/text = "Tech"
+popup/item_3/id = 3
+
+[node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Action Panel/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+button_pressed = true
+text = "Show Regions"
+
+[node name="VSeparator" type="VSeparator" parent="UI/Action Panel/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 663
+theme_override_styles/separator = SubResource("StyleBoxEmpty_iivbl")
+
+[node name="MainMenuButton" type="Button" parent="UI/Action Panel/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "Main
+Menu"
+flat = true
+
 [node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("map")]
+visible = false
 offset_left = 109.0
 offset_top = 66.0
 offset_right = 200.0
@@ -208,7 +315,13 @@ theme_override_font_sizes/font_size = 13
 text = "Region Data:
 Population: 100"
 script = ExtResource("9_iivbl")
-map = NodePath("../../Map Manager")
+map = NodePath("")
+
+[node name="Loading" type="CanvasLayer" parent="."]
+
+[node name="Loading Screen" parent="Loading" instance=ExtResource("2_nb51f")]
+visible = false
+z_index = 100
 
 [node name="PlayerCamera" parent="." instance=ExtResource("13_rfjv2")]
 position = Vector2(640, 360)
@@ -217,5 +330,6 @@ limit_top = 0
 limit_right = 1280
 limit_bottom = 720
 position_smoothing_enabled = true
+minZoom = 18.0
 
 [connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]

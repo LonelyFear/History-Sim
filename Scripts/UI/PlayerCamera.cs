@@ -7,8 +7,8 @@ public partial class PlayerCamera : Camera2D
     [Export] bool controlEnabled = false;
     [Export] float zoomSpeed = 10;
     Vector2 zoomTarget;
-    float maxZoom = 1;
-    float minZoom = 6;
+    [Export] float maxZoom = 1;
+    [Export] float minZoom = 6;
 
     bool dragging;
     Vector2 draggingStartMousePos;

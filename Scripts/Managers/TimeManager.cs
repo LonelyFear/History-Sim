@@ -28,33 +28,22 @@ public partial class TimeManager : Node
     public bool debuggerMode = false;
     double waitTime;
     double currentTime;
-    [Export] public GameSpeed gameSpeed = GameSpeed.YEAR_PER_SECOND;
+    [Export] public GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
+    OptionButton gameSpeedUI;
     public override void _Ready()
     {
         world = GetNode<WorldGeneration>("/root/Game/World");
         simManager = GetNode<SimManager>("/root/Game/Simulation");
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
+        gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");
         // Connection
         world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
     }
 
     public override void _Process(double delta)
     {
-        switch (gameSpeed){
-            case GameSpeed.MONTH_PER_SECOND:
-                waitTime = 1;
-                break;
-            case GameSpeed.YEAR_PER_SECOND:
-                waitTime = 1d/12d;
-                break;
-            case GameSpeed.DECADE_PER_SECOND:
-                waitTime = 1d/120d;
-                break;
-            case GameSpeed.UNLIMITED:
-                waitTime = 0;
-                break;
-
-        }
+        gameSpeed = (GameSpeed)gameSpeedUI.Selected;
+        GetWaitTime();
         currentTime += delta;
         if (currentTime >= waitTime){
             currentTime = 0;
@@ -76,7 +65,32 @@ public partial class TimeManager : Node
 
     }
 
-    public void OnWorldgenFinished(){
+    void GetWaitTime()
+    {
+        switch (gameSpeed){
+            case GameSpeed.ONE_MONTH_PER_SECOND:
+                waitTime = 1;
+                break;
+            case GameSpeed.SIX_MONTHS_PER_SECOND:
+                waitTime = 1d / 6d;
+                break;
+            case GameSpeed.ONE_YEAR_PER_SECOND:
+                waitTime = 1d/12d;
+                break;
+            case GameSpeed.FIVE_YEARS_PER_SECOND:
+                waitTime = 1d/60d;
+                break;
+            case GameSpeed.ONE_DECADE_PER_SECOND:
+                waitTime = 1d/120d;
+                break;
+            case GameSpeed.UNLIMITED:
+                waitTime = 0;
+                break;
+        }        
+    }
+
+    public void OnWorldgenFinished()
+    {
         TickGame();
         worldGenFinished = true;
     }
@@ -101,9 +115,11 @@ public partial class TimeManager : Node
     }
 
     public enum GameSpeed{
-        MONTH_PER_SECOND,
-        YEAR_PER_SECOND,
-        DECADE_PER_SECOND,
+        ONE_MONTH_PER_SECOND,
+        SIX_MONTHS_PER_SECOND,
+        ONE_YEAR_PER_SECOND,
+        FIVE_YEARS_PER_SECOND,
+        ONE_DECADE_PER_SECOND,
         UNLIMITED
     }
     

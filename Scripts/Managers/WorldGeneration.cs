@@ -12,6 +12,7 @@ public partial class WorldGeneration : Node2D
     [Export] public Sprite2D debugDisplay;
     [Export] Json biomesJson;
     TileMapLayer tileMap;
+    TileMapLayer reliefMap;
     public string[,] tileBiomes;
     public Biome[,] biomes;
     float[,] heightmap;
@@ -70,6 +71,7 @@ public partial class WorldGeneration : Node2D
     Tectonics tectonics = null;
     public void Init(){
         tileMap = GetNode<TileMapLayer>("Terrain Map");
+        reliefMap = GetNode<TileMapLayer>("Reliefs");
         worldSize = (Vector2I)((Vector2)worldSize * worldSizeMult);
         mapScale *= worldSizeMult;
 
@@ -194,6 +196,30 @@ public partial class WorldGeneration : Node2D
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
                         tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
+                        if (biome.fertility >= 0.1f)
+                        {
+                            if (rng.NextSingle() <= biome.fertility * 0.2f)
+                            {
+                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3,2));
+                            }
+                            if (rng.NextSingle() <= biome.fertility * 0.2f && biome.fertility > 0.75f)
+                            {
+                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1,1));
+                            }
+                            if (rng.NextSingle() <= biome.fertility * 0.25f)
+                            {
+                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
+                            }
+                        }
+
+                        if (heightmap[x, y] >= 0.75f)
+                        {
+                            reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 1));
+                        }
+                        if (heightmap[x, y] >= 0.8f)
+                        {
+                            reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
+                        }
                         biomes[x,y] = biome;
                     }
                 }
