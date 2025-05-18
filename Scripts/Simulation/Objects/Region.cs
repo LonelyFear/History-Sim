@@ -41,13 +41,13 @@ public class Region : PopObject
         {
             for (int y = 0; y < simManager.tilesPerRegion; y++)
             {
-                Biome biome = biomes[x, y];
-                if (biome.terrainType == Biome.TerrainType.LAND)
+                Tile tile = tiles[x, y];
+                if (tile.terrainType == Biome.TerrainType.LAND)
                 {
                     landCount++;
-                    f += biome.fertility;
+                    f += tile.fertility;
                 }
-                else if (biome.terrainType == Biome.TerrainType.WATER)
+                else if (tile.terrainType == Biome.TerrainType.WATER)
                 {
                     coastal = true;
                 }

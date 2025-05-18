@@ -27,8 +27,8 @@ public partial class TimeManager : Node
     Task tickTask;
     Task monthTask;
     Task yearTask;
-    bool doYear = false;
-    bool doMonth = false;
+    bool doYear = true;
+    bool doMonth = true;
     [Export]
     public bool debuggerMode = false;
     double waitTime;
@@ -60,27 +60,26 @@ public partial class TimeManager : Node
                 if (doMonth)
                 {
                     doMonth = false;
-                    monthTask = Task.Run(simManager.SimTick);
+                    monthTask = Task.Run(simManager.SimMonth);
                 }
                 if (monthDone)
                 {
                     if (doYear)
                     {
                         doYear = false;
+                        yearTask = Task.Run(simManager.SimYear);
                     }
                     if (yearDone)
                     {
                         tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000f;
                         TickGame();
-
                     }
+                    
                 }                  
             }
           
         }
-        if (mapManager.mapUpdate){
-            mapManager.UpdateMap();
-        }               
+        mapManager.UpdateMap();            
 
     }
 

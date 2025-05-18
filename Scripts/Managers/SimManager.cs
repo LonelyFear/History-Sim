@@ -13,6 +13,8 @@ public partial class SimManager : Node
     public WorldGeneration world { private set; get; }
     [Export]
     public int tilesPerRegion = 4;
+    [Export]
+    public TileMapLayer reliefs;
     [Export(PropertyHint.Range, "4,16,4")]
     public TimeManager timeManager { get; set; }
 
@@ -176,9 +178,35 @@ public partial class SimManager : Node
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
                 newTile.biome = world.biomes[x, y];
+                newTile.fertility = newTile.biome.fertility;
+                newTile.terrainType = newTile.biome.terrainType;
             }
         }
 
+        for (int x = 0; x < terrainSize.X; x++)
+        {
+            for (int y = 0; y < terrainSize.Y; y++)
+            {
+                Tile tile = tiles[x, y];
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
+                        {
+                            continue;
+                        }
+                        int nx = Mathf.PosMod(x + dx, terrainSize.X);
+                        int ny = Mathf.PosMod(y + dy, terrainSize.Y);
+                        Tile borderTile = tiles[nx, ny];
+                        if (borderTile.biome.id == "river")
+                        {
+                            tile.fertility *= 1.5f;
+                        }
+                    }
+                }
+            }
+        }
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)

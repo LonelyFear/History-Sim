@@ -73,7 +73,6 @@ horizontal_alignment = 1
 
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
-debuggerMode = true
 
 [node name="Map Manager" type="Area2D" parent="."]
 z_index = 2
@@ -87,9 +86,10 @@ centered = false
 position = Vector2(640, 319.5)
 shape = SubResource("RectangleShape2D_7nbq1")
 
-[node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("world", "timeManager")]
+[node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("world", "reliefs", "timeManager")]
 script = ExtResource("1_o5yvi")
 world = NodePath("../World")
+reliefs = NodePath("../World/Reliefs")
 timeManager = NodePath("../Time Manager")
 
 [node name="World" type="Node2D" parent="."]

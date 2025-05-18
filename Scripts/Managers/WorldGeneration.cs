@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 using FileAccess = Godot.FileAccess;
 
 public partial class WorldGeneration : Node2D
@@ -159,7 +161,7 @@ public partial class WorldGeneration : Node2D
             for (int y = 0; y < worldSize.Y; y++)
             {
                 bool nearSource = false;
-                if (rng.NextSingle() < 0.4f && heightmap[x, y] > 0.7f)
+                if (rng.NextSingle() < 0.5f && heightmap[x, y] > 0.7f)
                 {
                     foreach (Vector2I source in sources)
                     {
@@ -179,73 +181,91 @@ public partial class WorldGeneration : Node2D
             }
         }
         GD.Print("Rivers: " + sources.Count);
-        string[] riverEndBiomes = ["shallow ocean", "river", "ocean"];
-        ulong maxAttempts = 100000;
         foreach (Vector2I source in sources)
         {
-            uint riverLength = 1;
-            Vector2I end = new Vector2I(0, 0);
+            List<Vector2I> currentRiver = new List<Vector2I>();
             PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
             frontier.Enqueue(source, 0);
-            Dictionary<Vector2I, Vector2I> from = new Dictionary<Vector2I, Vector2I>();
-            from[source] = new Vector2I(0, 0);
-            Dictionary<Vector2I, float> cost = new Dictionary<Vector2I, float>();
-            cost[source] = 0;
+            Dictionary<Vector2I, Vector2I> flow = new Dictionary<Vector2I, Vector2I>();
+            flow[source] = new Vector2I(0, 0);
+            Dictionary<Vector2I, float> flowCost = new Dictionary<Vector2I, float>();
+            flowCost[source] = 0;
 
-            while (riverLength < maxAttempts && frontier.Count > 0)
+            uint attempts = 0;
+            Vector2I riverEnd = new Vector2I(-1, -1);
+
+            while (attempts < 10000 && frontier.Count > 0)
             {
-                riverLength++;
+                attempts++;
                 Vector2I current = frontier.Dequeue();
-
-                if (riverEndBiomes.Contains(tileBiomes[current.X, current.Y]))
+                riverEnd = current;
+                if (GoodRiverEnd(current))
                 {
-                    end = current;
+                    riverEnd = current;
                     break;
                 }
                 for (int dx = -1; dx < 2; dx++)
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
+                        if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
                         {
                             continue;
                         }
-                        Vector2I next = current + new Vector2I(dx, dy);
-                        float heightCost = 1f - (heightmap[next.X, next.Y] + (rng.NextSingle() * 0.05f));
-                        if (heightmap[next.X, next.Y] > 0.9f || heightmap[next.X, next.Y] < seaLevel - 0.05f)
+                        Vector2I next = new Vector2I(Mathf.PosMod(current.X + dx, worldSize.X), Mathf.PosMod(current.Y + dy, worldSize.Y));
+                        float newCost = flowCost[current] + (1f - heightmap[next.X, next.Y]);
+                        if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && heightmap[next.X, next.Y] <= 0.95)
                         {
-                            heightCost = -100;
-                        }
-                        float newCost = cost[current] + heightCost;
-                        if (!cost.ContainsKey(next) || newCost < cost[next])
-                        {
-                            cost[next] = newCost;
                             frontier.Enqueue(next, newCost);
-                            from[next] = current;
+                            flowCost[next] = newCost;
+                            flow[next] = current;
                         }
                     }
                 }
             }
-
-            if (riverLength < maxAttempts)
+            if (riverEnd != new Vector2I(-1, -1))
             {
-                Vector2I current = end;
-                List<Vector2I> currentRiver = new List<Vector2I>();
-                while (current != source)
+                Vector2I pos = riverEnd;
+                while (pos != source)
                 {
-                    tileBiomes[current.X, current.Y] = "river";
-                    currentRiver.Add(current);
-                    current = from[current];
-
+                    currentRiver.Add(pos);
+                    pos = flow[pos];
                 }
-                currentRiver.Add(source);
-                riverPositions.AddRange(currentRiver);
             }
+            if (currentRiver.Count > 1)
+            {
+                foreach (Vector2I pos in currentRiver)
+                {
+                    tileBiomes[pos.X, pos.Y] = "river";
+                }                
+            }
+
         }
-        foreach (Vector2I pos in riverPositions)
+    }
+
+    bool GoodRiverEnd(Vector2I point) {
+        string[] riverEndBiomes = ["shallow ocean", "river", "ocean"];
+        bool inLake = true;
+        for (int dx = -1; dx < 2; dx++)
         {
-            tileBiomes[pos.X, pos.Y] = "river";
+            for (int dy = -1; dy < 2; dy++)
+            {
+                if (dx != 0 && dy != 0)
+                {
+                    continue;
+                }
+                Vector2I nPoint = new Vector2I(Mathf.PosMod(point.X + dx, worldSize.X), Mathf.PosMod(point.Y + dy, worldSize.Y));
+                if (riverEndBiomes.Contains(tileBiomes[nPoint.X, nPoint.Y]))
+                {
+                    return true;
+                }
+                if (heightmap[nPoint.X, nPoint.Y] <= heightmap[point.X, point.Y] + 0.05)
+                {
+                    inLake = false;
+                }
+            }           
         }
+        return inLake;
     }
     public void GenerateWorld()
     {
@@ -283,9 +303,9 @@ public partial class WorldGeneration : Node2D
         worldGenStage++;
         GD.Print("River Generation Started");
         startTime = Time.GetTicksMsec();
-        //GenerateRivers();
+        GenerateRivers();
         GD.Print("River Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
-       
+
     }
 
     public void ColorMap(){
