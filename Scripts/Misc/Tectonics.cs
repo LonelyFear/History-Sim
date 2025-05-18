@@ -244,17 +244,31 @@ public class Tectonics
             
         }
         crust.pressure = Mathf.InverseLerp(minPressure, maxPressure, crust.pressure) * 2 - 1;
-        if (crust.pressure > 0){
+        if (crust.pressure > 0)
+        {
             // Convergence
-            if (crust.crustType == CrustTypes.OCEANIC){
+            if (crust.crustType == CrustTypes.OCEANIC)
+            {
                 // Island Chains
-                crust.elevation += NextFloatInRange(0.6f, 0.65f) * Mathf.Abs(crust.pressure);
-            } else {
-                // Mountains
-                crust.elevation += NextFloatInRange(0.34f, 0.35f) * Mathf.Abs(crust.pressure);
+                crust.elevation += NextFloatInRange(0.8f, 0.84f) * Mathf.Abs(crust.pressure);
             }
-        } else if (crust.pressure < 0){
-            crust.elevation -= NextFloatInRange(0.11f, 0.13f) * Mathf.Abs(crust.pressure);
+            else
+            {
+                // Mountains
+                crust.elevation += NextFloatInRange(0.32f, 0.33f) * Mathf.Abs(crust.pressure);
+            }
+        }
+        else if (crust.pressure < 0)
+        {
+            if (crust.crustType == CrustTypes.OCEANIC)
+            {
+                // Island Chains
+                crust.elevation += NextFloatInRange(0.8f, 0.84f) * Mathf.Abs(crust.pressure);
+            }
+            else
+            {
+                crust.elevation -= NextFloatInRange(0.11f, 0.13f) * Mathf.Abs(crust.pressure);
+            }
         }
     }
 
@@ -330,47 +344,53 @@ public class Tectonics
 
         int freeTiles = worldSize.X * worldSize.Y;
         int attempts = freeTiles * 8;
-        List<Vector2I> fullPositions = new List<Vector2I>();
-        for (int i = 0; i < amount; i++){
+        Queue<Vector2I> frontier = new Queue<Vector2I>();
+        for (int i = 0; i < amount; i++)
+        {
             freeTiles -= 1;
             Vector2I pos = points[i];
             Crust crust = GetCrust(pos.X, pos.Y);
             crust.plate = plates[i];
-            fullPositions.Add(pos);
+            frontier.Enqueue(pos);
         }
-        
-        while (freeTiles > 0 && attempts > 0){
-            world.heightMapProgress += 0.5f;
-            attempts -= 1;
-            Parallel.ForEach(fullPositions.ToArray(), pos =>{
 
-            });
-            foreach (Vector2I pos in fullPositions.ToArray()){
-                bool border = false;
-                Plate plate = GetCrust(pos.X, pos.Y).plate;
-                for (int dx = -1; dx < 2; dx++){
-                    for (int dy = -1; dy < 2; dy++){
-                        if (dx != 0 && dy != 0 || dx == 0 && dy == 0){
-                            continue;
+        while (freeTiles > 0)
+        {
+            world.heightMapProgress += 0.05f;
+
+            Vector2I pos = frontier.Dequeue();
+            Plate plate = GetCrust(pos.X, pos.Y).plate;
+            bool isFrontier = false;
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
+                    {
+                        continue;
+                    }
+                    Vector2I nPos = GetNewPos(pos, new Vector2I(dx, dy));
+                    Crust crust = GetCrust(nPos.X, nPos.Y);
+
+                    if (crust.plate == null)
+                    {
+                        if (rng.NextDouble() <= 0.25)
+                        {
+                            plate.AddCrust(crust);
+                            frontier.Enqueue(nPos);
+                            freeTiles -= 1;
                         }
-                        Vector2I nPos = GetNewPos(pos, new Vector2I(dx, dy));
-                        Crust crust = GetCrust(nPos.X, nPos.Y);
-
-                        if (crust.plate == null){
-                            border = true;
-                            if (rng.NextDouble() <= 0.5){
-                                plate.AddCrust(crust);
-                                fullPositions.Add(nPos);
-                                freeTiles -= 1;                                
-                            }
-
+                        else
+                        {
+                            isFrontier = true;
                         }
-                    }        
+                    }
                 }
-                if (!border){
-                    fullPositions.Remove(pos);
-                }                
             }
+            if (isFrontier)
+            {
+                frontier.Enqueue(pos);
+            }        
         }
     }
 

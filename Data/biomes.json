@@ -39,7 +39,7 @@
 		{
 			"id":"mixed forest",
 			"mergedIds":["cool temperate moist forest", "cool temperate wet forest", "cool temperate rain forest"],
-			"fertility":1,
+			"fertility":0.9,
 			"color":"739114",
 			"textureX": 1,
 			"textureY": 0,
@@ -75,7 +75,7 @@
 		{
 			"id":"chaparral",
 			"mergedIds":["warm temperate thorn scrub", "warm temperate dry forest"],
-			"fertility":0.85,
+			"fertility":0.7,
 			"color":"828205",
 			"textureX": 2,
 			"textureY": 0,
@@ -84,7 +84,7 @@
 		{
 			"id":"hot desert",
 			"mergedIds":["warm temperate desert", "warm temperate desert scrub", "subtropical desert", "subtropical desert scrub", "tropical desert", "tropical desert scrub"],
-			"fertility":0.175,
+			"fertility":0.15,
 			"color":"F0F000",
 			"textureX": 2,
 			"textureY": 1,
@@ -141,7 +141,7 @@
 			"fertility":1,
 			"color":"003CF0",
 			"textureX": 3,
-			"textureY": 3,
+			"textureY": 2,
 			"terrainType":1
 		},
 		{

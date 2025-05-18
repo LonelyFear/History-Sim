@@ -147,38 +147,145 @@ public partial class WorldGeneration : Node2D
             }
         }
         return map;
-    }  
-    public void GenerateWorld(){      
+    }
+
+    public void GenerateRivers()
+    {
+        List<Vector2I> sources = new List<Vector2I>();
+        List<Vector2I> riverPositions = new List<Vector2I>();
+
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                bool nearSource = false;
+                if (rng.NextSingle() < 0.4f && heightmap[x, y] > 0.7f)
+                {
+                    foreach (Vector2I source in sources)
+                    {
+                        if (!nearSource)
+                        {
+                            if (new Vector2I(x, y).DistanceTo(source) <= 5f)
+                            {
+                                nearSource = true;
+                            }
+                        }
+                    }
+                    if (!nearSource)
+                    {
+                        sources.Add(new Vector2I(x,y));
+                    }
+                }
+            }
+        }
+        GD.Print("Rivers: " + sources.Count);
+        string[] riverEndBiomes = ["shallow ocean", "river", "ocean"];
+        ulong maxAttempts = 100000;
+        foreach (Vector2I source in sources)
+        {
+            uint riverLength = 1;
+            Vector2I end = new Vector2I(0, 0);
+            PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
+            frontier.Enqueue(source, 0);
+            Dictionary<Vector2I, Vector2I> from = new Dictionary<Vector2I, Vector2I>();
+            from[source] = new Vector2I(0, 0);
+            Dictionary<Vector2I, float> cost = new Dictionary<Vector2I, float>();
+            cost[source] = 0;
+
+            while (riverLength < maxAttempts && frontier.Count > 0)
+            {
+                riverLength++;
+                Vector2I current = frontier.Dequeue();
+
+                if (riverEndBiomes.Contains(tileBiomes[current.X, current.Y]))
+                {
+                    end = current;
+                    break;
+                }
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
+                        {
+                            continue;
+                        }
+                        Vector2I next = current + new Vector2I(dx, dy);
+                        float heightCost = 1f - (heightmap[next.X, next.Y] + (rng.NextSingle() * 0.05f));
+                        if (heightmap[next.X, next.Y] > 0.9f || heightmap[next.X, next.Y] < seaLevel - 0.05f)
+                        {
+                            heightCost = -100;
+                        }
+                        float newCost = cost[current] + heightCost;
+                        if (!cost.ContainsKey(next) || newCost < cost[next])
+                        {
+                            cost[next] = newCost;
+                            frontier.Enqueue(next, newCost);
+                            from[next] = current;
+                        }
+                    }
+                }
+            }
+
+            if (riverLength < maxAttempts)
+            {
+                Vector2I current = end;
+                List<Vector2I> currentRiver = new List<Vector2I>();
+                while (current != source)
+                {
+                    tileBiomes[current.X, current.Y] = "river";
+                    currentRiver.Add(current);
+                    current = from[current];
+
+                }
+                currentRiver.Add(source);
+                riverPositions.AddRange(currentRiver);
+            }
+        }
+        foreach (Vector2I pos in riverPositions)
+        {
+            tileBiomes[pos.X, pos.Y] = "river";
+        }
+    }
+    public void GenerateWorld()
+    {
         worldGenStage++;
         GD.Print("Heightmap Generation Started");
         ulong startTime = Time.GetTicksMsec();
-        heightmap = new Tectonics().RunSimulation(this, 40);
+        heightmap = new Tectonics().RunSimulation(this, 20);
         GD.Print("Heightmap Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         worldGenStage++;
         GD.Print("Temperature Generation Started");
         startTime = Time.GetTicksMsec();
-        tempmap = GenerateTempMap(mapScale/4);
+        tempmap = GenerateTempMap(mapScale / 4);
         GD.Print("Temperature Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         worldGenStage++;
         GD.Print("Humidity Generation Started");
         startTime = Time.GetTicksMsec();
-        humidmap = GenerateHumidMap(mapScale/2);
+        humidmap = GenerateHumidMap(mapScale / 2);
         GD.Print("Humidity Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         worldGenStage++;
         GD.Print("Biome Generation Started");
         startTime = Time.GetTicksMsec();
         // Biome generation
-        tileBiomes = new string[worldSize.X,worldSize.Y];
-        for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++){
-                tileBiomes[x,y] = GetEnvironment(x,y);
+        tileBiomes = new string[worldSize.X, worldSize.Y];
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                tileBiomes[x, y] = GetEnvironment(x, y);
             }
         }
         GD.Print("Biome Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
-        //EmitSignal();
+        worldGenStage++;
+        GD.Print("River Generation Started");
+        startTime = Time.GetTicksMsec();
+        //GenerateRivers();
+        GD.Print("River Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
+       
     }
 
     public void ColorMap(){
@@ -196,30 +303,34 @@ public partial class WorldGeneration : Node2D
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
                         tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
-                        if (biome.fertility >= 0.1f)
+                        if (tileBiomes[x, y] != "river")
                         {
-                            if (rng.NextSingle() <= biome.fertility * 0.2f)
+                            if (biome.fertility >= 0.1f)
                             {
-                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3,2));
+                                if (rng.NextSingle() <= biome.fertility * 0.2f)
+                                {
+                                    reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 2));
+                                }
+                                if (rng.NextSingle() <= biome.fertility * 0.2f && biome.fertility > 0.75f)
+                                {
+                                    reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1, 1));
+                                }
+                                if (rng.NextSingle() <= biome.fertility * 0.25f)
+                                {
+                                    reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
+                                }
                             }
-                            if (rng.NextSingle() <= biome.fertility * 0.2f && biome.fertility > 0.75f)
+
+                            if (heightmap[x, y] >= 0.75f)
                             {
-                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1,1));
+                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 1));
                             }
-                            if (rng.NextSingle() <= biome.fertility * 0.25f)
+                            if (heightmap[x, y] >= 0.8f)
                             {
-                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
-                            }
+                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
+                            }                            
                         }
 
-                        if (heightmap[x, y] >= 0.75f)
-                        {
-                            reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 1));
-                        }
-                        if (heightmap[x, y] >= 0.8f)
-                        {
-                            reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
-                        }
                         biomes[x,y] = biome;
                     }
                 }

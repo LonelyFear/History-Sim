@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=25 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/ObjectInfo.cs" id="15_ewbju"]
+[ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/ActionPanel.cs" id="17_7nbq1"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7nbq1"]
 size = Vector2(1280, 639)
@@ -96,7 +97,7 @@ z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
 biomesJson = ExtResource("10_iivbl")
-worldSizeMult = 1.0
+worldSizeMult = 3.0
 seed = 48590
 mapScale = 1.0
 
@@ -225,6 +226,7 @@ anchor_bottom = 1.0
 offset_top = -81.0
 offset_right = 1280.0
 grow_vertical = 0
+script = ExtResource("17_7nbq1")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI/Action Panel"]
 layout_mode = 0

@@ -49,6 +49,9 @@ public partial class LoadingScreen : Control
             case 4:
                 splash.Text = "Seeding Forests...";
             break;
+            case 5:
+                splash.Text = "Carving Rivers...";
+                break;
             default:
                 splash.Text = "Finishing Up...";
             break;
