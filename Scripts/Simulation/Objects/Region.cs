@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 public class Region : PopObject
 {
-	public Tile[,] tiles;
+    public Tile[,] tiles;
     public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
@@ -18,6 +18,7 @@ public class Region : PopObject
     public int landCount;
     public SimManager simManager;
     public State owner = null;
+    public List<Army> armies;
 
     // Demographics
     public long maxPopulation = 0;
@@ -29,43 +30,56 @@ public class Region : PopObject
     public int currentMonth;
     public bool border;
     public bool frontier;
-    public bool needsJobs {private set; get;}
-    public bool needsWorkers {private set; get;}
-    public void CalcAvgFertility(){
+    public bool needsJobs { private set; get; }
+    public bool needsWorkers { private set; get; }
+    public void CalcAvgFertility()
+    {
         name = "Region";
         landCount = 0;
         float f = 0;
-        for (int x = 0; x < simManager.tilesPerRegion; x++){
-            for (int y = 0; y < simManager.tilesPerRegion; y++){
-                Biome biome = biomes[x,y];
-                if (biome.terrainType == Biome.TerrainType.LAND){
+        for (int x = 0; x < simManager.tilesPerRegion; x++)
+        {
+            for (int y = 0; y < simManager.tilesPerRegion; y++)
+            {
+                Biome biome = biomes[x, y];
+                if (biome.terrainType == Biome.TerrainType.LAND)
+                {
                     landCount++;
                     f += biome.fertility;
-                } else if (biome.terrainType == Biome.TerrainType.WATER){
+                }
+                else if (biome.terrainType == Biome.TerrainType.WATER)
+                {
                     coastal = true;
-                }               
+                }
             }
         }
         //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
-        avgFertility = (f/landCount);
+        avgFertility = (f / landCount);
     }
 
-    public void CheckHabitability(){
-        if (landCount > 0){
+    public void CheckHabitability()
+    {
+        if (landCount > 0)
+        {
             habitable = true;
         }
-        foreach (Profession profession in Enum.GetValues(typeof(Profession))){
+        foreach (Profession profession in Enum.GetValues(typeof(Profession)))
+        {
             professions.Add(profession, 0);
         }
     }
-    public void CalcMaxPopulation(){
-        for (int x = 0; x < simManager.tilesPerRegion; x++){
-            for (int y = 0; y < simManager.tilesPerRegion; y++){
+    public void CalcMaxPopulation()
+    {
+        for (int x = 0; x < simManager.tilesPerRegion; x++)
+        {
+            for (int y = 0; y < simManager.tilesPerRegion; y++)
+            {
                 Biome biome = biomes[x, y];
-                Tile tile = tiles[x,y];
+                Tile tile = tiles[x, y];
 
                 tile.maxPopulation = 0;
-                if (biome.terrainType == Biome.TerrainType.LAND){
+                if (biome.terrainType == Biome.TerrainType.LAND)
+                {
                     maxPopulation += (long)(Pop.ToNativePopulation(1000) * biome.fertility);
                     tile.maxPopulation = (long)(Pop.ToNativePopulation(1000) * biome.fertility);
                 }
@@ -73,8 +87,10 @@ public class Region : PopObject
         }
     }
     #region Nations
-    public void RandomStateFormation(){
-        if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001){
+    public void RandomStateFormation()
+    {
+        if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001)
+        {
             simManager.CreateState(this);
 
             owner.population = population;
@@ -83,34 +99,42 @@ public class Region : PopObject
             Pop rulingPop = simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, basePop.tech, basePop.culture, Profession.ARISTOCRAT);
             basePop.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
             AddPop(rulingPop, this);
-            
+
             owner.rulingPop = rulingPop;
             owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
             owner.UpdateDisplayName();
         }
     }
 
-    public void StateBordering(){
+    public void StateBordering()
+    {
         border = false;
         frontier = false;
-        foreach (Region region in borderingRegions){
-            if (region.owner == null){
+        foreach (Region region in borderingRegions)
+        {
+            if (region.owner == null)
+            {
                 frontier = true;
             }
-            if (region.owner != null && region.owner != owner){
+            if (region.owner != null && region.owner != owner)
+            {
                 border = true;
-                if (!owner.borderingStates.Contains(region.owner)){
-                    owner.borderingStates.Append(region.owner);                        
+                if (!owner.borderingStates.Contains(region.owner))
+                {
+                    owner.borderingStates.Append(region.owner);
                 }
-            }            
+            }
         }
     }
 
-    public void NeutralConquest(){
+    public void NeutralConquest()
+    {
         Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f){
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower()/2, (long)(region.workforce * 0.95f));
-            if (result.victor == Conflict.Side.AGRESSOR){
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
+        {
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower() / 2, (long)(region.workforce * 0.95f));
+            if (result.victor == Conflict.Side.AGRESSOR)
+            {
                 owner.AddRegion(region);
             }
 
@@ -118,79 +142,114 @@ public class Region : PopObject
             region.TakeLosses(result.defenderLosses);
         }
     }
-    
+
+    public void AddArmy(Army army)
+    {
+        if (!armies.Contains(army))
+        {
+            if (army.location != null)
+            {
+                army.location.RemoveArmy(army);
+            }
+            armies.Add(army);
+            army.location = this;
+        }
+    }
+    public void RemoveArmy(Army army)
+    {
+        if (armies.Contains(army))
+        {
+            army.location = null;
+            armies.Remove(army);
+        }
+    }
     #endregion
     #region Checks & Taxes
-    public void CheckPopulation(){
+    public void CheckPopulation()
+    {
         CountPopulation();
-        if (population < Pop.ToNativePopulation(1) && owner != null){
+        if (population < Pop.ToNativePopulation(1) && owner != null)
+        {
             owner.RemoveRegion(this);
         }
     }
 
-    public void PopWealth(Pop pop){
+    public void PopWealth(Pop pop)
+    {
         pop.totalWealth = 0;
-        switch (pop.profession){
-            case Profession.FARMER: 
+        switch (pop.profession)
+        {
+            case Profession.FARMER:
                 pop.totalWealth += 1 * Pop.FromNativePopulation(pop.workforce);
-            break;
+                break;
             case Profession.MERCHANT:
-                pop.totalWealth += 2 * Pop.FromNativePopulation(pop.workforce);;
-            break;
+                pop.totalWealth += 2 * Pop.FromNativePopulation(pop.workforce); ;
+                break;
             case Profession.ARISTOCRAT:
                 pop.totalWealth += 3 * Pop.FromNativePopulation(pop.workforce);
-            break;
+                break;
         }
         pop.CalcWealthPerCapita();
 
         double taxesPerCapita = 0;
-        switch (pop.profession){
-            case Profession.FARMER: 
+        switch (pop.profession)
+        {
+            case Profession.FARMER:
                 taxesPerCapita = pop.wealthPerCapita * 0.2f;
-            break;
+                break;
             case Profession.MERCHANT:
                 taxesPerCapita = pop.wealthPerCapita * 0.1f;
-            break;
+                break;
             case Profession.ARISTOCRAT:
                 taxesPerCapita = pop.wealthPerCapita * 0.05f;
-            break;
+                break;
         }
         double taxesCollected = taxesPerCapita * pop.population;
-        pop.totalWealth -= taxesCollected;            
+        pop.totalWealth -= taxesCollected;
     }
     #endregion
     #region PopActions
 
-    public void MergePops(){
-        foreach (Pop pop in pops){
-            if (pop.population >= Pop.ToNativePopulation(1)){
-                foreach (Pop merger in pops){
-                    if (Pop.CanPopsMerge(pop, merger)){
+    public void MergePops()
+    {
+        foreach (Pop pop in pops)
+        {
+            if (pop.population >= Pop.ToNativePopulation(1))
+            {
+                foreach (Pop merger in pops)
+                {
+                    if (Pop.CanPopsMerge(pop, merger))
+                    {
                         pop.ChangePopulation(merger.workforce, merger.dependents);
                         merger.ChangePopulation(-merger.workforce, -merger.dependents);
                         break;
                     }
-                }                
+                }
             }
 
         }
     }
 
     #region PopGrowth
-    public void GrowPop(Pop pop){
+    public void GrowPop(Pop pop)
+    {
         pop.canMove = true;
 
         float bRate;
-        if (pop.population < Pop.ToNativePopulation(2)){
+        if (pop.population < Pop.ToNativePopulation(2))
+        {
             bRate = 0;
-        } else {
+        }
+        else
+        {
             bRate = pop.birthRate;
         }
-        if (population > maxPopulation){
+        if (population > maxPopulation)
+        {
             bRate *= 0.75f;
         }
-        
-        float NIR =  (bRate - pop.deathRate) / 12f;
+
+        float NIR = (bRate - pop.deathRate) / 12f;
         long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
         long workforceChange = change - dependentChange;
@@ -199,114 +258,142 @@ public class Region : PopObject
     }
     #endregion
 
-    public void MovePops(){
-        foreach (Pop pop in pops.ToArray()){
+    public void MovePops()
+    {
+        foreach (Pop pop in pops.ToArray())
+        {
             // Chance of pop to migrate
             float migrateChance = 0.006f;
 
             // Pops are most likely to migrate if their region is overpopulated
-            if (population >= maxPopulation * 0.95f){
+            if (population >= maxPopulation * 0.95f)
+            {
                 migrateChance = 0.25f;
             }
-            if (pop.profession == Profession.ARISTOCRAT){
+            if (pop.profession == Profession.ARISTOCRAT)
+            {
                 migrateChance /= 100;
             }
 
             // If the pop migrates
-            if (rng.NextSingle() <= migrateChance){
-                for (int dx = -1; dx < 2; dx++){
-                    for (int dy = -1; dy < 2; dy++){
+            if (rng.NextSingle() <= migrateChance)
+            {
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
                         // Removes our region to avoid any messy behavior
-                        if (dx == 0 && dy == 0 || dx != 0 && dy != 0){
+                        if (dx == 0 && dy == 0 || dx != 0 && dy != 0)
+                        {
                             continue;
                         }
                         // Gets the tested region
                         Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
 
-                        if (region.habitable && rng.NextDouble() <= 0.25d){
+                        if (region.habitable && rng.NextDouble() <= 0.25d)
+                        {
                             MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
                             return;
                         }
                     }
-                } 
+                }
             }
         }
     }
 
-    public void MigratePop(Pop pop){
+    public void MigratePop(Pop pop)
+    {
         // Chance of pop to migrate
         float migrateChance = 0.0005f;
 
         // Pops are most likely to migrate if their region is overpopulated
-        if (population >= maxPopulation * 0.95f){
+        if (population >= maxPopulation * 0.95f)
+        {
             migrateChance = 1f;
         }
-        if (pop.profession == Profession.ARISTOCRAT){
+        if (pop.profession == Profession.ARISTOCRAT)
+        {
             migrateChance *= 0.1f;
         }
 
         // If the pop migrates
-        if (rng.NextSingle() <= migrateChance){
-            for (int dx = -1; dx < 2; dx++){
-                for (int dy = -1; dy < 2; dy++){
+        if (rng.NextSingle() <= migrateChance)
+        {
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
                     // Removes our region to avoid any messy behavior
-                    if (dx == 0 && dy == 0 || dx != 0 && dy != 0){
+                    if (dx == 0 && dy == 0 || dx != 0 && dy != 0)
+                    {
                         continue;
                     }
                     // Gets the tested region
                     Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
                     bool canMigrate = pop.profession == Profession.FARMER || region.owner != null;
-                    if (owner != null && owner.rulingPop == pop){
+                    if (owner != null && owner.rulingPop == pop)
+                    {
                         canMigrate = region.owner == owner;
                     }
 
-                    if (region.habitable && rng.NextDouble() <= 0.25d && canMigrate){
+                    if (region.habitable && rng.NextDouble() <= 0.25d && canMigrate)
+                    {
                         MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
                         return;
                     }
-                    
+
                 }
-            } 
+            }
         }
     }
 
-    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents){
-        if (destination == null || destination == this){
+    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)
+    {
+        if (destination == null || destination == this)
+        {
             return;
         }
-        if (movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1)){
-            if (movedWorkforce > pop.workforce){
+        if (movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1))
+        {
+            if (movedWorkforce > pop.workforce)
+            {
                 movedWorkforce = pop.workforce;
             }
-            if (movedDependents > pop.dependents){
+            if (movedDependents > pop.dependents)
+            {
                 movedDependents = pop.dependents;
             }
             Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
-            npop.canMove = false;            
-            pop.ChangePopulation(-movedWorkforce, -movedDependents);     
+            npop.canMove = false;
+            pop.ChangePopulation(-movedWorkforce, -movedDependents);
 
         }
     }
     #region Food & Consumption
-    public void PopConsumption(){
-        foreach (Pop pop in pops){
+    public void PopConsumption()
+    {
+        foreach (Pop pop in pops)
+        {
             pop.deathRate = pop.baseDeathRate;
-            double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, Pop.foodPerCapita, economy)/pop.GetConsumptionPopulation();
-            if (unsatisfiedFoodPerCapita != 0){
-                float starvationPercentage = (float)(unsatisfiedFoodPerCapita/Pop.foodPerCapita);
+            double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, Pop.foodPerCapita, economy) / pop.GetConsumptionPopulation();
+            if (unsatisfiedFoodPerCapita != 0)
+            {
+                float starvationPercentage = (float)(unsatisfiedFoodPerCapita / Pop.foodPerCapita);
                 pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 1f, starvationPercentage);
             }
-        }            
+        }
     }
 
-    public void Farming(){
+    public void Farming()
+    {
         double totalWork = professions[Profession.FARMER];
 
         double maxProduced = 530;
         double steepness = 0.021;
-        double foodPerSlot = maxProduced/(1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));
-        economy.ChangeResourceAmount(simManager.GetResource("grain"), foodPerSlot * avgFertility * landCount);               
+        double foodPerSlot = maxProduced / (1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));
+        economy.ChangeResourceAmount(simManager.GetResource("grain"), foodPerSlot * avgFertility * landCount);
     }
     #endregion
     #endregion
+    
 }

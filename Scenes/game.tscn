@@ -72,8 +72,7 @@ horizontal_alignment = 1
 
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
-monthsPerTick = 1
-gameSpeed = 3
+debuggerMode = true
 
 [node name="Map Manager" type="Area2D" parent="."]
 z_index = 2
@@ -246,20 +245,22 @@ text = "Game Speed:"
 [node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-selected = 5
-item_count = 6
-popup/item_0/text = "1 Month Per Second"
+selected = 6
+item_count = 7
+popup/item_0/text = "7 Days Per Second"
 popup/item_0/id = 0
-popup/item_1/text = "6 Months Per Second"
+popup/item_1/text = "1 Month Per Second"
 popup/item_1/id = 1
-popup/item_2/text = "1 Year Per Second"
+popup/item_2/text = "6 Months Per Second"
 popup/item_2/id = 2
-popup/item_3/text = "5 Years Per Second"
+popup/item_3/text = "1 Year Per Second"
 popup/item_3/id = 3
-popup/item_4/text = "10 Years Per Second"
+popup/item_4/text = "5 Years Per Second"
 popup/item_4/id = 4
-popup/item_5/text = "Unlimited"
+popup/item_5/text = "10 Years Per Second"
 popup/item_5/id = 5
+popup/item_6/text = "Unlimited"
+popup/item_6/id = 6
 
 [node name="MapModeHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer"]
 layout_mode = 2
@@ -302,7 +303,7 @@ text = "Main
 Menu"
 flat = true
 
-[node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("map")]
+[node name="Debug Label" type="Label" parent="UI"]
 visible = false
 offset_left = 109.0
 offset_top = 66.0
@@ -315,7 +316,6 @@ theme_override_font_sizes/font_size = 13
 text = "Region Data:
 Population: 100"
 script = ExtResource("9_iivbl")
-map = NodePath("")
 
 [node name="Loading" type="CanvasLayer" parent="."]
 

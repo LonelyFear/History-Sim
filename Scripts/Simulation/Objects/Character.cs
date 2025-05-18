@@ -12,7 +12,7 @@ public class Character
     public State state;
     public uint age;
     public uint birthTick;
-    public int existTime;
+    public uint existTime;
     public Pop pop;
     public Gender gender = Gender.MALE;
     public SimManager simManager;
@@ -29,7 +29,7 @@ public class Character
     public int agression = 0;
     public int wisdom = 0;
 
-    public const int maturityAge = 18*12;
+    public const uint maturityAge = 18*TimeManager.ticksPerYear;
 
     public void Die(){  
         simManager.DeleteCharacter(this);
@@ -67,9 +67,9 @@ public class Character
         return (state.leader == this || state.leader == parent) && age > maturityAge && childCooldown < 1;
     }
     public double GetDeathChance(){
-        if (age < 60*12){
+        if (age < 60*TimeManager.ticksPerYear){
             return 0.0001;
-        } else if (age < 90*12){
+        } else if (age < 90*TimeManager.ticksPerYear){
             return 0.01;
         } else {
             return 0.1;
