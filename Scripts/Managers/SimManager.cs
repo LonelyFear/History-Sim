@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -188,6 +189,7 @@ public partial class SimManager : Node
         {
             for (int y = 0; y < terrainSize.Y; y++)
             {
+                bool nearRiver = false;
                 Tile tile = tiles[x, y];
                 for (int dx = -1; dx < 2; dx++)
                 {
@@ -202,9 +204,13 @@ public partial class SimManager : Node
                         Tile borderTile = tiles[nx, ny];
                         if (borderTile.biome.id == "river")
                         {
-                            tile.fertility *= 1.5f;
+                            nearRiver = true;
                         }
                     }
+                }
+                if (nearRiver)
+                {
+                    tile.fertility *= 2f;
                 }
             }
         }
