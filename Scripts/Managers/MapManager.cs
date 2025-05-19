@@ -34,7 +34,7 @@ public partial class MapManager : Area2D
     }
     public void InitMapManager(){
         Scale = simManager.world.Scale * simManager.tilesPerRegion;
-        worldSize = simManager.worldSize;
+        worldSize = SimManager.worldSize;
         regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
         initialized = true;

@@ -62,7 +62,7 @@ layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_font_sizes/font_size = 18
 action_mode = 0
-text = "Options"
+text = "Options (WIP)"
 alignment = 0
 
 [node name="Exit Game" type="Button" parent="Button Holder"]

@@ -79,8 +79,10 @@ public partial class TimeManager : Node
             }
           
         }
-        mapManager.UpdateMap();            
-
+        if (mapManager.mapUpdate)
+        {
+            mapManager.UpdateMap(); 
+        }
     }
 
     void GetWaitTime()

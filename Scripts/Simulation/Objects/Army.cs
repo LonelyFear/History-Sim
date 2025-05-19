@@ -10,7 +10,7 @@ public class Army
     public Region headquarters;
     public ulong strength;
     public Character leader;
-    public Queue<Region> path;
+    public Queue<Region> currentPath;
     public static SimManager simManager;
 
     public void MoveArmy(Region region)
