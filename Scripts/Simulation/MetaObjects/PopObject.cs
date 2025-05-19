@@ -16,27 +16,34 @@ public class PopObject {
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public static Random rng = new Random();
+    public static SimManager simManager;
 
-    public void CountPopulation(){
+    public void CountPopulation()
+    {
         long countedPopulation = 0;
         long countedDependents = 0;
         long countedWorkforce = 0;
 
         Dictionary<Culture, long> countedCultures = new Dictionary<Culture, long>();
         Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
-        foreach (Profession profession in Enum.GetValues(typeof(Profession))){
+        foreach (Profession profession in Enum.GetValues(typeof(Profession)))
+        {
             countedProfessions.Add(profession, 0);
         }
 
-        foreach (Pop pop in pops.ToArray()){
+        foreach (Pop pop in pops.ToArray())
+        {
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
 
             countedProfessions[pop.profession] += pop.workforce;
-            if (!countedCultures.ContainsKey(pop.culture)){
+            if (!countedCultures.ContainsKey(pop.culture))
+            {
                 countedCultures.Add(pop.culture, pop.population);
-            } else {
+            }
+            else
+            {
                 countedCultures[pop.culture] += pop.population;
             }
         }

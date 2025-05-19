@@ -22,7 +22,7 @@ public partial class SimManager : Node
     public List<Region> regions = new List<Region>();
     public List<Region> habitableRegions = new List<Region>();
     public Vector2I terrainSize;
-    public Vector2I worldSize;
+    public static Vector2I worldSize;
     MapManager mapManager;
 
     // Population
@@ -163,7 +163,8 @@ public partial class SimManager : Node
     }
     private void OnWorldgenFinished()
     {
-
+        PopObject.simManager = this;
+        Army.simManager = this;
         LoadResources();
         // Load Resources Before Buildings
         LoadBuildings();
@@ -217,7 +218,6 @@ public partial class SimManager : Node
                 newRegion.tiles = new Tile[tilesPerRegion, tilesPerRegion];
                 newRegion.biomes = new Biome[tilesPerRegion, tilesPerRegion];
 
-                newRegion.simManager = this;
                 newRegion.pos = new Vector2I(x, y);
                 regions.Add(newRegion);
                 for (int tx = 0; tx < tilesPerRegion; tx++)
@@ -515,6 +515,14 @@ public partial class SimManager : Node
         int index = (lx * worldSize.Y) + ly;
         return regions[index];
     }
+    public Region GetRegion(Vector2I pos)
+    {
+        int lx = Mathf.PosMod(pos.X, worldSize.X);
+        int ly = Mathf.PosMod(pos.Y, worldSize.Y);
+
+        int index = (lx * worldSize.Y) + ly;
+        return regions[index];
+    }
     #region Creation
     public Culture CreateCulture()
     {
@@ -577,7 +585,6 @@ public partial class SimManager : Node
             culture = pop.culture,
             agression = rng.Next(0, 101),
             age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
-            simManager = this
         };
         pop.AddCharacter(character);
         if (pop == null)

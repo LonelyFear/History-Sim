@@ -1,4 +1,4 @@
-using System.Numerics;
+using System.Collections.Generic;
 using Godot;
 
 public class Army
@@ -10,6 +10,8 @@ public class Army
     public Region headquarters;
     public ulong strength;
     public Character leader;
+    public Queue<Region> path;
+    public static SimManager simManager;
 
     public void MoveArmy(Region region)
     {

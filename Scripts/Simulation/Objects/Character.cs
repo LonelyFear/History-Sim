@@ -15,7 +15,7 @@ public class Character
     public uint existTime;
     public Pop pop;
     public Gender gender = Gender.MALE;
-    public SimManager simManager;
+    public static SimManager simManager;
     
     public Random rng = new Random();
     public int childCooldown = 12;

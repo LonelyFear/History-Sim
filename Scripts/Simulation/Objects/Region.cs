@@ -16,7 +16,6 @@ public class Region : PopObject
     public Vector2I pos;
     public float avgFertility;
     public int landCount;
-    public SimManager simManager;
     public State owner = null;
     public List<Army> armies;
 
@@ -395,5 +394,59 @@ public class Region : PopObject
     }
     #endregion
     #endregion
+
+    public static bool GetPathToRegion(Region start, Region goal, out Queue<Region> path)
+    {
+        path = null;
+        bool validPath = false;
+
+        PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
+        frontier.Enqueue(start.pos, 0);
+        Dictionary<Vector2I, Vector2I> flow = new Dictionary<Vector2I, Vector2I>();
+        flow[start.pos] = new Vector2I(0, 0);
+        Dictionary<Vector2I, float> flowCost = new Dictionary<Vector2I, float>();
+        flowCost[start.pos] = 0;
+
+        uint attempts = 0;
+
+        while (attempts < 10000 && frontier.Count > 0)
+        {
+            attempts++;
+            Vector2I current = frontier.Dequeue();
+            if (current == goal.pos)
+            {
+                validPath = true;
+                break;
+            }
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
+                    {
+                        continue;
+                    }
+                    Vector2I next = new Vector2I(Mathf.PosMod(current.X + dx, SimManager.worldSize.X), Mathf.PosMod(current.Y + dy, SimManager.worldSize.Y));
+                    float newCost = 1;
+                    if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && simManager.GetRegion(next).habitable)
+                    {
+                        frontier.Enqueue(next, newCost);
+                        flowCost[next] = newCost;
+                        flow[next] = current;
+                    }
+                }
+            }     
+        }
+        if (validPath)
+        {
+            Vector2I pos = goal.pos;
+            while (pos != start.pos)
+            {
+                path.Enqueue(simManager.GetRegion(pos));
+                pos = flow[pos];
+            }
+        }
+        return validPath;
+    }
     
 }
