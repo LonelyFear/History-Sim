@@ -68,6 +68,7 @@ public partial class WorldGeneration : Node2D
     public float moistMapProgress;
     public float tempMapProgress;
     public float preparationProgress;
+
     //[ExportCategory("Rivers Settings")]
 
     Tectonics tectonics = null;
@@ -322,9 +323,10 @@ public partial class WorldGeneration : Node2D
                 preparationProgress++;
                 foreach (Biome biome in loadedBiomes){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
-                        tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
-                        if (tileBiomes[x, y] != "river")
+                        
+                        if (biome.terrainType != Biome.TerrainType.WATER)
                         {
+                            tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));    
                             if (biome.fertility >= 0.1f)
                             {
                                 if (rng.NextSingle() <= biome.fertility * 0.2f)

@@ -13,13 +13,13 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
 
     public const uint daysPerTick = 7;
-    public const uint ticksPerMonth = 30;
+    public const uint ticksPerMonth = 28;
     public const uint ticksPerYear = ticksPerMonth*12;
     uint monthCounter = 0;
     uint yearCounter = 0;
     public uint ticks = 0;
     public ulong tickStartTime = 0;
-    public float tickDelta = 1;
+    public double tickDelta = 1;
     public WorldGeneration world;
     public SimManager simManager;
     public MapManager mapManager;
@@ -47,6 +47,8 @@ public partial class TimeManager : Node
 
     public override void _Process(double delta)
     {
+        mapManager.UpdateMap(); 
+
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
         GetWaitTime();
         currentTime += delta;
@@ -71,18 +73,16 @@ public partial class TimeManager : Node
                     }
                     if (yearDone)
                     {
-                        tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000f;
+                        tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
                         TickGame();
+                        tickStartTime = Time.GetTicksMsec();
                     }
                     
                 }                  
             }
           
         }
-        if (mapManager.mapUpdate)
-        {
-            mapManager.UpdateMap(); 
-        }
+        
     }
 
     void GetWaitTime()
@@ -121,7 +121,6 @@ public partial class TimeManager : Node
     }
 
     private void TickGame(){
-        tickStartTime = Time.GetTicksMsec();
         ticks += daysPerTick;
         monthCounter += daysPerTick;
         yearCounter += daysPerTick;

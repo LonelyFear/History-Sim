@@ -24,6 +24,7 @@ public partial class SimManager : Node
     public List<Region> habitableRegions = new List<Region>();
     public Vector2I terrainSize;
     public static Vector2I worldSize;
+    public Mutex m;
     MapManager mapManager;
 
     // Population
@@ -327,8 +328,7 @@ public partial class SimManager : Node
                 }
             }
         }
-
-        foreach (Region region in habitableRegions)
+        Parallel.ForEach(habitableRegions, region =>
         {
             if (region.pops.Count > 0)
             {
@@ -342,7 +342,12 @@ public partial class SimManager : Node
                         region.PopWealth(pop);
                     }
                 }
-
+            }
+        });
+        foreach (Region region in habitableRegions)
+        {
+            if (region.pops.Count > 0)
+            {
                 if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                 {
                     region.NeutralConquest();

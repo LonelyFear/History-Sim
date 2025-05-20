@@ -40,21 +40,27 @@ public partial class MapManager : Area2D
         initialized = true;
     }
 
-    public void UpdateRegionColors(){
-        foreach (Region region in simManager.regions){
+    public void UpdateRegionColors()
+    {
+        foreach (Region region in simManager.regions)
+        {
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         }
     }
     public override void _Process(double delta)
     {
-        if (initialized){
+        if (initialized)
+        {
             UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
             mousePos = GetGlobalMousePosition();
             hoveredRegionPos = simManager.GlobalToRegionPos(mousePos);
-            if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible){
+            if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible)
+            {
                 hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
                 hoveredState = hoveredRegion.owner;
-            } else {
+            }
+            else
+            {
                 hoveredRegion = null;
                 hoveredState = null;
             }
@@ -272,8 +278,12 @@ public partial class MapManager : Area2D
         }
     }
     public void UpdateMap(){
-        mapUpdate = false;
-        regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
+        if (mapUpdate)
+        {
+            mapUpdate = false;
+            regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
+        }
+
     }
 }
 
