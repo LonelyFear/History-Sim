@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -24,7 +22,7 @@ public partial class SimManager : Node
     public List<Region> habitableRegions = new List<Region>();
     public Vector2I terrainSize;
     public static Vector2I worldSize;
-    public Mutex m;
+    public System.Threading.Mutex m = new System.Threading.Mutex();
     MapManager mapManager;
 
     // Population
@@ -166,7 +164,9 @@ public partial class SimManager : Node
     private void OnWorldgenFinished()
     {
         PopObject.simManager = this;
+        PopObject.m = m;
         Army.simManager = this;
+        Character.simManager = this;
         LoadResources();
         // Load Resources Before Buildings
         LoadBuildings();
@@ -302,32 +302,29 @@ public partial class SimManager : Node
             }
         }
     }
+    public void UpdatePops()
+    {
+        Parallel.ForEach(pops.ToArray(), pop =>
+        {
+            if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
+            {
+                m.WaitOne();
+                DestroyPop(pop);
+                m.ReleaseMutex();
+            }
+            else
+            {
+                pop.region.GrowPop(pop);
+                if (pop.batchId == timeManager.GetMonth())
+                {
+                    pop.region.MigratePop(pop);
+                }
+            }                
+        });
+    }
     public void UpdateRegions()
     {
         long worldPop = 0;
-        int populatedRegions = 0;
-        foreach (Region region in habitableRegions)
-        {
-            if (region.pops.Count > 0)
-            {
-                populatedRegions++;
-                foreach (Pop pop in region.pops.ToArray())
-                {
-                    if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
-                    {
-                        DestroyPop(pop);
-                    }
-                    else
-                    {
-                        region.GrowPop(pop);
-                        if (pop.batchId == timeManager.GetMonth())
-                        {
-                            region.MigratePop(pop);
-                        }
-                    }
-                }
-            }
-        }
         Parallel.ForEach(habitableRegions, region =>
         {
             if (region.pops.Count > 0)
@@ -342,24 +339,23 @@ public partial class SimManager : Node
                         region.PopWealth(pop);
                     }
                 }
+                if (region.pops.Count > 0)
+                {
+                    if (region.owner != null && region.frontier && region.owner.rulingPop != null)
+                    {
+                        region.NeutralConquest();
+                    }
+                    region.RandomStateFormation();
+                    if (region.owner != null)
+                    {
+                        region.StateBordering();
+                    }
+                }
+                m.WaitOne();
+                worldPop += region.population;
+                m.ReleaseMutex();         
             }
         });
-        foreach (Region region in habitableRegions)
-        {
-            if (region.pops.Count > 0)
-            {
-                if (region.owner != null && region.frontier && region.owner.rulingPop != null)
-                {
-                    region.NeutralConquest();
-                }
-                region.RandomStateFormation();
-                if (region.owner != null)
-                {
-                    region.StateBordering();
-                }
-            }
-            worldPop += region.population;
-        }
 
         worldPopulation = worldPop;
     }
@@ -454,12 +450,11 @@ public partial class SimManager : Node
     }
     public void SimMonth()
     {
+        UpdatePops();
         UpdateRegions();
         UpdateStates();
         UpdateCharacters();
         UpdateCultures();
-
-        mapManager.UpdateRegionColors();
     }
     public void SimYear()
     {

@@ -73,6 +73,7 @@ horizontal_alignment = 1
 
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
+debuggerMode = true
 
 [node name="Map Manager" type="Area2D" parent="."]
 z_index = 2

@@ -90,7 +90,9 @@ public class Region : PopObject
     {
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001)
         {
+            m.WaitOne();
             simManager.CreateState(this);
+            m.ReleaseMutex();
 
             owner.population = population;
             owner.workforce = workforce;
@@ -131,6 +133,7 @@ public class Region : PopObject
         Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
         {
+            m.WaitOne();
             Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower() / 2, (long)(region.workforce * 0.95f));
             if (result.victor == Conflict.Side.AGRESSOR)
             {
@@ -139,6 +142,7 @@ public class Region : PopObject
 
             owner.TakeLosses(result.attackerLosses, owner);
             region.TakeLosses(result.defenderLosses);
+            m.ReleaseMutex();
         }
     }
 
@@ -211,7 +215,7 @@ public class Region : PopObject
 
     public void MergePops()
     {
-        foreach (Pop pop in pops)
+        foreach (Pop pop in pops.ToArray())
         {
             if (pop.population >= Pop.ToNativePopulation(1))
             {
@@ -225,7 +229,6 @@ public class Region : PopObject
                     }
                 }
             }
-
         }
     }
 
@@ -362,10 +365,11 @@ public class Region : PopObject
             {
                 movedDependents = pop.dependents;
             }
+            m.WaitOne();
             Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
             npop.canMove = false;
             pop.ChangePopulation(-movedWorkforce, -movedDependents);
-
+            m.ReleaseMutex();
         }
     }
     #region Food & Consumption
