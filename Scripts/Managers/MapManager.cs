@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,8 +22,8 @@ public partial class MapManager : Area2D
     public bool mapUpdate = false;
     public bool initialized = false;
 
-    OptionButton mapModeUI;
-    CheckBox showRegionsCheckbox;
+    public OptionButton mapModeUI;
+    public CheckBox showRegionsCheckbox;
 
 
     public override void _Ready()
@@ -40,38 +41,52 @@ public partial class MapManager : Area2D
         initialized = true;
     }
 
-    public void UpdateRegionColors()
+    public void UpdateRegionColors(IEnumerable<Region> regions)
     {
-        foreach (Region region in simManager.regions)
+        Parallel.ForEach(regions, region =>
         {
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
-        }
+        });
     }
     public override void _Process(double delta)
     {
         if (initialized)
         {
             UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
+            
             mousePos = GetGlobalMousePosition();
             hoveredRegionPos = simManager.GlobalToRegionPos(mousePos);
-            if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible)
-            {
-                hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
-                hoveredState = hoveredRegion.owner;
-            }
-            else
-            {
-                hoveredRegion = null;
-                hoveredState = null;
-            }
+
+            UpdateHovering();
 
             if (regionOverlay.Visible)
             {
                 CheckMapmodeChange();
-                Selection();
+                UpdateMap();
             }
         }
 
+    }
+
+    void UpdateHovering()
+    {
+        Region lastHovered = hoveredRegion;
+        if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible)
+        {
+            hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
+            SetRegionColor(hoveredRegion.pos.X, hoveredRegion.pos.Y, GetRegionColor(hoveredRegion));
+            hoveredState = hoveredRegion.owner;
+        }
+        else
+        {
+            hoveredRegion = null;
+            hoveredState = null;
+        }
+
+        if (lastHovered != null)
+        {
+            SetRegionColor(lastHovered.pos.X, lastHovered.pos.Y, GetRegionColor(lastHovered));
+        }      
     }
 
     void UpdateRegionVisibility(bool value) {
@@ -123,40 +138,9 @@ public partial class MapManager : Area2D
         }        
     }
 
-    void Selection(){
-        PopObject smo = selectedMetaObj;
-        if (selectedMode != mapMode){
-            selectedMetaObj = null;
-        }
-        // if (Input.IsActionJustPressed("Select") && hoveredRegion != null){
-        //     switch (mapMode){
-        //         case MapModes.POLITIY:
-        //             if (hoveredRegion.habitable){
-        //                 selectedMetaObj = hoveredRegion;
-        //                 if (hoveredState != null){
-        //                     selectedMetaObj = hoveredState;
-        //                 }
-        //             } else {
-        //                 selectedMetaObj = null;
-        //             }
-        //             break;
-        //         case MapModes.CULTURE:
-        //             if (hoveredRegion.cultures.Keys.Count > 0){
-        //                 selectedMetaObj = hoveredRegion.cultures.ToArray()[0].Key;
-        //             } else {
-        //                 selectedMetaObj = null;
-        //             }
-        //             break;
-        //     }
-        // }
-        if (selectedMetaObj != smo){
-            UpdateAllRegions();
-        }
-    }
-    
     public override void _UnhandledInput(InputEvent evnt)
     {
-
+        PopObject smo = selectedMetaObj;
         if (evnt.IsAction("Select") && hoveredRegion != null)
         {
             switch (mapMode)
@@ -186,6 +170,10 @@ public partial class MapManager : Area2D
                     }
                     break;
             }
+            if (smo != selectedMetaObj)
+            {
+                UpdateRegionColors(simManager.regions);
+            }
         }
     }
 
@@ -193,75 +181,89 @@ public partial class MapManager : Area2D
     {
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
-        UpdateAllRegions();
+        UpdateRegionColors(simManager.habitableRegions);
     }
-
-    void UpdateAllRegions(){
-        foreach (Region region in simManager.regions){
-            SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
-        }        
-    }
-    public Color GetRegionColor(Region region){
+    
+    public Color GetRegionColor(Region region)
+    {
         Color color = new Color(0, 0, 0, 0);
-        switch (mapMode){
-            case MapModes.POLITIY:  
-                if (region.pops.Count > 0){
+        switch (mapMode)
+        {
+            case MapModes.POLITIY:
+                if (region.pops.Count > 0)
+                {
                     color = new Color(0.2f, 0.2f, 0.2f);
                 }
-                if (region.owner != null){
+                if (region.owner != null)
+                {
                     color = region.owner.color;
-                    if (region.border || region.frontier){
+                    if (region.border || region.frontier)
+                    {
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
                     }
-                    if (region.owner.capital == region){
+                    if (region.owner.capital == region)
+                    {
                         //color = new Color(1,0,0);
                     }
 
                 }
-                if (selectedMetaObj != null){
-                    switch (selectedMetaObj.GetObjectType()){
+                if (selectedMetaObj != null)
+                {
+                    switch (selectedMetaObj.GetObjectType())
+                    {
                         case PopObject.ObjectType.REGION:
-                            if (region != selectedMetaObj){
+                            if (region != selectedMetaObj)
+                            {
                                 color = (color * 0.6f) + (new Color(0, 0, 0) * 0.4f);
                             }
                             break;
                         case PopObject.ObjectType.STATE:
-                            if (region.owner != selectedMetaObj){
+                            if (region.owner != selectedMetaObj)
+                            {
                                 color = (color * 0.6f) + (new Color(0, 0, 0) * 0.4f);
                             }
                             break;
-                    }                     
+                    }
                 }
-               
-            break;
+
+                break;
             case MapModes.POPULATION:
-                if (region.habitable && region.pops.Count > 0){
-                    color = new Color(0, (float)region.population/Pop.ToNativePopulation(1000 * (int)Mathf.Pow(simManager.tilesPerRegion, 2)), 0, 1);
-                } else if (region.habitable) {
+                if (region.habitable && region.pops.Count > 0)
+                {
+                    color = new Color(0, (float)region.population / Pop.ToNativePopulation(1000 * (int)Mathf.Pow(simManager.tilesPerRegion, 2)), 0, 1);
+                }
+                else if (region.habitable)
+                {
                     color = new Color(0, 0, 0, 1);
                 }
-            break;
+                break;
             case MapModes.CULTURE:
-                if (region.habitable && region.pops.Count > 0){
+                if (region.habitable && region.pops.Count > 0)
+                {
                     color = region.cultures.ElementAt(0).Key.color;
-                } else if (region.habitable) {
+                }
+                else if (region.habitable)
+                {
                     color = new Color(0, 0, 0, 1);
                 }
-            break;
+                break;
             case MapModes.TECH:
                 break;
             case MapModes.POPS:
-                if (region.habitable && region.pops.Count > 0){
-                    color = new Color(0, 0,(float)region.pops.Count/10, 1);
-                } else if (region.habitable) {
+                if (region.habitable && region.pops.Count > 0)
+                {
+                    color = new Color(0, 0, (float)region.pops.Count / 10, 1);
+                }
+                else if (region.habitable)
+                {
                     color = new Color(0, 0, 0, 1);
                 }
-                
-            break;
+
+                break;
         }
-        // if (hoveredRegion == region){
-        //     color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
-        // }
+        if (hoveredRegion == region){
+            color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+        }
         return color;
     }
     public Region GetRegion(int x, int y){

@@ -47,12 +47,12 @@ public partial class TimeManager : Node
 
     public override void _Process(double delta)
     {
-        mapManager.UpdateMap(); 
 
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
         GetWaitTime();
         currentTime += delta;
-        if (currentTime >= waitTime){
+        if (currentTime >= waitTime)
+        {
             currentTime = 0;
             bool tickDone = tickTask == null || tickTask.IsCompleted;
             bool yearDone = yearTask == null || yearTask.IsCompleted;
@@ -73,16 +73,17 @@ public partial class TimeManager : Node
                     }
                     if (yearDone)
                     {
-                        tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
                         TickGame();
+                        mapManager.UpdateRegionColors(simManager.habitableRegions);
+                        tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
                         tickStartTime = Time.GetTicksMsec();
+                        
                     }
-                    
-                }                  
+
+                }
             }
-          
+
         }
-        
     }
 
     void GetWaitTime()

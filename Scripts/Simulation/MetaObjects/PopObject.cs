@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Godot;
+using System.Threading;
 
 public class PopObject {
     public string name;
@@ -17,6 +15,7 @@ public class PopObject {
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public static Random rng = new Random();
     public static SimManager simManager;
+    public static Mutex m;
 
     public void CountPopulation()
     {
