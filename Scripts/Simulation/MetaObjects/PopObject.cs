@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Godot;
 
 public class PopObject {
     public string name;
@@ -11,11 +12,17 @@ public class PopObject {
     public long dependents = 0;    
     public long workforce = 0;
     public List<Pop> pops = new List<Pop>();
-    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>();
+    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
+    {
+        {Profession.FARMER, 0},
+        { Profession.MERCHANT, 0},
+        {Profession.ARISTOCRAT, 0},
+    };
+    
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public static Random rng = new Random();
     public static SimManager simManager;
-    public static Mutex m;
+    public Culture largestCulture = null;
 
     public void CountPopulation()
     {
@@ -24,13 +31,14 @@ public class PopObject {
         long countedWorkforce = 0;
 
         Dictionary<Culture, long> countedCultures = new Dictionary<Culture, long>();
-        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
-        foreach (Profession profession in Enum.GetValues(typeof(Profession)))
+        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>()
         {
-            countedProfessions.Add(profession, 0);
-        }
-
-        foreach (Pop pop in pops.ToArray())
+            {Profession.FARMER, 0},
+            { Profession.MERCHANT, 0},
+            {Profession.ARISTOCRAT, 0},
+        };
+        Culture currentLargest = null;
+        foreach (Pop pop in pops)
         {
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
@@ -46,7 +54,18 @@ public class PopObject {
                 countedCultures[pop.culture] += pop.population;
             }
         }
-        cultures = countedCultures.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+        
+        cultures = countedCultures;
+        foreach (Culture culture in cultures.Keys)
+        {
+            if (currentLargest == null || cultures[culture] > cultures[currentLargest])
+            {
+                currentLargest = culture;
+            }
+        }
+        largestCulture = currentLargest;
+
+
         professions = countedProfessions;
         population = countedPopulation;
         dependents = countedDependents;
@@ -82,21 +101,15 @@ public class PopObject {
     public void RemovePop(Pop pop, PopObject popObject){
         if (popObject.GetType() == typeof(Culture)){
             // Adding Pop to Culture
-            if (pops.Contains(pop)){
-                pops.Remove(pop);
-                pop.culture = null;            
-                ChangePopulation(-pop.workforce, -pop.dependents);
-            }
+            pops.Remove(pop);
+            ChangePopulation(-pop.workforce, -pop.dependents);
+            pop.culture = null;
         } else if (popObject.GetType() == typeof(Region)){
-            if (pops.Contains(pop)){
-                pops.Remove(pop);
-                pop.region = null;            
-                ChangePopulation(-pop.workforce, -pop.dependents);
-            }
+            pops.Remove(pop);
+            ChangePopulation(-pop.workforce, -pop.dependents);                
+            pop.region = null;            
         } else if (popObject.GetType() == typeof(State)){
-            if (pops.Contains(pop)){
-                pops.Remove(pop);
-            }
+            pops.Remove(pop);
         }
     }
     public void ChangePopulation(long workforceChange, long dependentChange){

@@ -73,7 +73,7 @@ horizontal_alignment = 1
 
 [node name="Time Manager" type="Node" parent="."]
 script = ExtResource("7_ewbju")
-debuggerMode = true
+gameSpeed = 0
 
 [node name="Map Manager" type="Area2D" parent="."]
 z_index = 2
@@ -165,6 +165,7 @@ Fps: 300"
 horizontal_alignment = 2
 script = ExtResource("11_exi56")
 timeManager = NodePath("../../../Time Manager")
+updateDelay = 0.25
 
 [node name="InfoHolder" type="Control" parent="UI"]
 layout_mode = 3
@@ -249,7 +250,7 @@ text = "Game Speed:"
 [node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-selected = 6
+selected = 4
 item_count = 7
 popup/item_0/text = "7 Days Per Second"
 popup/item_0/id = 0

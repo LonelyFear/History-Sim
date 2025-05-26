@@ -5,6 +5,7 @@ using System.Threading;
 using Mutex = System.Threading.Mutex;
 using Godot;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 public class Region : PopObject
 {
@@ -62,10 +63,6 @@ public class Region : PopObject
         {
             habitable = true;
         }
-        foreach (Profession profession in Enum.GetValues(typeof(Profession)))
-        {
-            professions.Add(profession, 0);
-        }
     }
     public void CalcMaxPopulation()
     {
@@ -90,9 +87,9 @@ public class Region : PopObject
     {
         if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001)
         {
-            m.WaitOne();
+            SimManager.m.WaitOne();
             simManager.CreateState(this);
-            m.ReleaseMutex();
+            SimManager.m.ReleaseMutex();
 
             owner.population = population;
             owner.workforce = workforce;
@@ -133,7 +130,7 @@ public class Region : PopObject
         Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
         {
-            m.WaitOne();
+            SimManager.m.WaitOne();
             Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower() / 2, (long)(region.workforce * 0.95f));
             if (result.victor == Conflict.Side.AGRESSOR)
             {
@@ -142,7 +139,7 @@ public class Region : PopObject
 
             owner.TakeLosses(result.attackerLosses, owner);
             region.TakeLosses(result.defenderLosses);
-            m.ReleaseMutex();
+            SimManager.m.ReleaseMutex();
         }
     }
 
@@ -215,21 +212,29 @@ public class Region : PopObject
 
     public void MergePops()
     {
-        foreach (Pop pop in pops.ToArray())
+        if (pops.Count < 2)
         {
-            if (pop.population >= Pop.ToNativePopulation(1))
+            return;
+        }
+
+        Queue<Pop> popsToCheck = new Queue<Pop>(pops);
+        while (popsToCheck.Count > 0)
+        {
+            Pop pop = popsToCheck.Dequeue();
+            if (pop.population < Pop.ToNativePopulation(1))
             {
-                foreach (Pop merger in pops)
+                continue;
+            }
+            foreach (Pop merger in popsToCheck)
+            {
+                if (Pop.CanPopsMerge(pop, merger))
                 {
-                    if (Pop.CanPopsMerge(pop, merger))
-                    {
-                        pop.ChangePopulation(merger.workforce, merger.dependents);
-                        merger.ChangePopulation(-merger.workforce, -merger.dependents);
-                        break;
-                    }
+                    pop.ChangePopulation(merger.workforce, merger.dependents);
+                    merger.ChangePopulation(-merger.workforce, -merger.dependents);
+                    break;
                 }
             }
-        }
+        }            
     }
 
     #region PopGrowth
@@ -260,49 +265,6 @@ public class Region : PopObject
     }
     #endregion
 
-    public void MovePops()
-    {
-        foreach (Pop pop in pops.ToArray())
-        {
-            // Chance of pop to migrate
-            float migrateChance = 0.006f;
-
-            // Pops are most likely to migrate if their region is overpopulated
-            if (population >= maxPopulation * 0.95f)
-            {
-                migrateChance = 0.25f;
-            }
-            if (pop.profession == Profession.ARISTOCRAT)
-            {
-                migrateChance /= 100;
-            }
-
-            // If the pop migrates
-            if (rng.NextSingle() <= migrateChance)
-            {
-                for (int dx = -1; dx < 2; dx++)
-                {
-                    for (int dy = -1; dy < 2; dy++)
-                    {
-                        // Removes our region to avoid any messy behavior
-                        if (dx == 0 && dy == 0 || dx != 0 && dy != 0)
-                        {
-                            continue;
-                        }
-                        // Gets the tested region
-                        Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
-
-                        if (region.habitable && rng.NextDouble() <= 0.25d)
-                        {
-                            MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public void MigratePop(Pop pop)
     {
         // Chance of pop to migrate
@@ -321,32 +283,37 @@ public class Region : PopObject
         // If the pop migrates
         if (rng.NextSingle() <= migrateChance)
         {
-            for (int dx = -1; dx < 2; dx++)
+            Region region = pop.region;
+            Region target = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
+
+            bool canMigrate = pop.profession == Profession.FARMER || region.owner != null;
+            if (owner != null && owner.rulingPop == pop)
             {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    // Removes our region to avoid any messy behavior
-                    if (dx == 0 && dy == 0 || dx != 0 && dy != 0)
-                    {
-                        continue;
-                    }
-                    // Gets the tested region
-                    Region region = simManager.GetRegion(pos.X + dx, pos.Y + dy);
-                    bool canMigrate = pop.profession == Profession.FARMER || region.owner != null;
-                    if (owner != null && owner.rulingPop == pop)
-                    {
-                        canMigrate = region.owner == owner;
-                    }
+                canMigrate = region.owner == owner;
+            }
 
-                    if (region.habitable && rng.NextDouble() <= 0.25d && canMigrate)
-                    {
-                        MovePop(pop, region, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
-                        return;
-                    }
+            if (target.Migrateable(pop) && canMigrate)
+            {
+                MovePop(pop, target, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
+            }
+                              
+        }
+    }
 
-                }
+    public bool Migrateable(Pop pop)
+    {
+        if (habitable)
+        {
+            if (avgFertility > 0.15f)
+            {
+                return true;
+            }
+            else if (pop.tech.scienceLevel * 0.05 > avgFertility)
+            {
+                return true;
             }
         }
+        return false;
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)
@@ -365,11 +332,11 @@ public class Region : PopObject
             {
                 movedDependents = pop.dependents;
             }
-            m.WaitOne();
+            SimManager.m.WaitOne();
             Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
             npop.canMove = false;
             pop.ChangePopulation(-movedWorkforce, -movedDependents);
-            m.ReleaseMutex();
+            SimManager.m.ReleaseMutex();
         }
     }
     #region Food & Consumption

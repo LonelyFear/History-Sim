@@ -27,26 +27,35 @@ public class Pop
     public const double dependentNeedMultiplier = .8;
     public List<Character> characters = new List<Character>();
 
-    public void ChangeWorkforce(long amount){
-        if (workforce + amount < 0){
+    public void ChangeWorkforce(long amount)
+    {
+        if (workforce + amount < 0)
+        {
             amount = -workforce;
         }
         workforce += amount;
         population += amount;
-        if (culture != null){
+        SimManager.m.WaitOne();
+        if (culture != null)
+        {
             culture.ChangePopulation(amount, 0);
         }
-
+        SimManager.m.ReleaseMutex();
     }
-    public void ChangeDependents(long amount){
-        if (dependents + amount < 0){
+    public void ChangeDependents(long amount)
+    {
+        if (dependents + amount < 0)
+        {
             amount = -dependents;
         }
         dependents += amount;
         population += amount;
-        if (culture != null){
+        SimManager.m.WaitOne();
+        if (culture != null)
+        {
             culture.ChangePopulation(0, amount);
         }
+        SimManager.m.ReleaseMutex();
     }
     public void ChangePopulation(long workforceChange, long dependentChange){
         ChangeWorkforce(workforceChange);
@@ -92,7 +101,7 @@ public class Pop
     }
 
     public static bool CanPopsMerge(Pop a, Pop b){
-        if (a == null || b == null){
+        if (a == null || b == null || a == b){
             return false;
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);

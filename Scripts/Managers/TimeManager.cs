@@ -20,6 +20,8 @@ public partial class TimeManager : Node
     public uint ticks = 0;
     public ulong tickStartTime = 0;
     public double tickDelta = 1;
+    public ulong monthStartTime = 0;
+    public double monthDelta = 1;
     public WorldGeneration world;
     public SimManager simManager;
     public MapManager mapManager;
@@ -29,6 +31,7 @@ public partial class TimeManager : Node
     Task yearTask;
     bool doYear = true;
     bool doMonth = true;
+    bool didMonth = false;
     [Export]
     public bool debuggerMode = false;
     double waitTime;
@@ -59,24 +62,32 @@ public partial class TimeManager : Node
             bool monthDone = monthTask == null || monthTask.IsCompleted;
             if (worldGenFinished && tickDone)
             {
-                if (doMonth)
+                if (doMonth && !debuggerMode)
                 {
                     doMonth = false;
                     monthTask = Task.Run(simManager.SimMonth);
                 }
                 if (monthDone)
                 {
-                    if (doYear)
+                    if (monthTask == null || monthTask.IsCompleted)
+                    {
+                        didMonth = true;
+                    }
+                    if (doYear && !debuggerMode)
                     {
                         doYear = false;
                         yearTask = Task.Run(simManager.SimYear);
                     }
                     if (yearDone)
                     {
+                        tickDelta = (Time.GetTicksMsec() - (double)tickStartTime) / 1000d;
+                        if (didMonth)
+                        {
+                            didMonth = false;
+                            monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
+                        }
                         TickGame();
                         mapManager.UpdateRegionColors(simManager.habitableRegions);
-                        tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
-                        tickStartTime = Time.GetTicksMsec();
                         
                     }
 
@@ -122,6 +133,8 @@ public partial class TimeManager : Node
     }
 
     private void TickGame(){
+        tickStartTime = Time.GetTicksMsec();   
+
         ticks += daysPerTick;
         monthCounter += daysPerTick;
         yearCounter += daysPerTick;
@@ -136,6 +149,8 @@ public partial class TimeManager : Node
         if (monthCounter > 30)
         {
             monthCounter = 0;
+            monthStartTime = Time.GetTicksMsec(); 
+
             if (!debuggerMode)
             {
                 doMonth = true;

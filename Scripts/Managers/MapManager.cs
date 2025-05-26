@@ -105,6 +105,7 @@ public partial class MapManager : Area2D
     void ShowRegions()
     {
         regionOverlay.Visible = true;
+        UpdateRegionColors(simManager.regions);
     }
 
     void HideRegions()
@@ -162,7 +163,7 @@ public partial class MapManager : Area2D
                 case MapModes.CULTURE:
                     if (hoveredRegion.cultures.Keys.Count > 0)
                     {
-                        selectedMetaObj = hoveredRegion.cultures.ToArray()[0].Key;
+                        selectedMetaObj = hoveredRegion.largestCulture;
                     }
                     else
                     {
@@ -240,7 +241,19 @@ public partial class MapManager : Area2D
             case MapModes.CULTURE:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    color = region.cultures.ElementAt(0).Key.color;
+                    color = region.largestCulture.color;
+                    if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == PopObject.ObjectType.CULTURE)
+                    {
+                        Culture culture = (Culture)selectedMetaObj;
+                        if (region.cultures.ContainsKey(culture) && region.largestCulture != culture){
+                            color = culture.color;
+                            color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+                        }
+                        else if (region.largestCulture != culture)
+                        {
+                            color = (color * 0.3f) + (new Color(0, 0, 0) * 0.7f);
+                        }
+                    }
                 }
                 else if (region.habitable)
                 {

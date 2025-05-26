@@ -22,7 +22,7 @@ public partial class SimManager : Node
     public List<Region> habitableRegions = new List<Region>();
     public Vector2I terrainSize;
     public static Vector2I worldSize;
-    public System.Threading.Mutex m = new System.Threading.Mutex();
+    public static System.Threading.Mutex m = new System.Threading.Mutex();
     MapManager mapManager;
 
     // Population
@@ -32,6 +32,7 @@ public partial class SimManager : Node
     public long worldDependents = 0;
     public long workforceChange = 0;
     public long dependentsChange = 0;
+    public uint populatedRegions;
     public List<Culture> cultures = new List<Culture>();
     public List<State> states = new List<State>();
     public List<Army> armies = new List<Army>();
@@ -47,7 +48,6 @@ public partial class SimManager : Node
     int currentBatch = 0;
 
     public long simToPopMult;
-    public Task mapmodeTask;
     Random rng = new Random();
 
     // Events
@@ -164,7 +164,6 @@ public partial class SimManager : Node
     private void OnWorldgenFinished()
     {
         PopObject.simManager = this;
-        PopObject.m = m;
         Army.simManager = this;
         Character.simManager = this;
         LoadResources();
@@ -190,6 +189,7 @@ public partial class SimManager : Node
         {
             for (int y = 0; y < terrainSize.Y; y++)
             {
+                bool nearOcean = false;
                 bool nearRiver = false;
                 Tile tile = tiles[x, y];
                 for (int dx = -1; dx < 2; dx++)
@@ -203,15 +203,25 @@ public partial class SimManager : Node
                         int nx = Mathf.PosMod(x + dx, terrainSize.X);
                         int ny = Mathf.PosMod(y + dy, terrainSize.Y);
                         Tile borderTile = tiles[nx, ny];
-                        if (borderTile.biome.id == "river")
+                        // Makes aquatic and coastal tiles more fertile
+                        
+                        if (borderTile.biome.terrainType == Biome.TerrainType.WATER)
                         {
-                            nearRiver = true;
+                            nearOcean = true;
+                            if (borderTile.biome.id == "river")
+                            {
+                                nearRiver = true;
+                            }
                         }
                     }
                 }
                 if (nearRiver)
                 {
                     tile.fertility *= 2f;
+                }
+                else if (nearOcean)
+                {
+                    tile.fertility *= 1.25f;
                 }
             }
         }
@@ -249,11 +259,11 @@ public partial class SimManager : Node
                 // Calc max populaiton
                 newRegion.CalcMaxPopulation();
                 // Adds pops
-                // if (newRegion.habitable){
-                //     // Add pops here
-                //     long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(20, 100));
-                //     CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture(newRegion));
-                // }
+                if (newRegion.habitable){
+                    // Add pops here
+                    long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(20, 100));
+                    //CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture());
+                }
             }
         }
         BorderingRegions();
@@ -293,7 +303,7 @@ public partial class SimManager : Node
                 Culture culture = CreateCulture();
                 foreach (Region testRegion in habitableRegions)
                 {
-                    if (testRegion.pops.Count > 0 && testRegion.pos.DistanceTo(region.pos) <= 7 * world.worldSizeMult)
+                    if (testRegion.pops.Count > 0 && testRegion.pos.DistanceTo(region.pos) <= 3)
                     {
                         culture = testRegion.pops[0].culture;
                     }
@@ -304,64 +314,101 @@ public partial class SimManager : Node
     }
     public void UpdatePops()
     {
-        Parallel.ForEach(pops.ToArray(), pop =>
+        ulong tickStartTime = Time.GetTicksMsec();
+        ulong destroyTime = 0;
+        ulong migrateTime = 0;
+        ulong growTime = 0;
+        Parallel.ForEach(pops.ToArray(), pop  =>
         {
+            ulong startTime = Time.GetTicksMsec();
             if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
             {
-                m.WaitOne();
+                startTime = Time.GetTicksMsec();
+                //m.WaitOne();
                 DestroyPop(pop);
-                m.ReleaseMutex();
+                //m.ReleaseMutex();
+                destroyTime += Time.GetTicksMsec() - startTime;
             }
             else
             {
+                startTime = Time.GetTicksMsec();
                 pop.region.GrowPop(pop);
+                migrateTime += Time.GetTicksMsec() - startTime;
+
                 if (pop.batchId == timeManager.GetMonth())
                 {
+                    startTime = Time.GetTicksMsec();
                     pop.region.MigratePop(pop);
+                    growTime += Time.GetTicksMsec() - startTime;
                 }
-            }                
+                if (pop.region.owner != null)
+                {
+                    pop.region.PopWealth(pop);
+                }
+            }
         });
+        foreach (Pop pop in pops.ToArray())
+        {
+
+        }
+        // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
+        // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
+        // GD.Print("  Pops Grow Time: " + growTime + " ms");
+        // GD.Print("  Pops Move Time: " + migrateTime + " ms");
     }
     public void UpdateRegions()
     {
+        uint countedPoppedRegions = 0;
+        ulong tickStartTime = Time.GetTicksMsec();
+        ulong mergeTime = 0;
+        ulong checkTime = 0;
+        ulong conquestTime = 0;
+        ulong borderTime = 0;
         long worldPop = 0;
-        Parallel.ForEach(habitableRegions, region =>
+        foreach (Region region in habitableRegions)
         {
+            ulong startTime = Time.GetTicksMsec();
             if (region.pops.Count > 0)
             {
-                region.MergePops();
-                region.CheckPopulation();
+                countedPoppedRegions += 1;
 
-                foreach (Pop pop in region.pops)
-                {
-                    if (region.owner != null)
-                    {
-                        region.PopWealth(pop);
-                    }
-                }
                 if (region.pops.Count > 0)
                 {
+                    region.MergePops();
+                    mergeTime += Time.GetTicksMsec() - startTime;
+                    startTime = Time.GetTicksMsec();
+                    region.CheckPopulation();
+                    checkTime += Time.GetTicksMsec() - startTime;
+
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {
+                        startTime = Time.GetTicksMsec();
                         region.NeutralConquest();
+                        conquestTime += Time.GetTicksMsec() - startTime;
                     }
                     region.RandomStateFormation();
                     if (region.owner != null)
                     {
+                        startTime = Time.GetTicksMsec();
                         region.StateBordering();
+                        borderTime += Time.GetTicksMsec() - startTime;
                     }
                 }
-                m.WaitOne();
                 worldPop += region.population;
-                m.ReleaseMutex();         
             }
-        });
-
+        }
+        populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
+        // GD.Print("Region Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
+        // GD.Print("  Region Merge Time: " + mergeTime + " ms");
+        // GD.Print("  Region Census Time: " + checkTime + " ms");
+        // GD.Print("  Region Conquest Time: " + conquestTime + " ms");
+        // GD.Print("  Region Border Time: " + borderTime + " ms");
     }
 
     public void UpdateCharacters()
     {
+        ulong tickStartTime = Time.GetTicksMsec();
         foreach (Character character in characters.ToArray())
         {
             character.age += TimeManager.ticksPerMonth;
@@ -491,8 +538,8 @@ public partial class SimManager : Node
         //pop.ChangePopulation(workforce, dependents);
 
         pops.Add(pop);
-        region.AddPop(pop, region);
         culture.AddPop(pop, culture);
+        region.AddPop(pop, region);
 
         return pop;
     }
