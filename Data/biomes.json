@@ -57,7 +57,7 @@
 		{
 			"id":"cool desert",
 			"mergedIds":["cool temperate desert", "cool temperate desert scrub"],
-			"fertility":0.2,
+			"fertility":0.3,
 			"color":"B9BE37",
 			"textureX": 1,
 			"textureY": 2,
@@ -84,7 +84,7 @@
 		{
 			"id":"hot desert",
 			"mergedIds":["warm temperate desert", "warm temperate desert scrub", "subtropical desert", "subtropical desert scrub", "tropical desert", "tropical desert scrub"],
-			"fertility":0.15,
+			"fertility":0.2,
 			"color":"F0F000",
 			"textureX": 2,
 			"textureY": 1,

@@ -239,26 +239,28 @@ public partial class MapManager : Area2D
                 }
                 break;
             case MapModes.CULTURE:
-                if (region.habitable && region.pops.Count > 0)
+                if (region.largestCulture != null)
                 {
                     color = region.largestCulture.color;
-                    if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == PopObject.ObjectType.CULTURE)
-                    {
-                        Culture culture = (Culture)selectedMetaObj;
-                        if (region.cultures.ContainsKey(culture) && region.largestCulture != culture){
-                            color = culture.color;
-                            color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
-                        }
-                        else if (region.largestCulture != culture)
-                        {
-                            color = (color * 0.3f) + (new Color(0, 0, 0) * 0.7f);
-                        }
-                    }
                 }
                 else if (region.habitable)
                 {
                     color = new Color(0, 0, 0, 1);
                 }
+
+                if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == PopObject.ObjectType.CULTURE)
+                {
+                    Culture culture = (Culture)selectedMetaObj;
+                    if (region.cultures.ContainsKey(culture) && region.largestCulture != culture)
+                    {
+                        color = culture.color;
+                        color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+                    }
+                    else if (region.largestCulture != culture)
+                    {
+                        color = (color * 0.3f) + (new Color(0, 0, 0) * 0.7f);
+                    }
+                }                
                 break;
             case MapModes.TECH:
                 break;

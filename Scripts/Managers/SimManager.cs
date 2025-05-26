@@ -294,16 +294,16 @@ public partial class SimManager : Node
     {
         foreach (Region region in habitableRegions)
         {
-            double nodeChance = 0.01 / world.worldSizeMult;
+            double nodeChance = 1;
             nodeChance *= region.avgFertility;
 
-            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.0)
+            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.1)
             {
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 Culture culture = CreateCulture();
                 foreach (Region testRegion in habitableRegions)
                 {
-                    if (testRegion.pops.Count > 0 && testRegion.pos.DistanceTo(region.pos) <= 3)
+                    if (testRegion.pops.Count > 0 && testRegion.pos.DistanceTo(region.pos) <= 14)
                     {
                         culture = testRegion.pops[0].culture;
                     }
@@ -319,6 +319,10 @@ public partial class SimManager : Node
         ulong migrateTime = 0;
         ulong growTime = 0;
         Parallel.ForEach(pops.ToArray(), pop  =>
+        {
+
+        });
+        foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
             if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
@@ -346,10 +350,6 @@ public partial class SimManager : Node
                     pop.region.PopWealth(pop);
                 }
             }
-        });
-        foreach (Pop pop in pops.ToArray())
-        {
-
         }
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
         // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
