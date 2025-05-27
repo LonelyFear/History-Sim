@@ -9,18 +9,18 @@ public class State : PopObject
     public string displayName = "Nation";
     public Color color;
     public Color displayColor;
-    public List<Army> armies;
+    public List<Army> armies = new List<Army>();
     public GovernmentTypes government = GovernmentTypes.MONARCHY;
     public List<Region> regions = new List<Region>();
     public Region capital;
     public long manpower;
+    public long reserveManpower;
     public long manpowerTarget;
     List<State> vassals = new List<State>();
     State liege;
     public Dictionary<State, Relation> relations;
     public List<State> borderingStates = new List<State>();
     public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
-    public SimManager simManager;
 
 
     public List<Character> characters = new List<Character>();
@@ -28,6 +28,7 @@ public class State : PopObject
     public Tech tech;
     public List<Conflict> conflicts = new List<Conflict>();
     public List<War> wars = new List<War>();
+    public List<State> enemies = new List<State>();
 
     // Government
     public long wealth;
@@ -144,20 +145,6 @@ public class State : PopObject
         population = countedP;
         workforce = countedW;
         pops = countedPops;
-    }
-
-    public void Recruitment()
-    {
-        if (manpower > workforce)
-        {
-            manpower = workforce;
-        }
-        if (professions.ContainsKey(Profession.FARMER) && professions.ContainsKey(Profession.MERCHANT))
-        {
-            manpowerTarget = (long)Mathf.Round((professions[Profession.FARMER] + professions[Profession.MERCHANT]) * 0.25);
-            manpower = (long)Mathf.Lerp(manpower, manpowerTarget, 0.05);
-        }
-        //manpower = 400 * regions.Count;
     }
 
     public void SetLeader(Character newLeader)

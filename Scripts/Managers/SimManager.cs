@@ -46,24 +46,12 @@ public partial class SimManager : Node
     public long popTaskId = 0;
 
     int currentBatch = 0;
-
-    public long simToPopMult;
     Random rng = new Random();
 
     // Events
     public delegate void SimulationInitializedEventHandler();
-
-    // Saved Stuff
-    public Dictionary<string, SimResource> resources = new Dictionary<string, SimResource>();
-    public Dictionary<string, BuildingData> buildings = new Dictionary<string, BuildingData>();
     public override void _Ready()
     {
-        for (int i = 0; i < 10; i++)
-        {
-            //GD.Print(NameGenerator.GenerateCharacterName());
-            //GD.Print(NameGenerator.GenerateCharacterName(true));
-        }
-        simToPopMult = Pop.simPopulationMultiplier;
         world = (WorldGeneration)GetParent().GetNode<Node2D>("World");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
         mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
@@ -81,94 +69,16 @@ public partial class SimManager : Node
     {
         return tilesPerRegion * (regionPos * (world.Scale * 16));
     }
-
-    void LoadBuildings()
-    {
-        string buildingsPath = @"Data/Buildings/";
-        DirAccess buildingDir = DirAccess.Open(buildingsPath);
-        if (buildingDir != null)
-        {
-            foreach (string buildingFile in buildingDir.GetFiles())
-            {
-                string path = buildingsPath + buildingFile;
-
-                string buildingData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
-
-                BuildingData building = JsonSerializer.Deserialize<BuildingData>(buildingData);
-
-                buildings.Add(building.id, building);
-                foreach (string id in building.resourcesProducedIds.Keys)
-                {
-                    if (GetResource(id) == null)
-                    {
-                        GD.PushError("Building couldnt load resource '" + id + "'");
-                        return;
-                    }
-                    building.resourcesProduced.Add(GetResource(id), building.resourcesProducedIds[id]);
-                }
-            }
-
-        }
-        else
-        {
-            GD.PushError("Buildings directory not found at path '" + buildingsPath + "'");
-        }
-    }
-    void LoadResources()
-    {
-        string resourcesPath = @"Data/Resources/";
-
-        DirAccess resourcesDir = DirAccess.Open(resourcesPath);
-        if (resourcesDir != null)
-        {
-            foreach (string resourcesFile in resourcesDir.GetFiles())
-            {
-                string path = resourcesPath + resourcesFile;
-
-                string resourceData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
-                SimResource resource = JsonSerializer.Deserialize<SimResource>(resourceData);
-
-                resources.Add(resource.id, resource);
-            }
-
-        }
-        else
-        {
-            GD.PushError("Resources directory not found at path '" + resourcesPath + "'");
-        }
-    }
-    public SimResource GetResource(string id)
-    {
-        if (resources.ContainsKey(id))
-        {
-            return resources[id];
-        }
-        else
-        {
-            GD.PushError("Resource not found with ID '" + id + "'");
-            return null;
-        }
-    }
-    public BuildingData GetBuilding(string id)
-    {
-        if (buildings.ContainsKey(id))
-        {
-            return buildings[id];
-        }
-        else
-        {
-            GD.PushError("Building not found with ID '" + id + "'");
-            return null;
-        }
-    }
     private void OnWorldgenFinished()
     {
         PopObject.simManager = this;
         Army.simManager = this;
         Character.simManager = this;
-        LoadResources();
-        // Load Resources Before Buildings
-        LoadBuildings();
+        Pop.simManager = this;
+
+        ResourceLoader.LoadResources();
+        ResourceLoader.LoadBuildings();
+        // Load Resources Before Buildings        
         terrainSize = world.worldSize;
         worldSize = terrainSize / tilesPerRegion;
 
@@ -294,7 +204,7 @@ public partial class SimManager : Node
     {
         foreach (Region region in habitableRegions)
         {
-            double nodeChance = 1;
+            double nodeChance = 0.005;
             nodeChance *= region.avgFertility;
 
             if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.1)
@@ -605,7 +515,6 @@ public partial class SimManager : Node
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
-                simManager = this,
                 foundTick = timeManager.ticks
             };
             states.Add(state);

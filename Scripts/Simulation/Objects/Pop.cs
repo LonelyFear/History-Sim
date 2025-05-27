@@ -26,6 +26,7 @@ public class Pop
     public const double foodPerCapita = 1.0;
     public const double dependentNeedMultiplier = .8;
     public List<Character> characters = new List<Character>();
+    public static SimManager simManager;
 
     public void ChangeWorkforce(long amount)
     {
@@ -57,64 +58,83 @@ public class Pop
         }
         SimManager.m.ReleaseMutex();
     }
-    public void ChangePopulation(long workforceChange, long dependentChange){
+    public void ChangePopulation(long workforceChange, long dependentChange)
+    {
         ChangeWorkforce(workforceChange);
         ChangeDependents(dependentChange);
     }
 
     public const long simPopulationMultiplier = 1000;
-    public static long FromNativePopulation(long simPopulation){
-        return simPopulation/simPopulationMultiplier;
+    public static long FromNativePopulation(long simPopulation)
+    {
+        return simPopulation / simPopulationMultiplier;
     }
-    public static long ToNativePopulation(long population){
+    public static long ToNativePopulation(long population)
+    {
         return population * simPopulationMultiplier;
     }
-    public void CalcWealthPerCapita(){
+    public void CalcWealthPerCapita()
+    {
         wealthPerCapita = totalWealth / FromNativePopulation(population);
     }
 
-    public long GetConsumptionPopulation(){
+    public long GetConsumptionPopulation()
+    {
         return (long)(FromNativePopulation(workforce) + (FromNativePopulation(dependents) * dependentNeedMultiplier));
     }
 
-    public double ConsumeResources(ResourceType type, double needPerCapita, Economy economy){
+    public double ConsumeResources(ResourceType type, double needPerCapita, Economy economy)
+    {
         double needForPopulation = needPerCapita * GetConsumptionPopulation();
         double unsatisfiedNeed = needForPopulation;
 
-        foreach (var pair in economy.resources){
+        foreach (var pair in economy.resources)
+        {
             SimResource resource = pair.Key;
-            if (resource.types.Contains(type)){
+            if (resource.types.Contains(type))
+            {
 
                 double amount = pair.Value;
 
-                if (amount > unsatisfiedNeed){
+                if (amount > unsatisfiedNeed)
+                {
                     economy.ChangeResourceAmount(resource, -unsatisfiedNeed);
                     unsatisfiedNeed = 0;
-                } else {
+                }
+                else
+                {
                     economy.ChangeResourceAmount(resource, -amount);
                     unsatisfiedNeed -= amount;
                 }
-                
+
             }
         }
         return unsatisfiedNeed;
     }
-
-    public static bool CanPopsMerge(Pop a, Pop b){
-        if (a == null || b == null || a == b){
+    public static bool CanPopsMerge(Pop a, Pop b)
+    {
+        if (a == null || b == null || a == b)
+        {
             return false;
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public void AddCharacter(Character character){
-        try {
-            if (character == null){
+    public void AddCharacter(Character character)
+    {
+        try
+        {
+            if (character == null)
+            {
                 GD.PushError("Error: Null character added, something is probably broken");
-            } else if (character != null && !characters.Contains(character)){
-                if (character.pop != null){
+            }
+            else if (character != null && !characters.Contains(character))
+            {
+                if (character.pop != null)
+                {
                     character.pop.RemoveCharacter(character);
-                } 
-                if (region == null){
+                }
+                if (region == null)
+                {
                     GD.Print("wtf");
                     GD.Print(Enum.GetName(typeof(Profession), profession));
                 }
@@ -122,19 +142,49 @@ public class Pop
                 character.pop = this;
                 characters.Add(character);
             }
-        } catch (Exception e){
+        }
+        catch (Exception e)
+        {
             GD.PushError(e);
         }
     }
-    public void RemoveCharacter(Character character){
-        if (characters.Contains(character)){
+    public void RemoveCharacter(Character character)
+    {
+        if (characters.Contains(character))
+        {
             characters.Remove(character);
             character.pop = null;
         }
     }
+    public Pop ChangeProfession(long workforceDelta, long dependentDelta, Profession newProfession)
+    {
+        // Makes sure the profession is actually changing
+        // And that we arent just creating an empty pop
+        if (newProfession == profession && (workforceDelta >= ToNativePopulation(1) || dependentDelta>= ToNativePopulation(1)))
+        {
+            return null;
+        }
+        // Clamping
+        workforceDelta = Math.Clamp(workforceDelta, 0, workforce);
+        dependentDelta = Math.Clamp(dependentDelta, 0, dependents);
+
+        // If we are changing the whole pop just change the profession
+        if (workforceDelta == workforce && dependentDelta == dependents)
+        {
+            profession = newProfession;
+            return this;
+        }
+        // Makes a new pop with the new profession
+        Pop newWorkers = simManager.CreatePop(workforceDelta, dependentDelta, region, tech, culture, newProfession);
+        // And removes the people who switched to the new profession
+        ChangePopulation(-workforceDelta, -dependentDelta);
+        return newWorkers;
+    }
 }
 public enum Profession{
     FARMER,
+    SOLDIER,
+    ARTISAN,
     MERCHANT,
     ARISTOCRAT
 }

@@ -9,7 +9,8 @@ public class Army
     public Region location;
     public Region headquarters;
     public ulong strength;
-    public Character leader;
+    public uint maxStrength = 5000;
+    public Character commander;
     public Queue<Region> currentPath;
     public static SimManager simManager;
 

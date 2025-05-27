@@ -296,9 +296,17 @@ theme = ExtResource("4_exi56")
 button_pressed = true
 text = "Show Regions"
 
+[node name="ShowOverlaysCheck" type="CheckBox" parent="UI/Action Panel/HBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+button_pressed = true
+text = "Show Region
+Overlays"
+alignment = 1
+
 [node name="VSeparator" type="VSeparator" parent="UI/Action Panel/HBoxContainer"]
 layout_mode = 2
-theme_override_constants/separation = 635
+theme_override_constants/separation = 493
 theme_override_styles/separator = SubResource("StyleBoxEmpty_iivbl")
 
 [node name="MainMenuButton" type="Button" parent="UI/Action Panel/HBoxContainer"]

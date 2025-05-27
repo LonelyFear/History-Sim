@@ -14,9 +14,9 @@ public partial class PopulationLabel : Label
     public override void _Process(double delta)
     {
         if (simManager != null){
-            Text = "World Population: " + (simManager.worldPopulation / simManager.simToPopMult).ToString("#,##0")
-            + "\nTotal Pops: " + simManager.pops.Count.ToString("#,##0") + "\nTotal Characters: " + simManager.characters.Count.ToString("#,##0") +
-            "\nPopulated Regions: " + simManager.populatedRegions.ToString("#,##0");
+            Text = "World Population: " + (simManager.worldPopulation / Pop.simPopulationMultiplier).ToString("#,##0\n");
+            Text += "Total Pops: " + simManager.pops.Count.ToString("#,##0") + "\nTotal Characters: " + simManager.characters.Count.ToString("#,##0\n");
+            Text += "Populated Regions: " + simManager.populatedRegions.ToString("#,##0");
         } else {
             Text = "";
         }

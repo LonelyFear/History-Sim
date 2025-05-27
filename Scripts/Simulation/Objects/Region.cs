@@ -94,9 +94,7 @@ public class Region : PopObject
             owner.population = population;
             owner.workforce = workforce;
             Pop basePop = pops[0];
-            Pop rulingPop = simManager.CreatePop(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), this, basePop.tech, basePop.culture, Profession.ARISTOCRAT);
-            basePop.ChangePopulation(Pop.ToNativePopulation(-25), Pop.ToNativePopulation(-75));
-            AddPop(rulingPop, this);
+            Pop rulingPop = basePop.ChangeProfession(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), Profession.ARISTOCRAT);
 
             owner.rulingPop = rulingPop;
             owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
@@ -361,7 +359,7 @@ public class Region : PopObject
         double maxProduced = 530;
         double steepness = 0.021;
         double foodPerSlot = maxProduced / (1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));
-        economy.ChangeResourceAmount(simManager.GetResource("grain"), foodPerSlot * avgFertility * landCount);
+        economy.ChangeResourceAmount(ResourceLoader.GetResource("grain"), foodPerSlot * avgFertility * landCount);
     }
     #endregion
     #endregion
