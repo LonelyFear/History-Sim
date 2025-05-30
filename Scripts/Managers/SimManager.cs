@@ -76,8 +76,6 @@ public partial class SimManager : Node
         Character.simManager = this;
         Pop.simManager = this;
 
-        ResourceLoader.LoadResources();
-        ResourceLoader.LoadBuildings();
         // Load Resources Before Buildings        
         terrainSize = world.worldSize;
         worldSize = terrainSize / tilesPerRegion;

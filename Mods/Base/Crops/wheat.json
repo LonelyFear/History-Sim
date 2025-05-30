@@ -1,0 +1,9 @@
+{
+	"name":"Wheat",
+	"id":"wheat",
+	"maxFertility" : 1.0,
+	"minFertility" : 0.4,
+	"yield" : {
+		"bread" : 1.0
+	}
+}

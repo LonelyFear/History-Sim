@@ -1,6 +1,0 @@
-{
-	"name":"Food",
-	"id":"grain",
-	"baseCost" : 1,
-	"types":[0]
-}

@@ -1,11 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Threading;
-using Mutex = System.Threading.Mutex;
 using Godot;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 
 public class Region : PopObject
 {
@@ -32,6 +28,7 @@ public class Region : PopObject
     public bool frontier;
     public bool needsJobs { private set; get; }
     public bool needsWorkers { private set; get; }
+    public List<Crop> plantableCrops = new List<Crop>();
     public void CalcAvgFertility()
     {
         name = "Region";
@@ -55,6 +52,14 @@ public class Region : PopObject
         }
         //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
         avgFertility = (f / landCount);
+
+        foreach (Crop crop in AssetManager.crops.Values)
+        {
+            if (crop.maxFertility <= avgFertility && crop.minFertility >= avgFertility)
+            {
+                plantableCrops.Add(crop);
+            }
+        }
     }
 
     public void CheckHabitability()
@@ -338,28 +343,15 @@ public class Region : PopObject
         }
     }
     #region Food & Consumption
-    public void PopConsumption()
-    {
-        foreach (Pop pop in pops)
-        {
-            pop.deathRate = pop.baseDeathRate;
-            double unsatisfiedFoodPerCapita = pop.ConsumeResources(ResourceType.FOOD, Pop.foodPerCapita, economy) / pop.GetConsumptionPopulation();
-            if (unsatisfiedFoodPerCapita != 0)
-            {
-                float starvationPercentage = (float)(unsatisfiedFoodPerCapita / Pop.foodPerCapita);
-                pop.deathRate = pop.baseDeathRate + Mathf.Lerp(0.0f, 1f, starvationPercentage);
-            }
-        }
-    }
 
     public void Farming()
     {
-        double totalWork = professions[Profession.FARMER];
+        double totalWork = professions[Profession.FARMER] * 0.5f;
 
-        double maxProduced = 530;
-        double steepness = 0.021;
-        double foodPerSlot = maxProduced / (1 + 100 * Mathf.Pow(Mathf.E, steepness - (steepness * totalWork)));
-        economy.ChangeResourceAmount(ResourceLoader.GetResource("grain"), foodPerSlot * avgFertility * landCount);
+        foreach (BaseResource yield in plantableCrops[0].yields.Keys)
+        {
+            economy.ChangeResourceAmount(yield, plantableCrops[0].yields[yield] * totalWork * landCount);
+        }
     }
     #endregion
     #endregion

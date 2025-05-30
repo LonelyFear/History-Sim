@@ -1,0 +1,6 @@
+{
+	"name":"Bread",
+	"id":"bread",
+	"baseWorth": 1.0,
+	"nutrition":1.0
+}

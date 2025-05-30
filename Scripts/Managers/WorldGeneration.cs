@@ -59,7 +59,6 @@ public partial class WorldGeneration : Node2D
     [Export] public int seed;
     [Export] public float mapScale = 1.5f;
     [Export] public int octaves = 8;
-    public List<Biome> loadedBiomes;
     Random rng;
 
     public bool generationFinished = false;
@@ -270,6 +269,7 @@ public partial class WorldGeneration : Node2D
     }
     public void GenerateWorld()
     {
+        AssetManager.LoadMods();
         worldGenStage++;
         GD.Print("Heightmap Generation Started");
         ulong startTime = Time.GetTicksMsec();
@@ -311,17 +311,16 @@ public partial class WorldGeneration : Node2D
 
     public void ColorMap(){
         worldGenStage++;
-        GD.Print("Map Coloring Started");
+        //GD.Print("Map Coloring Started");
         ulong startTime = Time.GetTicksMsec();
         // Map coloring
-        loadedBiomes = LoadBiomes();
         biomes = new Biome[worldSize.X, worldSize.Y]; 
 
         terrainImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgb8);
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
                 preparationProgress++;
-                foreach (Biome biome in loadedBiomes){
+                foreach (Biome biome in AssetManager.biomes.Values){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
                         
                         if (biome.terrainType != Biome.TerrainType.WATER)
@@ -363,7 +362,7 @@ public partial class WorldGeneration : Node2D
                 preparationProgress++;
                 Biome biome = biomes[x,y];
                 if (biome.terrainType == Biome.TerrainType.WATER){
-                    Color oceanColor = Color.FromString(GetBiome("shallow ocean").color, new Color(1, 1, 1));
+                    Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow ocean").color, new Color(1, 1, 1));
                     //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
                     terrainImage.SetPixel(x,y, oceanColor);
                 } else {
@@ -590,27 +589,5 @@ public partial class WorldGeneration : Node2D
         } else {
             return HumidTypes.INVALID;
         }
-    }
-
-    List<Biome> LoadBiomes(){
-        string biomesPath = @"Data/biomes.json";
-        FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
-        if (bio != null){       
-            string biomeData = bio.GetAsText();
-
-            List<Biome> biomeList = JsonSerializer.Deserialize<List<Biome>>(biomeData);
-            return biomeList;
-        }
-        GD.Print("Biomes.json not found at path '" + biomesPath + "'");  
-        return null;
-    }
-
-    public Biome GetBiome(string id){
-        foreach (Biome biome in loadedBiomes){
-            if (biome.id == id){
-                return biome;
-            }
-        }
-        return null;
     }
 }

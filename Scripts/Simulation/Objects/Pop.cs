@@ -77,40 +77,6 @@ public class Pop
     {
         wealthPerCapita = totalWealth / FromNativePopulation(population);
     }
-
-    public long GetConsumptionPopulation()
-    {
-        return (long)(FromNativePopulation(workforce) + (FromNativePopulation(dependents) * dependentNeedMultiplier));
-    }
-
-    public double ConsumeResources(ResourceType type, double needPerCapita, Economy economy)
-    {
-        double needForPopulation = needPerCapita * GetConsumptionPopulation();
-        double unsatisfiedNeed = needForPopulation;
-
-        foreach (var pair in economy.resources)
-        {
-            SimResource resource = pair.Key;
-            if (resource.types.Contains(type))
-            {
-
-                double amount = pair.Value;
-
-                if (amount > unsatisfiedNeed)
-                {
-                    economy.ChangeResourceAmount(resource, -unsatisfiedNeed);
-                    unsatisfiedNeed = 0;
-                }
-                else
-                {
-                    economy.ChangeResourceAmount(resource, -amount);
-                    unsatisfiedNeed -= amount;
-                }
-
-            }
-        }
-        return unsatisfiedNeed;
-    }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
         if (a == null || b == null || a == b)

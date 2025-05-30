@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public class Biome
 {
@@ -9,8 +10,10 @@ public class Biome
     public string color { get; set; } 
     public int textureX { get; set; } 
     public int textureY { get; set; } 
-    public TerrainType terrainType { get; set; } 
-    public enum TerrainType{
+    public TerrainType terrainType { get; set; }
+    //public List<Crop> crops = new List<Crop>();
+    public enum TerrainType
+    {
         LAND,
         WATER,
         ICE
