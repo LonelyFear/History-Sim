@@ -29,6 +29,7 @@ public class Pop
     public const float dependentNutritionNeed = .8f;
     public List<Character> characters = new List<Character>();
     public static SimManager simManager;
+    public static Random rng = new Random();
 
     public void ChangeWorkforce(long amount)
     {
@@ -190,11 +191,22 @@ public class Pop
         Crop crop = SelectCrop();
         if (crop != null)
         {
-            double totalWork = FromNativePopulation(workforce) * 4.54f;
+            double totalWork = FromNativePopulation(workforce) * 5f * Mathf.Lerp(rng.NextSingle(), 0.95f, 1f);
             foreach (BaseResource yield in crop.yields.Keys)
             {
                 region.economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork);
             }
+        }
+    }
+    #endregion
+    #region Jobs
+    public void ProfessionUpdate()
+    {
+        switch (profession)
+        {
+            case Profession.FARMER:
+                GrowCrops();
+                break;
         }
     }
     #endregion

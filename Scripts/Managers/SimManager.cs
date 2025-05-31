@@ -253,15 +253,17 @@ public partial class SimManager : Node
                     pop.region.MigratePop(pop);
                     growTime += Time.GetTicksMsec() - startTime;
                 }
-                if (pop.profession == Profession.FARMER)
-                {
-                    pop.GrowCrops();
-                }
-                pop.ConsumeFood();
                 if (pop.region.owner != null)
                 {
                     pop.region.PopWealth(pop);
                 }
+                // Pop Farming           
+                pop.ProfessionUpdate();
+                pop.ConsumeFood();
+
+                // Starving
+                pop.ChangePopulation(-(long)(pop.workforce * pop.starvingPercentage), -(long)(pop.dependents * pop.starvingPercentage));
+
             }
         }
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
