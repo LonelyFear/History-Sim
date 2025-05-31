@@ -16,7 +16,7 @@ public class Pop
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
-    public Profession profession;
+    public Profession profession = Profession.FARMER;
     public double totalWealth;
     public double wealthPerCapita;
     public Tech tech;
@@ -126,7 +126,7 @@ public class Pop
     {
         // Makes sure the profession is actually changing
         // And that we arent just creating an empty pop
-        if (newProfession == profession && (workforceDelta >= ToNativePopulation(1) || dependentDelta>= ToNativePopulation(1)))
+        if (newProfession == profession && (workforceDelta >= ToNativePopulation(1) || dependentDelta >= ToNativePopulation(1)))
         {
             return null;
         }
@@ -146,8 +146,35 @@ public class Pop
         ChangePopulation(-workforceDelta, -dependentDelta);
         return newWorkers;
     }
+    public Crop SelectCrop()
+    {
+        if (region.plantableCrops.Count > 0)
+        {
+            return region.plantableCrops[0];
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    public void GrowCrops()
+    {
+        Crop crop = SelectCrop();
+        if (crop != null)
+        {
+            float totalWork = FromNativePopulation(workforce) * 0.5f;
+            foreach (BaseResource yield in crop.yields.Keys)
+            {
+                region.economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork);
+            }
+        }
+    }
 }
-public enum Profession{
+
+
+public enum Profession
+{
     FARMER,
     SOLDIER,
     ARTISAN,

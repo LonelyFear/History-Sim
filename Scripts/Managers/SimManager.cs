@@ -253,6 +253,10 @@ public partial class SimManager : Node
                     pop.region.MigratePop(pop);
                     growTime += Time.GetTicksMsec() - startTime;
                 }
+                if (pop.profession == Profession.FARMER)
+                {
+                    pop.GrowCrops();
+                }
                 if (pop.region.owner != null)
                 {
                     pop.region.PopWealth(pop);

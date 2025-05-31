@@ -55,7 +55,7 @@ public class Region : PopObject
 
         foreach (Crop crop in AssetManager.crops.Values)
         {
-            if (crop.maxFertility <= avgFertility && crop.minFertility >= avgFertility)
+            if (avgFertility <= crop.maxFertility && avgFertility >= crop.minFertility)
             {
                 plantableCrops.Add(crop);
             }
@@ -237,7 +237,7 @@ public class Region : PopObject
                     break;
                 }
             }
-        }            
+        }
     }
 
     #region PopGrowth
@@ -299,7 +299,7 @@ public class Region : PopObject
             {
                 MovePop(pop, target, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
             }
-                              
+
         }
     }
 
@@ -342,18 +342,7 @@ public class Region : PopObject
             SimManager.m.ReleaseMutex();
         }
     }
-    #region Food & Consumption
 
-    public void Farming()
-    {
-        double totalWork = professions[Profession.FARMER] * 0.5f;
-
-        foreach (BaseResource yield in plantableCrops[0].yields.Keys)
-        {
-            economy.ChangeResourceAmount(yield, plantableCrops[0].yields[yield] * totalWork * landCount);
-        }
-    }
-    #endregion
     #endregion
 
     public static bool GetPathToRegion(Region start, Region goal, out Queue<Region> path)
@@ -396,7 +385,7 @@ public class Region : PopObject
                         flow[next] = current;
                     }
                 }
-            }     
+            }
         }
         if (validPath)
         {
@@ -409,5 +398,6 @@ public class Region : PopObject
         }
         return validPath;
     }
+    
     
 }

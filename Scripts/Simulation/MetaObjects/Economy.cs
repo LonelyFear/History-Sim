@@ -6,36 +6,65 @@ using System.Linq;
 public class Economy
 {
     public Dictionary<BaseResource, double> resources = new Dictionary<BaseResource, double>();
-    
-    public double ChangeResourceAmount(BaseResource resource, double amount){
-        if (amount > 0){
-            if (!resources.ContainsKey(resource)){
+
+    public double ChangeResourceAmount(BaseResource resource, double amount)
+    {
+        if (amount > 0)
+        {
+            if (!resources.ContainsKey(resource))
+            {
                 resources.Add(resource, amount);
-            } else {
+            }
+            else
+            {
                 resources[resource] += amount;
-            }            
-        } else if (resources.ContainsKey(resource)){
+            }
+        }
+        else if (resources.ContainsKey(resource))
+        {
             resources[resource] += amount;
-            if (resources[resource] <= 0){
+            if (resources[resource] <= 0)
+            {
                 double extra = resources[resource];
-                resources.Remove(resource);                
+                resources.Remove(resource);
                 return Mathf.Abs(extra);
             }
         }
         return 0;
     }
-    public void SetResourceAmount(BaseResource resource, double amount){
-        if (amount > 0){
-            if (!resources.ContainsKey(resource)){
+    public void TransferResources(Economy newEconomy, BaseResource resource, double amount)
+    {
+        double clampedAmount = Mathf.Clamp(amount, 0, resources[resource]);
+        if (resources.ContainsKey(resource))
+        {
+            ChangeResourceAmount(resource, -clampedAmount);
+        }
+        newEconomy.ChangeResourceAmount(resource, clampedAmount);
+    }
+    public void SetResourceAmount(BaseResource resource, double amount)
+    {
+        if (amount > 0)
+        {
+            if (!resources.ContainsKey(resource))
+            {
                 resources.Add(resource, amount);
-            } else {
+            }
+            else
+            {
                 resources[resource] = amount;
-            }                
-        } else if (resources.ContainsKey(resource)){
+            }
+        }
+        else if (resources.ContainsKey(resource))
+        {
             resources.Remove(resource);
         }
     }
-    public double AmountOfResource(BaseResource resource){
-        return resources[resource];
+    public double AmountOfResource(BaseResource resource)
+    {
+        if (resources.ContainsKey(resource))
+        {
+            return resources[resource];
+        }
+        return 0;
     }
 }

@@ -40,7 +40,8 @@ public partial class ObjectInfo : Control
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
                     nameLabel.Text = "Disorganized Tribes";
-                    specialLabel.Text = "Fertility: " + region.avgFertility.ToString("0.00");
+                    specialLabel.Text = "Fertility: " + region.avgFertility.ToString("0.00") + "\n";
+                    specialLabel.Text += "Food: " + region.economy.AmountOfResource(AssetManager.GetResource("bread")).ToString("#,###0");
                     break;
                 case PopObject.ObjectType.CULTURE:
                     Culture culture = (Culture)metaObject;
