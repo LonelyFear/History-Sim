@@ -59,12 +59,37 @@ public class Economy
             resources.Remove(resource);
         }
     }
-    public double AmountOfResource(BaseResource resource)
+    public double GetResourceAmount(BaseResource resource)
     {
         if (resources.ContainsKey(resource))
         {
             return resources[resource];
         }
         return 0;
+    }
+    public double GetTotalFoodAmount()
+    {
+        double amount = 0;
+        foreach (BaseResource resource in resources.Keys)
+        {
+            if (resource.GetType() == typeof(FoodResouce))
+            {
+                amount += resources[resource];
+            }
+        }
+        return amount;
+    }
+    public double GetTotalNutrition()
+    {
+        double amount = 0;
+        foreach (BaseResource resource in resources.Keys)
+        {
+            if (resource.GetType() == typeof(FoodResouce))
+            {
+                FoodResouce food = (FoodResouce)resource;
+                amount += resources[food] * food.nutrition;
+            }
+        }
+        return amount;
     }
 }

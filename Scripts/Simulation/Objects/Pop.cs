@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Godot;
 
 public class Pop
@@ -13,6 +14,7 @@ public class Pop
     public float baseDeathRate = 0.29f;
     public float deathRate = 0.29f;
     public float birthRate = 0.3f;
+    public float starvingPercentage = 0;
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
@@ -23,8 +25,8 @@ public class Pop
     public int batchId;
 
     public bool canMove = true;
-    public const double foodPerCapita = 1.0;
-    public const double dependentNeedMultiplier = .8;
+    public const float workforceNutritionNeed = 1f;
+    public const float dependentNutritionNeed = .8f;
     public List<Character> characters = new List<Character>();
     public static SimManager simManager;
 
@@ -146,6 +148,31 @@ public class Pop
         ChangePopulation(-workforceDelta, -dependentDelta);
         return newWorkers;
     }
+    #region Farmin' & Starvin'
+    public void ConsumeFood()
+    {
+        double nutritionRequired = ((FromNativePopulation(workforce) * workforceNutritionNeed) + (FromNativePopulation(dependents) * dependentNutritionNeed)) * 1.0;
+        double nutritionSatisfied = 0;
+        foreach (BaseResource resource in region.economy.resources.Keys)
+        {
+            if (resource.IsFood())
+            {
+                FoodResouce foodstuff = (FoodResouce)resource;
+                double nutritionForFood = foodstuff.nutrition * region.economy.GetResourceAmount(foodstuff);
+
+                double nutritionRemaining = Mathf.Clamp(nutritionForFood, 0, nutritionRequired - nutritionSatisfied);
+                nutritionSatisfied += nutritionRemaining;
+
+                region.economy.ChangeResourceAmount(foodstuff, -(nutritionRemaining / foodstuff.nutrition));
+            }
+        }
+
+        if (nutritionSatisfied < nutritionRequired)
+        {
+            starvingPercentage = 1 - (float)(nutritionSatisfied / nutritionRequired);
+            starvingPercentage = Mathf.Clamp(starvingPercentage, 0, 1);
+        }
+    }
     public Crop SelectCrop()
     {
         if (region.plantableCrops.Count > 0)
@@ -163,13 +190,14 @@ public class Pop
         Crop crop = SelectCrop();
         if (crop != null)
         {
-            float totalWork = FromNativePopulation(workforce) * 0.5f;
+            double totalWork = FromNativePopulation(workforce) * 4.54f;
             foreach (BaseResource yield in crop.yields.Keys)
             {
                 region.economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork);
             }
         }
     }
+    #endregion
 }
 
 

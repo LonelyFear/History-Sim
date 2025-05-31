@@ -257,6 +257,7 @@ public partial class SimManager : Node
                 {
                     pop.GrowCrops();
                 }
+                pop.ConsumeFood();
                 if (pop.region.owner != null)
                 {
                     pop.region.PopWealth(pop);
