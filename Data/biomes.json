@@ -124,7 +124,7 @@
 			"id":"tropical rain forest",
 			"mergedIds":["subtropical wet forest", "subtropical rain forest", "tropical moist forest", "tropical wet forest", "tropical rain forest"],
 			"fertility":0.8,
-			"plantDensity":1,
+			"plantDensity":1.2,
 			"color":"329664",
 			"textureX": 3,
 			"textureY": 0,

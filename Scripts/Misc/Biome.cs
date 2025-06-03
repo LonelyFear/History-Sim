@@ -6,8 +6,8 @@ public class Biome
 {
     public string id { get; set; }
     public string[] mergedIds { get; set; } 
-    public float fertility { get; set; } 
-    public float plantDensity { get; set; } 
+    public float fertility { get; set; }
+    public float plantDensity { get; set; } = 0.0f;
     public string color { get; set; } 
     public int textureX { get; set; } 
     public int textureY { get; set; } 

@@ -328,19 +328,23 @@ public partial class WorldGeneration : Node2D
                         
                         if (biome.terrainType != TerrainType.WATER)
                         {
-                            tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));    
-                            if (biome.fertility >= 0.1f)
+                            tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
+                            // Plant Reliefs    
+                            if (biome.fertility >= 0.0f)
                             {
-                                if (rng.NextSingle() <= biome.fertility * 0.2f)
+                                if (rng.NextSingle() <= biome.plantDensity * 0.2f)
                                 {
+                                    // Grass
                                     reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 2));
                                 }
-                                if (rng.NextSingle() <= biome.fertility * 0.2f && biome.fertility > 0.75f)
+                                if (rng.NextSingle() <= biome.plantDensity * 0.2f && biome.plantDensity > 0.75f)
                                 {
+                                    // Bushes
                                     reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1, 1));
                                 }
-                                if (rng.NextSingle() <= biome.fertility * 0.25f)
+                                if (rng.NextSingle() <= biome.plantDensity * 0.25f)
                                 {
+                                    // Biome Specific Plants
                                     reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
                                 }
                             }
