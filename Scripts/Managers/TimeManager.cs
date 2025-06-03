@@ -40,7 +40,7 @@ public partial class TimeManager : Node
     OptionButton gameSpeedUI;
     public override void _Ready()
     {
-        world = GetNode<WorldGeneration>("/root/Game/World");
+        world = GetNode<WorldGeneration>("/root/Game/WorldGeneration");
         simManager = GetNode<SimManager>("/root/Game/Simulation");
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");

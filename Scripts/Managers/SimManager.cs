@@ -52,7 +52,7 @@ public partial class SimManager : Node
     public delegate void SimulationInitializedEventHandler();
     public override void _Ready()
     {
-        world = (WorldGeneration)GetParent().GetNode<Node2D>("World");
+        world = (WorldGeneration)GetParent().GetNode<Node2D>("WorldGeneration");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
         mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
 
@@ -90,6 +90,15 @@ public partial class SimManager : Node
                 newTile.biome = world.biomes[x, y];
                 newTile.fertility = newTile.biome.fertility;
                 newTile.terrainType = newTile.biome.terrainType;
+
+                if (world.heightmap[x, y] > WorldGeneration.hillThreshold)
+                {
+                    newTile.terrainType = TerrainType.HILLS;
+                }
+                if (world.heightmap[x, y] > WorldGeneration.mountainThreshold)
+                {
+                    newTile.terrainType = TerrainType.MOUNTAINS;
+                }
             }
         }
 
@@ -113,7 +122,7 @@ public partial class SimManager : Node
                         Tile borderTile = tiles[nx, ny];
                         // Makes aquatic and coastal tiles more fertile
                         
-                        if (borderTile.biome.terrainType == Biome.TerrainType.WATER)
+                        if (borderTile.biome.terrainType == TerrainType.WATER)
                         {
                             nearOcean = true;
                             if (borderTile.biome.id == "river")
@@ -259,11 +268,14 @@ public partial class SimManager : Node
                 }
                 // Pop Farming           
                 pop.ProfessionUpdate();
-                pop.ConsumeFood();
+                
 
                 // Starving
-                pop.ChangePopulation(-(long)(pop.workforce * pop.starvingPercentage), -(long)(pop.dependents * pop.starvingPercentage));
-
+                if (timeManager.ticks > 4)
+                {
+                    pop.ChangePopulation(-(long)(pop.workforce * pop.starvingPercentage * 0.5f), -(long)(pop.dependents * pop.starvingPercentage * 0.5f));
+                }
+                pop.ConsumeFood();
             }
         }
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
@@ -286,7 +298,7 @@ public partial class SimManager : Node
             if (region.pops.Count > 0)
             {
                 countedPoppedRegions += 1;
-
+                region.economy.RotPerishables();
                 if (region.pops.Count > 0)
                 {
                     region.MergePops();
@@ -294,6 +306,7 @@ public partial class SimManager : Node
                     startTime = Time.GetTicksMsec();
                     region.CheckPopulation();
                     checkTime += Time.GetTicksMsec() - startTime;
+                    region.GrowCrops();
 
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {

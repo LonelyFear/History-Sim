@@ -89,11 +89,11 @@ shape = SubResource("RectangleShape2D_7nbq1")
 
 [node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("world", "reliefs", "timeManager")]
 script = ExtResource("1_o5yvi")
-world = NodePath("../World")
-reliefs = NodePath("../World/Reliefs")
+world = NodePath("../WorldGeneration")
+reliefs = NodePath("../WorldGeneration/Reliefs")
 timeManager = NodePath("../Time Manager")
 
-[node name="World" type="Node2D" parent="."]
+[node name="WorldGeneration" type="Node2D" parent="."]
 z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
@@ -102,7 +102,7 @@ worldSizeMult = 3.0
 seed = 48590
 mapScale = 1.0
 
-[node name="Terrain Map" type="TileMapLayer" parent="World" node_paths=PackedStringArray("lodMap", "regionSprite")]
+[node name="Terrain Map" type="TileMapLayer" parent="WorldGeneration" node_paths=PackedStringArray("lodMap", "regionSprite")]
 scale = Vector2(1.333, 1.333)
 tile_set = ExtResource("4_1phco")
 script = ExtResource("5_nb51f")
@@ -111,11 +111,11 @@ regionSprite = NodePath("../../Map Manager/RegionOverlay")
 highQualityMaxZoom = 4.0
 baseRegionOpacity = 0.9
 
-[node name="Reliefs" type="TileMapLayer" parent="World"]
+[node name="Reliefs" type="TileMapLayer" parent="WorldGeneration"]
 z_index = 10
 tile_set = SubResource("TileSet_7nbq1")
 
-[node name="LOD Map" type="Sprite2D" parent="World"]
+[node name="LOD Map" type="Sprite2D" parent="WorldGeneration"]
 scale = Vector2(16, 16)
 centered = false
 
@@ -250,7 +250,7 @@ text = "Game Speed:"
 [node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-selected = 4
+selected = 6
 item_count = 7
 popup/item_0/text = "7 Days Per Second"
 popup/item_0/id = 0
@@ -345,4 +345,4 @@ limit_bottom = 720
 position_smoothing_enabled = true
 minZoom = 25.0
 
-[connection signal="worldgenFinished" from="World" to="Time Manager" method="_on_world_worldgen_finished"]
+[connection signal="worldgenFinished" from="WorldGeneration" to="Time Manager" method="_on_world_worldgen_finished"]

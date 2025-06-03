@@ -8,7 +8,21 @@ public class Tile
 	public bool hasRoad;
 	public Vector2I defaultIcon = new Vector2I();
 	public SettlementTypes settlementType = SettlementTypes.NONE;
-	public Biome.TerrainType terrainType;
+	public TerrainType terrainType;
+
+	public bool IsLand()
+	{
+		return terrainType == TerrainType.LAND || terrainType == TerrainType.MOUNTAINS || terrainType == TerrainType.HILLS;
+	}
+}
+public enum TerrainType
+{
+	LAND,
+	WATER,
+	ICE,
+	HILLS,
+	MOUNTAINS,
+	
 }
 public enum SettlementTypes{
 	NONE,

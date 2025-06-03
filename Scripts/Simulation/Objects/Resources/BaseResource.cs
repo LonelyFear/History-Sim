@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 public abstract class BaseResource
@@ -12,5 +13,9 @@ public abstract class BaseResource
     public bool IsFood()
     {
         return GetType() == typeof(FoodResouce);
+    }
+    public bool IsPerishable()
+    {
+        return GetType().IsSubclassOf(typeof(PerishableResource));
     }
 }

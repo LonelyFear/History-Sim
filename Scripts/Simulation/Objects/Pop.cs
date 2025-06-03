@@ -152,12 +152,14 @@ public class Pop
     #region Farmin' & Starvin'
     public void ConsumeFood()
     {
+        starvingPercentage = 0;
         double nutritionRequired = ((FromNativePopulation(workforce) * workforceNutritionNeed) + (FromNativePopulation(dependents) * dependentNutritionNeed)) * 1.0;
         double nutritionSatisfied = 0;
         foreach (BaseResource resource in region.economy.resources.Keys)
         {
             if (resource.IsFood())
             {
+                
                 FoodResouce foodstuff = (FoodResouce)resource;
                 double nutritionForFood = foodstuff.nutrition * region.economy.GetResourceAmount(foodstuff);
 
@@ -172,6 +174,7 @@ public class Pop
         {
             starvingPercentage = 1 - (float)(nutritionSatisfied / nutritionRequired);
             starvingPercentage = Mathf.Clamp(starvingPercentage, 0, 1);
+            //GD.Print(starvingPercentage);
         }
     }
     public Crop SelectCrop()
@@ -186,18 +189,6 @@ public class Pop
         }
     }
 
-    public void GrowCrops()
-    {
-        Crop crop = SelectCrop();
-        if (crop != null)
-        {
-            double totalWork = FromNativePopulation(workforce) * 5f * Mathf.Lerp(rng.NextSingle(), 0.95f, 1f);
-            foreach (BaseResource yield in crop.yields.Keys)
-            {
-                region.economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork);
-            }
-        }
-    }
     #endregion
     #region Jobs
     public void ProfessionUpdate()
@@ -205,7 +196,7 @@ public class Pop
         switch (profession)
         {
             case Profession.FARMER:
-                GrowCrops();
+                //GrowCrops();
                 break;
         }
     }

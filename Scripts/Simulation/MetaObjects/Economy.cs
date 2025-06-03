@@ -6,6 +6,7 @@ using System.Linq;
 public class Economy
 {
     public Dictionary<BaseResource, double> resources = new Dictionary<BaseResource, double>();
+    public float maxFoodStorage = 10000;
 
     public double ChangeResourceAmount(BaseResource resource, double amount)
     {
@@ -18,6 +19,10 @@ public class Economy
             else
             {
                 resources[resource] += amount;
+            }
+            if (resource.IsFood())
+            {
+                resources[resource] = Mathf.Clamp(resources[resource], 0, maxFoodStorage);
             }
         }
         else if (resources.ContainsKey(resource))
@@ -70,7 +75,7 @@ public class Economy
     public double GetTotalFoodAmount()
     {
         double amount = 0;
-        foreach (BaseResource resource in resources.Keys)
+        foreach (BaseResource resource in resources.Keys.ToArray())
         {
             if (resource.GetType() == typeof(FoodResouce))
             {
@@ -91,5 +96,16 @@ public class Economy
             }
         }
         return amount;
+    }
+
+    public void RotPerishables()
+    {
+        foreach (BaseResource resource in resources.Keys)
+        {
+            if (resource.IsPerishable())
+            {
+                resources[resource] *= 1f - ((PerishableResource)resource).rotRate;
+            }
+        }
     }
 }

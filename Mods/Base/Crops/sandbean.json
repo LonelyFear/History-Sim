@@ -1,0 +1,9 @@
+{
+	"name":"Sandbeans",
+	"id":"beans",
+	"maxFertility" : 0.8,
+	"minFertility" : 0.2,
+	"yield" : {
+		"grain" : 0.8
+	}
+}

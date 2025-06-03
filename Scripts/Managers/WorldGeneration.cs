@@ -17,9 +17,9 @@ public partial class WorldGeneration : Node2D
     TileMapLayer reliefMap;
     public string[,] tileBiomes;
     public Biome[,] biomes;
-    float[,] heightmap;
-    float[,] tempmap;
-    float[,] humidmap;
+    public float[,] heightmap;
+    public float[,] tempmap;
+    public float[,] humidmap;
 
     float[] tempThresholds = [0.874f, 0.765f, 0.594f, 0.439f, 0.366f, 0.124f];
     float[] humidThresholds = [0.941f, 0.778f, 0.507f, 0.236f, 0.073f, 0.014f, 0.002f];
@@ -47,6 +47,9 @@ public partial class WorldGeneration : Node2D
         SUPER_HUMID,
         INVALID
     }
+
+    public const float hillThreshold = 0.75f;
+    public const float mountainThreshold = 0.8f;
 
     [Signal]
     public delegate void worldgenFinishedEventHandler();
@@ -323,7 +326,7 @@ public partial class WorldGeneration : Node2D
                 foreach (Biome biome in AssetManager.biomes.Values){
                     if (biome.mergedIds.Contains(tileBiomes[x,y])){
                         
-                        if (biome.terrainType != Biome.TerrainType.WATER)
+                        if (biome.terrainType != TerrainType.WATER)
                         {
                             tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));    
                             if (biome.fertility >= 0.1f)
@@ -342,11 +345,11 @@ public partial class WorldGeneration : Node2D
                                 }
                             }
 
-                            if (heightmap[x, y] >= 0.75f)
+                            if (heightmap[x, y] >= hillThreshold)
                             {
                                 reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 1));
                             }
-                            if (heightmap[x, y] >= 0.8f)
+                            if (heightmap[x, y] >= mountainThreshold)
                             {
                                 reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
                             }                            
@@ -361,7 +364,7 @@ public partial class WorldGeneration : Node2D
             for (int y = 0; y < worldSize.Y; y++){
                 preparationProgress++;
                 Biome biome = biomes[x,y];
-                if (biome.terrainType == Biome.TerrainType.WATER){
+                if (biome.terrainType == TerrainType.WATER){
                     Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow ocean").color, new Color(1, 1, 1));
                     //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
                     terrainImage.SetPixel(x,y, oceanColor);

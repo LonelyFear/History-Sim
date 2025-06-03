@@ -16,7 +16,7 @@ public partial class LoadingScreen : Control
     public int worldSizeFactor;
     public override void _Ready()
     {
-        world = GetNode<WorldGeneration>("/root/Game/World");
+        world = GetNode<WorldGeneration>("/root/Game/WorldGeneration");
         sim = GetNode<SimManager>("/root/Game/Simulation");
         ui = GetNode<CanvasLayer>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
