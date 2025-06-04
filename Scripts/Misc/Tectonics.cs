@@ -18,10 +18,8 @@ public class Tectonics
     Vector2I worldSize;
     int seed;
     float seaLevel;
-    int sizeMult;
     float maxPressure = float.MinValue;
     float minPressure = float.MaxValue;
-    float maxElevation = float.MinValue;
     Random rng;
     bool advancedGeneration;
 

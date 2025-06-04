@@ -9,6 +9,7 @@ public class Region : PopObject
     public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
+    public float tradeWeight;
 
     public Vector2I pos;
     public float avgFertility;
@@ -30,6 +31,7 @@ public class Region : PopObject
     public bool needsWorkers { private set; get; }
     public List<Crop> plantableCrops = new List<Crop>();
     public float ariableLand;
+    public bool fieldsFull;
     public void CalcAvgFertility()
     {
         name = "Region";
@@ -289,7 +291,7 @@ public class Region : PopObject
         }
         if (population > maxPopulation)
         {
-            bRate *= 0.9f;
+            bRate *= 0.75f;
         }
 
         float NIR = (bRate - pop.deathRate) / 12f;
@@ -300,41 +302,6 @@ public class Region : PopObject
         pop.ChangeDependents(dependentChange);
     }
     #endregion
-
-    public void MigratePop(Pop pop)
-    {
-        // Chance of pop to migrate
-        float migrateChance = 0.0005f;
-
-        // Pops are most likely to migrate if their region is overpopulated
-        if (population >= maxPopulation * 0.95f)
-        {
-            migrateChance = 1f;
-        }
-        if (pop.profession == Profession.ARISTOCRAT)
-        {
-            migrateChance *= 0.1f;
-        }
-
-        // If the pop migrates
-        if (rng.NextSingle() <= migrateChance)
-        {
-            Region region = pop.region;
-            Region target = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
-
-            bool canMigrate = pop.profession == Profession.FARMER || region.owner != null;
-            if (owner != null && owner.rulingPop == pop)
-            {
-                canMigrate = region.owner == owner;
-            }
-
-            if (target.Migrateable(pop) && canMigrate)
-            {
-                MovePop(pop, target, (long)(pop.workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(pop.dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
-            }
-
-        }
-    }
 
     public bool Migrateable(Pop pop)
     {
@@ -446,20 +413,31 @@ public class Region : PopObject
     }
     public void GrowCrops()
     {
+        fieldsFull = false;
         Crop crop = SelectCrop();
         if (crop != null)
         {
             float cropsPerAribleLand = 200f;
             float farmerHarvestMult = 4f;
-            float smoothing = 0.01f;
-            
+            float smoothing = 0.1f;
+
             long totalFarmers = (long)Mathf.Round(Pop.FromNativePopulation(professions[Profession.FARMER]));
-            double totalWork =  cropsPerAribleLand * ariableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers/ariableLand)));
+            double totalWork = cropsPerAribleLand * ariableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers / ariableLand)));
             foreach (BaseResource yield in crop.yields.Keys)
             {
                 economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * farmerHarvestMult);
             }
+            fieldsFull = totalWork == cropsPerAribleLand * ariableLand;
         }
     }
     #endregion
+
+    public Region PickRandomBorder()
+    {
+        if (borderingRegions.Count > 0)
+        {
+            return borderingRegions[rng.Next(0, borderingRegions.Count)];
+        }
+        return null;
+    }
 }

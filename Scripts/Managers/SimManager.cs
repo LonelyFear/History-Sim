@@ -16,6 +16,7 @@ public partial class SimManager : Node
     public TileMapLayer reliefs;
     [Export(PropertyHint.Range, "4,16,4")]
     public TimeManager timeManager { get; set; }
+    [Export] public bool complexEconomy = false;
 
     public Tile[,] tiles;
     public List<Region> regions = new List<Region>();
@@ -50,6 +51,7 @@ public partial class SimManager : Node
 
     // Events
     public delegate void SimulationInitializedEventHandler();
+    #region Utility
     public override void _Ready()
     {
         world = (WorldGeneration)GetParent().GetNode<Node2D>("WorldGeneration");
@@ -69,6 +71,8 @@ public partial class SimManager : Node
     {
         return tilesPerRegion * (regionPos * (world.Scale * 16));
     }
+    #endregion
+    #region Initialization
     private void OnWorldgenFinished()
     {
         PopObject.simManager = this;
@@ -79,7 +83,7 @@ public partial class SimManager : Node
         // Load Resources Before Buildings        
         terrainSize = world.worldSize;
         worldSize = terrainSize / tilesPerRegion;
-
+        #region Tile Initialization
         tiles = new Tile[terrainSize.X, terrainSize.Y];
         for (int x = 0; x < terrainSize.X; x++)
         {
@@ -121,7 +125,7 @@ public partial class SimManager : Node
                         int ny = Mathf.PosMod(y + dy, terrainSize.Y);
                         Tile borderTile = tiles[nx, ny];
                         // Makes aquatic and coastal tiles more fertile
-                        
+
                         if (borderTile.biome.terrainType == TerrainType.WATER)
                         {
                             nearOcean = true;
@@ -134,14 +138,17 @@ public partial class SimManager : Node
                 }
                 if (nearRiver)
                 {
-                    tile.fertility *= 2f;
+                    tile.fertility *= 1.5f;
                 }
                 else if (nearOcean)
                 {
                     tile.fertility *= 1.25f;
                 }
+                tile.fertility = Mathf.Clamp(tile.fertility, 0, 1.2f);
             }
         }
+        #endregion
+        #region Region Creation
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
@@ -176,13 +183,15 @@ public partial class SimManager : Node
                 // Calc max populaiton
                 newRegion.CalcMaxPopulation();
                 // Adds pops
-                if (newRegion.habitable){
+                if (newRegion.habitable)
+                {
                     // Add pops here
                     long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(20, 100));
                     //CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture());
                 }
             }
         }
+        #endregion
         BorderingRegions();
         InitPops();
         mapManager.InitMapManager();
@@ -229,13 +238,15 @@ public partial class SimManager : Node
             }
         }
     }
+    #endregion
+    #region Pop Update
     public void UpdatePops()
     {
         ulong tickStartTime = Time.GetTicksMsec();
         ulong destroyTime = 0;
         ulong migrateTime = 0;
         ulong growTime = 0;
-        Parallel.ForEach(pops.ToArray(), pop  =>
+        Parallel.ForEach(pops.ToArray(), pop =>
         {
 
         });
@@ -259,7 +270,16 @@ public partial class SimManager : Node
                 if (pop.batchId == timeManager.GetMonth())
                 {
                     startTime = Time.GetTicksMsec();
-                    pop.region.MigratePop(pop);
+                    pop.Migrate();
+                    if (complexEconomy)
+                    {
+                        pop.ComplexProfessionTransitions();
+                    }
+                    else
+                    {
+                        pop.SimpleProfessionTransitions();
+                    }
+
                     growTime += Time.GetTicksMsec() - startTime;
                 }
                 if (pop.region.owner != null)
@@ -268,14 +288,15 @@ public partial class SimManager : Node
                 }
                 // Pop Farming           
                 pop.ProfessionUpdate();
-                
+
 
                 // Starving
-                if (timeManager.ticks > 4)
+                if (complexEconomy)
                 {
                     pop.ChangePopulation(-(long)(pop.workforce * pop.starvingPercentage * 0.5f), -(long)(pop.dependents * pop.starvingPercentage * 0.5f));
+                    pop.ConsumeFood();
                 }
-                pop.ConsumeFood();
+
             }
         }
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
@@ -283,6 +304,8 @@ public partial class SimManager : Node
         // GD.Print("  Pops Grow Time: " + growTime + " ms");
         // GD.Print("  Pops Move Time: " + migrateTime + " ms");
     }
+    #endregion
+    #region Region Update
     public void UpdateRegions()
     {
         uint countedPoppedRegions = 0;
@@ -295,10 +318,17 @@ public partial class SimManager : Node
         foreach (Region region in habitableRegions)
         {
             ulong startTime = Time.GetTicksMsec();
+            // Trade Route Decay
+            region.tradeWeight -= 0.1f;
+            if (region.tradeWeight < 0)
+            {
+                region.tradeWeight = 0;
+            }
+            region.economy.RotPerishables();
+
             if (region.pops.Count > 0)
             {
                 countedPoppedRegions += 1;
-                region.economy.RotPerishables();
                 if (region.pops.Count > 0)
                 {
                     region.MergePops();
@@ -306,7 +336,10 @@ public partial class SimManager : Node
                     startTime = Time.GetTicksMsec();
                     region.CheckPopulation();
                     checkTime += Time.GetTicksMsec() - startTime;
-                    region.GrowCrops();
+                    if (complexEconomy)
+                    {
+                        region.GrowCrops();
+                    }
 
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {
@@ -333,7 +366,8 @@ public partial class SimManager : Node
         // GD.Print("  Region Conquest Time: " + conquestTime + " ms");
         // GD.Print("  Region Border Time: " + borderTime + " ms");
     }
-
+    #endregion
+    #region Character Update
     public void UpdateCharacters()
     {
         ulong tickStartTime = Time.GetTicksMsec();
@@ -371,6 +405,8 @@ public partial class SimManager : Node
             }
         }
     }
+    #endregion
+    #region State Update
     public void UpdateStates()
     {
         foreach (State state in states.ToArray())
@@ -402,7 +438,8 @@ public partial class SimManager : Node
             }
         }
     }
-
+    #endregion
+    #region Culture Update
     public void UpdateCultures()
     {
         foreach (Culture culture in cultures.ToArray())
@@ -410,7 +447,8 @@ public partial class SimManager : Node
             culture.age += TimeManager.ticksPerMonth;
         }
     }
-
+    #endregion
+    #region Army Update
     public void UpdateArmies()
     {
         foreach (Army army in armies.ToArray())
@@ -418,6 +456,7 @@ public partial class SimManager : Node
             army.age += TimeManager.daysPerTick;
         }
     }
+    #endregion
     #region SimTick
     public void SimTick()
     {
@@ -437,7 +476,7 @@ public partial class SimManager : Node
     }
     #endregion
 
-    #region Pops
+    #region Stat Update
     void UpdateStats()
     {
         worldDependents += dependentsChange;
@@ -446,6 +485,7 @@ public partial class SimManager : Node
         workforceChange = 0;
         worldPopulation = worldDependents + worldWorkforce;
     }
+    #region Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER)
     {
         currentBatch += 1;
@@ -504,7 +544,6 @@ public partial class SimManager : Node
         int index = (lx * worldSize.Y) + ly;
         return regions[index];
     }
-    #region Creation
     public Culture CreateCulture()
     {
         float r = rng.NextSingle();

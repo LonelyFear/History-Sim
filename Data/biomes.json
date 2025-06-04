@@ -23,8 +23,8 @@
 		{
 			"id":"cold parkland",
 			"mergedIds":["boreal desert", "boreal dry scrub"],
-			"fertility":0.09,
-			"plantDensity":0.0,
+			"fertility":0.3,
+			"plantDensity":0.4,
 			"color":"828C73",
 			"textureX": 0,
 			"textureY": 2,
@@ -33,7 +33,7 @@
 		{
 			"id":"coniferous forest",
 			"mergedIds":["boreal moist forest", "boreal wet forest", "boreal rain forest"],
-			"fertility":0.5,
+			"fertility":0.45,
 			"plantDensity":0.5,
 			"color":"465A23",
 			"textureX": 0,
@@ -103,7 +103,7 @@
 		{
 			"id":"savanna",
 			"mergedIds":["subtropical thorn woodland", "tropical thorn woodland", "tropical very dry forest"],
-			"fertility":0.6,
+			"fertility":0.55,
 			"plantDensity":0.5,
 			"color":"FAC896",
 			"textureX": 2,
@@ -113,7 +113,7 @@
 		{
 			"id":"tropical seasonal forest",
 			"mergedIds":["subtropical dry forest", "tropical dry forest", "subtropical moist forest"],
-			"fertility":0.9,
+			"fertility":0.8,
 			"plantDensity":0.9,
 			"color":"C8FAC8",
 			"textureX": 2,
@@ -123,7 +123,7 @@
 		{
 			"id":"tropical rain forest",
 			"mergedIds":["subtropical wet forest", "subtropical rain forest", "tropical moist forest", "tropical wet forest", "tropical rain forest"],
-			"fertility":0.8,
+			"fertility":0.5,
 			"plantDensity":1.2,
 			"color":"329664",
 			"textureX": 3,

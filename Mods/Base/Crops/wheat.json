@@ -1,8 +1,8 @@
 {
 	"name":"Wheat",
 	"id":"wheat",
-	"maxFertility" : 1.5,
-	"minFertility" : 0.4,
+	"maxFertility" : 1,
+	"minFertility" : 0.6,
 	"yield" : {
 		"grain" : 1.0
 	}

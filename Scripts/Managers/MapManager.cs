@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 public partial class MapManager : Area2D
 {
-    Task mapmodeTask;
+    Task mapmodeTask = null;
     SimManager simManager;
     Vector2I worldSize;
     Sprite2D regionOverlay;
@@ -207,6 +207,10 @@ public partial class MapManager : Area2D
                         //color = new Color(1,0,0);
                     }
 
+                }
+                if (region.tradeWeight > 100)
+                {
+                    color = new Color(1,1,1,1);
                 }
                 if (selectedMetaObj != null)
                 {

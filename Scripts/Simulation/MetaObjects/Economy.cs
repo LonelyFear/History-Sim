@@ -5,8 +5,8 @@ using System.Linq;
 
 public class Economy
 {
-    public Dictionary<BaseResource, double> resources = new Dictionary<BaseResource, double>();
-    public float maxFoodStorage = 10000;
+    Dictionary<BaseResource, double> resources = new Dictionary<BaseResource, double>();
+    public float maxFoodStorage = 20000;
 
     public double ChangeResourceAmount(BaseResource resource, double amount)
     {
@@ -37,7 +37,7 @@ public class Economy
         }
         return 0;
     }
-    public void TransferResources(Economy newEconomy, BaseResource resource, double amount)
+    public void TransferResource(Economy newEconomy, BaseResource resource, double amount)
     {
         double clampedAmount = Mathf.Clamp(amount, 0, resources[resource]);
         if (resources.ContainsKey(resource))
@@ -46,6 +46,26 @@ public class Economy
         }
         newEconomy.ChangeResourceAmount(resource, clampedAmount);
     }
+
+    public void TransferResources(Economy newEconomy, BaseResource[] resourcesToTransfer, double amount)
+    {
+        double totalResources = 0;
+        foreach (BaseResource resource in resourcesToTransfer)
+        {
+            totalResources += GetResourceAmount(resource);
+        }
+
+        double clampedAmount = Mathf.Clamp(amount, 0, totalResources);
+        foreach (BaseResource resource in resourcesToTransfer)
+        {
+            double amountOfResource = GetResourceAmount(resource);
+            double amtTaken = Mathf.Clamp(amountOfResource, 0, clampedAmount);
+            clampedAmount -= amtTaken;
+            ChangeResourceAmount(resource, -amtTaken);
+            newEconomy.ChangeResourceAmount(resource, amtTaken);
+        }
+    }
+
     public void SetResourceAmount(BaseResource resource, double amount)
     {
         if (amount > 0)
@@ -84,6 +104,18 @@ public class Economy
         }
         return amount;
     }
+    public FoodResouce[] GetAllFood()
+    {
+        FoodResouce[] allFood = [];
+        foreach (BaseResource resource in GetResources())
+        {
+            if (resource.IsFood())
+            {
+                allFood.Append(resource);
+            }
+        }
+        return allFood;
+    }
     public double GetTotalNutrition()
     {
         double amount = 0;
@@ -107,5 +139,10 @@ public class Economy
                 resources[resource] *= 1f - ((PerishableResource)resource).rotRate;
             }
         }
+    }
+
+    public BaseResource[] GetResources()
+    {
+        return resources.Keys.ToArray();
     }
 }
