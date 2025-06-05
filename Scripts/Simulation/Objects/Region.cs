@@ -10,6 +10,8 @@ public class Region : PopObject
     public bool habitable;
     public bool coastal;
     public float tradeWeight;
+    public float tradeDifficulty;
+    public float movementDifficulty;
 
     public Vector2I pos;
     public float avgFertility;
@@ -51,12 +53,15 @@ public class Region : PopObject
                     {
                         case TerrainType.LAND:
                             ariableLand++;
+                            tradeDifficulty += 0.1f;
                             break;
                         case TerrainType.HILLS:
                             ariableLand += 0.5f;
+                            tradeDifficulty += 0.5f;
                             break;
                         case TerrainType.MOUNTAINS:
                             ariableLand += 0.1f;
+                            tradeDifficulty++;
                             break;
                         default:
                             if (tile.biome.id == "river")
@@ -72,6 +77,8 @@ public class Region : PopObject
                 }
             }
         }
+
+        tradeDifficulty /= landCount;     
         //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
         avgFertility = f / landCount;
 
@@ -287,14 +294,15 @@ public class Region : PopObject
         }
         else
         {
-            bRate = pop.birthRate;
+            bRate = pop.GetBirthRate();
         }
         if (population > maxPopulation)
         {
             bRate *= 0.75f;
         }
 
-        float NIR = (bRate - pop.deathRate) / 12f;
+        float NIR = (bRate - pop.GetDeathRate()) / 12f;
+
         long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
         long workforceChange = change - dependentChange;
@@ -417,15 +425,14 @@ public class Region : PopObject
         Crop crop = SelectCrop();
         if (crop != null)
         {
-            float cropsPerAribleLand = 200f;
-            float farmerHarvestMult = 4f;
-            float smoothing = 0.1f;
+            float cropsPerAribleLand = 230f;
+            float smoothing = 0.05f;
 
             long totalFarmers = (long)Mathf.Round(Pop.FromNativePopulation(professions[Profession.FARMER]));
             double totalWork = cropsPerAribleLand * ariableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers / ariableLand)));
             foreach (BaseResource yield in crop.yields.Keys)
             {
-                economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * farmerHarvestMult);
+                economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * 2f);
             }
             fieldsFull = totalWork == cropsPerAribleLand * ariableLand;
         }

@@ -276,7 +276,7 @@ public partial class WorldGeneration : Node2D
         worldGenStage++;
         GD.Print("Heightmap Generation Started");
         ulong startTime = Time.GetTicksMsec();
-        heightmap = new Tectonics().RunSimulation(this, 20);
+        heightmap = new Tectonics().RunSimulation(this, 30);
         GD.Print("Heightmap Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         worldGenStage++;

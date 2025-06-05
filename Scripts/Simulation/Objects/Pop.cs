@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using Godot;
 
 public class Pop
@@ -13,9 +10,7 @@ public class Pop
 
     public float baseBirthRate = 0.3f;
     public float baseDeathRate = 0.29f;
-    public float deathRate = 0.29f;
-    public float birthRate = 0.3f;
-    public float starvingPercentage = 0;
+    public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;
     public Region region;
     public Culture culture;
@@ -151,7 +146,8 @@ public class Pop
         return newWorkers;
     }
     #region Farmin' & Starvin'
-    public double GetRequiredNutrition() {
+    public double GetRequiredNutrition()
+    {
         return ((FromNativePopulation(workforce) * workforceNutritionNeed) + (FromNativePopulation(dependents) * dependentNutritionNeed)) * 1.0;
     }
     public void ConsumeFood()
@@ -209,20 +205,20 @@ public class Pop
                 }
                 else
                 {
-                    
+
                 }
-                
+
                 break;
         }
     }
     #region Simple Economy
     public void SimpleProfessionTransitions()
     {
-        
+
     }
     public void SimpleTrade()
     {
-        
+
     }
     #endregion
     #region Complex Economy
@@ -248,7 +244,7 @@ public class Pop
         switch (profession)
         {
             case Profession.FARMER:
-                bool surplusMercantilism = region.fieldsFull || region.economy.GetTotalNutrition() > GetRequiredNutrition() * 2 && FromNativePopulation(population) > 1000;
+                bool surplusMercantilism = region.fieldsFull || region.economy.GetTotalNutrition() > GetRequiredNutrition() * 1.25;
                 bool tradeMercantilism = region.tradeWeight >= 100;
                 if (surplusMercantilism || tradeMercantilism)
                 {
@@ -258,7 +254,7 @@ public class Pop
                 }
                 break;
             case Profession.MERCHANT:
-                if (region.economy.GetTotalNutrition() < GetRequiredNutrition() * 2 && !region.fieldsFull)
+                if (region.economy.GetTotalNutrition() < GetRequiredNutrition() * 1.2 && !region.fieldsFull)
                 {
                     // Merchant To Farmer
                     ChangeProfession((long)(workforce * 0.02), (long)(dependents * 0.02), Profession.FARMER);
@@ -279,9 +275,8 @@ public class Pop
         if (simManager.complexEconomy)
         {
             // Complex Migration
-            bool farmingFactor = FromNativePopulation(population) >= region.economy.GetTotalFoodAmount() * 1.2 || region.fieldsFull;
             // Pops are most likely to migrate if their region is overpopulated
-            if (farmingFactor && FromNativePopulation(population) > 4000 * region.avgFertility || region.fieldsFull)
+            if (FromNativePopulation(population)/region.ariableLand >= 400 || region.fieldsFull)
             {
                 migrateChance = 1f;
             }
@@ -316,6 +311,35 @@ public class Pop
                 region.MovePop(this, target, (long)(workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
             }
         }
+    }
+    public float GetDeathRate()
+    {
+        float rateInBracket = 0;
+        float deathRate = baseDeathRate;
+        if (starvingPercentage <= 0.7)
+        {
+            rateInBracket = Mathf.InverseLerp(0f, 0.7f, starvingPercentage);
+
+            deathRate += Mathf.Lerp(rateInBracket, 0f, 0.05f);
+        }
+        else if (starvingPercentage > 0.7)
+        {
+            rateInBracket = Mathf.InverseLerp(0.7f, 1f, starvingPercentage);
+            if (starvingPercentage >= 1f)
+            {
+                deathRate += 0.25f;
+            }
+            else
+            {
+                deathRate += Mathf.Lerp(rateInBracket, 0.05f, 0.2f);
+            }
+        }
+        //GD.Print(rateInBracket); 
+        return deathRate;
+    }
+    public float GetBirthRate()
+    {
+        return baseBirthRate;
     }
 }
 
