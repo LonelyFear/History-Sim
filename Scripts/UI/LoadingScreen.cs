@@ -58,7 +58,7 @@ public partial class LoadingScreen : Control
         }
         //splash.Text = "Generating World";
         
-        if (task.IsCompleted && world.worldCreated == false){
+        if (task.IsCompleted && !world.worldCreated && !world.startedColoring){
             splash.Text = "Finishing Up...";
             world.ColorMap();
         } else if (task.IsCompleted){

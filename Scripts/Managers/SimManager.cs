@@ -213,9 +213,8 @@ public partial class SimManager : Node
         foreach (Region region in habitableRegions)
         {
             double nodeChance = 0.005;
-            nodeChance *= region.avgFertility;
 
-            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.1)
+            if (rng.NextDouble() <= nodeChance)
             {
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 Culture culture = CreateCulture();

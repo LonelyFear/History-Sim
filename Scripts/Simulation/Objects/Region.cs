@@ -14,7 +14,9 @@ public class Region : PopObject
     public float movementDifficulty;
 
     public Vector2I pos;
-    public float avgFertility;
+    //public float avgFertility;
+    public float avgTemperature;
+    public float avgRainfall;
     public int landCount;
     public State owner = null;
     public List<Army> armies;
@@ -61,7 +63,9 @@ public class Region : PopObject
 
         foreach (Crop crop in AssetManager.crops.Values)
         {
-            if (avgFertility <= crop.maxFertility && avgFertility >= crop.minFertility)
+            bool goodTemp = avgTemperature <= crop.maxTemperature && avgTemperature >= crop.minTemperature;
+            bool goodRain = avgRainfall <= crop.maxRainfall && avgRainfall >= crop.minRainfall;
+            if (goodTemp && goodRain)
             {
                 plantableCrops.Add(crop);
             }
@@ -276,18 +280,7 @@ public class Region : PopObject
 
     public bool Migrateable(Pop pop)
     {
-        if (habitable)
-        {
-            if (avgFertility > 0.15f)
-            {
-                return true;
-            }
-            else if (pop.tech.scienceLevel * 0.05 > avgFertility)
-            {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)

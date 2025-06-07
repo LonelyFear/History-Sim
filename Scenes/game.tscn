@@ -99,12 +99,11 @@ z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
 biomesJson = ExtResource("10_iivbl")
-worldSizeMult = 3.0
+worldSizeMult = 2.0
 seed = 48590
 mapScale = 1.0
 
 [node name="Terrain Map" type="TileMapLayer" parent="WorldGeneration" node_paths=PackedStringArray("lodMap", "regionSprite")]
-visible = false
 scale = Vector2(1.333, 1.333)
 tile_set = ExtResource("4_1phco")
 script = ExtResource("5_nb51f")

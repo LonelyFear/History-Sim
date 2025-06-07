@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,7 +16,6 @@ public partial class WorldGeneration : Node2D
     [Export] Json biomesJson;
     TileMapLayer tileMap;
     TileMapLayer reliefMap;
-    public string[,] tileBiomes;
     public Biome[,] biomes;
     public float[,] heightmap;
     public float[,] tempmap;
@@ -26,7 +26,9 @@ public partial class WorldGeneration : Node2D
     Image terrainImage;
     public bool worldCreated;
     public int worldGenStage;
-    enum TempTypes {
+    public bool startedColoring = false;
+    enum TempTypes
+    {
         POLAR,
         ALPINE,
         BOREAL,
@@ -117,7 +119,7 @@ public partial class WorldGeneration : Node2D
         noise.SetFractalOctaves(octaves);
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(rng.Next(-99999, 99999));
-
+        float averageTemp = 0;
         float[,] falloff = Falloff.GenerateFalloffMap(worldSize.X, worldSize.Y, false, 1, 1.1f);
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++)
@@ -133,9 +135,12 @@ public partial class WorldGeneration : Node2D
                 map[x, y] = Mathf.Clamp(map[x, y], 0, 1);
 
                 // converts to real value
-                map[x,y] = minTemperature - Mathf.Pow(map[x, y], 0.7f) * (maxTemperature - minTemperature);
+                map[x, y] = minTemperature + Mathf.Pow(map[x, y], 0.7f) * (maxTemperature - minTemperature);
+                //GD.Print(map[x, y].ToString("0.0") + " C");
+                averageTemp += map[x, y];
             }
         }
+        GD.Print((averageTemp/(worldSize.X*worldSize.Y)).ToString("Average: 0.0") + " C");
         return map;
     } 
 
@@ -147,24 +152,13 @@ public partial class WorldGeneration : Node2D
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(rng.Next(-99999, 99999));
         for (int y = 0; y < worldSize.Y; y++){
-            float moisture = 0;
             for (int x = 0; x < worldSize.X; x++)
             {
                 moistMapProgress += 1;
-                if (heightmap[x, y] < seaLevel)
-                {
-                    moisture += 0.05f * tempmap[x, y];
-                }
-                else if ((heightmap[x, y] - seaLevel) / (1f - seaLevel) > 0.4f)
-                {
-                    moisture -= (heightmap[x, y] - seaLevel) / (1f - seaLevel) - 0.4f;
-                }
-
-                moisture = Mathf.Clamp(moisture, 0f, 1f);
-                map[x, y] = Mathf.InverseLerp(-0.2f, 0.5f, noise.GetNoise(x, y));
+                map[x, y] = Mathf.InverseLerp(-0.8f, 1f, noise.GetNoise(x, y));
 
                 // Turns moisture into real value
-                map[x, y] = minRainfall - Mathf.Pow(map[x, y], 0.7f) * (maxRainfall - minRainfall);
+                map[x, y] = minRainfall + Mathf.Pow(map[x, y], 0.7f) * (maxRainfall - minRainfall);
             }
         }
         return map;
@@ -255,7 +249,7 @@ public partial class WorldGeneration : Node2D
             {
                 foreach (Vector2I pos in currentRiver)
                 {
-                    tileBiomes[pos.X, pos.Y] = "river";
+                    biomes[pos.X, pos.Y] = AssetManager.GetBiome("river");
                 }                
             }
 
@@ -263,7 +257,7 @@ public partial class WorldGeneration : Node2D
     }
 
     bool GoodRiverEnd(Vector2I point) {
-        string[] riverEndBiomes = ["shallow ocean", "river", "ocean"];
+        Biome[] riverEndBiomes = [AssetManager.GetBiome("river"), AssetManager.GetBiome("ocean")];
         bool inLake = true;
         for (int dx = -1; dx < 2; dx++)
         {
@@ -274,7 +268,7 @@ public partial class WorldGeneration : Node2D
                     continue;
                 }
                 Vector2I nPoint = new Vector2I(Mathf.PosMod(point.X + dx, worldSize.X), Mathf.PosMod(point.Y + dy, worldSize.Y));
-                if (riverEndBiomes.Contains(tileBiomes[nPoint.X, nPoint.Y]))
+                if (riverEndBiomes.Contains(biomes[nPoint.X, nPoint.Y]))
                 {
                     return true;
                 }
@@ -308,71 +302,83 @@ public partial class WorldGeneration : Node2D
         GD.Print("Humidity Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         worldGenStage++;
-        GD.Print("Biome Generation Started");
-        startTime = Time.GetTicksMsec();
-        // Biome generation
-        tileBiomes = new string[worldSize.X, worldSize.Y];
-        for (int x = 0; x < worldSize.X; x++)
-        {
-            for (int y = 0; y < worldSize.Y; y++)
-            {
-                tileBiomes[x, y] = GetEnvironment(x, y);
-            }
-        }
-        GD.Print("Biome Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
+        biomes = new Biome[worldSize.X, worldSize.Y];
+        GenerateBiomes();
         worldGenStage++;
         GD.Print("River Generation Started");
         startTime = Time.GetTicksMsec();
         GenerateRivers();
         GD.Print("River Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
-
     }
 
-    public void ColorMap(){
+    public void GenerateBiomes()
+    {
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                preparationProgress++;
+                Biome selectedBiome = AssetManager.GetBiome("ocean");
+                biomes[x, y] = selectedBiome;
+                float temp = tempmap[x, y];
+                float elevation = heightmap[x, y];
+                float moist = humidmap[x, y];
+
+                foreach (Biome biome in AssetManager.biomes.Values)
+                {
+                    bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
+                    bool heightInRange = elevation >= biome.minElevation && elevation <= biome.maxElevation;
+                    bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
+
+                    if (tempInRange && moistInRange && !biome.special && elevation >= seaLevel)
+                    {
+                        selectedBiome = biome;
+                        tempInRange = biome.minTemperature >= temp && biome.maxTemperature <= temp;
+                        heightInRange = biome.minElevation >= elevation && biome.maxElevation <= elevation;
+                        moistInRange = biome.minMoisture >= moist && biome.maxMoisture <= moist;
+                        biomes[x, y] = selectedBiome;
+                        break;                        
+                    }
+
+                }
+            }
+        }        
+    }
+
+    public void ColorMap()
+    {
+        startedColoring = true;
         worldGenStage++;
         //GD.Print("Map Coloring Started");
         ulong startTime = Time.GetTicksMsec();
-        // Map coloring
-        biomes = new Biome[worldSize.X, worldSize.Y]; 
 
         terrainImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgb8);
-        for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++){
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
                 preparationProgress++;
-                Biome selectedBiome = AssetManager.GetBiome("rock");
-                foreach (Biome biome in AssetManager.biomes.Values)
+                
+                Biome biome = biomes[x, y];
+                GD.Print(biome);
+                if (biome.type != "water")
                 {
-                    float temp = tempmap[x, y];
-                    float elevation = heightmap[x, y];
-                    float moist = humidmap[x, y];
-
-                    bool tempInRange = biome.minTemperature >= temp && biome.maxTemperature <= temp;
-                    bool heightInRange = biome.minElevation >= elevation && biome.maxElevation <= elevation;
-                    bool moistInRange = biome.minMoisture >= moist && biome.maxMoisture <= moist;
-                    if (tempInRange && heightInRange && moistInRange)
-                    {
-                        selectedBiome = biome;
-                    }
-                }
-
-                if (selectedBiome.type != "water")
-                {
-                    tileMap.SetCell(new Vector2I(x, y), 0, new Vector2I(selectedBiome.textureX, selectedBiome.textureY));
+                    tileMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
                     // Plant Reliefs    
-                    if (rng.NextSingle() <= selectedBiome.plantDensity * 0.2f)
+                    if (rng.NextSingle() <= biome.plantDensity * 0.2f)
                     {
                         // Grass
                         reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 2));
                     }
-                    if (rng.NextSingle() <= selectedBiome.plantDensity * 0.2f && selectedBiome.plantDensity > 0.75f)
+                    if (rng.NextSingle() <= biome.plantDensity * 0.2f && biome.plantDensity > 0.75f)
                     {
                         // Bushes
                         reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1, 1));
                     }
-                    if (rng.NextSingle() <= selectedBiome.plantDensity * 0.25f)
+                    if (rng.NextSingle() <= biome.plantDensity * 0.25f)
                     {
                         // Biome Specific Plants
-                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(selectedBiome.textureX, selectedBiome.textureY));
+                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
                     }
 
                     // Height Reliefs
@@ -384,242 +390,29 @@ public partial class WorldGeneration : Node2D
                     {
                         reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
                     }
-
-                    biomes[x, y] = selectedBiome;
                 }
             }
         }
-        for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++){
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
                 preparationProgress++;
-                Biome biome = biomes[x,y];
-                if (biome.type == "water"){
-                    Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow ocean").color, new Color(1, 1, 1));
+                Biome biome = biomes[x, y];
+                if (biome.type == "water")
+                {
+                    Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow_ocean").color, new Color(1, 1, 1));
                     //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
-                    terrainImage.SetPixel(x,y, oceanColor);
-                } else {
-                    terrainImage.SetPixel(x,y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                    terrainImage.SetPixel(x, y, oceanColor);
+                }
+                else
+                {
+                    terrainImage.SetPixel(x, y, Color.FromString(biome.color, new Color(1, 1, 1)));
                 }
             }
         }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
         worldCreated = true;
-        EmitSignal(SignalName.worldgenFinished);                   
-    }
-
-    string GetEnvironment(int x, int y){
-        float altitude = heightmap[x,y];
-        string biome = "rock";
-
-        // If we are below the ocean threshold
-        if (altitude <= seaLevel){
-            switch (getTempType(x, y)){
-                case TempTypes.POLAR:
-                    biome = "polar ice";
-                    break;
-                default:
-                	biome = "shallow ocean";
-				    if (altitude <= seaLevel - 0.1){
-                        biome = "ocean";
-                    }
-                    break;
-            }
-        } else {
-            switch (getTempType(x, y)){
-                case TempTypes.POLAR:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "polar desert";
-                            break;
-                        default:
-                            biome = "polar ice";
-                            break;
-                    }
-                    break;
-                case TempTypes.ALPINE:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "subpolar dry tundra";
-                            break;
-                        case HumidTypes.PER_ARID:
-                            biome = "subpolar moist tundra";
-                            break;
-                        case HumidTypes.ARID:
-                            biome = "subpolar wet tundra";
-                            break;
-                        default:
-                            biome = "subpolar rain tundra";
-                            break;
-                    }
-                    break;
-                case TempTypes.BOREAL:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "boreal desert";
-                            break;
-                        case HumidTypes.PER_ARID:
-                            biome = "boreal dry scrub";
-                            break;
-                        case HumidTypes.ARID:
-                            biome = "boreal moist forest";
-                            break;
-                        case HumidTypes.SEMI_ARID:
-                            biome = "boreal wet forest";
-                            break;
-                        default:
-                            biome = "boreal rain forest";
-                            break;
-                    }
-                    break;
-                case TempTypes.COOL:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "cool temperate desert";
-                            break;
-                        case HumidTypes.PER_ARID:
-                            biome = "cool temperate desert scrub";
-                            break;
-                        case HumidTypes.ARID:
-                            biome = "cool temperate steppe";
-                            break;
-                        case HumidTypes.SEMI_ARID:
-                            biome = "cool temperate moist forest";
-                            break;
-                        case HumidTypes.SUB_HUMID:
-                            biome = "cool temperate wet forest";
-                            break;
-                        default:
-                            biome = "cool temperate rain forest";
-                            break;
-                    }
-                    break;
-                case TempTypes.WARM:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "warm temperate desert";
-                            break;
-                        case HumidTypes.PER_ARID:
-                            biome = "warm temperate desert scrub";
-                            break;
-                        case HumidTypes.ARID:
-                            biome = "warm temperate thorn scrub";
-                            break;
-                        case HumidTypes.SEMI_ARID:
-                            biome = "warm temperate dry forest";
-                            break;
-                        case HumidTypes.SUB_HUMID:
-                            biome = "warm temperate moist forest";
-                            break;
-                        case HumidTypes.HUMID:
-                            biome = "warm temperate wet forest";
-                            break;
-                        default:
-                            biome = "warm temperate rain forest";
-                            break;
-                    }
-                    break;
-                case TempTypes.SUBTROPICAL:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "subtropical desert";
-                            break;
-                        case HumidTypes.PER_ARID:
-                            biome = "subtropical desert scrub";
-                            break;
-                        case HumidTypes.ARID:
-                            biome = "subtropical thorn woodland";
-                            break;
-                        case HumidTypes.SEMI_ARID:
-                            biome = "subtropical dry forest";
-                            break;
-                        case HumidTypes.SUB_HUMID:
-                            biome = "subtropical moist forest";
-                            break;
-                        case HumidTypes.HUMID:
-                            biome = "subtropical wet forest";
-                            break;
-                        default:
-                            biome = "subtropical rain forest";
-                            break;
-                    }
-                    break;
-                case TempTypes.TROPICAL:
-                    switch (getHumidType(x, y)){
-                        case HumidTypes.SUPER_ARID:
-                            biome = "tropical desert";
-                            break;
-                        case HumidTypes.PER_ARID:
-                            biome = "tropical desert scrub";
-                            break;
-                        case HumidTypes.ARID:
-                            biome = "tropical thorn woodland";
-                            break;
-                        case HumidTypes.SEMI_ARID:
-                            biome = "tropical very dry forest";
-                            break;
-                        case HumidTypes.SUB_HUMID:
-                            biome = "tropical dry forest";
-                            break;
-                        case HumidTypes.HUMID:
-                            biome = "tropical moist forest";
-                            break;
-                        case HumidTypes.PER_HUMID:
-                            biome = "tropical wet forest";
-                            break;
-                        default:
-                            biome = "tropical rain forest";
-                            break;
-                    }
-                    break;
-                default:
-                    biome = "rock";
-                    break;
-            }
-        }
-        return biome;
-    }
-    TempTypes getTempType(int x, int y){
-        float temp = tempmap[x,y];
-        if (temp < tempThresholds[5]){
-            return TempTypes.POLAR;
-        } else if (temp >= tempThresholds[5] && temp < tempThresholds[4]){
-            return TempTypes.ALPINE;
-        } else if (temp >= tempThresholds[4] && temp < tempThresholds[3]){
-            return TempTypes.BOREAL;
-        } else if (temp >= tempThresholds[3] && temp < tempThresholds[2]){
-            return TempTypes.COOL;
-        } else if (temp >= tempThresholds[2] && temp < tempThresholds[1]){
-            return TempTypes.WARM;
-        } else if (temp >= tempThresholds[1] && temp < tempThresholds[0]){
-            return TempTypes.SUBTROPICAL;
-        } else if (temp >= tempThresholds[0]){
-            return TempTypes.TROPICAL;
-        } else {
-            return TempTypes.INVALID;
-        }
-    }
-
-    HumidTypes getHumidType(int x, int y){
-        float humid = humidmap[x,y];
-        //humid = 0;
-        if ( humid < humidThresholds[6]){
-            return  HumidTypes.SUPER_ARID;
-        } else if (humid >= humidThresholds[6] && humid < humidThresholds[5]){
-            return HumidTypes.PER_ARID;
-        } else if (humid >= humidThresholds[5] && humid < humidThresholds[4]){
-            return HumidTypes.ARID;
-        } else if (humid >= humidThresholds[4] && humid < humidThresholds[3]){
-            return HumidTypes.SEMI_ARID;
-        } else if (humid >= humidThresholds[3] && humid < humidThresholds[2]){
-            return HumidTypes.SUB_HUMID;
-        } else if (humid >= humidThresholds[2] && humid < humidThresholds[1]){
-            return HumidTypes.HUMID;
-        } else if (humid >= humidThresholds[1] && humid < humidThresholds[0]){
-            return HumidTypes.PER_HUMID; 
-        } else if (humid >= humidThresholds[0]){
-            return HumidTypes.SUPER_HUMID;
-        } else {
-            return HumidTypes.INVALID;
-        }
+        EmitSignal(SignalName.worldgenFinished);
     }
 }
