@@ -108,59 +108,35 @@ public partial class SimManager : Node
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
                 newTile.biome = world.biomes[x, y];
-                newTile.fertility = newTile.biome.fertility;
-                newTile.terrainType = newTile.biome.terrainType;
-
-                if (world.heightmap[x, y] > WorldGeneration.hillThreshold)
+                newTile.temperature = world.tempmap[x,y];
+                newTile.moisture = world.humidmap[x,y];
+                newTile.ariability = newTile.biome.ariablity;
+                newTile.navigability = newTile.biome.navigability;
+                switch (newTile.biome.type)
                 {
-                    newTile.terrainType = TerrainType.HILLS;
+                    case "ice":
+                        newTile.terrainType = TerrainType.ICE;
+                        break;
+                    case "land":
+                        newTile.terrainType = TerrainType.LAND;
+                        break;
+                    case "water":
+                        newTile.terrainType = TerrainType.WATER;
+                        break;
                 }
                 if (world.heightmap[x, y] > WorldGeneration.mountainThreshold)
                 {
+                    newTile.navigability *= 0.25f;
+                    newTile.ariability *= 0.25f;
                     newTile.terrainType = TerrainType.MOUNTAINS;
+                }                
+                else if (world.heightmap[x, y] > WorldGeneration.hillThreshold)
+                {
+                    newTile.navigability *= 0.5f;
+                    newTile.ariability *= 0.5f;
+                    newTile.terrainType = TerrainType.HILLS;
                 }
-            }
-        }
 
-        for (int x = 0; x < terrainSize.X; x++)
-        {
-            for (int y = 0; y < terrainSize.Y; y++)
-            {
-                bool nearOcean = false;
-                bool nearRiver = false;
-                Tile tile = tiles[x, y];
-                for (int dx = -1; dx < 2; dx++)
-                {
-                    for (int dy = -1; dy < 2; dy++)
-                    {
-                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
-                        {
-                            continue;
-                        }
-                        int nx = Mathf.PosMod(x + dx, terrainSize.X);
-                        int ny = Mathf.PosMod(y + dy, terrainSize.Y);
-                        Tile borderTile = tiles[nx, ny];
-                        // Makes aquatic and coastal tiles more fertile
-
-                        if (borderTile.biome.terrainType == TerrainType.WATER)
-                        {
-                            nearOcean = true;
-                            if (borderTile.biome.id == "river")
-                            {
-                                nearRiver = true;
-                            }
-                        }
-                    }
-                }
-                if (nearRiver)
-                {
-                    tile.fertility *= 1.5f;
-                }
-                else if (nearOcean)
-                {
-                    tile.fertility *= 1.25f;
-                }
-                tile.fertility = Mathf.Clamp(tile.fertility, 0, 1.2f);
             }
         }
         #endregion
@@ -341,6 +317,7 @@ public partial class SimManager : Node
 
             if (region.pops.Count > 0)
             {
+                //GD.Print(region.GetFoodSurplus());
                 countedPoppedRegions += 1;
                 if (region.pops.Count > 0)
                 {

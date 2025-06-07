@@ -4,14 +4,22 @@ using System.Collections.Generic;
 
 public class Biome
 {
+    public string name { get; set; }
     public string id { get; set; }
-    public string[] mergedIds { get; set; } 
-    public float fertility { get; set; }
+    public string type = "ice";
     public float plantDensity { get; set; } = 0.0f;
+    public BaseResource[] resources { get; set; }
+    public Crop[] crops { get; set; }
+    public float maxElevation { get; set; } = float.PositiveInfinity;
+    public float minElevation { get; set; } = float.NegativeInfinity;
+    public float maxMoisture { get; set; } = float.PositiveInfinity;
+    public float minMoisture { get; set; } = float.NegativeInfinity;
+    public float maxTemperature { get; set; } = float.PositiveInfinity;
+    public float minTemperature { get; set; } = float.NegativeInfinity;
+    public float navigability { get; set; } = 0.0f;
+    public float ariablity { get; set; } = 0.0f;
     public string color { get; set; } 
     public int textureX { get; set; } 
     public int textureY { get; set; } 
-    public TerrainType terrainType { get; set; }
-    //public List<Crop> crops = new List<Crop>()
 }
 

@@ -4,6 +4,6 @@
 	"maxFertility" : 0.5,
 	"minFertility" : 0.2,
 	"yield" : {
-		"grain" : 0.8
+		"grain" : 1.0
 	}
 }

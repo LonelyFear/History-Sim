@@ -38,7 +38,6 @@ public class Region : PopObject
     {
         name = "Region";
         landCount = 0;
-        float f = 0;
         for (int x = 0; x < simManager.tilesPerRegion; x++)
         {
             for (int y = 0; y < simManager.tilesPerRegion; y++)
@@ -47,29 +46,8 @@ public class Region : PopObject
                 if (tile.IsLand())
                 {
                     landCount++;
-                    f += tile.fertility;
-
-                    switch (tile.terrainType)
-                    {
-                        case TerrainType.LAND:
-                            ariableLand++;
-                            tradeDifficulty += 0.1f;
-                            break;
-                        case TerrainType.HILLS:
-                            ariableLand += 0.5f;
-                            tradeDifficulty += 0.5f;
-                            break;
-                        case TerrainType.MOUNTAINS:
-                            ariableLand += 0.1f;
-                            tradeDifficulty++;
-                            break;
-                        default:
-                            if (tile.biome.id == "river")
-                            {
-                                ariableLand++;
-                            }
-                            break;
-                    }
+                    ariableLand += tile.ariability;
+                    tradeDifficulty += tile.navigability;
                 }
                 else if (tile.terrainType == TerrainType.WATER)
                 {
@@ -78,9 +56,8 @@ public class Region : PopObject
             }
         }
 
-        tradeDifficulty /= landCount;     
+        tradeDifficulty /= landCount;
         //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
-        avgFertility = f / landCount;
 
         foreach (Crop crop in AssetManager.crops.Values)
         {
@@ -110,21 +87,7 @@ public class Region : PopObject
                 tile.maxPopulation = 0;
                 if (tile.IsLand())
                 {
-                    switch (tile.terrainType)
-                    {
-                        case TerrainType.LAND:
-                            maxPopulation += (long)(Pop.ToNativePopulation(1000) * biome.fertility);
-                            tile.maxPopulation = (long)(Pop.ToNativePopulation(1000) * biome.fertility);
-                            break;
-                        case TerrainType.HILLS:
-                            maxPopulation += (long)(Pop.ToNativePopulation(800) * biome.fertility);
-                            tile.maxPopulation = (long)(Pop.ToNativePopulation(800) * biome.fertility);
-                            break;
-                        case TerrainType.MOUNTAINS:
-                            maxPopulation += (long)(Pop.ToNativePopulation(500) * biome.fertility);
-                            tile.maxPopulation = (long)(Pop.ToNativePopulation(500) * biome.fertility);
-                            break;
-                    }
+                    maxPopulation += (long)(Pop.ToNativePopulation(1000) * tile.navigability);
                 }
             }
         }
@@ -432,7 +395,7 @@ public class Region : PopObject
             double totalWork = cropsPerAribleLand * ariableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers / ariableLand)));
             foreach (BaseResource yield in crop.yields.Keys)
             {
-                economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * 2f);
+                economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * 1.3);
             }
             fieldsFull = totalWork == cropsPerAribleLand * ariableLand;
         }
@@ -446,5 +409,10 @@ public class Region : PopObject
             return borderingRegions[rng.Next(0, borderingRegions.Count)];
         }
         return null;
+    }
+
+    public float GetFoodSurplus()
+    {
+        return ((Pop.FromNativePopulation(workforce) * Pop.workforceNutritionNeed) + (Pop.FromNativePopulation(dependents) * Pop.dependentNutritionNeed))/(float)economy.GetTotalNutrition() - 1f;
     }
 }

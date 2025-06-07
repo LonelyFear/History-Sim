@@ -50,6 +50,10 @@ public partial class WorldGeneration : Node2D
 
     public const float hillThreshold = 0.75f;
     public const float mountainThreshold = 0.8f;
+    public const float maxTemperature = 35;
+    public const float minTemperature = -30;
+    public const float maxRainfall = 4000;
+    public const float minRainfall = 50;
 
     [Signal]
     public delegate void worldgenFinishedEventHandler();
@@ -116,15 +120,20 @@ public partial class WorldGeneration : Node2D
 
         float[,] falloff = Falloff.GenerateFalloffMap(worldSize.X, worldSize.Y, false, 1, 1.1f);
         for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++){
+            for (int y = 0; y < worldSize.Y; y++)
+            {
                 tempMapProgress += 1f;
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
-                map[x, y] = Mathf.Lerp(1 - falloff[x,y], noiseValue, 0.15f);
-                float heightFactor = (heightmap[x,y] - seaLevel - 0.2f)/(1f - seaLevel - 0.2f);
-                if (heightFactor > 0){
+                map[x, y] = Mathf.Lerp(1 - falloff[x, y], noiseValue, 0.15f);
+                float heightFactor = (heightmap[x, y] - seaLevel - 0.2f) / (1f - seaLevel - 0.2f);
+                if (heightFactor > 0)
+                {
                     map[x, y] -= heightFactor;
                 }
-                map[x,y] = Mathf.Clamp(map[x,y], 0, 1);
+                map[x, y] = Mathf.Clamp(map[x, y], 0, 1);
+
+                // converts to real value
+                map[x,y] = minTemperature - Mathf.Pow(map[x, y], 0.7f) * (maxTemperature - minTemperature);
             }
         }
         return map;
@@ -139,16 +148,23 @@ public partial class WorldGeneration : Node2D
         noise.SetSeed(rng.Next(-99999, 99999));
         for (int y = 0; y < worldSize.Y; y++){
             float moisture = 0;
-            for (int x = 0; x < worldSize.X; x++){
+            for (int x = 0; x < worldSize.X; x++)
+            {
                 moistMapProgress += 1;
-                if (heightmap[x,y] < seaLevel){
-                    moisture += 0.05f * tempmap[x,y];
-                } else if ((heightmap[x,y] - seaLevel)/(1f - seaLevel) > 0.4f){
-                    moisture -= (heightmap[x,y] - seaLevel)/(1f - seaLevel) - 0.4f;
+                if (heightmap[x, y] < seaLevel)
+                {
+                    moisture += 0.05f * tempmap[x, y];
                 }
-                
+                else if ((heightmap[x, y] - seaLevel) / (1f - seaLevel) > 0.4f)
+                {
+                    moisture -= (heightmap[x, y] - seaLevel) / (1f - seaLevel) - 0.4f;
+                }
+
                 moisture = Mathf.Clamp(moisture, 0f, 1f);
-                map[x,y] = Mathf.InverseLerp(-0.2f, 0.5f, noise.GetNoise(x,y));
+                map[x, y] = Mathf.InverseLerp(-0.2f, 0.5f, noise.GetNoise(x, y));
+
+                // Turns moisture into real value
+                map[x, y] = minRainfall - Mathf.Pow(map[x, y], 0.7f) * (maxRainfall - minRainfall);
             }
         }
         return map;
@@ -323,44 +339,53 @@ public partial class WorldGeneration : Node2D
         for (int x = 0; x < worldSize.X; x++){
             for (int y = 0; y < worldSize.Y; y++){
                 preparationProgress++;
-                foreach (Biome biome in AssetManager.biomes.Values){
-                    if (biome.mergedIds.Contains(tileBiomes[x,y])){
-                        
-                        if (biome.terrainType != TerrainType.WATER)
-                        {
-                            tileMap.SetCell(new Vector2I(x,y), 0, new Vector2I(biome.textureX,biome.textureY));
-                            // Plant Reliefs    
-                            if (biome.fertility >= 0.0f)
-                            {
-                                if (rng.NextSingle() <= biome.plantDensity * 0.2f)
-                                {
-                                    // Grass
-                                    reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 2));
-                                }
-                                if (rng.NextSingle() <= biome.plantDensity * 0.2f && biome.plantDensity > 0.75f)
-                                {
-                                    // Bushes
-                                    reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1, 1));
-                                }
-                                if (rng.NextSingle() <= biome.plantDensity * 0.25f)
-                                {
-                                    // Biome Specific Plants
-                                    reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
-                                }
-                            }
+                Biome selectedBiome = AssetManager.GetBiome("rock");
+                foreach (Biome biome in AssetManager.biomes.Values)
+                {
+                    float temp = tempmap[x, y];
+                    float elevation = heightmap[x, y];
+                    float moist = humidmap[x, y];
 
-                            if (heightmap[x, y] >= hillThreshold)
-                            {
-                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 1));
-                            }
-                            if (heightmap[x, y] >= mountainThreshold)
-                            {
-                                reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
-                            }                            
-                        }
-
-                        biomes[x,y] = biome;
+                    bool tempInRange = biome.minTemperature >= temp && biome.maxTemperature <= temp;
+                    bool heightInRange = biome.minElevation >= elevation && biome.maxElevation <= elevation;
+                    bool moistInRange = biome.minMoisture >= moist && biome.maxMoisture <= moist;
+                    if (tempInRange && heightInRange && moistInRange)
+                    {
+                        selectedBiome = biome;
                     }
+                }
+
+                if (selectedBiome.type != "water")
+                {
+                    tileMap.SetCell(new Vector2I(x, y), 0, new Vector2I(selectedBiome.textureX, selectedBiome.textureY));
+                    // Plant Reliefs    
+                    if (rng.NextSingle() <= selectedBiome.plantDensity * 0.2f)
+                    {
+                        // Grass
+                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 2));
+                    }
+                    if (rng.NextSingle() <= selectedBiome.plantDensity * 0.2f && selectedBiome.plantDensity > 0.75f)
+                    {
+                        // Bushes
+                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(1, 1));
+                    }
+                    if (rng.NextSingle() <= selectedBiome.plantDensity * 0.25f)
+                    {
+                        // Biome Specific Plants
+                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(selectedBiome.textureX, selectedBiome.textureY));
+                    }
+
+                    // Height Reliefs
+                    if (heightmap[x, y] >= hillThreshold)
+                    {
+                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(3, 1));
+                    }
+                    if (heightmap[x, y] >= mountainThreshold)
+                    {
+                        reliefMap.SetCell(new Vector2I(x, y), 0, new Vector2I(0, 0));
+                    }
+
+                    biomes[x, y] = selectedBiome;
                 }
             }
         }
@@ -368,7 +393,7 @@ public partial class WorldGeneration : Node2D
             for (int y = 0; y < worldSize.Y; y++){
                 preparationProgress++;
                 Biome biome = biomes[x,y];
-                if (biome.terrainType == TerrainType.WATER){
+                if (biome.type == "water"){
                     Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow ocean").color, new Color(1, 1, 1));
                     //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
                     terrainImage.SetPixel(x,y, oceanColor);

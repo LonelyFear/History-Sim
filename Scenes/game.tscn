@@ -104,6 +104,7 @@ seed = 48590
 mapScale = 1.0
 
 [node name="Terrain Map" type="TileMapLayer" parent="WorldGeneration" node_paths=PackedStringArray("lodMap", "regionSprite")]
+visible = false
 scale = Vector2(1.333, 1.333)
 tile_set = ExtResource("4_1phco")
 script = ExtResource("5_nb51f")
