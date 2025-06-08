@@ -4,7 +4,7 @@
 		"name":"River",
 		"type":"water",
 		"id":"river",
-		"color":"003CF0",
+		"color":"0078F0",
 		"textureX": 3,
 		"textureY": 2,
 		"navigability":0,

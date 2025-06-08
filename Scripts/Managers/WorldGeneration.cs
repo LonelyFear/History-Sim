@@ -329,18 +329,16 @@ public partial class WorldGeneration : Node2D
                     bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
                     bool heightInRange = elevation >= biome.minElevation && elevation <= biome.maxElevation;
                     bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
-
-                    if (tempInRange && moistInRange && !biome.special && elevation >= seaLevel)
+                    bool bestFitTemp = biome.maxTemperature <= selectedBiome.maxTemperature && biome.minTemperature >= selectedBiome.minTemperature;
+                    bool bestFitHeight = biome.maxElevation <= selectedBiome.maxElevation && biome.minElevation >= selectedBiome.minElevation;
+                    bool bestFitMoist = biome.maxMoisture <= selectedBiome.maxMoisture && biome.minMoisture >= selectedBiome.minMoisture;
+                    if (tempInRange && moistInRange && elevation >= seaLevel && bestFitHeight && bestFitMoist && bestFitTemp)
                     {
                         selectedBiome = biome;
-                        tempInRange = biome.minTemperature >= temp && biome.maxTemperature <= temp;
-                        heightInRange = biome.minElevation >= elevation && biome.maxElevation <= elevation;
-                        moistInRange = biome.minMoisture >= moist && biome.maxMoisture <= moist;
-                        biomes[x, y] = selectedBiome;
-                        break;                        
                     }
 
                 }
+                biomes[x, y] = selectedBiome;
             }
         }        
     }

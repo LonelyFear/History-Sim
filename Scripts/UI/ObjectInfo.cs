@@ -42,7 +42,7 @@ public partial class ObjectInfo : Control
                     populationLabel.Text += "\nFarmers: " + Pop.FromNativePopulation(region.professions[Profession.FARMER]).ToString("#,###0");
                     populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";
-                    specialLabel.Text = "Fertility: " + region.avgFertility.ToString("0.00") + "\n";
+                    //specialLabel.Text = "Fertility: " + region.avgFertility.ToString("0.00") + "\n";
                     specialLabel.Text += "Food: " + region.economy.GetTotalFoodAmount().ToString("#,###0");
                     break;
                 case PopObject.ObjectType.CULTURE:
