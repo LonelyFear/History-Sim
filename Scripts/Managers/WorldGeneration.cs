@@ -20,6 +20,8 @@ public partial class WorldGeneration : Node2D
     public float[,] heightmap;
     public float[,] tempmap;
     public float[,] humidmap;
+    public Dictionary<Vector2I, Vector2I> flowDirMap;
+    public float[,] waterFlow;
 
     float[] tempThresholds = [0.874f, 0.765f, 0.594f, 0.439f, 0.366f, 0.124f];
     float[] humidThresholds = [0.941f, 0.778f, 0.507f, 0.236f, 0.073f, 0.014f, 0.002f];
@@ -54,7 +56,7 @@ public partial class WorldGeneration : Node2D
     public const float mountainThreshold = 0.8f;
     public const float maxTemperature = 35;
     public const float minTemperature = -30;
-    public const float maxRainfall = 4000;
+    public const float maxRainfall = 3500;
     public const float minRainfall = 50;
 
     [Signal]
@@ -127,17 +129,13 @@ public partial class WorldGeneration : Node2D
                 tempMapProgress += 1f;
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
                 map[x, y] = Mathf.Lerp(1 - falloff[x, y], noiseValue, 0.15f);
-                float heightFactor = (heightmap[x, y] - seaLevel - 0.2f) / (1f - seaLevel - 0.2f);
+                float heightFactor = (heightmap[x, y] - seaLevel) / (1f - seaLevel);
                 if (heightFactor > 0)
                 {
-                    map[x, y] -= heightFactor;
+                    map[x, y] -= heightFactor * 0.3f;
                 }
                 map[x, y] = Mathf.Clamp(map[x, y], 0, 1);
-
-                // converts to real value
-                map[x, y] = minTemperature + Mathf.Pow(map[x, y], 0.7f) * (maxTemperature - minTemperature);
-                //GD.Print(map[x, y].ToString("0.0") + " C");
-                averageTemp += map[x, y];
+                averageTemp += GetUnitTemp(map[x, y]);
             }
         }
         GD.Print((averageTemp/(worldSize.X*worldSize.Y)).ToString("Average: 0.0") + " C");
@@ -151,72 +149,47 @@ public partial class WorldGeneration : Node2D
         noise.SetFractalOctaves(octaves);
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(rng.Next(-99999, 99999));
-        for (int y = 0; y < worldSize.Y; y++){
+        float minVal = float.PositiveInfinity;
+        for (int y = 0; y < worldSize.Y; y++)
+        {
             for (int x = 0; x < worldSize.X; x++)
             {
                 moistMapProgress += 1;
-                map[x, y] = Mathf.InverseLerp(-0.8f, 1f, noise.GetNoise(x, y));
-
-                // Turns moisture into real value
-                map[x, y] = minRainfall + Mathf.Pow(map[x, y], 0.7f) * (maxRainfall - minRainfall);
+                map[x, y] = Mathf.InverseLerp(-0.5f, 0.5f, noise.GetNoise(x/scale, y/scale));
+                if (noise.GetNoise(x, y) < minVal)
+                {
+                    minVal = noise.GetNoise(x, y);
+                }
             }
         }
+        GD.Print("Min Rainfall Value: " + minVal);
         return map;
     }
 
-    public void GenerateRivers()
+    public static float GetUnitTemp(float value)
     {
-        List<Vector2I> sources = new List<Vector2I>();
-        List<Vector2I> riverPositions = new List<Vector2I>();
-
+        if (value < 0 || value > 1) {
+            return float.NaN;
+        }
+        return minTemperature + Mathf.Pow(value, 0.7f) * (maxTemperature - minTemperature);
+    }
+    public static float GetUnitRainfall(float value)
+    {
+        if (value < 0 || value > 1) {
+            return float.NaN;
+        }
+        return minRainfall + Mathf.Pow(value, 2f) * (maxRainfall - minRainfall);
+    }
+    public void CalculateFlowDirection()
+    {
+        flowDirMap = new Dictionary<Vector2I, Vector2I>();
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                bool nearSource = false;
-                if (rng.NextSingle() < 0.5f && heightmap[x, y] > 0.7f)
-                {
-                    foreach (Vector2I source in sources)
-                    {
-                        if (!nearSource)
-                        {
-                            if (new Vector2I(x, y).DistanceTo(source) <= 5f)
-                            {
-                                nearSource = true;
-                            }
-                        }
-                    }
-                    if (!nearSource)
-                    {
-                        sources.Add(new Vector2I(x,y));
-                    }
-                }
-            }
-        }
-        GD.Print("Rivers: " + sources.Count);
-        foreach (Vector2I source in sources)
-        {
-            List<Vector2I> currentRiver = new List<Vector2I>();
-            PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
-            frontier.Enqueue(source, 0);
-            Dictionary<Vector2I, Vector2I> flow = new Dictionary<Vector2I, Vector2I>();
-            flow[source] = new Vector2I(0, 0);
-            Dictionary<Vector2I, float> flowCost = new Dictionary<Vector2I, float>();
-            flowCost[source] = 0;
-
-            uint attempts = 0;
-            Vector2I riverEnd = new Vector2I(-1, -1);
-
-            while (attempts < 10000 && frontier.Count > 0)
-            {
-                attempts++;
-                Vector2I current = frontier.Dequeue();
-                riverEnd = current;
-                if (GoodRiverEnd(current))
-                {
-                    riverEnd = current;
-                    break;
-                }
+                Vector2I pos = new Vector2I(x, y);
+                Vector2I flowDir = new Vector2I(-1, -1);
+                float lowestElevation = heightmap[x, y] * 1.1f;
                 for (int dx = -1; dx < 2; dx++)
                 {
                     for (int dy = -1; dy < 2; dy++)
@@ -225,60 +198,39 @@ public partial class WorldGeneration : Node2D
                         {
                             continue;
                         }
-                        Vector2I next = new Vector2I(Mathf.PosMod(current.X + dx, worldSize.X), Mathf.PosMod(current.Y + dy, worldSize.Y));
-                        float newCost = flowCost[current] + (1f - heightmap[next.X, next.Y]);
-                        if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && heightmap[next.X, next.Y] <= 0.95)
+                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                        if (heightmap[next.X, next.Y] < lowestElevation)
                         {
-                            frontier.Enqueue(next, newCost);
-                            flowCost[next] = newCost;
-                            flow[next] = current;
+                            lowestElevation = heightmap[next.X, next.Y];
+                            flowDir = next;
                         }
                     }
                 }
+                flowDirMap.Add(pos, flowDir);
             }
-            if (riverEnd != new Vector2I(-1, -1))
-            {
-                Vector2I pos = riverEnd;
-                while (pos != source)
-                {
-                    currentRiver.Add(pos);
-                    pos = flow[pos];
-                }
-            }
-            if (currentRiver.Count > 1)
-            {
-                foreach (Vector2I pos in currentRiver)
-                {
-                    biomes[pos.X, pos.Y] = AssetManager.GetBiome("river");
-                }                
-            }
-
         }
     }
 
-    bool GoodRiverEnd(Vector2I point) {
-        Biome[] riverEndBiomes = [AssetManager.GetBiome("river"), AssetManager.GetBiome("ocean")];
-        bool inLake = true;
-        for (int dx = -1; dx < 2; dx++)
+    public void CalculateFlow()
+    {
+        waterFlow = new float[worldSize.X, worldSize.Y];
+        for (int x = 0; x < worldSize.X; x++)
         {
-            for (int dy = -1; dy < 2; dy++)
+            for (int y = 0; y < worldSize.Y; y++)
             {
-                if (dx != 0 && dy != 0)
+                if (heightmap[x, y] < 0.5 || humidmap[x, y] < 0.4f)
                 {
                     continue;
                 }
-                Vector2I nPoint = new Vector2I(Mathf.PosMod(point.X + dx, worldSize.X), Mathf.PosMod(point.Y + dy, worldSize.Y));
-                if (riverEndBiomes.Contains(biomes[nPoint.X, nPoint.Y]))
+                Vector2I pos = new Vector2I(x, y);
+                waterFlow[x, y] += humidmap[x, y];
+                if (flowDirMap[pos] != new Vector2I(-1, -1))
                 {
-                    return true;
+                    waterFlow[flowDirMap[pos].X, flowDirMap[pos].Y] += waterFlow[x, y];
+                   
                 }
-                if (heightmap[nPoint.X, nPoint.Y] <= heightmap[point.X, point.Y] + 0.05)
-                {
-                    inLake = false;
-                }
-            }           
+            }
         }
-        return inLake;
     }
     public void GenerateWorld()
     {
@@ -303,11 +255,12 @@ public partial class WorldGeneration : Node2D
 
         worldGenStage++;
         biomes = new Biome[worldSize.X, worldSize.Y];
+        CalculateFlowDirection();
+        CalculateFlow();
         GenerateBiomes();
         worldGenStage++;
         GD.Print("River Generation Started");
         startTime = Time.GetTicksMsec();
-        GenerateRivers();
         GD.Print("River Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
     }
 
@@ -318,25 +271,52 @@ public partial class WorldGeneration : Node2D
             for (int y = 0; y < worldSize.Y; y++)
             {
                 preparationProgress++;
-                Biome selectedBiome = AssetManager.GetBiome("ocean");
-                biomes[x, y] = selectedBiome;
-                float temp = tempmap[x, y];
+                Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
+                float temp = GetUnitTemp(tempmap[x, y]);
                 float elevation = heightmap[x, y];
-                float moist = humidmap[x, y];
+                float moist = GetUnitRainfall(humidmap[x, y]);
+                Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
 
                 foreach (Biome biome in AssetManager.biomes.Values)
                 {
                     bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
-                    bool heightInRange = elevation >= biome.minElevation && elevation <= biome.maxElevation;
                     bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
-                    bool bestFitTemp = biome.maxTemperature <= selectedBiome.maxTemperature && biome.minTemperature >= selectedBiome.minTemperature;
-                    bool bestFitHeight = biome.maxElevation <= selectedBiome.maxElevation && biome.minElevation >= selectedBiome.minElevation;
-                    bool bestFitMoist = biome.maxMoisture <= selectedBiome.maxMoisture && biome.minMoisture >= selectedBiome.minMoisture;
-                    if (tempInRange && moistInRange && elevation >= seaLevel && bestFitHeight && bestFitMoist && bestFitTemp)
+
+                    if (tempInRange && moistInRange && elevation >= seaLevel)
                     {
-                        selectedBiome = biome;
+                        candidates.Add(biome, 0);
+                    }
+                    if (elevation < seaLevel)
+                    {
+                        selectedBiome = AssetManager.GetBiome("ocean");
                     }
 
+                }
+                float minTRange = float.PositiveInfinity;
+                float minMRange = float.PositiveInfinity;
+                if (candidates.Count > 0)
+                {
+                    for (int i = 0; i < 2; i++){
+                        foreach (Biome biome in candidates.Keys)
+                        {
+                            if (minTRange > biome.maxTemperature - biome.minTemperature)
+                            {
+                                minTRange = biome.maxTemperature - biome.minTemperature;
+                                selectedBiome = biome;
+                            }
+                            if (minMRange > biome.maxMoisture - biome.minMoisture)
+                            {
+                                minMRange = biome.maxMoisture - biome.minMoisture;
+                                selectedBiome = biome;
+                            }
+                        }
+                    }
+
+                }
+                //GD.Print(waterFlow[x, y]);
+                if (waterFlow[x, y] > 3f && elevation >= seaLevel)
+                {
+                    selectedBiome = AssetManager.GetBiome("river");
                 }
                 biomes[x, y] = selectedBiome;
             }
@@ -358,7 +338,7 @@ public partial class WorldGeneration : Node2D
                 preparationProgress++;
                 
                 Biome biome = biomes[x, y];
-                GD.Print(biome);
+
                 if (biome.type != "water")
                 {
                     tileMap.SetCell(new Vector2I(x, y), 0, new Vector2I(biome.textureX, biome.textureY));
@@ -401,12 +381,13 @@ public partial class WorldGeneration : Node2D
                 {
                     Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow_ocean").color, new Color(1, 1, 1));
                     //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
-                    terrainImage.SetPixel(x, y, oceanColor);
+                    //terrainImage.SetPixel(x, y, oceanColor);
                 }
                 else
                 {
-                    terrainImage.SetPixel(x, y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                    
                 }
+                terrainImage.SetPixel(x, y, Color.FromString(biome.color, new Color(1, 1, 1)));
             }
         }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");

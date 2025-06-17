@@ -41,12 +41,12 @@ func manageMaps() -> void:
 				showMapId = WorkerThreadPool.add_task(showMap)
 
 func hideMap() -> void:
-	visible = false
+	#visible = false
 	reliefs.visible = false
 	lodMap.texture = ImageTexture.create_from_image(world.terrainImage)
 	lodMap.visible = true
 
 func showMap() -> void:
-	lodMap.call_deferred("set_visible", false)
-	call_deferred("set_visible", true)
+	#lodMap.call_deferred("set_visible", false)
+	#call_deferred("set_visible", true)
 	reliefs.call_deferred("set_visible", true)

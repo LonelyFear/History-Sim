@@ -147,7 +147,7 @@ public partial class MapManager : Area2D
             switch (mapMode)
             {
                 case MapModes.POLITIY:
-                    if (hoveredRegion.habitable && hoveredRegion.pops.Count > 0)
+                    if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
                     {
                         selectedMetaObj = hoveredRegion;
                         if (hoveredState != null)

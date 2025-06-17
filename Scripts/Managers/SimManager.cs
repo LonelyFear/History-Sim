@@ -107,11 +107,13 @@ public partial class SimManager : Node
             {
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
+
                 newTile.biome = world.biomes[x, y];
-                newTile.temperature = world.tempmap[x,y];
-                newTile.moisture = world.humidmap[x,y];
+                newTile.temperature = WorldGeneration.GetUnitTemp(world.tempmap[x,y]);
+                newTile.moisture = WorldGeneration.GetUnitRainfall(world.humidmap[x,y]);
                 newTile.ariability = newTile.biome.ariablity;
                 newTile.navigability = newTile.biome.navigability;
+
                 switch (newTile.biome.type)
                 {
                     case "ice":

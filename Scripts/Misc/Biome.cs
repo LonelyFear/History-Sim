@@ -6,7 +6,7 @@ public class Biome
 {
     public string name { get; set; }
     public string id { get; set; }
-    public string type = "ice";
+    public string type { get; set; } = "ice";
     public float plantDensity { get; set; } = 0.0f;
     public BaseResource[] resources { get; set; }
     public Crop[] crops { get; set; }

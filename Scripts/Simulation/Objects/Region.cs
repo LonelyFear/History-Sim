@@ -45,6 +45,10 @@ public class Region : PopObject
             for (int y = 0; y < simManager.tilesPerRegion; y++)
             {
                 Tile tile = tiles[x, y];
+
+                avgTemperature += tile.temperature;
+                avgRainfall += tile.moisture;    
+
                 if (tile.IsLand())
                 {
                     landCount++;
@@ -59,6 +63,8 @@ public class Region : PopObject
         }
 
         tradeDifficulty /= landCount;
+        avgTemperature /= tiles.Length;
+        avgRainfall /= tiles.Length;
         //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
 
         foreach (Crop crop in AssetManager.crops.Values)

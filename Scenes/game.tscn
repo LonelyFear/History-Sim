@@ -56,6 +56,7 @@ script = ExtResource("1_rku1e")
 z_index = -4096
 
 [node name="Sea" type="Sprite2D" parent="Background"]
+modulate = Color(0.0336749, 0, 0.328941, 1)
 z_index = -4096
 scale = Vector2(1.18519, 1.18333)
 texture = ExtResource("2_7nbq1")
@@ -100,10 +101,11 @@ z_as_relative = false
 script = ExtResource("3_rfjv2")
 biomesJson = ExtResource("10_iivbl")
 worldSizeMult = 2.0
-seed = 48590
 mapScale = 1.0
+octaves = 16
 
 [node name="Terrain Map" type="TileMapLayer" parent="WorldGeneration" node_paths=PackedStringArray("lodMap", "regionSprite")]
+modulate = Color(1, 1, 1, 0.0117647)
 scale = Vector2(1.333, 1.333)
 tile_set = ExtResource("4_1phco")
 script = ExtResource("5_nb51f")
@@ -113,7 +115,7 @@ highQualityMaxZoom = 4.0
 baseRegionOpacity = 0.9
 
 [node name="Reliefs" type="TileMapLayer" parent="WorldGeneration"]
-z_index = 10
+z_index = 99
 tile_set = SubResource("TileSet_7nbq1")
 
 [node name="LOD Map" type="Sprite2D" parent="WorldGeneration"]
