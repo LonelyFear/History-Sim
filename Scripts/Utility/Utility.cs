@@ -47,7 +47,36 @@ public static class Utility
         return result.ToArray();
     }
 
-    public static float NextSingle(this Random rng, float minValue, float maxValue) {
+    public static float NextSingle(this Random rng, float minValue, float maxValue)
+    {
         return Mathf.Lerp(rng.NextSingle(), minValue, maxValue);
+    }
+    public static float WrappedDistanceTo(this Vector2 pointA, Vector2 pointB, Vector2 worldSize)
+    {
+        float dx = pointA.X - pointB.X;
+        float dy = pointA.Y - pointB.Y;
+        if (dx > worldSize.X / 2f)
+        {
+            dx = worldSize.X - dx;
+        }
+        if (dy > worldSize.Y / 2f)
+        {
+            dy = worldSize.Y - dy;
+        }
+        return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2)); 
+    }
+    public static float WrappedDistanceTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize, bool squared = false)
+    {
+        float dx = pointA.X - pointB.X;
+        float dy = pointA.Y - pointB.Y;
+        if (dx > worldSize.X / 2f)
+        {
+            dx = worldSize.X - dx;
+        }
+        if (dy > worldSize.Y / 2f)
+        {
+            dy = worldSize.Y - dy;
+        }
+        return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2)); 
     }
 }

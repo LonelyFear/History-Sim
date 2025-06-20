@@ -93,25 +93,6 @@ public partial class WorldGeneration : Node2D
         tileMap.Scale = new Vector2(1,1) * 16f/tileMap.TileSet.TileSize.X;        
     }
 
-    public override void _Ready()
-    {
-        if (tectonicTest){
-            Init();
-            if (tectonics == null){
-                tectonics = new Tectonics();
-                tectonics.InitSim(this, 16, true, debugDisplay);
-            }
-            tectonics.SimStep();            
-        }
-    }
-
-    public override void _Process(double delta)
-    {
-        if (tectonicTest && tectonics != null){
-            tectonics.SimStep();
-        }
-    }
-
 
 
     float[,] GenerateTempMap(float scale){
@@ -199,7 +180,7 @@ public partial class WorldGeneration : Node2D
                             continue;
                         }
                         Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
-                        if (heightmap[next.X, next.Y] < lowestElevation)
+                        if (heightmap[next.X, next.Y] <= lowestElevation)
                         {
                             lowestElevation = heightmap[next.X, next.Y];
                             flowDir = next;
@@ -218,16 +199,18 @@ public partial class WorldGeneration : Node2D
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                if (heightmap[x, y] < 0.5 || humidmap[x, y] < 0.4f)
+                if (heightmap[x, y] < 0.6 || humidmap[x, y] < 0.4f)
                 {
                     continue;
                 }
-                Vector2I pos = new Vector2I(x, y);
                 waterFlow[x, y] += humidmap[x, y];
-                if (flowDirMap[pos] != new Vector2I(-1, -1))
+                Vector2I pos = new Vector2I(x, y);
+                float attempts = 500;
+                while (flowDirMap[pos] != new Vector2I(-1, -1) && heightmap[pos.X, pos.Y] >= seaLevel && attempts > 0)
                 {
+                    attempts--;
                     waterFlow[flowDirMap[pos].X, flowDirMap[pos].Y] += waterFlow[x, y];
-                   
+                    pos = flowDirMap[pos];
                 }
             }
         }
@@ -238,7 +221,15 @@ public partial class WorldGeneration : Node2D
         worldGenStage++;
         GD.Print("Heightmap Generation Started");
         ulong startTime = Time.GetTicksMsec();
-        heightmap = new Tectonics().RunSimulation(this, 30);
+        try
+        {
+            heightmap = new Tectonics().GenerateHeightmap(this);
+        }
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        
         GD.Print("Heightmap Generation Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
 
         worldGenStage++;
@@ -314,9 +305,9 @@ public partial class WorldGeneration : Node2D
 
                 }
                 //GD.Print(waterFlow[x, y]);
-                if (waterFlow[x, y] > 3f && elevation >= seaLevel)
+                if (waterFlow[x, y] > 7f && elevation >= seaLevel)
                 {
-                    selectedBiome = AssetManager.GetBiome("river");
+                    //selectedBiome = AssetManager.GetBiome("river");
                 }
                 biomes[x, y] = selectedBiome;
             }
@@ -379,15 +370,17 @@ public partial class WorldGeneration : Node2D
                 Biome biome = biomes[x, y];
                 if (biome.type == "water")
                 {
-                    Color oceanColor = Color.FromString(AssetManager.GetBiome("shallow_ocean").color, new Color(1, 1, 1));
-                    //terrainImage.SetPixel(x,y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x,y])));
+                    Color oceanColor = Color.FromString(AssetManager.GetBiome("ocean").color, new Color(1, 1, 1));
+                    terrainImage.SetPixel(x, y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x, y])));
                     //terrainImage.SetPixel(x, y, oceanColor);
                 }
                 else
                 {
-                    
+                    float hf = (heightmap[x, y] - seaLevel) / (1f - seaLevel);
+                    terrainImage.SetPixel(x, y, Color.FromString(biome.color, new Color(hf, hf, hf)));
+                    terrainImage.SetPixel(x, y, new Color(hf, hf, hf));
                 }
-                terrainImage.SetPixel(x, y, Color.FromString(biome.color, new Color(1, 1, 1)));
+                
             }
         }
         GD.Print("Map Coloring Finished After " + (Time.GetTicksMsec() - startTime) + "ms");
