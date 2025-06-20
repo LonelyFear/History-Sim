@@ -8,8 +8,8 @@ public class Tectonics
 {
     public static float oceanDepth = 0.45f;
     float[,] heightmap;
-    int gridSizeX = 8;
-    int gridSizeY = 8;
+    int gridSizeX = 2;
+    int gridSizeY = 2;
     int ppcx;
     int ppcy;
     TerrainTile[,] tiles;
@@ -62,11 +62,11 @@ public class Tectonics
             {
                 if (tiles[x, y].region.continental)
                 {
-                    heightmap[x, y] = 0.6f + (Mathf.InverseLerp(-0.8f, 1f, xNoise.GetNoise(x / 3f, y / 3f)) * 0.35f);
+                    heightmap[x, y] = Mathf.Clamp(0.6f + (tiles[x, y].coastDist / 100f), 0f, 0.9f);//0.6f + (Mathf.InverseLerp(-0.8f, 1f, xNoise.GetNoise(x / 3f, y / 3f)) * 0.35f);
                 }
                 if (tiles[x, y].border)
                 {
-                    heightmap[x, y] = 1.0f;
+                    heightmap[x, y] = 1f;
                 }
             }
         }
@@ -88,7 +88,7 @@ public class Tectonics
             for (int j = 0; j < gridSizeY; j++)
             {
                 VoronoiRegion region = new VoronoiRegion();
-                region.seed = new Vector2I(i * ppcx + rng.Next(0, ppcx + 1), j * ppcy + rng.Next(0, ppcy + 1));
+                region.seed = new Vector2I(i * ppcx + rng.Next(0, ppcx), j * ppcy + rng.Next(0, ppcy));
                 point.Add(new Vector2I(i, j), region);
                 voronoiRegions.Add(region);
             }
@@ -124,10 +124,12 @@ public class Tectonics
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
+                
                 TerrainTile tile = new TerrainTile();
                 // Domain warping
-                int fx = (int)Mathf.PosMod(x + (xNoise.GetNoise(x / scale, y / scale) * 50), worldSize.X);
-                int fy = (int)Mathf.PosMod(y + (yNoise.GetNoise(x / scale, y / scale) * 50), worldSize.Y);
+                int fx = x;//(int)Mathf.PosMod(x + (xNoise.GetNoise(x / scale, y / scale) * 50), worldSize.X);
+                int fy = y;//(int)Mathf.PosMod(y + (yNoise.GetNoise(x / scale, y / scale) * 50), worldSize.Y);
+                Vector2I pos = new Vector2I(fx, fy);
                 VoronoiRegion region = null;
                 VoronoiRegion ocean = null;
                 float shortestDist = float.PositiveInfinity;
@@ -142,7 +144,7 @@ public class Tectonics
                     {
                         int gridX = Mathf.PosMod(gx - i, gridSizeX);
                         int gridY = Mathf.PosMod(gy - j, gridSizeY);
-                        float dist = new Vector2I(fx, fy).DistanceTo(points[new Vector2I(gridX, gridY)].seed);
+                        float dist = pos.WrappedDistanceTo(points[new Vector2I(gridX, gridY)].seed, worldSize);
                         if (dist < shortestDist)
                         {
                             shortestDist = dist;
@@ -150,20 +152,10 @@ public class Tectonics
                         }
                     }
                 }
-                for (int i = -1; i < 2; i++)
-                {
-                    for (int j = -1; j < 2; j++)
-                    {
-                        int gridX = Mathf.PosMod(gx - i, gridSizeX);
-                        int gridY = Mathf.PosMod(gy - j, gridSizeY);
-                        float dist = new Vector2I(fx, fy).DistanceTo(points[new Vector2I(gridX, gridY)].seed);
-                        if (region.continental && !points[new Vector2I(gridX, gridY)].continental && dist < shortestOceanDist)
-                        {
-                            shortestOceanDist = dist;
-                            ocean = points[new Vector2I(gridX, gridY)];
-                        }
-                    }
-                }
+
+                Vector2I midpoint = ocean.seed.WrappedMidpoint(region.seed, worldSize);
+                tile.coastDist = pos.WrappedDistanceTo(region.seed, worldSize);            
+
                 tile.region = region;
                 tiles[x, y] = tile;
 

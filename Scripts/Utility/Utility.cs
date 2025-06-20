@@ -63,7 +63,7 @@ public static class Utility
         {
             dy = worldSize.Y - dy;
         }
-        return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2)); 
+        return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2));
     }
     public static float WrappedDistanceTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize, bool squared = false)
     {
@@ -77,6 +77,14 @@ public static class Utility
         {
             dy = worldSize.Y - dy;
         }
-        return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2)); 
+        return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2));
+    }
+    public static Vector2I WrappedDifference(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
+    {
+        return new Vector2I(Mathf.PosMod(pointA.X - pointB.X, worldSize.X), Mathf.PosMod(pointA.Y - pointB.Y, worldSize.Y));
+    }
+    public static Vector2I WrappedMidpoint(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
+    {
+        return new Vector2I(Mathf.PosMod((pointA.X + pointB.X)/2, worldSize.X), Mathf.PosMod((pointA.Y - pointB.Y)/2, worldSize.Y));
     }
 }
