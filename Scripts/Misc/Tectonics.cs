@@ -8,8 +8,9 @@ public class Tectonics
 {
     public static float oceanDepth = 0.45f;
     float[,] heightmap;
-    int gridSizeX = 2;
-    int gridSizeY = 2;
+    bool[,] midpoints;
+    int gridSizeX = 8;
+    int gridSizeY = 8;
     int ppcx;
     int ppcy;
     TerrainTile[,] tiles;
@@ -25,9 +26,10 @@ public class Tectonics
         rng = new Random(w.seed);
         worldSize = w.worldSize;
         heightmap = new float[worldSize.X, worldSize.Y];
+        midpoints = new bool[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
         points = GeneratePoints();
-        GenerateRegions(100, 6);
+        GenerateRegions(6);
         GenerateContinents();
         AdjustHeightMap();
         GD.Print("Offshore tiles: " + offshore.Count());
@@ -36,8 +38,10 @@ public class Tectonics
 
     public void GenerateContinents()
     {
-        while (continentalRegions.Count < Mathf.RoundToInt(voronoiRegions.Count * 0.29f))
+        int attempts = 5000;
+        while (continentalRegions.Count < Mathf.RoundToInt(voronoiRegions.Count * 0.29f) && attempts > 0)
         {
+            attempts--;
             foreach (VoronoiRegion region in continentalRegions.ToArray())
             {
                 VoronoiRegion border = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
@@ -62,9 +66,13 @@ public class Tectonics
             {
                 if (tiles[x, y].region.continental)
                 {
-                    heightmap[x, y] = Mathf.Clamp(0.6f + (tiles[x, y].coastDist / 100f), 0f, 0.9f);//0.6f + (Mathf.InverseLerp(-0.8f, 1f, xNoise.GetNoise(x / 3f, y / 3f)) * 0.35f);
+                    heightmap[x, y] = Mathf.Clamp(0.6f + (tiles[x, y].coastDist / 100f), 0f, 0.7f);//0.6f + (Mathf.InverseLerp(-0.8f, 1f, xNoise.GetNoise(x / 3f, y / 3f)) * 0.35f);
                 }
                 if (tiles[x, y].border)
+                {
+                    heightmap[x, y] = 0.8f;
+                }
+                if (midpoints[x, y])
                 {
                     heightmap[x, y] = 1f;
                 }
@@ -95,7 +103,7 @@ public class Tectonics
         }
         return point;
     }
-    public void GenerateRegions(int amount, int landCount)
+    public void GenerateRegions(int landCount)
     {
         int addedLand = 0;
         while (addedLand < landCount)
@@ -120,11 +128,12 @@ public class Tectonics
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         yNoise.SetSeed(rng.Next(-99999, 99999));
         float scale = 2;
+        GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                
+
                 TerrainTile tile = new TerrainTile();
                 // Domain warping
                 int fx = x;//(int)Mathf.PosMod(x + (xNoise.GetNoise(x / scale, y / scale) * 50), worldSize.X);
@@ -137,27 +146,47 @@ public class Tectonics
                 // Loops through the points
                 int gx = fx / ppcx;
                 int gy = fy / ppcy;
-                
-                for (int i = -1; i < 2; i++)
+                try
                 {
-                    for (int j = -1; j < 2; j++)
+                    for (int i = -1; i < 2; i++)
                     {
-                        int gridX = Mathf.PosMod(gx - i, gridSizeX);
-                        int gridY = Mathf.PosMod(gy - j, gridSizeY);
-                        float dist = pos.WrappedDistanceTo(points[new Vector2I(gridX, gridY)].seed, worldSize);
-                        if (dist < shortestDist)
+                        for (int j = -1; j < 2; j++)
                         {
-                            shortestDist = dist;
-                            region = points[new Vector2I(gridX, gridY)];
+                            int gridX = Mathf.PosMod(gx - i, gridSizeX);
+                            int gridY = Mathf.PosMod(gy - j, gridSizeY);
+                            float dist = pos.WrappedDistanceTo(points[new Vector2I(gridX, gridY)].seed, worldSize);
+                            if (dist < shortestDist)
+                            {
+                                shortestDist = dist;
+                                region = points[new Vector2I(gridX, gridY)];
+                            }
                         }
                     }
+                    for (int i = -1; i < 2; i++)
+                    {
+                        for (int j = -1; j < 2; j++)
+                        {
+                            int gridX = Mathf.PosMod(gx - i, gridSizeX);
+                            int gridY = Mathf.PosMod(gy - j, gridSizeY);
+                            float dist = pos.WrappedDistanceTo(points[new Vector2I(gridX, gridY)].seed, worldSize);
+                            if (dist < shortestOceanDist && points[new Vector2I(gridX, gridY)] != region)
+                            {
+                                shortestOceanDist = dist;
+                                ocean = points[new Vector2I(gridX, gridY)];
+                            }
+                        }
+                    }
+                    Vector2I midpoint = ocean.seed.WrappedMidpoint(region.seed, worldSize);
+                    tile.coastDist = pos.WrappedDistanceTo(midpoint, worldSize);
+                    //midpoints[midpoint.X, midpoint.Y] = true;
+                    tile.region = region;
+                    tiles[x, y] = tile;
+                }
+                catch (Exception e)
+                {
+                    GD.PushError(e);
                 }
 
-                Vector2I midpoint = ocean.seed.WrappedMidpoint(region.seed, worldSize);
-                tile.coastDist = pos.WrappedDistanceTo(region.seed, worldSize);            
-
-                tile.region = region;
-                tiles[x, y] = tile;
 
             }
         }
@@ -215,7 +244,7 @@ public class Tectonics
 internal class VoronoiRegion
 {
     public Vector2I seed;
-    public bool continental = false;
+    public bool continental = true;
     public List<VoronoiRegion> borderingRegions = new List<VoronoiRegion>();
 }
 internal class TerrainTile

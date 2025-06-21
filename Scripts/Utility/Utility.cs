@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Principal;
 using Godot;
 
 public static class Utility
@@ -67,8 +68,8 @@ public static class Utility
     }
     public static float WrappedDistanceTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize, bool squared = false)
     {
-        float dx = pointA.X - pointB.X;
-        float dy = pointA.Y - pointB.Y;
+        float dx = Mathf.Abs(pointB.X - pointA.X);
+        float dy = Mathf.Abs(pointB.Y - pointA.Y);
         if (dx > worldSize.X / 2f)
         {
             dx = worldSize.X - dx;
@@ -85,6 +86,18 @@ public static class Utility
     }
     public static Vector2I WrappedMidpoint(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
     {
-        return new Vector2I(Mathf.PosMod((pointA.X + pointB.X)/2, worldSize.X), Mathf.PosMod((pointA.Y - pointB.Y)/2, worldSize.Y));
+
+        int dx = Mathf.Abs(pointB.X - pointA.X);
+        if (dx > worldSize.X / 2f)
+        {
+            dx -= Math.Sign(dx) * worldSize.X;
+        }
+        int dy = Mathf.Abs(pointB.Y - pointA.Y);
+        if (dy > worldSize.Y / 2f)
+        {
+            dy -= Math.Sign(dy) * worldSize.Y;
+        }
+        //GD.Print(dy);
+        return new Vector2I(Mathf.RoundToInt(Mathf.PosMod(pointA.X + dx / 2f, worldSize.X)), Mathf.RoundToInt(Mathf.PosMod(pointA.Y + dy / 2f, worldSize.Y)));
     }
 }
