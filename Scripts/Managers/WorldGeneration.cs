@@ -246,8 +246,8 @@ public partial class WorldGeneration : Node2D
 
         worldGenStage++;
         biomes = new Biome[worldSize.X, worldSize.Y];
-        CalculateFlowDirection();
-        CalculateFlow();
+        //CalculateFlowDirection();
+        //CalculateFlow();
         GenerateBiomes();
         worldGenStage++;
         GD.Print("River Generation Started");
@@ -305,10 +305,12 @@ public partial class WorldGeneration : Node2D
 
                 }
                 //GD.Print(waterFlow[x, y]);
+                /*
                 if (waterFlow[x, y] > 7f && elevation >= seaLevel)
                 {
                     //selectedBiome = AssetManager.GetBiome("river");
                 }
+                */
                 biomes[x, y] = selectedBiome;
             }
         }        
