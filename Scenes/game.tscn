@@ -100,7 +100,7 @@ z_index = -10
 z_as_relative = false
 script = ExtResource("3_rfjv2")
 biomesJson = ExtResource("10_iivbl")
-worldSizeMult = 2.0
+worldSizeMult = 3.0
 mapScale = 1.0
 octaves = 16
 

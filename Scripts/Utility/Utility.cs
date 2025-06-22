@@ -1,8 +1,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Security.Principal;
+using System.Numerics;
 using Godot;
+using Vector2 = System.Numerics.Vector2;
 
 public static class Utility
 {
@@ -66,7 +67,7 @@ public static class Utility
         }
         return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2));
     }
-    public static float WrappedDistanceTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize, bool squared = false)
+    public static float WrappedDistanceTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
     {
         float dx = Mathf.Abs(pointB.X - pointA.X);
         float dy = Mathf.Abs(pointB.Y - pointA.Y);
@@ -80,24 +81,55 @@ public static class Utility
         }
         return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2));
     }
-    public static Vector2I WrappedDifference(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
+    public static float WrappedDistanceSquaredTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
     {
-        return new Vector2I(Mathf.PosMod(pointA.X - pointB.X, worldSize.X), Mathf.PosMod(pointA.Y - pointB.Y, worldSize.Y));
+        float dx = Mathf.Abs(pointB.X - pointA.X);
+        float dy = Mathf.Abs(pointB.Y - pointA.Y);
+        if (dx > worldSize.X / 2f)
+        {
+            dx = worldSize.X - dx;
+        }
+        if (dy > worldSize.Y / 2f)
+        {
+            dy = worldSize.Y - dy;
+        }
+        return Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2);
+    }
+    public static Vector2I WrappedDelta(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
+    {
+        float dx = pointB.X - pointA.X;
+        if (Mathf.Abs(dx) > worldSize.X / 2f)
+        {
+            dx -= Math.Sign(dx) * worldSize.X;
+        }
+        float dy = pointB.Y - pointA.Y;
+        if (Mathf.Abs(dy) > worldSize.Y / 2f)
+        {
+            dy -= Math.Sign(dy) * worldSize.Y;
+        }
+        return new Vector2I((int)dx, (int)dy);
     }
     public static Vector2I WrappedMidpoint(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
     {
 
-        int dx = Mathf.Abs(pointB.X - pointA.X);
-        if (dx > worldSize.X / 2f)
+        int dx = pointB.X - pointA.X;
+        if (Mathf.Abs(dx) > worldSize.X / 2f)
         {
             dx -= Math.Sign(dx) * worldSize.X;
         }
-        int dy = Mathf.Abs(pointB.Y - pointA.Y);
-        if (dy > worldSize.Y / 2f)
+        int dy = pointB.Y - pointA.Y;
+        if (Mathf.Abs(dy) > worldSize.Y / 2f)
         {
             dy -= Math.Sign(dy) * worldSize.Y;
         }
         //GD.Print(dy);
         return new Vector2I(Mathf.RoundToInt(Mathf.PosMod(pointA.X + dx / 2f, worldSize.X)), Mathf.RoundToInt(Mathf.PosMod(pointA.Y + dy / 2f, worldSize.Y)));
+    }
+    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize)
+    {
+        float nx = y;
+        float ny = Mathf.Sin(x * (Mathf.Pi * 2) / worldSize.X) / (Mathf.Pi * 2) * worldSize.X;
+        float nz = Mathf.Cos(x * (Mathf.Pi * 2) / worldSize.X) / (Mathf.Pi * 2) * worldSize.X;
+        return noise.GetNoise(nx, ny, nz);
     }
 }
