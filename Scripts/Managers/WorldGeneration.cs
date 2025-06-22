@@ -372,15 +372,19 @@ public partial class WorldGeneration : Node2D
                 Biome biome = biomes[x, y];
                 if (biome.type == "water")
                 {
-                    Color oceanColor = Color.FromString(AssetManager.GetBiome("ocean").color, new Color(1, 1, 1));
-                    terrainImage.SetPixel(x, y, oceanColor * Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(seaLevel - Tectonics.oceanDepth, seaLevel, heightmap[x, y])));
+                    Color oceanColor = Color.Color8(71,149,197);
+                    terrainImage.SetPixel(x, y, oceanColor);
                     //terrainImage.SetPixel(x, y, oceanColor);
                 }
                 else
                 {
                     float hf = (heightmap[x, y] - seaLevel) / (1f - seaLevel);
                     terrainImage.SetPixel(x, y, Color.FromString(biome.color, new Color(hf, hf, hf)));
-                    terrainImage.SetPixel(x, y, new Color(hf, hf, hf));
+                    
+                    Color lowFlatColor = Color.Color8(31,126,52);
+                    Color lowHillColor = Color.Color8(198,187,114);
+                    Color highHillColor = Color.Color8(95,42,22);
+                    terrainImage.SetPixel(x, y, Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf));
                 }
                 
             }
