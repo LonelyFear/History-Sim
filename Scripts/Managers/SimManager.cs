@@ -8,8 +8,7 @@ using FileAccess = Godot.FileAccess;
 
 public partial class SimManager : Node
 {
-    [Export]
-    public WorldGeneration world { private set; get; }
+    public Node2D terrainMap;
     [Export(PropertyHint.Range, "4,16,4")]
     public int tilesPerRegion = 4;
     [Export]
@@ -54,22 +53,23 @@ public partial class SimManager : Node
     #region Utility
     public override void _Ready()
     {
-        world = (WorldGeneration)GetParent().GetNode<Node2D>("WorldGeneration");
+        terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
         mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
 
         // Connection
-        world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
+        WorldGenerator.worldgenFinishedEvent += OnWorldgenFinished;
+        //Connect("WorldgenFinished", new Callable(this, nameof()));
     }
 
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
-        return (Vector2I)(pos / (world.Scale * 16)) / tilesPerRegion;
+        return (Vector2I)(pos / (terrainMap.Scale * 16)) / tilesPerRegion;
     }
 
     public Vector2 RegionToGlobalPos(Vector2I regionPos)
     {
-        return tilesPerRegion * (regionPos * (world.Scale * 16));
+        return tilesPerRegion * (regionPos * (terrainMap.Scale * 16));
     }
     public Region GetRegion(int x, int y)
     {
@@ -89,7 +89,7 @@ public partial class SimManager : Node
     }
     #endregion
     #region Initialization
-    private void OnWorldgenFinished()
+    private void OnWorldgenFinished(object sender, EventArgs e)
     {
         PopObject.simManager = this;
         Army.simManager = this;
@@ -97,7 +97,7 @@ public partial class SimManager : Node
         Pop.simManager = this;
 
         // Load Resources Before Buildings        
-        terrainSize = world.worldSize;
+        terrainSize = WorldGenerator.WorldSize;
         worldSize = terrainSize / tilesPerRegion;
         #region Tile Initialization
         tiles = new Tile[terrainSize.X, terrainSize.Y];
@@ -107,60 +107,38 @@ public partial class SimManager : Node
             {
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
-                newTile.biome = world.biomes[x, y];
-                newTile.fertility = newTile.biome.fertility;
-                newTile.terrainType = newTile.biome.terrainType;
 
-                if (world.heightmap[x, y] > WorldGeneration.hillThreshold)
+                newTile.biome = WorldGenerator.BiomeMap[x, y];
+                newTile.temperature = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x,y]);
+                newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x,y]);
+                newTile.ariability = newTile.biome.ariablity;
+                newTile.navigability = newTile.biome.navigability;
+
+                switch (newTile.biome.type)
                 {
+                    case "ice":
+                        newTile.terrainType = TerrainType.ICE;
+                        break;
+                    case "land":
+                        newTile.terrainType = TerrainType.LAND;
+                        break;
+                    case "water":
+                        newTile.terrainType = TerrainType.WATER;
+                        break;
+                }
+                if (WorldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
+                {
+                    newTile.navigability *= 0.25f;
+                    newTile.ariability *= 0.25f;
+                    newTile.terrainType = TerrainType.MOUNTAINS;
+                }                
+                else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
+                {
+                    newTile.navigability *= 0.5f;
+                    newTile.ariability *= 0.5f;
                     newTile.terrainType = TerrainType.HILLS;
                 }
-                if (world.heightmap[x, y] > WorldGeneration.mountainThreshold)
-                {
-                    newTile.terrainType = TerrainType.MOUNTAINS;
-                }
-            }
-        }
 
-        for (int x = 0; x < terrainSize.X; x++)
-        {
-            for (int y = 0; y < terrainSize.Y; y++)
-            {
-                bool nearOcean = false;
-                bool nearRiver = false;
-                Tile tile = tiles[x, y];
-                for (int dx = -1; dx < 2; dx++)
-                {
-                    for (int dy = -1; dy < 2; dy++)
-                    {
-                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
-                        {
-                            continue;
-                        }
-                        int nx = Mathf.PosMod(x + dx, terrainSize.X);
-                        int ny = Mathf.PosMod(y + dy, terrainSize.Y);
-                        Tile borderTile = tiles[nx, ny];
-                        // Makes aquatic and coastal tiles more fertile
-
-                        if (borderTile.biome.terrainType == TerrainType.WATER)
-                        {
-                            nearOcean = true;
-                            if (borderTile.biome.id == "river")
-                            {
-                                nearRiver = true;
-                            }
-                        }
-                    }
-                }
-                if (nearRiver)
-                {
-                    tile.fertility *= 1.5f;
-                }
-                else if (nearOcean)
-                {
-                    tile.fertility *= 1.25f;
-                }
-                tile.fertility = Mathf.Clamp(tile.fertility, 0, 1.2f);
             }
         }
         #endregion
@@ -237,9 +215,8 @@ public partial class SimManager : Node
         foreach (Region region in habitableRegions)
         {
             double nodeChance = 0.005;
-            nodeChance *= region.avgFertility;
 
-            if (rng.NextDouble() <= nodeChance && region.avgFertility > 0.1)
+            if (rng.NextDouble() <= nodeChance)
             {
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 Culture culture = CreateCulture();
@@ -341,6 +318,7 @@ public partial class SimManager : Node
 
             if (region.pops.Count > 0)
             {
+                //GD.Print(region.GetFoodSurplus());
                 countedPoppedRegions += 1;
                 if (region.pops.Count > 0)
                 {

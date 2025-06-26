@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 public partial class LoadingScreen : Control
 {
     Task task;
-    WorldGeneration world;
     SimManager sim;
     CanvasLayer ui;
     Label splash;
@@ -14,9 +13,12 @@ public partial class LoadingScreen : Control
     public int seed;
     public int tilesPerRegionFactor;
     public int worldSizeFactor;
+    bool textureGenerated;
+    TerrainMap map;
+    
     public override void _Ready()
     {
-        world = GetNode<WorldGeneration>("/root/Game/WorldGeneration");
+        map = GetNode<TerrainMap>("/root/Game/Terrain Map");
         sim = GetNode<SimManager>("/root/Game/Simulation");
         ui = GetNode<CanvasLayer>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
@@ -28,28 +30,27 @@ public partial class LoadingScreen : Control
     public override void _Process(double delta)
     {
         if (task == null){
-            world.seed = seed;
+            WorldGenerator.Seed = seed;
             sim.tilesPerRegion *= tilesPerRegionFactor;
-            world.Init();
-            task = Task.Run(world.GenerateWorld);
+            task = Task.Run(WorldGenerator.GenerateWorld);
         }
 
-        float tileCount = world.worldSize.X * world.worldSize.Y;
-        GetNode<TextureProgressBar>("ProgressBar").Value = (world.heightMapProgress/tileCount * 100f) + (world.tempMapProgress/tileCount * 25f) + (world.moistMapProgress/tileCount * 25f) + (world.preparationProgress/tileCount * 50f);
-        switch (world.worldGenStage){
-            case 1:
+        float tileCount = WorldGenerator.WorldSize.X * WorldGenerator.WorldSize.Y;
+        GetNode<TextureProgressBar>("ProgressBar").Value = WorldGenerator.Stage/5f;
+        switch (WorldGenerator.Stage){
+            case 0:
                 splash.Text = "Colliding Plates...";
             break;
-            case 2:
+            case 1:
                 splash.Text = "Heating Planet...";
             break;
-            case 3:
+            case 2:
                 splash.Text = "Forming Clouds...";
             break;
-            case 4:
+            case 3:
                 splash.Text = "Seeding Forests...";
             break;
-            case 5:
+            case 4:
                 splash.Text = "Carving Rivers...";
                 break;
             default:
@@ -57,14 +58,20 @@ public partial class LoadingScreen : Control
             break;
         }
         //splash.Text = "Generating World";
-        
-        if (task.IsCompleted && world.worldCreated == false){
+
+        if (task.IsCompleted && WorldGenerator.WorldExists && !textureGenerated)
+        {
+            textureGenerated = true;
             splash.Text = "Finishing Up...";
-            world.ColorMap();
-        } else if (task.IsCompleted){
+            map.Init();
+            map.SetMapImageTexture(WorldGenerator.GetTerrainImage(true));
+        }
+        else if (task.IsCompleted)
+        {
+            WorldGenerator.FinishWorldgen();
             camera.Set("controlEnabled", true);
             ui.Visible = true;
-            QueueFree();            
+            QueueFree();
         }
     }
 }

@@ -4,7 +4,10 @@ public class Tile
 {
 	public long maxPopulation;
 	public Biome biome;
-	public float fertility;
+	public float moisture;
+	public float temperature;
+	public float navigability;
+	public float ariability;
 	public bool hasRoad;
 	public Vector2I defaultIcon = new Vector2I();
 	public SettlementTypes settlementType = SettlementTypes.NONE;
