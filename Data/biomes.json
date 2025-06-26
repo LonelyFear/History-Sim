@@ -9,6 +9,7 @@
 		"textureY": 2,
 		"navigability":0,
 		"ariability":0,
+		"survivability":0,
 		"special":true
 	},	{
 		"name":"Ocean",
@@ -19,6 +20,7 @@
 		"textureY": 2,
 		"navigability":0,
 		"ariability":0,
+		"survivability":0,
 		"special":true
 	},
 	{
@@ -30,6 +32,7 @@
 		"textureY": 2,
 		"navigability":0,
 		"ariability":0,
+		"survivability":0,
 		"special":true
 	},
 	{
@@ -39,6 +42,7 @@
 		"color":"797979",
 		"navigability":0,
 		"ariability":0,
+		"survivability":0,
 		"special":true
 	},
 	{
@@ -51,7 +55,8 @@
 		"textureX": 0,
 		"textureY": 0,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},
 	{
 		"name":"Tundra",
@@ -66,7 +71,8 @@
 		"textureX": 0,
 		"textureY": 1,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},  
 	{
 		"name":"Desert Tundra",
@@ -81,7 +87,8 @@
 		"textureX": 0,
 		"textureY": 2,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},  
 	{
 		"name":"Boreal Forest",
@@ -96,7 +103,8 @@
 		"textureX": 0,
 		"textureY": 3,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},  
 	{
 		"name":"Forest",
@@ -111,7 +119,8 @@
 		"textureX": 1,
 		"textureY": 0,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},
 	{
 		"name":"Grassland",
@@ -126,7 +135,8 @@
 		"textureX": 1,
 		"textureY": 1,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},
 	{
 		"name":"Savanna",
@@ -141,7 +151,8 @@
 		"textureX": 1,
 		"textureY": 1,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},	
 	{ 
 		"name":"Desert",
@@ -156,7 +167,8 @@
 		"textureX": 1,
 		"textureY": 2,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},	
 	{
 		"name":"Rainforest",
@@ -171,7 +183,8 @@
 		"textureX": 3,
 		"textureY": 0,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	},
 	{
 		"name":"Temperate Rainforest",
@@ -186,6 +199,7 @@
 		"textureX": 3,
 		"textureY": 0,
 		"navigability":0,
-		"ariability":0
+		"ariability":0,
+		"survivability":0
 	}
 ]

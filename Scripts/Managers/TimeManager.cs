@@ -22,7 +22,6 @@ public partial class TimeManager : Node
     public double tickDelta = 1;
     public ulong monthStartTime = 0;
     public double monthDelta = 1;
-    public WorldGeneration world;
     public SimManager simManager;
     public MapManager mapManager;
     bool worldGenFinished = false;
@@ -40,12 +39,11 @@ public partial class TimeManager : Node
     OptionButton gameSpeedUI;
     public override void _Ready()
     {
-        world = GetNode<WorldGeneration>("/root/Game/WorldGeneration");
         simManager = GetNode<SimManager>("/root/Game/Simulation");
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");
         // Connection
-        world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
+        WorldGenerator.worldgenFinishedEvent += OnWorldgenFinished;
     }
 
     public override void _Process(double delta)
@@ -126,7 +124,7 @@ public partial class TimeManager : Node
         }        
     }
 
-    public void OnWorldgenFinished()
+    public void OnWorldgenFinished(object sender, EventArgs e)
     {
         TickGame();
         worldGenFinished = true;
