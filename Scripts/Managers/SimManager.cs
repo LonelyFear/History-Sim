@@ -8,8 +8,7 @@ using FileAccess = Godot.FileAccess;
 
 public partial class SimManager : Node
 {
-    [Export]
-    public WorldGeneration world { private set; get; }
+    public Node2D terrainMap;
     [Export(PropertyHint.Range, "4,16,4")]
     public int tilesPerRegion = 4;
     [Export]
@@ -54,22 +53,23 @@ public partial class SimManager : Node
     #region Utility
     public override void _Ready()
     {
-        world = (WorldGeneration)GetParent().GetNode<Node2D>("WorldGeneration");
+        terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
         timeManager = GetParent().GetNode<TimeManager>("Time Manager");
         mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
 
         // Connection
-        world.Connect("worldgenFinished", new Callable(this, nameof(OnWorldgenFinished)));
+        WorldGenerator.worldgenFinishedEvent += OnWorldgenFinished;
+        //Connect("WorldgenFinished", new Callable(this, nameof()));
     }
 
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
-        return (Vector2I)(pos / (world.Scale * 16)) / tilesPerRegion;
+        return (Vector2I)(pos / (terrainMap.Scale * 16)) / tilesPerRegion;
     }
 
     public Vector2 RegionToGlobalPos(Vector2I regionPos)
     {
-        return tilesPerRegion * (regionPos * (world.Scale * 16));
+        return tilesPerRegion * (regionPos * (terrainMap.Scale * 16));
     }
     public Region GetRegion(int x, int y)
     {
@@ -89,7 +89,7 @@ public partial class SimManager : Node
     }
     #endregion
     #region Initialization
-    private void OnWorldgenFinished()
+    private void OnWorldgenFinished(object sender, EventArgs e)
     {
         PopObject.simManager = this;
         Army.simManager = this;
@@ -97,7 +97,7 @@ public partial class SimManager : Node
         Pop.simManager = this;
 
         // Load Resources Before Buildings        
-        terrainSize = world.worldSize;
+        terrainSize = WorldGenerator.WorldSize;
         worldSize = terrainSize / tilesPerRegion;
         #region Tile Initialization
         tiles = new Tile[terrainSize.X, terrainSize.Y];
@@ -108,9 +108,9 @@ public partial class SimManager : Node
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
 
-                newTile.biome = world.biomes[x, y];
-                newTile.temperature = WorldGeneration.GetUnitTemp(world.tempmap[x,y]);
-                newTile.moisture = WorldGeneration.GetUnitRainfall(world.humidmap[x,y]);
+                newTile.biome = WorldGenerator.BiomeMap[x, y];
+                newTile.temperature = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x,y]);
+                newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x,y]);
                 newTile.ariability = newTile.biome.ariablity;
                 newTile.navigability = newTile.biome.navigability;
 
@@ -126,13 +126,13 @@ public partial class SimManager : Node
                         newTile.terrainType = TerrainType.WATER;
                         break;
                 }
-                if (world.heightmap[x, y] > WorldGeneration.mountainThreshold)
+                if (WorldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
                 {
                     newTile.navigability *= 0.25f;
                     newTile.ariability *= 0.25f;
                     newTile.terrainType = TerrainType.MOUNTAINS;
                 }                
-                else if (world.heightmap[x, y] > WorldGeneration.hillThreshold)
+                else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
                 {
                     newTile.navigability *= 0.5f;
                     newTile.ariability *= 0.5f;

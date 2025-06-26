@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 
-public class Tectonics
+public class HeightmapGenerator
 {
     public static float oceanDepth = 0.45f;
     float[,] heightmap;
@@ -23,11 +23,12 @@ public class Tectonics
     Dictionary<Vector2I, VoronoiRegion> points;
     static Random rng = new Random();
 
-    public float[,] GenerateHeightmap(WorldGeneration w)
+    // Todo: Make World Generation Manager
+    public float[,] GenerateHeightmap()
     {
-        rng = new Random(w.seed);
-        worldSize = w.worldSize;
-        worldMult = w.worldSizeMult;
+        rng = new Random(WorldGenerator.Seed);
+        worldSize = WorldGenerator.WorldSize;
+        worldMult = WorldGenerator.WorldMult;
         heightmap = new float[worldSize.X, worldSize.Y];
         midpoints = new bool[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
@@ -37,17 +38,62 @@ public class Tectonics
         GetDistances();
         try
         {
-            GeneratePlates(15);
+            GeneratePlates(10);
         }
         catch (Exception e)
         {
             GD.PushError(e);
         }
         GetTectonicPressure();
-        
         AdjustHeightMap();
+        TectonicEffects();
         GD.Print("Offshore tiles: " + offshore.Count());
         return heightmap;
+    }
+
+    public void TectonicEffects()
+    {
+        FastNoiseLite widthNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        widthNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        widthNoise.SetFractalOctaves(8);
+        widthNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+
+        FastNoiseLite heightNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        heightNoise.SetFractalType(FastNoiseLite.FractalType.Ridged);
+        heightNoise.SetFractalOctaves(8);
+        heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                float minWidth = 6f + (widthNoise.GetNoise(x,y) * 3f);
+                TerrainTile tile = tiles[x, y];
+                if (tile.boundaryDist <= minWidth)
+                {
+                    float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x, y));
+                    float boundaryFactor = 1f - (tile.boundaryDist / minWidth);
+                    TerrainTile boundary = tile.nearestBoundary;
+                    if (boundary.region.continental)
+                    {
+                        if (boundary.collisionContinental)
+                        {
+                            if (boundary.pressure > 0)
+                            {
+                                heightmap[x, y] += 0.3f * Mathf.Pow(boundaryFactor, 2) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.5f, 1f, noiseValue);
+                            }
+                        }
+                        else
+                        {        
+                            // TODO                               
+                        }
+                    }
+                    else
+                    {
+                        // TODO
+                    }
+                }
+            }
+        }        
     }
     public void GetTectonicPressure()
     {
@@ -60,27 +106,30 @@ public class Tectonics
                 {
                     continue;
                 }
-                for (int dx = -1; dx < 2; dx++)
+                int otherTiles = 0;
+                for (int dx = -3; dx < 4; dx++)
                 {
-                    for (int dy = -1; dy < 2; dy++)
+                    for (int dy = -3; dy < 4; dy++)
                     {
                         Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
                         TerrainTile next = tiles[testPos.X, testPos.Y];
                         if (next.region.plate != tile.region.plate)
                         {
+                            otherTiles++;
                             Vector2 relativeVel = tile.region.plate.dir - next.region.plate.dir;
                             if (relativeVel.Length() * relativeVel.Normalized().Dot(testPos - new Vector2I(x, y)) < 0)
                             {
-                                tile.pressure += 1f * relativeVel.Length();
-                                tile.collisionContinental = true;
+                                tile.pressure += 0.5f * relativeVel.Length();
                             }
                             else
                             {
-                                tile.pressure -= 1f * relativeVel.Length();
+                                tile.pressure += -0.5f * relativeVel.Length();
                             }
+                            tile.collisionContinental = next.region.continental;
                         }
                     }
                 }
+                tile.pressure /= otherTiles;
                 if (tile.pressure >= 1)
                 {
                     tile.convergent = true;
@@ -100,7 +149,7 @@ public class Tectonics
             {
                 Plate plate = new Plate()
                 {
-                    dir = new Vector2(rng.NextSingle() * 2f, rng.NextSingle() * 2f)
+                    dir = new Vector2(Mathf.Lerp(-2, 2,rng.NextSingle()), Mathf.Lerp(-2, 2,rng.NextSingle()))
                 };
                 region.plate = plate;
                 plates.Add(plate);
@@ -189,7 +238,7 @@ public class Tectonics
             attempts--;
             foreach (VoronoiRegion region in continentalRegions.ToArray())
             {
-                VoronoiRegion border = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
+                VoronoiRegion border = region.borderingRegions[rng.Next(0, region.borderingRegions.Count - 1)];
                 if (continentalRegions.Count < Mathf.RoundToInt(voronoiRegions.Count * continentalRegionPercentage))
                 {
                     SetRegionContinental(true, border);
@@ -221,7 +270,7 @@ public class Tectonics
                     float coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (10f * worldMult * Mathf.Lerp(0.2f, 7f, noiseValue)), 0f, 1f);
                     heightmap[x, y] = 0.6f + (Mathf.InverseLerp(-0.8f, 0.8f, heightNoise.GetNoise(x / scale, y / scale)) * 0.3f * Mathf.Clamp(Mathf.Log((9f * coastMultiplier) + 1), 0, 1));
                     heightmap[x, y] = Mathf.Clamp(heightmap[x, y], 0.6f, 1f);
-                    heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
+                    //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
                 }
             }
         }
@@ -403,11 +452,14 @@ public class Tectonics
                 TerrainTile tile = tiles[x, y];
                 Vector2I pos = new Vector2I(x, y);
                 PriorityQueue<Vector2I, float> distances = new PriorityQueue<Vector2I, float>();
-                foreach (Vector2I next in tilesToCheck)
+                if (tilesToCheck.Count > 0)
                 {
-                    distances.Enqueue(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                    foreach (Vector2I next in tilesToCheck)
+                    {
+                        distances.Enqueue(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                    }
+                    tile.coastDist = pos.WrappedDistanceTo(distances.Dequeue(), worldSize);                    
                 }
-                tile.coastDist = pos.WrappedDistanceTo(distances.Dequeue(), worldSize);
             }
         }        
     }
@@ -442,7 +494,7 @@ internal class TerrainTile
     public float coastDist = Mathf.Inf;
     public float boundaryDist = Mathf.Inf;
     public TerrainTile nearestBoundary = null;
-    public float pressure = -Mathf.Inf;
+    public float pressure = 0f;
     public bool collisionContinental = false;
     public bool convergent;
     public bool coastal;

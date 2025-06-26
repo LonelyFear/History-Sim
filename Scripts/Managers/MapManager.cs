@@ -29,12 +29,12 @@ public partial class MapManager : Area2D
     public override void _Ready()
     {
         simManager = GetNode<SimManager>("/root/Game/Simulation");
-        regionOverlay = GetNode<Sprite2D>("RegionOverlay");
+        regionOverlay = GetNode<Sprite2D>("Region Map");
         mapModeUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/MapModeHolder/MapMode");
         showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");
     }
     public void InitMapManager(){
-        Scale = simManager.world.Scale * simManager.tilesPerRegion;
+        Scale = simManager.terrainMap.Scale * simManager.tilesPerRegion;
         worldSize = SimManager.worldSize;
         regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);

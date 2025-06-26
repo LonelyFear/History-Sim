@@ -1,21 +1,17 @@
-[gd_scene load_steps=25 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=19 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="Texture2D" uid="uid://dkcv4h7u8elck" path="res://Sprites/Sea.png" id="2_7nbq1"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
-[ext_resource type="Script" uid="uid://dvd0mpgaq08hr" path="res://Scripts/Managers/WorldGeneration.cs" id="3_rfjv2"]
-[ext_resource type="TileSet" uid="uid://ddvui44w3eoj6" path="res://main.tres" id="4_1phco"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="4_exi56"]
-[ext_resource type="Script" uid="uid://coij55xtv1x1s" path="res://Scripts/terrain_map.gd" id="5_nb51f"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
+[ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/TerrainMap.cs" id="7_nnt18"]
 [ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="8_7t8sx"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
-[ext_resource type="JSON" path="res://Data/biomes.json" id="10_iivbl"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
-[ext_resource type="Texture2D" uid="uid://08k8n8y0qyiv" path="res://Sprites/Reliefs.png" id="11_iivbl"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/ObjectInfo.cs" id="15_ewbju"]
@@ -23,29 +19,6 @@
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7nbq1"]
 size = Vector2(1280, 639)
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iivbl"]
-texture = ExtResource("11_iivbl")
-0:0/0 = 0
-1:0/0 = 0
-1:1/0 = 0
-0:1/0 = 0
-0:2/0 = 0
-0:3/0 = 0
-1:3/0 = 0
-1:2/0 = 0
-2:3/0 = 0
-2:2/0 = 0
-2:1/0 = 0
-3:0/0 = 0
-2:0/0 = 0
-3:1/0 = 0
-3:2/0 = 0
-4:1/0 = 0
-4:0/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_7nbq1"]
-sources/0 = SubResource("TileSetAtlasSource_iivbl")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_iivbl"]
 
@@ -80,7 +53,7 @@ gameSpeed = 0
 z_index = 2
 script = ExtResource("6_85qyi")
 
-[node name="RegionOverlay" type="Sprite2D" parent="Map Manager"]
+[node name="Region Map" type="Sprite2D" parent="Map Manager"]
 scale = Vector2(16, 16)
 centered = false
 
@@ -88,37 +61,17 @@ centered = false
 position = Vector2(640, 319.5)
 shape = SubResource("RectangleShape2D_7nbq1")
 
-[node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("world", "reliefs", "timeManager")]
+[node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("timeManager")]
 script = ExtResource("1_o5yvi")
-world = NodePath("../WorldGeneration")
-reliefs = NodePath("../WorldGeneration/Reliefs")
 timeManager = NodePath("../Time Manager")
 complexEconomy = true
 
-[node name="WorldGeneration" type="Node2D" parent="."]
+[node name="Terrain Map" type="Node2D" parent="."]
 z_index = -10
 z_as_relative = false
-script = ExtResource("3_rfjv2")
-biomesJson = ExtResource("10_iivbl")
-worldSizeMult = 2.0
-mapScale = 1.0
-octaves = 16
+script = ExtResource("7_nnt18")
 
-[node name="Terrain Map" type="TileMapLayer" parent="WorldGeneration" node_paths=PackedStringArray("lodMap", "regionSprite")]
-modulate = Color(1, 1, 1, 0.0117647)
-scale = Vector2(1.333, 1.333)
-tile_set = ExtResource("4_1phco")
-script = ExtResource("5_nb51f")
-lodMap = NodePath("../LOD Map")
-regionSprite = NodePath("../../Map Manager/RegionOverlay")
-highQualityMaxZoom = 4.0
-baseRegionOpacity = 0.9
-
-[node name="Reliefs" type="TileMapLayer" parent="WorldGeneration"]
-z_index = 99
-tile_set = SubResource("TileSet_7nbq1")
-
-[node name="LOD Map" type="Sprite2D" parent="WorldGeneration"]
+[node name="Terrain Map" type="Sprite2D" parent="Terrain Map"]
 scale = Vector2(16, 16)
 centered = false
 
@@ -350,5 +303,3 @@ limit_right = 1280
 limit_bottom = 720
 position_smoothing_enabled = true
 minZoom = 25.0
-
-[connection signal="worldgenFinished" from="WorldGeneration" to="Time Manager" method="_on_world_worldgen_finished"]
