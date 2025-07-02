@@ -11,16 +11,19 @@ public class TempmapGenerator
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         float averageTemp = 0;
-        float[,] falloff = Falloff.GenerateFalloffMap(WorldGenerator.WorldSize.X, WorldGenerator.WorldSize.Y, false, 1, 1.1f);
-        for (int x = 0; x < WorldGenerator.WorldSize.X; x++){
+        //float[,] falloff = Falloff.GenerateFalloffMap(WorldGenerator.WorldSize.X, WorldGenerator.WorldSize.Y, false, 1, 1.1f);
+        GD.Print("Equator Temp: " + (1f - (Mathf.Abs(50 - (WorldGenerator.WorldSize.Y / 2f)) / (WorldGenerator.WorldSize.Y / 2f))));
+        for (int x = 0; x < WorldGenerator.WorldSize.X; x++)
+        {
             for (int y = 0; y < WorldGenerator.WorldSize.Y; y++)
             {
+                float latitudeFactor = 1f - (Mathf.Abs(y - (WorldGenerator.WorldSize.Y / 2f)) / (WorldGenerator.WorldSize.Y / 2f));
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
-                map[x, y] = Mathf.Lerp(1 - falloff[x, y], noiseValue, 0.15f);
+                map[x, y] = Mathf.Lerp(Mathf.Pow(latitudeFactor, 2.5f), noiseValue, 0.15f);
                 float heightFactor = (WorldGenerator.HeightMap[x, y] - WorldGenerator.SeaLevel) / (1f - WorldGenerator.SeaLevel);
                 if (heightFactor > 0)
                 {
-                    map[x, y] -= heightFactor * 0.3f;
+                    map[x, y] -= heightFactor * 0.2f;
                 }
                 map[x, y] = Mathf.Clamp(map[x, y], 0, 1);
                 averageTemp += WorldGenerator.GetUnitTemp(map[x, y]);

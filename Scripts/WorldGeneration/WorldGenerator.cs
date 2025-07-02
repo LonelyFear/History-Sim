@@ -15,7 +15,7 @@ public static class WorldGenerator
     public static Vector2I WorldSize = new Vector2I(360, 180);
     public static float Width;
     public static float Height;
-    public static float WorldMult = 3f;
+    public static float WorldMult = 2f;
     public static float SeaLevel = 0.6f;
     public static int Seed;
     public static EventHandler worldgenFinishedEvent;
@@ -54,13 +54,24 @@ public static class WorldGenerator
     {
         HeightMap = new HeightmapGenerator().GenerateHeightmap();
         Stage++;
-        TempMap = new TempmapGenerator().GenerateTempMap(2f);
+        TempMap = new TempmapGenerator().GenerateTempMap(1f);
         Stage++;
         RainfallMap = new RainfallMapGenerator().GenerateRainfallMap(2f);
         Stage++;
+        //HydroMap = new HydrologyGenerator().GenerateHydrologyMap();
+        RiverGenerator riverGenerator = new RiverGenerator()
+        {
+            attemptedRivers = 10000,
+            minRiverDist = 3f,
+            minRiverLength = 5,
+            maxRiverLength = 500000,
+            minRiverHeight = 0.7f,
+            riverMustEndInWater = true
+        };
         try
         {
             BiomeMap = new BiomeGenerator().GenerateBiomes();
+            riverGenerator.RunRiverGeneration();
         }
         catch (Exception e)
         {
@@ -80,7 +91,7 @@ public static class WorldGenerator
         {
             return float.NaN;
         }
-        return MinTemperature + Mathf.Pow(value, 0.7f) * (MaxTemperature - MinTemperature);
+        return MinTemperature + Mathf.Pow(value, 0.8f) * (MaxTemperature - MinTemperature);
     }
     public static float GetUnitRainfall(float value)
     {

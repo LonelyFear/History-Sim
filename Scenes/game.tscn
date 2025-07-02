@@ -70,6 +70,7 @@ complexEconomy = true
 z_index = -10
 z_as_relative = false
 script = ExtResource("7_nnt18")
+switchMap = true
 
 [node name="Terrain Map" type="Sprite2D" parent="Terrain Map"]
 scale = Vector2(16, 16)

@@ -54,13 +54,12 @@ public class BiomeGenerator
                     }
 
                 }
-                //GD.Print(waterFlow[x, y]);
-                /*
-                if (waterFlow[x, y] > 7f && elevation >= seaLevel)
-                {
-                    //selectedBiome = AssetManager.GetBiome("river");
-                }
-                */
+                
+                // if (WorldGenerator.HydroMap[x, y] > 11f && elevation >= WorldGenerator.SeaLevel)
+                // {
+                //     selectedBiome = AssetManager.GetBiome("river");
+                // }
+                
                 map[x, y] = selectedBiome;
             }
         }

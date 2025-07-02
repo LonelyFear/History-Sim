@@ -32,6 +32,7 @@ public partial class LoadingScreen : Control
         if (task == null){
             WorldGenerator.Seed = seed;
             sim.tilesPerRegion *= tilesPerRegionFactor;
+
             task = Task.Run(WorldGenerator.GenerateWorld);
         }
 
