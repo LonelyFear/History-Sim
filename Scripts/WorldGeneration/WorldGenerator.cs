@@ -15,7 +15,7 @@ public static class WorldGenerator
     public static Vector2I WorldSize = new Vector2I(360, 180);
     public static float Width;
     public static float Height;
-    public static float WorldMult = 2f;
+    public static float WorldMult = 3f;
     public static float SeaLevel = 0.6f;
     public static int Seed;
     public static EventHandler worldgenFinishedEvent;
@@ -52,7 +52,9 @@ public static class WorldGenerator
     }
     static void Generate()
     {
+        ulong startTime = Time.GetTicksMsec();
         HeightMap = new HeightmapGenerator().GenerateHeightmap();
+        GD.Print("Heightmap Generation Finished After " + ((Time.GetTicksMsec() - startTime)/1000f) + "s");
         Stage++;
         TempMap = new TempmapGenerator().GenerateTempMap(1f);
         Stage++;
@@ -91,7 +93,7 @@ public static class WorldGenerator
         {
             return float.NaN;
         }
-        return MinTemperature + Mathf.Pow(value, 0.8f) * (MaxTemperature - MinTemperature);
+        return MinTemperature + Mathf.Pow(value, 1f) * (MaxTemperature - MinTemperature);
     }
     public static float GetUnitRainfall(float value)
     {
@@ -99,7 +101,7 @@ public static class WorldGenerator
         {
             return float.NaN;
         }
-        return MinRainfall + Mathf.Pow(value, 2f) * (MaxRainfall - MinRainfall);
+        return MinRainfall + Mathf.Pow(value, 1f) * (MaxRainfall - MinRainfall);
     }
 
     public static Image GetTerrainImage(bool heightmap = false)

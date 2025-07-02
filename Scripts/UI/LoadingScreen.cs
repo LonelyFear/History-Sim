@@ -65,7 +65,7 @@ public partial class LoadingScreen : Control
             textureGenerated = true;
             splash.Text = "Finishing Up...";
             map.Init();
-            map.SetMapImageTexture(WorldGenerator.GetTerrainImage(true));
+            map.SetMapImageTexture(WorldGenerator.GetTerrainImage());
         }
         else if (task.IsCompleted)
         {

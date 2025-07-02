@@ -280,24 +280,17 @@ public class HeightmapGenerator
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                List<Vector2I> tilesToCheck = [.. tiles[x, y].region.boundaryTiles];
-                foreach (VoronoiRegion r in tiles[x, y].region.borderingRegions) {
-                    tilesToCheck.AddRange(r.boundaryTiles);
-                }
                 TerrainTile tile = tiles[x, y];
-                Vector2I pos = new Vector2I(x, y);
-                PriorityQueue<Vector2I, float> distances = new PriorityQueue<Vector2I, float>();
-                if (tilesToCheck.Count > 0)
+                float shortestDistSquared = Mathf.Inf;
+                foreach (var entry in tile.edgeDistancesSquared)
                 {
-                    foreach (Vector2I next in tilesToCheck)
+                    TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
+                    if (entry.Value < shortestDistSquared && nextTile.fault)
                     {
-                        distances.Enqueue(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                        shortestDistSquared = entry.Value;
                     }
-                    Vector2I closestPos = distances.Dequeue();
-                    tile.nearestBoundary = tiles[closestPos.X, closestPos.Y];
-                    tile.boundaryDist = pos.WrappedDistanceTo(closestPos, worldSize);                    
                 }
-
+                tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
             }
         }   
     }
@@ -462,12 +455,34 @@ public class HeightmapGenerator
                             {
                                 region.borderingRegions.Add(neighbor);
                             }
+                            if (!region.edges.Contains(pos))
+                            {
+                                region.edges.Add(pos);
+                            }
                         }
 
                     }
                 }
             }
         }
+
+        // Get Edge Distances
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                List<Vector2I> tilesToCheck = [.. tiles[x, y].region.edges];
+                TerrainTile tile = tiles[x, y];
+                Vector2I pos = new Vector2I(x, y);
+                if (tilesToCheck.Count > 0)
+                {
+                    foreach (Vector2I next in tilesToCheck)
+                    {
+                        tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                    }                 
+                }
+            }
+        }          
     }
 
     void GetDistances()
@@ -498,6 +513,7 @@ public class HeightmapGenerator
                             if (!neighbor.continental && region.continental)
                             {
                                 region.coastal = true;
+                                tiles[x, y].coastal = true;
                                 region.coastalTiles.Add(pos);
                             }
                         }
@@ -514,24 +530,18 @@ public class HeightmapGenerator
                 {
                     continue;
                 }
-                List<Vector2I> tilesToCheck = [.. tiles[x, y].region.coastalTiles];
-                foreach (VoronoiRegion r in tiles[x, y].region.borderingRegions) {
-                    if (r.coastal)
-                    {
-                        tilesToCheck.AddRange(r.coastalTiles);
-                    }
-                }
                 TerrainTile tile = tiles[x, y];
                 Vector2I pos = new Vector2I(x, y);
-                PriorityQueue<Vector2I, float> distances = new PriorityQueue<Vector2I, float>();
-                if (tilesToCheck.Count > 0)
+                float shortestDistSquared = Mathf.Inf;
+                foreach (var entry in tile.edgeDistancesSquared)
                 {
-                    foreach (Vector2I next in tilesToCheck)
+                    TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
+                    if (entry.Value < shortestDistSquared && nextTile.coastal)
                     {
-                        distances.Enqueue(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                        shortestDistSquared = entry.Value;
                     }
-                    tile.coastDist = pos.WrappedDistanceTo(distances.Dequeue(), worldSize);                    
                 }
+                tile.coastDist = Mathf.Sqrt(shortestDistSquared);
             }
         }        
     }
@@ -559,6 +569,7 @@ internal class VoronoiRegion
     public List<Vector2I> coastalTiles = new List<Vector2I>();
     public List<Vector2I> boundaryTiles = new List<Vector2I>();
     public List<VoronoiRegion> borderingRegions = new List<VoronoiRegion>();
+    public List<Vector2I> edges = new List<Vector2I>();
 }
 internal class TerrainTile
 {
@@ -566,6 +577,7 @@ internal class TerrainTile
     public float coastDist = Mathf.Inf;
     public float boundaryDist = Mathf.Inf;
     public TerrainTile nearestBoundary = null;
+    public Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
     public float pressure = 0f;
     public bool collisionContinental = false;
     public bool convergent;

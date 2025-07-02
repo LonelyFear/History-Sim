@@ -3,6 +3,7 @@ using System;
 
 public class TempmapGenerator
 {
+    Curve tempCurve = GD.Load<Curve>("res://Curves/TempCurve.tres");
     float[,] map;
     public float[,] GenerateTempMap(float scale){
         map = new float[WorldGenerator.WorldSize.X, WorldGenerator.WorldSize.Y];
@@ -19,7 +20,7 @@ public class TempmapGenerator
             {
                 float latitudeFactor = 1f - (Mathf.Abs(y - (WorldGenerator.WorldSize.Y / 2f)) / (WorldGenerator.WorldSize.Y / 2f));
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
-                map[x, y] = Mathf.Lerp(Mathf.Pow(latitudeFactor, 2.5f), noiseValue, 0.15f);
+                map[x, y] = Mathf.Lerp(Mathf.Pow(tempCurve.Sample(latitudeFactor), 2.5f), noiseValue, 0.15f);
                 float heightFactor = (WorldGenerator.HeightMap[x, y] - WorldGenerator.SeaLevel) / (1f - WorldGenerator.SeaLevel);
                 if (heightFactor > 0)
                 {

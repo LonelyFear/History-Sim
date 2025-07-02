@@ -28,7 +28,14 @@ public class BiomeGenerator
                     }
                     if (elevation < WorldGenerator.SeaLevel)
                     {
-                        selectedBiome = AssetManager.GetBiome("ocean");
+                        if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
+                        {
+                            selectedBiome = AssetManager.GetBiome("ice_sheet");
+                        }
+                        else
+                        {
+                            selectedBiome = AssetManager.GetBiome("ocean");
+                        }
                     }
 
                 }

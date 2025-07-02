@@ -142,7 +142,7 @@
 		"name":"Savanna",
 		"id":"savanna",
 		"type":"land",
-		"minTemperature":0,
+		"minTemperature":20,
 		"maxTemperature":35,
 		"minMoisture":1000,
 		"maxMoisture":1500,
