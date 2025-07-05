@@ -6,8 +6,10 @@ public class Tile
 	public Biome biome;
 	public float moisture;
 	public float temperature;
+	public float elevation;
 	public float navigability;
 	public float ariability;
+	public float survivalbility;
 	public bool hasRoad;
 	public Vector2I defaultIcon = new Vector2I();
 	public SettlementTypes settlementType = SettlementTypes.NONE;

@@ -7,10 +7,11 @@ public static class WorldGenerator
 {
     public const float HillThreshold = 0.75f;
     public const float MountainThreshold = 0.8f;
-    public const float MaxTemperature = 30;
+    public const float MaxTemperature = 35;
     public const float MinTemperature = -30;
     public const float MaxRainfall = 3500;
     public const float MinRainfall = 50;
+    public const int WorldHeight = 10000;
 
     public static Vector2I WorldSize = new Vector2I(360, 180);
     public static float Width;
@@ -103,6 +104,11 @@ public static class WorldGenerator
         }
         return MinRainfall + Mathf.Pow(value, 1f) * (MaxRainfall - MinRainfall);
     }
+    public static float GetUnitElevation(float value)
+    {
+        float seaElevation = WorldHeight * SeaLevel;
+        return (value * WorldHeight) - seaElevation;
+    }
 
     public static Image GetTerrainImage(bool heightmap = false)
     {
@@ -122,15 +128,18 @@ public static class WorldGenerator
                     Color lowFlatColor = Color.Color8(31, 126, 52);
                     Color lowHillColor = Color.Color8(198, 187, 114);
                     Color highHillColor = Color.Color8(95, 42, 22);
+                    Color shallowWatersColor = Color.Color8(71, 149, 197);
+                    Color deepWatersColor = Color.Color8(27, 59, 111);
                     float hf = (HeightMap[x, y] - SeaLevel) / (1f - SeaLevel);
                     image.SetPixel(x, y, Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf));
-                    
+
                     if (BiomeMap[x, y].type == "water")
                     {
+                        image.SetPixel(x, y, Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y]/SeaLevel, 0f, 1f)));
                         Color oceanColor = Color.Color8(71, 149, 197);
-                        image.SetPixel(x, y, oceanColor);
+                        //image.SetPixel(x, y, oceanColor);
                         //terrainImage.SetPixel(x, y, oceanColor);
-                    }                    
+                    }
                 }
                 else
                 {

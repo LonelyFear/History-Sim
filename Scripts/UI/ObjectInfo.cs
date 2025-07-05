@@ -43,7 +43,8 @@ public partial class ObjectInfo : Control
                     populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";
                     specialLabel.Text = "Temperature: " + region.avgTemperature.ToString("0.0C") + "\n";
-                    specialLabel.Text += "Rainfall: " + region.avgRainfall.ToString("#,###0 mm");
+                    specialLabel.Text += "Rainfall: " + region.avgRainfall.ToString("#,###0 mm") + "\n";
+                    specialLabel.Text += "Elevation: " + region.avgElevation.ToString("#,###0 meters");
                     break;
                 case PopObject.ObjectType.CULTURE:
                     Culture culture = (Culture)metaObject;

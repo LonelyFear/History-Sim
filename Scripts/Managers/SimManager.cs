@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Godot;
@@ -111,8 +112,12 @@ public partial class SimManager : Node
                 newTile.biome = WorldGenerator.BiomeMap[x, y];
                 newTile.temperature = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x,y]);
                 newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x,y]);
+                newTile.elevation = WorldGenerator.GetUnitElevation(WorldGenerator.HeightMap[x,y]);
+                
                 newTile.ariability = newTile.biome.ariablity;
                 newTile.navigability = newTile.biome.navigability;
+                newTile.survivalbility = newTile.biome.survivability;
+                
 
                 switch (newTile.biome.type)
                 {
@@ -130,6 +135,7 @@ public partial class SimManager : Node
                 {
                     newTile.navigability *= 0.25f;
                     newTile.ariability *= 0.25f;
+                    newTile.survivalbility *= 0.8f;
                     newTile.terrainType = TerrainType.MOUNTAINS;
                 }                
                 else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)

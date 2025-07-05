@@ -1,8 +1,10 @@
 {
 	"name":"Wheat",
 	"id":"wheat",
-	"maxFertility" : 1,
-	"minFertility" : 0.6,
+	"maxTemperature" : 40,
+	"minTemperature" : 0,
+	"maxRainfall" : 4000,
+	"minRainfall" : 50,
 	"yield" : {
 		"grain" : 1.0
 	}

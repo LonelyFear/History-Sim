@@ -17,6 +17,7 @@ public class Region : PopObject
     //public float avgFertility;
     public float avgTemperature;
     public float avgRainfall;
+    public float avgElevation;
     public int landCount;
     public State owner = null;
     public List<Army> armies;
@@ -47,7 +48,8 @@ public class Region : PopObject
                 Tile tile = tiles[x, y];
 
                 avgTemperature += tile.temperature;
-                avgRainfall += tile.moisture;    
+                avgRainfall += tile.moisture;
+                avgElevation += tile.elevation;
 
                 if (tile.IsLand())
                 {
@@ -65,15 +67,17 @@ public class Region : PopObject
         tradeDifficulty /= landCount;
         avgTemperature /= tiles.Length;
         avgRainfall /= tiles.Length;
+        avgElevation /= tiles.Length;
         //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
 
         foreach (Crop crop in AssetManager.crops.Values)
         {
-            bool goodTemp = avgTemperature <= crop.maxTemperature && avgTemperature >= crop.minTemperature;
-            bool goodRain = avgRainfall <= crop.maxRainfall && avgRainfall >= crop.minRainfall;
+            bool goodTemp = crop.maxTemperature <= avgTemperature && crop.minTemperature >= avgTemperature;
+            bool goodRain = crop.maxRainfall <= avgRainfall && crop.minRainfall >= avgRainfall;
             if (goodTemp && goodRain)
             {
                 plantableCrops.Add(crop);
+                GD.Print(crop);
             }
         }
     }
