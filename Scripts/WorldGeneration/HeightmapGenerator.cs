@@ -336,7 +336,7 @@ public class HeightmapGenerator
                 if (tiles[x, y].region.continental)
                 {
                     float noiseValue = Mathf.InverseLerp(-0.8f, 1f, erosion.GetNoise(x / erosionScale, y / erosionScale));
-                    float coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (6f * worldMult * Mathf.Lerp(0.2f, 7f, noiseValue)), 0f, 1f);
+                    float coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (4f * worldMult * Mathf.Lerp(0.2f, 7f, noiseValue)), 0f, 1f);
                     heightmap[x, y] = 0.6f + (Mathf.InverseLerp(-0.8f, 0.8f, heightNoise.GetNoise(x / scale, y / scale)) * 0.3f * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
                     heightmap[x, y] = Mathf.Clamp(heightmap[x, y], 0.6f, 1f);
                     //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
@@ -468,27 +468,7 @@ public class HeightmapGenerator
                     }
                 }
             }
-        }
-        for (int x = 0; x < worldSize.X; x++)
-        {
-            for (int y = 0; y < worldSize.Y; y++)
-            {
-                List<Vector2I> tilesToCheck = [.. tiles[x, y].region.edges];
-                foreach (VoronoiRegion region in tiles[x, y].region.borderingRegions)
-                {
-                    //tilesToCheck.AddRange(region.edges);
-                }
-                TerrainTile tile = tiles[x, y];
-                Vector2I pos = new Vector2I(x, y);
-                if (tilesToCheck.Count > 0)
-                {
-                    foreach (Vector2I next in tilesToCheck)
-                    {
-                        tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
-                    }
-                }
-            }            
-        }     
+        }    
     }
 
     void GetDistances()
@@ -528,6 +508,33 @@ public class HeightmapGenerator
                 }
             }
         }
+
+        // Gets Relevant Tiles for each Tile
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                TerrainTile tile = tiles[x, y];
+                List<Vector2I> tilesToCheck = [.. tile.region.edges];
+                foreach (VoronoiRegion region in tile.region.borderingRegions)
+                {
+                    if (region.coastal && tile.region.continental)
+                    {
+                        tilesToCheck.AddRange(region.edges);
+                    }
+                }
+
+                Vector2I pos = new Vector2I(x, y);
+                if (tilesToCheck.Count > 0)
+                {
+                    foreach (Vector2I next in tilesToCheck)
+                    {
+                        tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                    }
+                }
+            }
+        }
+        
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
