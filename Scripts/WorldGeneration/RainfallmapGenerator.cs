@@ -12,19 +12,31 @@ public class RainfallMapGenerator
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(WorldGenerator.rng.Next(-99999, 99999));
-        float minVal = float.PositiveInfinity;
+        float minValue = float.MaxValue;
+        float maxValue = float.MinValue;
         for (int y = 0; y < WorldGenerator.WorldSize.Y; y++)
         {
             for (int x = 0; x < WorldGenerator.WorldSize.X; x++)
             {
-                map[x, y] = Mathf.InverseLerp(-0.5f, 0.5f, noise.GetNoise(x/scale, y/scale));
-                if (noise.GetNoise(x, y) < minVal)
+                map[x, y] = Mathf.InverseLerp(-1f, 1f, noise.GetNoise(x / scale, y / scale));
+                if (map[x, y] < minValue)
                 {
-                    minVal = noise.GetNoise(x, y);
+                    minValue = map[x, y];
+                }
+                if (map[x, y] > maxValue)
+                {
+                    maxValue = map[x, y];
                 }
             }
         }
-        GD.Print("Min Rainfall Value: " + minVal);
+        for (int y = 0; y < WorldGenerator.WorldSize.Y; y++)
+        {
+            for (int x = 0; x < WorldGenerator.WorldSize.X; x++)
+            {
+                map[x, y] = Mathf.Lerp(map[x, y], minValue, maxValue);
+                map[x, y] *= Mathf.Clamp(WorldGenerator.TempMap[x, y] * 1f, 0f, 1f);
+            }
+        }
         return map;
     }
 }

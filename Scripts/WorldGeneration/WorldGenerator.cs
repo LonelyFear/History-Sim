@@ -7,7 +7,7 @@ public static class WorldGenerator
 {
     public const float HillThreshold = 0.75f;
     public const float MountainThreshold = 0.8f;
-    public const float MaxTemperature = 35;
+    public const float MaxTemperature = 30;
     public const float MinTemperature = -30;
     public const float MaxRainfall = 3500;
     public const float MinRainfall = 50;

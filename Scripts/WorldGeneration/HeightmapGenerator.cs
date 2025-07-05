@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 public class HeightmapGenerator
 {
@@ -281,15 +282,18 @@ public class HeightmapGenerator
             for (int y = 0; y < worldSize.Y; y++)
             {
                 TerrainTile tile = tiles[x, y];
+                TerrainTile boundary = null;
                 float shortestDistSquared = Mathf.Inf;
                 foreach (var entry in tile.edgeDistancesSquared)
                 {
                     TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
                     if (entry.Value < shortestDistSquared && nextTile.fault)
                     {
+                        boundary = nextTile;
                         shortestDistSquared = entry.Value;
                     }
                 }
+                tile.nearestBoundary = boundary;
                 tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
             }
         }   
@@ -465,13 +469,15 @@ public class HeightmapGenerator
                 }
             }
         }
-
-        // Get Edge Distances
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
                 List<Vector2I> tilesToCheck = [.. tiles[x, y].region.edges];
+                foreach (VoronoiRegion region in tiles[x, y].region.borderingRegions)
+                {
+                    //tilesToCheck.AddRange(region.edges);
+                }
                 TerrainTile tile = tiles[x, y];
                 Vector2I pos = new Vector2I(x, y);
                 if (tilesToCheck.Count > 0)
@@ -479,10 +485,10 @@ public class HeightmapGenerator
                     foreach (Vector2I next in tilesToCheck)
                     {
                         tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
-                    }                 
+                    }
                 }
-            }
-        }          
+            }            
+        }     
     }
 
     void GetDistances()

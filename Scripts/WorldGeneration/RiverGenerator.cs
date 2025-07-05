@@ -21,7 +21,7 @@ public class RiverGenerator
         {
             bool posGood = true;
             Vector2I pos = new Vector2I(rng.Next(0, WorldGenerator.WorldSize.X), rng.Next(0, WorldGenerator.WorldSize.Y));
-            if (!validPositions.Contains(pos) && WorldGenerator.HeightMap[pos.X, pos.Y] > minRiverHeight && rng.NextSingle() < WorldGenerator.RainfallMap[pos.X, pos.Y])
+            if (!validPositions.Contains(pos) && WorldGenerator.HeightMap[pos.X, pos.Y] > minRiverHeight && rng.NextSingle() < WorldGenerator.RainfallMap[pos.X, pos.Y] && WorldGenerator.BiomeMap[pos.X, pos.Y].type == "land")
             {
                 foreach (Vector2I oPos in validPositions)
                 {
