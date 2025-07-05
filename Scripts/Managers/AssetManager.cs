@@ -87,8 +87,9 @@ public static class AssetManager
         foreach (string modPath in foundModPaths)
         {
             LoadCrops(modPath);
-        }            
+        }
         LoadBiomes();
+        GD.Print("Crops: " + crops.Count);
     }
     public static void LoadFood(string modPath)
     {
