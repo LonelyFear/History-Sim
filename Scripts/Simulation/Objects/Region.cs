@@ -72,12 +72,11 @@ public class Region : PopObject
 
         foreach (Crop crop in AssetManager.crops.Values)
         {
-            bool goodTemp = crop.maxTemperature <= avgTemperature && crop.minTemperature >= avgTemperature;
-            bool goodRain = crop.maxRainfall <= avgRainfall && crop.minRainfall >= avgRainfall;
+            bool goodTemp = crop.maxTemperature >= avgTemperature && crop.minTemperature <= avgTemperature;
+            bool goodRain = crop.maxRainfall >= avgRainfall && crop.minRainfall <= avgRainfall;
             if (goodTemp && goodRain)
             {
                 plantableCrops.Add(crop);
-                GD.Print(crop);
             }
         }
     }
@@ -87,6 +86,10 @@ public class Region : PopObject
         if (landCount > 0)
         {
             habitable = true;
+        }
+        else
+        {
+            habitable = false;
         }
     }
     public void CalcMaxPopulation()
@@ -290,7 +293,7 @@ public class Region : PopObject
 
     public bool Migrateable(Pop pop)
     {
-        return true;
+        return habitable;
     }
 
     public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)

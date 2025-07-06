@@ -247,10 +247,6 @@ public partial class SimManager : Node
         ulong destroyTime = 0;
         ulong migrateTime = 0;
         ulong growTime = 0;
-        Parallel.ForEach(pops.ToArray(), pop =>
-        {
-
-        });
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
@@ -280,22 +276,8 @@ public partial class SimManager : Node
                     pop.region.PopWealth(pop);
                 }
                 // Pop Farming           
-                pop.ProfessionUpdate();
-
-
-                // Starving
-                if (complexEconomy)
-                {
-                    foodQueue.Enqueue(pop, (int)pop.profession);
-                }
-
+                //pop.ProfessionUpdate();
             }
-        }
-
-        while (foodQueue.Count > 0)
-        {
-            Pop pop = foodQueue.Dequeue();
-            pop.ConsumeFood();
         }
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
         // GD.Print("  Pops Delete Time: " + destroyTime + " ms");

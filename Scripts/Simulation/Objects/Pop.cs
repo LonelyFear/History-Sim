@@ -145,7 +145,7 @@ public class Pop
         ChangePopulation(-workforceDelta, -dependentDelta);
         return newWorkers;
     }
-    #region Farmin' & Starvin'
+    #region Starvin'
     public double GetRequiredNutrition()
     {
         return ((FromNativePopulation(workforce) * workforceNutritionNeed) + (FromNativePopulation(dependents) * dependentNutritionNeed)) * 1.0;
@@ -190,28 +190,8 @@ public class Pop
     }
 
     #endregion
-    #region Jobs
-    public void ProfessionUpdate()
-    {
-        switch (profession)
-        {
-            case Profession.FARMER:
-                //GrowCrops();
-                break;
-            case Profession.MERCHANT:
-                if (simManager.complexEconomy)
-                {
-                    ComplexTrade();
-                }
-                else
-                {
 
-                }
-
-                break;
-        }
-    }
-    #region Simple Economy
+    #region Economy
     public void SimpleProfessionTransitions()
     {
 
@@ -221,73 +201,14 @@ public class Pop
 
     }
     #endregion
-    #region Complex Economy
-    public void ComplexTrade()
-    {
-        Region target = region.PickRandomBorder();
-        if (rng.NextSingle() < 0.1 && target.tradeWeight < 100)
-        {
-            return;
-        }
-        if (target.pops.Count > 0)
-        {
-            if (region.economy.GetTotalFoodAmount() > target.economy.GetTotalFoodAmount())
-            {
-                target.tradeWeight += 1;
-                region.economy.TransferResources(target.economy, region.economy.GetAllFood(), region.economy.GetTotalFoodAmount() * 0.05f);
-            }
-        }
-    }
-    public void ComplexProfessionTransitions()
-    {
-        // Profession Transitions
-        switch (profession)
-        {
-            case Profession.FARMER:
-                bool surplusMercantilism = region.fieldsFull || region.economy.GetTotalNutrition() > GetRequiredNutrition() * 1.25;
-                bool tradeMercantilism = region.tradeWeight >= 100;
-                if (surplusMercantilism || tradeMercantilism)
-                {
-                    // Farmer To Merchant
-                    ChangeProfession((long)(workforce * 0.01), (long)(dependents * 0.01), Profession.MERCHANT);
-                    return;
-                }
-                break;
-            case Profession.MERCHANT:
-                if (region.economy.GetTotalNutrition() < GetRequiredNutrition() * 1.2 && !region.fieldsFull)
-                {
-                    // Merchant To Farmer
-                    ChangeProfession((long)(workforce * 0.02), (long)(dependents * 0.02), Profession.FARMER);
-                    return;
-                }
-                // Merchant To Soldier
-                break;
-        }
-    }
-    #endregion
-    #endregion
-
     public void Migrate()
     {
         // Chance of pop to migrate
         float migrateChance = 0.0005f;
-
-        if (simManager.complexEconomy)
+        // Simple Migration
+        if (region.population >= region.maxPopulation * 0.95f)
         {
-            // Complex Migration
-            // Pops are most likely to migrate if their region is overpopulated
-            if (FromNativePopulation(population)/region.ariableLand >= 400 || region.fieldsFull)
-            {
-                migrateChance = 1f;
-            }
-        }
-        else
-        {
-            // Simple Migration
-            if (region.population >= region.maxPopulation * 0.95f)
-            {
-                migrateChance = 1f;
-            }
+            migrateChance = 1f;
         }
 
         if (profession == Profession.ARISTOCRAT)
