@@ -55,7 +55,7 @@ public static class WorldGenerator
     {
         ulong startTime = Time.GetTicksMsec();
         HeightMap = new HeightmapGenerator().GenerateHeightmap();
-        GD.Print("Heightmap Generation Finished After " + ((Time.GetTicksMsec() - startTime)/1000f) + "s");
+        GD.Print("Heightmap Generation Finished After " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         Stage++;
         TempMap = new TempmapGenerator().GenerateTempMap(1f);
         Stage++;

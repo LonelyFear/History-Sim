@@ -53,10 +53,19 @@ public class HeightmapGenerator
         heightmap = new float[worldSize.X, worldSize.Y];
         midpoints = new bool[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
+        ulong startTime = Time.GetTicksMsec();
         points = GeneratePoints();
+        GD.Print("Point Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         GenerateRegions(6);
+        GD.Print("Voronoi Region Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         GenerateContinents();
+        GD.Print("Continent Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         GetDistances();
+        GD.Print("Distance Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         try
         {
             GeneratePlates(10);
@@ -65,8 +74,14 @@ public class HeightmapGenerator
         {
             GD.PushError(e);
         }
+        GD.Print("Plate Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         GetTectonicPressure();
+        GD.Print("Pressure Calc Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         AdjustHeightMap();
+        GD.Print("Heightmap Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
         try
         {
             TectonicEffects();
@@ -75,7 +90,8 @@ public class HeightmapGenerator
         {
             GD.PushError(e);
         }
-
+        GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        /*
         float aboveSeaLevelTiles = 0;
         for (int x = 0; x < worldSize.X; x++)
         {
@@ -89,6 +105,7 @@ public class HeightmapGenerator
         }
         avgElevationAboveSea /= aboveSeaLevelTiles;
         GD.Print("Avg Elevation Above Sea Level: " + WorldGenerator.GetUnitElevation(avgElevationAboveSea).ToString("#,###0 meters"));
+        */
         return heightmap;
     }
 
@@ -103,85 +120,89 @@ public class HeightmapGenerator
         heightNoise.SetFractalType(FastNoiseLite.FractalType.Ridged);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        for (int x = 0; x < worldSize.X; x++)
+        int divisions = 4;
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
-                float minWidth = 0f;
-                TerrainTile tile = tiles[x, y];
-
-                float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x, y));
-                float boundaryFactor;
-                TerrainTile boundary = tile.nearestBoundary;
-                
-                if (boundary == null)
+                for (int y = 0; y < worldSize.Y; y++)
                 {
-                    continue;
-                }
+                    float minWidth = 0f;
+                    TerrainTile tile = tiles[x, y];
 
-                if (boundary.region.continental)
-                {
-                    if (boundary.collisionContinental)
+                    float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x, y));
+                    float boundaryFactor;
+                    TerrainTile boundary = tile.nearestBoundary;
+
+                    if (boundary == null)
                     {
-                        // Mountain Ranges
-                        if (boundary.pressure > 0)
+                        continue;
+                    }
+
+                    if (boundary.region.continental)
+                    {
+                        if (boundary.collisionContinental)
                         {
-                            // Normal Ranges
-                            minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
-                            boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                            if (tile.boundaryDist <= minWidth)
+                            // Mountain Ranges
+                            if (boundary.pressure > 0)
                             {
-                                heightmap[x, y] += 0.35f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
+                                // Normal Ranges
+                                minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
+                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
+                                if (tile.boundaryDist <= minWidth)
+                                {
+                                    heightmap[x, y] += 0.35f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
+                                }
+                            }
+                            else
+                            {
+                                // Rift Valleys
+                                minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
+                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
+                                if (tile.boundaryDist <= minWidth)
+                                {
+                                    heightmap[x, y] -= 0.3f * (1f - riftValleyCurve.Sample(boundaryFactor)) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
+                                }
                             }
                         }
                         else
                         {
-                            // Rift Valleys
-                            minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
-                            boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                            if (tile.boundaryDist <= minWidth)
+                            // Inland Volcanoes
+                            if (boundary.pressure > 0)
                             {
-                                heightmap[x, y] -= 0.3f * (1f - riftValleyCurve.Sample(boundaryFactor)) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
+                                minWidth = 12f + (widthNoise.GetNoise(x, y) * 3f);
+                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
+                                if (tile.boundaryDist <= minWidth)
+                                {
+                                    heightmap[x, y] += 0.4f * volcanicRangeCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
+                                }
                             }
                         }
                     }
                     else
                     {
-                        // Inland Volcanoes
-                        if (boundary.pressure > 0)
+                        if (boundary.collisionContinental)
                         {
-                            minWidth = 12f + (widthNoise.GetNoise(x, y) * 3f);
-                            boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                            if (tile.boundaryDist <= minWidth)
-                            {
-                                heightmap[x, y] += 0.4f * volcanicRangeCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
-                            }
+                            // TODO
                         }
-                    }
-                }
-                else
-                {
-                    if (boundary.collisionContinental)
-                    {
-                        // TODO
-                    }
-                    else
-                    {
-                        // Island Arcs
-                        if (boundary.pressure > 0)
+                        else
                         {
-                            minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
-                            boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                            if (tile.boundaryDist <= minWidth)
+                            // Island Arcs
+                            if (boundary.pressure > 0)
                             {
-                                heightmap[x, y] += 0.5f * islandArcCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
-                            }
+                                minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
+                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
+                                if (tile.boundaryDist <= minWidth)
+                                {
+                                    heightmap[x, y] += 0.75f * islandArcCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
+                                }
 
+                            }
                         }
                     }
                 }
             }
-        }        
+        });       
     }
     public void GetTectonicPressure()
     {
@@ -276,52 +297,59 @@ public class HeightmapGenerator
         }
         GD.Print("Plates grown");
         // Checks if tiles are on a plate border
-        for (int x = 0; x < worldSize.X; x++)
+        int divisions = 8;
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
-                VoronoiRegion region = tiles[x, y].region;
-                Vector2I pos = new Vector2I(x, y);
-                for (int dx = -1; dx < 2; dx++)
+                for (int y = 0; y < worldSize.Y; y++)
                 {
-                    for (int dy = -1; dy < 2; dy++)
+                    VoronoiRegion region = tiles[x, y].region;
+                    Vector2I pos = new Vector2I(x, y);
+                    for (int dx = -1; dx < 2; dx++)
                     {
-                        if ((dx == 0 && dy == 0) || tiles[x, y].fault)
+                        for (int dy = -1; dy < 2; dy++)
                         {
-                            continue;
-                        }
-                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
-                        VoronoiRegion neighbor = tiles[next.X, next.Y].region;
-                        if (neighbor.plate != region.plate)
-                        {
-                            tiles[x, y].fault = true;
-                            region.boundaryTiles.Add(pos);
+                            if ((dx == 0 && dy == 0) || tiles[x, y].fault)
+                            {
+                                continue;
+                            }
+                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                            VoronoiRegion neighbor = tiles[next.X, next.Y].region;
+                            if (neighbor.plate != region.plate)
+                            {
+                                tiles[x, y].fault = true;
+                                region.boundaryTiles.Add(pos);
+                            }
                         }
                     }
                 }
             }
-        }
+        });
         // Gets Distance From Nearest Boundary
-        for (int x = 0; x < worldSize.X; x++)
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
-                TerrainTile tile = tiles[x, y];
-                TerrainTile boundary = null;
-                float shortestDistSquared = Mathf.Inf;
-                foreach (var entry in tile.edgeDistancesSquared)
+                for (int y = 0; y < worldSize.Y; y++)
                 {
-                    TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                    if (entry.Value < shortestDistSquared && nextTile.fault)
+                    TerrainTile tile = tiles[x, y];
+                    TerrainTile boundary = null;
+                    float shortestDistSquared = Mathf.Inf;
+                    foreach (var entry in tile.edgeDistancesSquared)
                     {
-                        boundary = nextTile;
-                        shortestDistSquared = entry.Value;
+                        TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
+                        if (entry.Value < shortestDistSquared && nextTile.fault)
+                        {
+                            boundary = nextTile;
+                            shortestDistSquared = entry.Value;
+                        }
                     }
+                    tile.nearestBoundary = boundary;
+                    tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
                 }
-                tile.nearestBoundary = boundary;
-                tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
             }
-        }   
+        });  
     }
     public void GenerateContinents()
     {
@@ -381,29 +409,34 @@ public class HeightmapGenerator
                 }
             }
         }
-        for (int x = 0; x < worldSize.X; x++){
-            for (int y = 0; y < worldSize.Y; y++)
+        int divisions = 4;
+        Parallel.For(1, divisions + 1, (i) =>
+        {
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
-                float noiseValue = Mathf.InverseLerp(minErosionValue, maxErosionValue, erosion.GetNoise(x / erosionScale, y / erosionScale));
-                float coastMultiplier;
-                if (tiles[x, y].region.continental)
+                for (int y = 0; y < worldSize.Y; y++)
                 {
-                    // Land hills
-                    coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 20f, noiseValue)), 0f, 1f);
-                    float topDist = 1f - seaLevel - 0.05f;
-                    heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
-                    heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);
-                    //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
-                }
-                else
-                {
-                    // Sea Floor
-                    coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 5f, noiseValue)), 0f, 1f);
-                    float seaFloorHeight = seaFloorLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * (seaLevel / 4f));
-                    heightmap[x, y] = Mathf.Lerp(seaLevel, seaFloorHeight, Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
+                    float noiseValue = Mathf.InverseLerp(minErosionValue, maxErosionValue, erosion.GetNoise(x / erosionScale, y / erosionScale));
+                    float coastMultiplier;
+                    if (tiles[x, y].region.continental)
+                    {
+                        // Land hills
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 20f, noiseValue)), 0f, 1f);
+                        float topDist = 1f - seaLevel - 0.05f;
+                        heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
+                        heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);
+                        //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
+                    }
+                    else
+                    {
+                        // Sea Floor
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 5f, noiseValue)), 0f, 1f);
+                        float seaFloorHeight = seaFloorLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * (seaLevel / 4f));
+                        heightmap[x, y] = Mathf.Lerp(seaLevel, seaFloorHeight, Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
+                    }
                 }
             }
-        }
+        });
     }
     Dictionary<Vector2I, VoronoiRegion> GeneratePoints()
     {
@@ -527,125 +560,107 @@ public class HeightmapGenerator
 
     void GetDistances()
     {
-        for (int x = 0; x < worldSize.X; x++)
+        ulong startTime = Time.GetTicksMsec();
+        int divisions = 8;
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < worldSize.Y; y++)
-            {
-                VoronoiRegion region = tiles[x, y].region;
-                Vector2I pos = new Vector2I(x, y);
-                for (int dx = -1; dx < 2; dx++)
-                {
-                    for (int dy = -1; dy < 2; dy++)
-                    {
-                        if (dx == 0 && dy == 0)
-                        {
-                            continue;
-                        }
-                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
-                        VoronoiRegion neighbor = tiles[next.X, next.Y].region;
-                        if (neighbor != region)
-                        {
-                            tiles[x, y].border = true;
-                            if (!region.borderingRegions.Contains(neighbor))
-                            {
-                                region.borderingRegions.Add(neighbor);
-                            }          
-                            if (region.continental != neighbor.continental)
-                            {
-                                region.coastal = true;
-                                tiles[x, y].coastal = true;
-                                region.coastalTiles.Add(pos);
-                            }
-                        }
-
-                    }
-                }
-            }
-        }
-
-        // Gets Relevant Tiles for each Tile
-        try
-        {
-            //int divisions = 8;
-            for (int x = 0; x < worldSize.X; x++)
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
                 for (int y = 0; y < worldSize.Y; y++)
                 {
-                    m.WaitOne();
-                    TerrainTile tile = tiles[x, y];
-                    m.ReleaseMutex();
-                    List<Vector2I> tilesToCheck = [.. tile.region.edges];
-                    foreach (VoronoiRegion region in tile.region.borderingRegions)
-                    {
-                        if (region.coastal && tile.region.continental && region.continental)
-                        {
-                            tilesToCheck.AddRange(region.edges);
-                        }
-                    }
-
+                    VoronoiRegion region = tiles[x, y].region;
                     Vector2I pos = new Vector2I(x, y);
-                    Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
-                    if (tilesToCheck.Count > 0)
+                    for (int dx = -1; dx < 2; dx++)
                     {
-                        foreach (Vector2I next in tilesToCheck)
+                        for (int dy = -1; dy < 2; dy++)
                         {
-                            tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                            if (dx == 0 && dy == 0)
+                            {
+                                continue;
+                            }
+                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                            VoronoiRegion neighbor = tiles[next.X, next.Y].region;
+                            if (neighbor != region)
+                            {
+                                tiles[x, y].border = true;
+                                if (!region.borderingRegions.Contains(neighbor))
+                                {
+                                    region.borderingRegions.Add(neighbor);
+                                }
+                                if (region.continental != neighbor.continental)
+                                {
+                                    region.coastal = true;
+                                    tiles[x, y].coastal = true;
+                                    region.coastalTiles.Add(pos);
+                                }
+                            }
+
                         }
                     }
-                    //tile.edgeDistancesSquared = edgeDistancesSquared.ToDictionary();
                 }
             }
+        });
+        GD.Print("  Neighbor Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
+        // Gets Relevant Tiles for each Tile
+        try
+        {
+            Parallel.For(1, divisions + 1, (i) =>
+            {
+                for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+                {
+                    for (int y = 0; y < worldSize.Y; y++)
+                    {
+                        TerrainTile tile = tiles[x, y];
+                        List<Vector2I> tilesToCheck = [.. tile.region.edges];
+                        foreach (VoronoiRegion region in tile.region.borderingRegions)
+                        {
+                            if (region.coastal && tile.region.continental && region.continental)
+                            {
+                                tilesToCheck.AddRange(region.edges);
+                            }
+                        }
+
+                        Vector2I pos = new Vector2I(x, y);
+                        if (tilesToCheck.Count > 0)
+                        {
+                            foreach (Vector2I next in tilesToCheck)
+                            {
+                                tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                            }
+                        }
+                    }
+                }
+            });
         }
         catch (Exception e)
         {
             GD.PrintErr(e);
         }
-
-        /*
-        for (int x = 0; x < worldSize.X; x++)
+        GD.Print("  Tile Search Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        startTime = Time.GetTicksMsec();
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
-                TerrainTile tile = tiles[x, y];
-                List<Vector2I> tilesToCheck = [.. tile.region.edges];
-                foreach (VoronoiRegion region in tile.region.borderingRegions)
+                for (int y = 0; y < worldSize.Y; y++)
                 {
-                    if (region.coastal && tile.region.continental && region.continental)
+                    TerrainTile tile = tiles[x, y];
+                    Vector2I pos = new Vector2I(x, y);
+                    float shortestDistSquared = Mathf.Inf;
+                    foreach (var entry in tile.edgeDistancesSquared)
                     {
-                        tilesToCheck.AddRange(region.edges);
+                        TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
+                        if (entry.Value < shortestDistSquared && nextTile.coastal)
+                        {
+                            shortestDistSquared = entry.Value;
+                        }
                     }
-                }
-
-                Vector2I pos = new Vector2I(x, y);
-                if (tilesToCheck.Count > 0)
-                {
-                    foreach (Vector2I next in tilesToCheck)
-                    {
-                        tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
-                    }
+                    tile.coastDist = Mathf.Sqrt(shortestDistSquared);
                 }
             }
-        }
-        */
-        
-        for (int x = 0; x < worldSize.X; x++)
-        {
-            for (int y = 0; y < worldSize.Y; y++)
-            {
-                TerrainTile tile = tiles[x, y];
-                Vector2I pos = new Vector2I(x, y);
-                float shortestDistSquared = Mathf.Inf;
-                foreach (var entry in tile.edgeDistancesSquared)
-                {
-                    TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                    if (entry.Value < shortestDistSquared && nextTile.coastal)
-                    {
-                        shortestDistSquared = entry.Value;
-                    }
-                }
-                tile.coastDist = Mathf.Sqrt(shortestDistSquared);
-            }
-        }        
+        });
+        GD.Print("  Coast Dist Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));    
     }
 
     void SetRegionContinental(bool value, VoronoiRegion region) {
