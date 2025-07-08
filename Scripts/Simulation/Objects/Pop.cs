@@ -227,7 +227,7 @@ public class Pop
                 canMigrate = region.owner == target.owner;
             }
 
-            if (target.Migrateable(this) && canMigrate)
+            if (target.Migrateable(this) && canMigrate && (rng.NextSingle() < target.navigability))
             {
                 region.MovePop(this, target, (long)(workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
             }

@@ -1,10 +1,12 @@
 using Godot;
 using System;
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
+using Mutex = System.Threading.Mutex;
 
 public class HeightmapGenerator
 {
@@ -22,8 +24,8 @@ public class HeightmapGenerator
     Vector2I worldSize;
     float worldMult;
     float seaLevel;
-    
-    
+
+    Mutex m = new Mutex();
     
     Dictionary<Vector2I, VoronoiRegion> points;
     static Random rng = new Random();
@@ -86,7 +88,7 @@ public class HeightmapGenerator
             }
         }
         avgElevationAboveSea /= aboveSeaLevelTiles;
-        GD.Print("Avg Elevation Above Sea Level: " + WorldGenerator.GetUnitElevation(avgElevationAboveSea).ToString("#,###0 meters") + " meters");
+        GD.Print("Avg Elevation Above Sea Level: " + WorldGenerator.GetUnitElevation(avgElevationAboveSea).ToString("#,###0 meters"));
         return heightmap;
     }
 
@@ -562,6 +564,44 @@ public class HeightmapGenerator
         }
 
         // Gets Relevant Tiles for each Tile
+        try
+        {
+            //int divisions = 8;
+            for (int x = 0; x < worldSize.X; x++)
+            {
+                for (int y = 0; y < worldSize.Y; y++)
+                {
+                    m.WaitOne();
+                    TerrainTile tile = tiles[x, y];
+                    m.ReleaseMutex();
+                    List<Vector2I> tilesToCheck = [.. tile.region.edges];
+                    foreach (VoronoiRegion region in tile.region.borderingRegions)
+                    {
+                        if (region.coastal && tile.region.continental && region.continental)
+                        {
+                            tilesToCheck.AddRange(region.edges);
+                        }
+                    }
+
+                    Vector2I pos = new Vector2I(x, y);
+                    Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
+                    if (tilesToCheck.Count > 0)
+                    {
+                        foreach (Vector2I next in tilesToCheck)
+                        {
+                            tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
+                        }
+                    }
+                    //tile.edgeDistancesSquared = edgeDistancesSquared.ToDictionary();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr(e);
+        }
+
+        /*
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
@@ -586,6 +626,7 @@ public class HeightmapGenerator
                 }
             }
         }
+        */
         
         for (int x = 0; x < worldSize.X; x++)
         {
@@ -647,6 +688,26 @@ internal class TerrainTile
     public bool fault;
     public bool sank = false;
     public bool offshore;
+
+    public TerrainTile Clone()
+    {
+        return new TerrainTile()
+        {
+            region = region,
+            coastDist = coastDist,
+            boundaryDist = boundaryDist,
+            nearestBoundary = nearestBoundary,
+            edgeDistancesSquared = edgeDistancesSquared,
+            pressure = pressure,
+            collisionContinental = collisionContinental,
+            convergent = convergent,
+            coastal = coastal,
+            border = border,
+            fault = fault,
+            sank = sank,
+            offshore = offshore
+        };
+    }
 }
 internal class Plate
 {

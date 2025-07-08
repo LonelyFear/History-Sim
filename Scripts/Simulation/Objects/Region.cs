@@ -10,11 +10,9 @@ public class Region : PopObject
     public bool habitable;
     public bool coastal;
     public float tradeWeight;
-    public float tradeDifficulty;
-    public float movementDifficulty;
 
     public Vector2I pos;
-    //public float avgFertility;
+    public float navigability;
     public float avgTemperature;
     public float avgRainfall;
     public float avgElevation;
@@ -37,7 +35,7 @@ public class Region : PopObject
     public List<Crop> plantableCrops = new List<Crop>();
     public float ariableLand;
     public bool fieldsFull;
-    public void CalcAvgFertility()
+    public void CalcAverages()
     {
         name = "Region";
         landCount = 0;
@@ -55,7 +53,8 @@ public class Region : PopObject
                 {
                     landCount++;
                     ariableLand += tile.ariability;
-                    tradeDifficulty += tile.navigability;
+                    navigability += tile.navigability;
+
                 }
                 else if (tile.terrainType == TerrainType.WATER)
                 {
@@ -64,7 +63,7 @@ public class Region : PopObject
             }
         }
 
-        tradeDifficulty /= landCount;
+        navigability /= landCount;
         avgTemperature /= tiles.Length;
         avgRainfall /= tiles.Length;
         avgElevation /= tiles.Length;

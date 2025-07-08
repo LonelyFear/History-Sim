@@ -173,7 +173,7 @@ public partial class SimManager : Node
                     }
                 }
                 // Calc average fertility
-                newRegion.CalcAvgFertility();
+                newRegion.CalcAverages();
                 // Checks habitability
                 newRegion.CheckHabitability();
                 if (newRegion.habitable)
@@ -222,7 +222,7 @@ public partial class SimManager : Node
         {
             double nodeChance = 0.005;
 
-            if (rng.NextDouble() <= nodeChance)
+            if (rng.NextDouble() <= nodeChance && region.habitable)
             {
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 Culture culture = CreateCulture();
