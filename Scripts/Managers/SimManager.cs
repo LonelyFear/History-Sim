@@ -284,53 +284,44 @@ public partial class SimManager : Node
     {
         uint countedPoppedRegions = 0;
         ulong tickStartTime = Time.GetTicksMsec();
-        ulong mergeTime = 0;
-        ulong checkTime = 0;
-        ulong conquestTime = 0;
-        ulong borderTime = 0;
         long worldPop = 0;
-        foreach (Region region in habitableRegions)
+        int regionBatches = 8;
+        Parallel.For(1, regionBatches + 1, (batch) =>
         {
-            ulong startTime = Time.GetTicksMsec();
-            // Trade Route Decay
-            
-            region.tradeWeight = Mathf.Clamp(region.tradeWeight, 0f, 100f);
-            region.tradeWeight -= 1;
-            region.economy.RotPerishables();
-
-            if (region.pops.Count > 0)
+            for (int i = habitableRegions.Count / regionBatches * (batch - 1); i < habitableRegions.Count / regionBatches * batch - 1; i++)
             {
-                //GD.Print(region.GetFoodSurplus());
-                countedPoppedRegions += 1;
+                Region region = habitableRegions[i];
+                // Trade Route Decay
+
+                region.tradeWeight = Mathf.Clamp(region.tradeWeight, 0f, 100f);
+                region.tradeWeight -= 1;
+                region.economy.RotPerishables();
+
                 if (region.pops.Count > 0)
                 {
+                    m.WaitOne();
+                    countedPoppedRegions += 1;
+                    m.ReleaseMutex();
+                    
                     region.MergePops();
-                    mergeTime += Time.GetTicksMsec() - startTime;
-                    startTime = Time.GetTicksMsec();
                     region.CheckPopulation();
-                    checkTime += Time.GetTicksMsec() - startTime;
-                    if (complexEconomy)
-                    {
-                        region.GrowCrops();
-                    }
 
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {
-                        startTime = Time.GetTicksMsec();
                         region.NeutralConquest();
-                        conquestTime += Time.GetTicksMsec() - startTime;
                     }
                     region.RandomStateFormation();
                     if (region.owner != null)
                     {
-                        startTime = Time.GetTicksMsec();
                         region.StateBordering();
-                        borderTime += Time.GetTicksMsec() - startTime;
                     }
-                }
-                worldPop += region.population;
+
+                    m.WaitOne();
+                    worldPop += region.population;
+                    m.ReleaseMutex();
+                }                
             }
-        }
+        });
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
         // GD.Print("Region Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");

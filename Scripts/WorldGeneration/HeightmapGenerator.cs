@@ -188,7 +188,7 @@ public class HeightmapGenerator
                         else
                         {
                             // Island Arcs
-                            if (boundary.pressure > 0)
+                            if (boundary.pressure > 0 && tile.nearestBoundary.sank)
                             {
                                 minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
@@ -240,10 +240,7 @@ public class HeightmapGenerator
                                 tile.pressure += -0.5f * relativeVel.Length();
                             }
                             tile.collisionContinental = next.region.continental;
-                            if (tile.collisionContinental)
-                            {
-                                tile.sank = density > next.region.plate.density;
-                            }
+                            tile.sank = density > next.region.plate.density;
                         }
                     }
                 }

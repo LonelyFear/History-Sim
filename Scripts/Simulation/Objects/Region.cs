@@ -151,11 +151,14 @@ public class Region : PopObject
 
     public void NeutralConquest()
     {
+        SimManager.m.WaitOne();
         Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
+        SimManager.m.ReleaseMutex();
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
         {
-            SimManager.m.WaitOne();
             Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower() / 2, (long)(region.workforce * 0.95f));
+
+            SimManager.m.WaitOne();
             if (result.victor == Conflict.Side.AGRESSOR)
             {
                 owner.AddRegion(region);
