@@ -130,7 +130,7 @@ public class HeightmapGenerator
                     float minWidth = 0f;
                     TerrainTile tile = tiles[x, y];
 
-                    float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x, y));
+                    float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x/2f, y/2f));
                     float boundaryFactor;
                     TerrainTile boundary = tile.nearestBoundary;
 
@@ -151,7 +151,7 @@ public class HeightmapGenerator
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                                 if (tile.boundaryDist <= minWidth)
                                 {
-                                    heightmap[x, y] += 0.35f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
+                                    heightmap[x, y] += 0.35f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
                                 }
                             }
                             else
@@ -607,12 +607,15 @@ public class HeightmapGenerator
         {
             Parallel.For(1, divisions + 1, (i) =>
             {
+                TerrainTile tile = null;
+                List<Vector2I> tilesToCheck = null;
+                Vector2I pos = Vector2I.Down;
                 for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
                 {
                     for (int y = 0; y < worldSize.Y; y++)
                     {
-                        TerrainTile tile = tiles[x, y];
-                        List<Vector2I> tilesToCheck = [.. tile.region.edges];
+                        tile = tiles[x, y];
+                        tilesToCheck = [.. tile.region.edges];
                         foreach (VoronoiRegion region in tile.region.borderingRegions)
                         {
                             if (region.coastal && tile.region.continental && region.continental)
@@ -621,7 +624,7 @@ public class HeightmapGenerator
                             }
                         }
 
-                        Vector2I pos = new Vector2I(x, y);
+                        pos = new Vector2I(x, y);
                         if (tilesToCheck.Count > 0)
                         {
                             foreach (Vector2I next in tilesToCheck)

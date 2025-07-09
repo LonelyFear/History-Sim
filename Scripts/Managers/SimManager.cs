@@ -241,44 +241,38 @@ public partial class SimManager : Node
     #region Pop Update
     public void UpdatePops()
     {
-        PriorityQueue<Pop, int> foodQueue = new PriorityQueue<Pop, int>();
-
-        ulong tickStartTime = Time.GetTicksMsec();
-        ulong destroyTime = 0;
-        ulong migrateTime = 0;
-        ulong growTime = 0;
-        foreach (Pop pop in pops.ToArray())
+        int popBatches = Mathf.Clamp(8, 0, pops.Count());
+        Parallel.For(1, popBatches + 1, (batch) =>
         {
-            ulong startTime = Time.GetTicksMsec();
-            if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
+            //GD.Print("Pop Batch " + batch + " Running");
+            for (int i = pops.Count / popBatches * (batch - 1); i < pops.Count / popBatches * batch - 1; i++)
             {
-                startTime = Time.GetTicksMsec();
-                //m.WaitOne();
-                DestroyPop(pop);
-                //m.ReleaseMutex();
-                destroyTime += Time.GetTicksMsec() - startTime;
-            }
-            else
-            {
-                startTime = Time.GetTicksMsec();
-                pop.region.GrowPop(pop);
-                migrateTime += Time.GetTicksMsec() - startTime;
-
-                if (pop.batchId == timeManager.GetMonth())
+                Pop pop = pops[i];
+                ulong startTime = Time.GetTicksMsec();
+                if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
                 {
-                    startTime = Time.GetTicksMsec();
-                    pop.Migrate();
-
-                    growTime += Time.GetTicksMsec() - startTime;
+                    m.WaitOne();
+                    DestroyPop(pop);
+                    m.ReleaseMutex();
                 }
-                if (pop.region.owner != null)
+                else
                 {
-                    pop.region.PopWealth(pop);
+                    pop.region.GrowPop(pop);
+
+                    if (pop.batchId == timeManager.GetMonth())
+                    {
+                        pop.Migrate();
+                    }
+                    if (pop.region.owner != null)
+                    {
+                        //pop.region.PopWealth(pop);
+                    }
+                    // Pop Farming           
+                    //pop.ProfessionUpdate();
                 }
-                // Pop Farming           
-                //pop.ProfessionUpdate();
             }
-        }
+        });
+
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
         // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
         // GD.Print("  Pops Grow Time: " + growTime + " ms");
@@ -443,7 +437,14 @@ public partial class SimManager : Node
     }
     public void SimMonth()
     {
-        UpdatePops();
+        try
+        {
+            UpdatePops();
+        }
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }
         UpdateRegions();
         UpdateStates();
         UpdateCharacters();

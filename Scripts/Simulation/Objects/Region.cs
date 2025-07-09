@@ -198,39 +198,6 @@ public class Region : PopObject
         }
     }
 
-    public void PopWealth(Pop pop)
-    {
-        pop.totalWealth = 0;
-        switch (pop.profession)
-        {
-            case Profession.FARMER:
-                pop.totalWealth += 1 * Pop.FromNativePopulation(pop.workforce);
-                break;
-            case Profession.MERCHANT:
-                pop.totalWealth += 2 * Pop.FromNativePopulation(pop.workforce); ;
-                break;
-            case Profession.ARISTOCRAT:
-                pop.totalWealth += 3 * Pop.FromNativePopulation(pop.workforce);
-                break;
-        }
-        pop.CalcWealthPerCapita();
-
-        double taxesPerCapita = 0;
-        switch (pop.profession)
-        {
-            case Profession.FARMER:
-                taxesPerCapita = pop.wealthPerCapita * 0.2f;
-                break;
-            case Profession.MERCHANT:
-                taxesPerCapita = pop.wealthPerCapita * 0.1f;
-                break;
-            case Profession.ARISTOCRAT:
-                taxesPerCapita = pop.wealthPerCapita * 0.05f;
-                break;
-        }
-        double taxesCollected = taxesPerCapita * pop.population;
-        pop.totalWealth -= taxesCollected;
-    }
     #endregion
     #region PopActions
 
