@@ -12,11 +12,11 @@ public class Pop
     public float baseDeathRate = 0.29f;
     public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;
+    public float netIncome = 0f;
     public Region region;
     public Culture culture;
     public Profession profession = Profession.FARMER;
-    public double totalWealth;
-    public double wealthPerCapita;
+    
     public Tech tech;
     public int batchId;
 
@@ -26,6 +26,11 @@ public class Pop
     public List<Character> characters = new List<Character>();
     public static SimManager simManager;
     public static Random rng = new Random();
+    public float income = 0f;
+    public float expenses = 0f;
+    public float wealth = 0f;
+    public static Curve starvationCurve = GD.Load<Curve>("res://Curves/Simulation/StarvationCurve.tres");
+    public static Curve farmerProductionCurve = GD.Load<Curve>("res://Curves/Simulation/FarmerProductivityCurve.tres");
 
     public void ChangeWorkforce(long amount)
     {
@@ -71,10 +76,6 @@ public class Pop
     public static long ToNativePopulation(long population)
     {
         return population * simPopulationMultiplier;
-    }
-    public void CalcWealthPerCapita()
-    {
-        wealthPerCapita = totalWealth / FromNativePopulation(population);
     }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
@@ -150,6 +151,7 @@ public class Pop
     {
         return ((FromNativePopulation(workforce) * workforceNutritionNeed) + (FromNativePopulation(dependents) * dependentNutritionNeed)) * 1.0;
     }
+    /*
     public void ConsumeFood()
     {
         starvingPercentage = 0;
@@ -177,29 +179,36 @@ public class Pop
             //GD.Print(starvingPercentage);
         }
     }
-    public Crop SelectCrop()
-    {
-        if (region.plantableCrops.Count > 0)
-        {
-            return region.plantableCrops[0];
-        }
-        else
-        {
-            return null;
-        }
-    }
+    */
 
     #endregion
 
     #region Economy
-    public void SimpleProfessionTransitions()
+    public void ProfessionUpdate()
     {
-
+        switch (profession)
+        {
+            case Profession.FARMER:
+                // Farmer Stuff
+                float baseFarmerIncome = 0.2f;
+                float arableLandRatio = region.arableLand / region.landCount;
+                float harvestMultiplier = Mathf.Lerp(1f, 1.5f, rng.NextSingle());
+                float landUseRatio = 1f;
+                if (FromNativePopulation(region.professions[Profession.FARMER]) > 0) {
+                    landUseRatio = FromNativePopulation(workforce) / FromNativePopulation(region.professions[Profession.FARMER]);
+                }
+                income += arableLandRatio * (baseFarmerIncome * landUseRatio) * harvestMultiplier * farmerProductionCurve.Sample(workforce);
+                break;
+        }
     }
-    public void SimpleTrade()
+    public void Consumption()
     {
+        starvingPercentage = 0;
+        float expenses = FromNativePopulation(population) / 80000f;
 
-    }
+        netIncome = income - expenses;
+        wealth += netIncome;
+    }    
     #endregion
     public void Migrate()
     {
@@ -227,40 +236,26 @@ public class Pop
                 canMigrate = region.owner == target.owner;
             }
 
-            if (target.Migrateable(this) && canMigrate && (rng.NextSingle() < target.navigability))
+            if (target.Migrateable(this) && canMigrate && (rng.NextSingle() < target.navigability) && (rng.NextSingle() < target.arableLand/target.landCount))
             {
-                region.MovePop(this, target, (long)(workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble())), (long)(dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble())));
+                long movedDependents = (long)(dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble()));
+                long movedWorkforce = (long)(workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble()));
+                float movedWorkforceRatio = movedWorkforce/(float)workforce;
+                region.MovePop(this, target, movedWorkforce, movedDependents, wealth * movedWorkforceRatio);
             }
         }
     }
     public float GetDeathRate()
     {
-        float rateInBracket = 0;
         float deathRate = baseDeathRate;
-        if (starvingPercentage <= 0.7)
-        {
-            rateInBracket = Mathf.InverseLerp(0f, 0.7f, starvingPercentage);
-
-            deathRate += Mathf.Lerp(rateInBracket, 0f, 0.05f);
-        }
-        else if (starvingPercentage > 0.7)
-        {
-            rateInBracket = Mathf.InverseLerp(0.7f, 1f, starvingPercentage);
-            if (starvingPercentage >= 1f)
-            {
-                deathRate += 0.25f;
-            }
-            else
-            {
-                deathRate += Mathf.Lerp(rateInBracket, 0.05f, 0.2f);
-            }
-        }
+        deathRate += Mathf.Clamp(starvationCurve.Sample(starvingPercentage * 0.8f), 0f, 1f);
         //GD.Print(rateInBracket); 
         return deathRate;
     }
     public float GetBirthRate()
     {
-        return baseBirthRate;
+        float birthRate = baseBirthRate;
+        return birthRate;
     }
 }
 

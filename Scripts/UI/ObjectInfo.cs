@@ -35,16 +35,21 @@ public partial class ObjectInfo : Control
                 case PopObject.ObjectType.STATE:
                     State state = (State)metaObject;
                     nameLabel.Text = state.displayName;
-                    specialLabel.Text = "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0");
+                    specialLabel.Text = "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0") + "\n";
+                    specialLabel.Text += "Average Wealth: " + metaObject.averageWealth.ToString("0.0");
                     break;
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
                     populationLabel.Text += "\nFarmers: " + Pop.FromNativePopulation(region.professions[Profession.FARMER]).ToString("#,###0");
                     populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";
+                    specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand/region.landCount).ToString("#.0%") + "\n";
+                    specialLabel.Text += "Average Wealth: " + metaObject.averageWealth.ToString("#,##0.0");
+                    /*
                     specialLabel.Text = "Temperature: " + region.avgTemperature.ToString("0.0C") + "\n";
                     specialLabel.Text += "Rainfall: " + region.avgRainfall.ToString("#,###0 mm") + "\n";
                     specialLabel.Text += "Elevation: " + region.avgElevation.ToString("#,###0 meters");
+                    */
                     break;
                 case PopObject.ObjectType.CULTURE:
                     Culture culture = (Culture)metaObject;

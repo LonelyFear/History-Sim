@@ -5,6 +5,7 @@ public abstract class PopObject {
     public string name;
     public uint foundTick;
     public uint age;
+    public float averageWealth;
     public long population = 0;
     public long dependents = 0;    
     public long workforce = 0;
@@ -26,6 +27,7 @@ public abstract class PopObject {
         long countedPopulation = 0;
         long countedDependents = 0;
         long countedWorkforce = 0;
+        averageWealth = 0f;
 
         Dictionary<Culture, long> countedCultures = new Dictionary<Culture, long>();
         Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>()
@@ -40,6 +42,7 @@ public abstract class PopObject {
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
+            averageWealth += pop.wealth;
 
             countedProfessions[pop.profession] += pop.workforce;
             if (!countedCultures.ContainsKey(pop.culture))
@@ -50,6 +53,11 @@ public abstract class PopObject {
             {
                 countedCultures[pop.culture] += pop.population;
             }
+        }
+        averageWealth /= pops.Count;
+        if (float.IsNaN(averageWealth))
+        {
+            averageWealth = 0f;
         }
         
         cultures = countedCultures;

@@ -268,6 +268,17 @@ public partial class MapManager : Area2D
                 break;
             case MapModes.TECH:
                 break;
+            case MapModes.WEALTH:
+                if (region.habitable && region.pops.Count > 0)
+                {
+                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], region.averageWealth / 100f);
+                }
+                else if (region.habitable)
+                {
+                    color = new Color(0, 0, 0, 1);
+                }
+
+                break;
             case MapModes.POPS:
                 if (region.habitable && region.pops.Count > 0)
                 {
@@ -313,5 +324,6 @@ public enum MapModes {
     CULTURE,
     POPULATION,
     TECH,
+    WEALTH,
     POPS
 }

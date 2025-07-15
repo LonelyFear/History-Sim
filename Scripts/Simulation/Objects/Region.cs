@@ -16,7 +16,7 @@ public class Region : PopObject
     public float avgTemperature;
     public float avgRainfall;
     public float avgElevation;
-    public int landCount;
+    public float landCount;
     public State owner = null;
     public List<Army> armies;
 
@@ -33,8 +33,9 @@ public class Region : PopObject
     public bool needsJobs { private set; get; }
     public bool needsWorkers { private set; get; }
     public List<Crop> plantableCrops = new List<Crop>();
-    public float ariableLand;
+    public float arableLand;
     public bool fieldsFull;
+    public float food;
     public void CalcAverages()
     {
         name = "Region";
@@ -52,7 +53,7 @@ public class Region : PopObject
                 if (tile.IsLand())
                 {
                     landCount++;
-                    ariableLand += tile.ariability;
+                    arableLand += tile.arability;
                     navigability += tile.navigability;
 
                 }
@@ -61,6 +62,10 @@ public class Region : PopObject
                     coastal = true;
                 }
             }
+        }
+        if (landCount > 0)
+        {
+            //GD.Print(arableLand);            
         }
 
         navigability /= landCount;
@@ -109,25 +114,6 @@ public class Region : PopObject
         }
     }
     #region Nations
-    public void RandomStateFormation()
-    {
-        if (owner == null && population > Pop.ToNativePopulation(1000) && rng.NextDouble() <= 0.0001)
-        {
-            SimManager.m.WaitOne();
-            simManager.CreateState(this);
-            SimManager.m.ReleaseMutex();
-
-            owner.population = population;
-            owner.workforce = workforce;
-            Pop basePop = pops[0];
-            Pop rulingPop = basePop.ChangeProfession(Pop.ToNativePopulation(25), Pop.ToNativePopulation(75), Profession.ARISTOCRAT);
-
-            owner.rulingPop = rulingPop;
-            owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
-            owner.UpdateDisplayName();
-        }
-    }
-
     public void StateBordering()
     {
         border = false;
@@ -224,7 +210,9 @@ public class Region : PopObject
                 if (Pop.CanPopsMerge(pop, merger))
                 {
                     pop.ChangePopulation(merger.workforce, merger.dependents);
+                    pop.wealth += merger.wealth;
                     merger.ChangePopulation(-merger.workforce, -merger.dependents);
+                    merger.wealth -= merger.wealth;
                     break;
                 }
             }
@@ -260,12 +248,17 @@ public class Region : PopObject
     }
     #endregion
 
-    public bool Migrateable(Pop pop)
+    public bool Migrateable(Pop pop = null)
     {
-        return habitable;
+        bool migrateable = true;
+        if (arableLand / landCount < 0.2f)
+        {
+            migrateable = false;
+        }
+        return migrateable && habitable;
     }
 
-    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)
+    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents, float movedWealth = 0f)
     {
         if (destination == null || destination == this)
         {
@@ -282,9 +275,10 @@ public class Region : PopObject
                 movedDependents = pop.dependents;
             }
             SimManager.m.WaitOne();
-            Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
+            Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession, movedWealth);
             npop.canMove = false;
             pop.ChangePopulation(-movedWorkforce, -movedDependents);
+            pop.wealth -= movedWealth;
             SimManager.m.ReleaseMutex();
         }
     }
@@ -367,12 +361,12 @@ public class Region : PopObject
             float smoothing = 0.05f;
 
             long totalFarmers = (long)Mathf.Round(Pop.FromNativePopulation(professions[Profession.FARMER]));
-            double totalWork = cropsPerAribleLand * ariableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers / ariableLand)));
+            double totalWork = cropsPerAribleLand * arableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers / arableLand)));
             foreach (BaseResource yield in crop.yields.Keys)
             {
                 economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * 1.3);
             }
-            fieldsFull = totalWork == cropsPerAribleLand * ariableLand;
+            fieldsFull = totalWork == cropsPerAribleLand * arableLand;
         }
     }
     #endregion

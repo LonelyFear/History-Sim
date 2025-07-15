@@ -17,7 +17,7 @@ public class Biome
     public float maxTemperature { get; set; } = float.PositiveInfinity;
     public float minTemperature { get; set; } = float.NegativeInfinity;
     public float navigability { get; set; } = 0.0f;
-    public float ariablity { get; set; } = 0.0f;
+    public float arability { get; set; } = 0.0f;
     public float survivability { get; set; } = 0.0f;
     public string color { get; set; } = "FFFFFF";
     public int textureX { get; set; }

@@ -16,7 +16,7 @@ public static class WorldGenerator
     public static Vector2I WorldSize = new Vector2I(360, 180);
     public static float Width;
     public static float Height;
-    public static float WorldMult = 3f;
+    public static float WorldMult = 2f;
     public static float SeaLevel = 0.6f;
     public static int Seed;
     public static EventHandler worldgenFinishedEvent;

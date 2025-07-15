@@ -8,7 +8,7 @@ public class Tile
 	public float temperature;
 	public float elevation;
 	public float navigability;
-	public float ariability;
+	public float arability;
 	public float survivalbility;
 	public bool hasRoad;
 	public Vector2I defaultIcon = new Vector2I();

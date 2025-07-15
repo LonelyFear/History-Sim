@@ -34,6 +34,7 @@ public partial class SimManager : Node
     public long workforceChange = 0;
     public long dependentsChange = 0;
     public uint populatedRegions;
+    public float maxAvgWealth;
     public List<Culture> cultures = new List<Culture>();
     public List<State> states = new List<State>();
     public List<Army> armies = new List<Army>();
@@ -114,7 +115,7 @@ public partial class SimManager : Node
                 newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x,y]);
                 newTile.elevation = WorldGenerator.GetUnitElevation(WorldGenerator.HeightMap[x,y]);
                 
-                newTile.ariability = newTile.biome.ariablity;
+                newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
                 newTile.survivalbility = newTile.biome.survivability;
                 
@@ -134,14 +135,14 @@ public partial class SimManager : Node
                 if (WorldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
                 {
                     newTile.navigability *= 0.25f;
-                    newTile.ariability *= 0.25f;
+                    newTile.arability *= 0.25f;
                     newTile.survivalbility *= 0.8f;
                     newTile.terrainType = TerrainType.MOUNTAINS;
                 }                
                 else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
                 {
                     newTile.navigability *= 0.5f;
-                    newTile.ariability *= 0.5f;
+                    newTile.arability *= 0.5f;
                     newTile.terrainType = TerrainType.HILLS;
                 }
 
@@ -222,7 +223,7 @@ public partial class SimManager : Node
         {
             double nodeChance = 0.005;
 
-            if (rng.NextDouble() <= nodeChance && region.habitable)
+            if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
                 long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
                 Culture culture = CreateCulture();
@@ -233,7 +234,7 @@ public partial class SimManager : Node
                         culture = testRegion.pops[0].culture;
                     }
                 }
-                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture);
+                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, Profession.FARMER, 10f);
             }
         }
     }
@@ -242,36 +243,42 @@ public partial class SimManager : Node
     public void UpdatePops()
     {
         int popBatches = Mathf.Clamp(8, 0, pops.Count());
+        /*
         Parallel.For(1, popBatches + 1, (batch) =>
         {
             //GD.Print("Pop Batch " + batch + " Running");
             for (int i = pops.Count / popBatches * (batch - 1); i < pops.Count / popBatches * batch - 1; i++)
             {
                 Pop pop = pops[i];
-                ulong startTime = Time.GetTicksMsec();
-                if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
-                {
-                    m.WaitOne();
-                    DestroyPop(pop);
-                    m.ReleaseMutex();
-                }
-                else
-                {
-                    pop.region.GrowPop(pop);
 
-                    if (pop.batchId == timeManager.GetMonth())
-                    {
-                        pop.Migrate();
-                    }
-                    if (pop.region.owner != null)
-                    {
-                        //pop.region.PopWealth(pop);
-                    }
-                    // Pop Farming           
-                    //pop.ProfessionUpdate();
-                }
+
             }
         });
+        */
+        foreach (Pop pop in pops.ToArray())
+        {
+            ulong startTime = Time.GetTicksMsec();
+            if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
+            {
+                m.WaitOne();
+                DestroyPop(pop);
+                m.ReleaseMutex();
+            }
+            else
+            {
+                pop.income = 0f;
+                pop.expenses = 0f;
+                pop.region.GrowPop(pop);
+
+                if (pop.batchId == timeManager.GetMonth())
+                {
+                    pop.Migrate();
+                }
+                pop.ProfessionUpdate();
+                pop.Consumption();
+                pop.wealth = Mathf.Clamp(pop.wealth, 0, 100);
+            }            
+        }
 
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
         // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
@@ -310,7 +317,7 @@ public partial class SimManager : Node
                     {
                         region.NeutralConquest();
                     }
-                    region.RandomStateFormation();
+                    //region.RandomStateFormation();
                     if (region.owner != null)
                     {
                         region.StateBordering();
@@ -318,6 +325,10 @@ public partial class SimManager : Node
 
                     m.WaitOne();
                     worldPop += region.population;
+                    if (region.averageWealth > maxAvgWealth)
+                    {
+                        maxAvgWealth = region.averageWealth;
+                    }
                     m.ReleaseMutex();
                 }                
             }
@@ -459,7 +470,7 @@ public partial class SimManager : Node
     #endregion
     #region Creation
     #region Pops Creation
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER)
+    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER, float wealth = 0f)
     {
         currentBatch += 1;
         if (currentBatch > 12)
@@ -474,7 +485,8 @@ public partial class SimManager : Node
             profession = profession,
             workforce = workforce,
             dependents = dependents,
-            population = workforce + dependents
+            population = workforce + dependents,
+            wealth = wealth
         };
         //pop.ChangePopulation(workforce, dependents);
 
