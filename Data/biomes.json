@@ -149,7 +149,7 @@
 		"textureX": 1,
 		"textureY": 1,
 		"navigability":0.9,
-		"arability":0.5,
+		"arability":0.7,
 		"survivability":0.8
 	},	
 	{ 
@@ -165,7 +165,7 @@
 		"textureX": 1,
 		"textureY": 2,
 		"navigability":0.5,
-		"arability":0.1,
+		"arability":0.15,
 		"survivability":0.3
 	},	
 	{
@@ -181,7 +181,7 @@
 		"textureX": 3,
 		"textureY": 0,
 		"navigability":0.2,
-		"arability":0.2,
+		"arability":0.15,
 		"survivability":0.6
 	},
 	{
@@ -197,7 +197,7 @@
 		"textureX": 3,
 		"textureY": 0,
 		"navigability":0.4,
-		"arability":0.2,
+		"arability":0.25,
 		"survivability":0.7
 	}
 ]

@@ -10,20 +10,21 @@ public class Region : PopObject
     public bool habitable;
     public bool coastal;
     public float tradeWeight;
+    public float baseWealth;
+    public float wealth;
 
     public Vector2I pos;
     public float navigability;
     public float avgTemperature;
     public float avgRainfall;
     public float avgElevation;
-    public float landCount;
+    public int landCount;
+    public int freeLand;    
     public State owner = null;
     public List<Army> armies;
 
     // Demographics
     public long maxPopulation = 0;
-    public double wealth;
-
     public Economy economy = new Economy();
     public List<Region> borderingRegions = new List<Region>();
 
@@ -34,8 +35,7 @@ public class Region : PopObject
     public bool needsWorkers { private set; get; }
     public List<Crop> plantableCrops = new List<Crop>();
     public float arableLand;
-    public bool fieldsFull;
-    public float food;
+
     public void CalcAverages()
     {
         name = "Region";
@@ -67,6 +67,7 @@ public class Region : PopObject
         {
             //GD.Print(arableLand);            
         }
+        freeLand = landCount;
 
         navigability /= landCount;
         avgTemperature /= tiles.Length;
@@ -187,6 +188,13 @@ public class Region : PopObject
         }
     }
 
+    public void UpdateWealth()
+    {
+        float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
+        float farmerProduction = ((Pop.FromNativePopulation(professions[Profession.FARMER]) * 0.01f) + (Pop.FromNativePopulation(dependents) * 0.0033f)) * (arableLand / landCount) * techFactor;
+        wealth = farmerProduction;
+    }
+
     #endregion
     #region PopActions
 
@@ -233,7 +241,7 @@ public class Region : PopObject
         {
             bRate = pop.GetBirthRate();
         }
-        if (population > maxPopulation)
+        if (pop.population > pop.maxPopulation)
         {
             bRate *= 0.75f;
         }
@@ -284,7 +292,6 @@ public class Region : PopObject
     }
 
     #endregion
-
     public static bool GetPathToRegion(Region start, Region goal, out Queue<Region> path)
     {
         path = null;
@@ -338,39 +345,6 @@ public class Region : PopObject
         }
         return validPath;
     }
-
-    #region Farmin'
-    public Crop SelectCrop()
-    {
-        if (plantableCrops.Count > 0)
-        {
-            return plantableCrops[0];
-        }
-        else
-        {
-            return null;
-        }
-    }
-    public void GrowCrops()
-    {
-        fieldsFull = false;
-        Crop crop = SelectCrop();
-        if (crop != null)
-        {
-            float cropsPerAribleLand = 230f;
-            float smoothing = 0.05f;
-
-            long totalFarmers = (long)Mathf.Round(Pop.FromNativePopulation(professions[Profession.FARMER]));
-            double totalWork = cropsPerAribleLand * arableLand * (1 - Mathf.Pow(Mathf.E, -smoothing * (totalFarmers / arableLand)));
-            foreach (BaseResource yield in crop.yields.Keys)
-            {
-                economy.ChangeResourceAmount(yield, crop.yields[yield] * totalWork * 1.3);
-            }
-            fieldsFull = totalWork == cropsPerAribleLand * arableLand;
-        }
-    }
-    #endregion
-
     public Region PickRandomBorder()
     {
         if (borderingRegions.Count > 0)

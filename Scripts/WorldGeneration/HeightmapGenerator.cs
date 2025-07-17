@@ -188,13 +188,13 @@ public class HeightmapGenerator
                         else
                         {
                             // Island Arcs
-                            if (boundary.pressure > 0 && tile.nearestBoundary.sank)
+                            if (boundary.pressure > 0)
                             {
                                 minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                                if (tile.boundaryDist <= minWidth)
+                                if (tile.boundaryDist <= minWidth && tile.nearestBoundary.sank)
                                 {
-                                    heightmap[x, y] += 0.75f * islandArcCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
+                                    heightmap[x, y] += 0.6f * islandArcCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
                                 }
 
                             }
@@ -217,10 +217,7 @@ public class HeightmapGenerator
                 }
                 int otherTiles = 0;
                 int density = tile.region.plate.density;
-                if (!tile.region.continental)
-                {
-                    density += 1000;
-                }
+
                 for (int dx = -3; dx < 4; dx++)
                 {
                     for (int dy = -3; dy < 4; dy++)
@@ -240,7 +237,12 @@ public class HeightmapGenerator
                                 tile.pressure += -0.5f * relativeVel.Length();
                             }
                             tile.collisionContinental = next.region.continental;
-                            tile.sank = density > next.region.plate.density;
+                            
+                            int otherDensity = next.region.plate.density;
+                            if (!next.region.continental) {
+                                otherDensity += 1000;
+                            }
+                            tile.sank = density > otherDensity;
                         }
                     }
                 }
@@ -428,7 +430,7 @@ public class HeightmapGenerator
                     {
                         // Sea Floor
                         coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 5f, noiseValue)), 0f, 1f);
-                        float seaFloorHeight = seaFloorLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * (seaLevel / 4f));
+                        float seaFloorHeight = seaFloorLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * (seaLevel / 2f));
                         heightmap[x, y] = Mathf.Lerp(seaLevel, seaFloorHeight, Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
                     }
                 }

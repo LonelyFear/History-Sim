@@ -118,34 +118,35 @@ public partial class SimManager : Node
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
                 newTile.survivalbility = newTile.biome.survivability;
-                
 
                 switch (newTile.biome.type)
                 {
-                    case "ice":
-                        newTile.terrainType = TerrainType.ICE;
-                        break;
                     case "land":
                         newTile.terrainType = TerrainType.LAND;
                         break;
                     case "water":
                         newTile.terrainType = TerrainType.WATER;
                         break;
+                    default:
+                        newTile.terrainType = TerrainType.ICE;
+                        break;
                 }
-                if (WorldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
+                if (newTile.terrainType == TerrainType.LAND)
                 {
-                    newTile.navigability *= 0.25f;
-                    newTile.arability *= 0.25f;
-                    newTile.survivalbility *= 0.8f;
-                    newTile.terrainType = TerrainType.MOUNTAINS;
-                }                
-                else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
-                {
-                    newTile.navigability *= 0.5f;
-                    newTile.arability *= 0.5f;
-                    newTile.terrainType = TerrainType.HILLS;
+                    if (WorldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
+                    {
+                        newTile.navigability *= 0.25f;
+                        newTile.arability *= 0.25f;
+                        newTile.survivalbility *= 0.8f;
+                        newTile.terrainType = TerrainType.MOUNTAINS;
+                    }
+                    else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
+                    {
+                        newTile.navigability *= 0.5f;
+                        newTile.arability *= 0.5f;
+                        newTile.terrainType = TerrainType.HILLS;
+                    }                    
                 }
-
             }
         }
         #endregion
@@ -275,8 +276,12 @@ public partial class SimManager : Node
                     pop.Migrate();
                 }
                 pop.ProfessionUpdate();
-                pop.Consumption();
-                pop.wealth = Mathf.Clamp(pop.wealth, 0, 100);
+                //pop.Consumption();
+                if (pop.wealth < 0)
+                {
+                    pop.wealth = 0;
+                }
+                //pop.wealth = Mathf.Clamp(pop.wealth, 0, 100);
             }            
         }
 
@@ -312,7 +317,7 @@ public partial class SimManager : Node
                     
                     region.MergePops();
                     region.CheckPopulation();
-
+                    region.UpdateWealth();
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {
                         region.NeutralConquest();
@@ -325,10 +330,6 @@ public partial class SimManager : Node
 
                     m.WaitOne();
                     worldPop += region.population;
-                    if (region.averageWealth > maxAvgWealth)
-                    {
-                        maxAvgWealth = region.averageWealth;
-                    }
                     m.ReleaseMutex();
                 }                
             }
