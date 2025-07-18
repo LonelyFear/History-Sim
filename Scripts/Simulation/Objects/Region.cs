@@ -11,6 +11,8 @@ public class Region : PopObject
     public bool coastal;
     public float tradeWeight;
     public float baseWealth;
+    public float taxIncome;
+    public float tradeIncome;
     public float wealth;
 
     public Vector2I pos;
@@ -188,11 +190,57 @@ public class Region : PopObject
         }
     }
 
-    public void UpdateWealth()
+    public void CalcBaseWealth()
     {
         float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
         float farmerProduction = ((Pop.FromNativePopulation(professions[Profession.FARMER]) * 0.01f) + (Pop.FromNativePopulation(dependents) * 0.0033f)) * (arableLand / landCount) * techFactor;
-        wealth = farmerProduction;
+        baseWealth = farmerProduction;
+        taxIncome = 0;
+        tradeIncome = 0;
+    }
+    public void CalcTaxes()
+    {
+        if (owner != null && owner.capital != null)
+        {
+            float totalTaxIncome = baseWealth * owner.taxRate;
+            float capitalTaxIncome = totalTaxIncome * 0.1f;
+            float distributedTaxIncome = (totalTaxIncome * 0.9f) / (owner.regions.Count - 1);
+
+            SimManager.m.WaitOne();
+            owner.capital.taxIncome += capitalTaxIncome;
+            SimManager.m.ReleaseMutex();
+            
+            foreach (Region r in owner.regions)
+            {
+                if (r != owner.capital)
+                {
+                    SimManager.m.WaitOne();
+                    r.taxIncome += distributedTaxIncome;
+                    SimManager.m.ReleaseMutex();
+                }
+            }
+        }
+    }
+    public void Trade()
+    {
+        
+    }
+    public void CalcTradeWeight()
+    {
+        tradeWeight = 0f;
+        long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
+        long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
+        float populationTradeWeight = (notMerchants * 0.005f) + (merchants * 0.01f);
+        float politySizeTradeWeight = 0f;
+        if (owner != null && owner.capital == this)
+        {
+            politySizeTradeWeight = owner.regions.Count * 0.1f;
+        }
+        tradeWeight = (navigability + populationTradeWeight + politySizeTradeWeight) * navigability;
+    }    
+    public void UpdateWealth()
+    {
+        wealth = baseWealth + taxIncome + tradeIncome;
     }
 
     public void DistributeWealth()
@@ -267,7 +315,7 @@ public class Region : PopObject
     }
 
     #endregion
-    public static bool GetPathToRegion(Region start, Region goal, out Queue<Region> path)
+    public static bool GetPathToRegion(Region start, Region goal, out List<Region> path)
     {
         path = null;
         bool validPath = false;
@@ -314,7 +362,7 @@ public class Region : PopObject
             Vector2I pos = goal.pos;
             while (pos != start.pos)
             {
-                path.Enqueue(simManager.GetRegion(pos));
+                path.Add(simManager.GetRegion(pos));
                 pos = flow[pos];
             }
         }

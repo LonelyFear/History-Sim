@@ -332,7 +332,10 @@ public partial class SimManager : Node
                     
                     region.MergePops();
                     region.CheckPopulation();
-                    region.UpdateWealth();
+                    region.CalcBaseWealth();
+                    region.CalcTradeWeight();
+                    region.CalcTaxes();
+                    // region trade goes here
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {
                         region.NeutralConquest();

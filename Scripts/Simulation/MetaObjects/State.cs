@@ -14,8 +14,9 @@ public class State : PopObject
     public List<Region> regions = new List<Region>();
     public Region capital;
     public long manpower;
-    public long reserveManpower;
     public long manpowerTarget;
+    public float taxRate = 0.1f;
+    public float tribute = 0.1f;
     List<State> vassals = new List<State>();
     State liege;
     public Dictionary<State, Relation> relations;
