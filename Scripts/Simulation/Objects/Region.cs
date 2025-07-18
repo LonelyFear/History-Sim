@@ -57,7 +57,7 @@ public class Region : PopObject
                     navigability += tile.navigability;
 
                 }
-                else if (tile.terrainType == TerrainType.WATER)
+                else if (tile.coastal)
                 {
                     coastal = true;
                 }

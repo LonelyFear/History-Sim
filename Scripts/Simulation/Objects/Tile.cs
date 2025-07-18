@@ -10,6 +10,7 @@ public class Tile
 	public float navigability;
 	public float arability;
 	public float survivalbility;
+	public bool coastal;
 	public bool hasRoad;
 	public Vector2I defaultIcon = new Vector2I();
 	public SettlementTypes settlementType = SettlementTypes.NONE;

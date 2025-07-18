@@ -111,10 +111,10 @@ public partial class SimManager : Node
                 tiles[x, y] = newTile;
 
                 newTile.biome = WorldGenerator.BiomeMap[x, y];
-                newTile.temperature = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x,y]);
-                newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x,y]);
-                newTile.elevation = WorldGenerator.GetUnitElevation(WorldGenerator.HeightMap[x,y]);
-                
+                newTile.temperature = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x, y]);
+                newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x, y]);
+                newTile.elevation = WorldGenerator.GetUnitElevation(WorldGenerator.HeightMap[x, y]);
+
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
                 newTile.survivalbility = newTile.biome.survivability;
@@ -145,9 +145,28 @@ public partial class SimManager : Node
                         newTile.navigability *= 0.5f;
                         newTile.arability *= 0.5f;
                         newTile.terrainType = TerrainType.HILLS;
-                    }                    
+                    }
                 }
-            }
+                // checks for coasts
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
+                        {
+                            continue;
+                        }
+                        int nx = Mathf.PosMod(x + dx, worldSize.X);
+                        int ny = Mathf.PosMod(y + dy, worldSize.Y);
+                        if (WorldGenerator.BiomeMap[nx, ny].type == "water" && !newTile.coastal)
+                        {
+                            newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
+                            newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);
+                            newTile.coastal = true;
+                        }
+                    }
+                }
+                }
         }
         #endregion
         #region Region Creation
