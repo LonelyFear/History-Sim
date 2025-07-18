@@ -178,7 +178,7 @@ public class Region : PopObject
         }
     }
     #endregion
-    #region Checks & Taxes
+    #region Economy & Checks
     public void CheckPopulation()
     {
         CountPopulation();
@@ -193,6 +193,11 @@ public class Region : PopObject
         float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
         float farmerProduction = ((Pop.FromNativePopulation(professions[Profession.FARMER]) * 0.01f) + (Pop.FromNativePopulation(dependents) * 0.0033f)) * (arableLand / landCount) * techFactor;
         wealth = farmerProduction;
+    }
+
+    public void DistributeWealth()
+    {
+        
     }
 
     #endregion
@@ -226,36 +231,6 @@ public class Region : PopObject
             }
         }
     }
-
-    #region PopGrowth
-    public void GrowPop(Pop pop)
-    {
-        pop.canMove = true;
-
-        float bRate;
-        if (pop.population < Pop.ToNativePopulation(2))
-        {
-            bRate = 0;
-        }
-        else
-        {
-            bRate = pop.GetBirthRate();
-        }
-        if (pop.population > pop.maxPopulation)
-        {
-            bRate *= 0.75f;
-        }
-
-        float NIR = (bRate - pop.GetDeathRate()) / 12f;
-
-        long change = Mathf.RoundToInt((pop.workforce + pop.dependents) * NIR);
-        long dependentChange = Mathf.RoundToInt(change * pop.targetDependencyRatio);
-        long workforceChange = change - dependentChange;
-        pop.ChangeWorkforce(workforceChange);
-        pop.ChangeDependents(dependentChange);
-    }
-    #endregion
-
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;

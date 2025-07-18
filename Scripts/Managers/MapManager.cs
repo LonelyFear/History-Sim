@@ -180,6 +180,8 @@ public partial class MapManager : Area2D
 
     public void SetMapMode(MapModes mode)
     {
+        selectedMetaObj = null;
+        UpdateRegionColors(simManager.regions);
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
         UpdateRegionColors(simManager.habitableRegions);

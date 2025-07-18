@@ -267,21 +267,17 @@ public partial class SimManager : Node
             }
             else
             {
+                pop.canMove = true;
                 pop.income = 0f;
                 pop.expenses = 0f;
-                pop.region.GrowPop(pop);
+                pop.EconomyUpdate();
+                pop.ProfessionTransitions();
 
+                pop.GrowPop();
                 if (pop.batchId == timeManager.GetMonth())
                 {
                     pop.Migrate();
                 }
-                pop.ProfessionUpdate();
-                //pop.Consumption();
-                if (pop.wealth < 0)
-                {
-                    pop.wealth = 0;
-                }
-                //pop.wealth = Mathf.Clamp(pop.wealth, 0, 100);
             }            
         }
 

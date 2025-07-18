@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using Godot;
 
 public class Pop
@@ -124,7 +125,7 @@ public class Pop
             character.pop = null;
         }
     }
-    public Pop ChangeProfession(long workforceDelta, long dependentDelta, Profession newProfession, float wealthMoved)
+    public Pop ChangeProfession(long workforceDelta, long dependentDelta, Profession newProfession, float wealthMoved, int landMoved)
     {
         // Makes sure the profession is actually changing
         // And that we arent just creating an empty pop
@@ -147,11 +148,16 @@ public class Pop
         // And removes the people who switched to the new profession
         ChangePopulation(-workforceDelta, -dependentDelta);
         wealth -= wealthMoved;
+
+        // Land Stuff
+        newWorkers.ClaimLand(landMoved);
+        ClaimLand(-landMoved);
+        
         return newWorkers;
     }
 
     #region Economy
-    public void ProfessionUpdate()
+    public void EconomyUpdate()
     {
         if (population > maxPopulation && region.freeLand > 0)
         {
@@ -179,12 +185,13 @@ public class Pop
                 if (rng.Next() < 0.005f && wealth > 50f)
                 {
                     float changedPercent = Mathf.Lerp(0.01f, 0.1f, rng.Next());
-                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.MERCHANT, wealth * 0.5f);
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.MERCHANT, wealth * 0.5f, ownedLand/2);
                 }
                 break;
         }
     }
     #endregion
+    #region Demographics
     public void Migrate()
     {
         // Chance of pop to migrate
@@ -239,6 +246,37 @@ public class Pop
         }
         return birthRate;
     }
+    public void GrowPop()
+    {
+
+        float bRate;
+        if (population < ToNativePopulation(2))
+        {
+            bRate = 0;
+        }
+        else
+        {
+            bRate = GetBirthRate();
+        }
+        if (population > maxPopulation)
+        {
+            bRate *= 0.75f;
+        }
+
+        float NIR = (bRate - GetDeathRate()) / 12f;
+
+        long change = Mathf.RoundToInt((workforce + dependents) * NIR);
+        long dependentChange = Mathf.RoundToInt(change * targetDependencyRatio);
+        long workforceChange = change - dependentChange;
+        ChangeWorkforce(workforceChange);
+        ChangeDependents(dependentChange);
+    }
+    public void CalcMaxPopulation()
+    {
+        float techFactor = 1 + (tech.societyLevel * 0.1f);
+        maxPopulation = ToNativePopulation((long)(1000 * techFactor * (1 + ownedLand)));
+    }    
+    #endregion
     public void ClaimLand(int amount)
     {
         int fixedAmount;
@@ -261,11 +299,6 @@ public class Pop
             SimManager.m.ReleaseMutex();
 
         }
-    }
-    public void CalcMaxPopulation()
-    {
-        float techFactor = 1 + (tech.societyLevel * 0.1f);
-        maxPopulation = ToNativePopulation((long)(1000 * techFactor * (1 + ownedLand)));
     }
 }
 
