@@ -279,7 +279,16 @@ public partial class MapManager : Area2D
                 {
                     color = new Color(0, 0, 0, 1);
                 }
-
+                break;
+            case MapModes.TRADE_WEIGHT:
+                if (region.habitable && region.pops.Count > 0)
+                {
+                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / 100f);
+                }
+                else if (region.habitable)
+                {
+                    color = new Color(0, 0, 0, 1);
+                }                
                 break;
             case MapModes.POPS:
                 if (region.habitable && region.pops.Count > 0)
@@ -327,5 +336,6 @@ public enum MapModes {
     POPULATION,
     TECH,
     WEALTH,
+    TRADE_WEIGHT,
     POPS
 }

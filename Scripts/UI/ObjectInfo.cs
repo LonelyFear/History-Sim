@@ -39,6 +39,7 @@ public partial class ObjectInfo : Control
                     break;
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
+                    populationLabel.Text += "\nFree Land: " + region.freeLand;
                     populationLabel.Text += "\nFarmers: " + Pop.FromNativePopulation(region.professions[Profession.FARMER]).ToString("#,###0");
                     populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";

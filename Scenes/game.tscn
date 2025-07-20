@@ -240,7 +240,7 @@ text = "Map Mode:"
 layout_mode = 2
 theme = ExtResource("4_exi56")
 selected = 0
-item_count = 5
+item_count = 6
 popup/item_0/text = "Polities"
 popup/item_0/id = 0
 popup/item_1/text = "Cultures"
@@ -251,6 +251,8 @@ popup/item_3/text = "Tech"
 popup/item_3/id = 3
 popup/item_4/text = "Wealth"
 popup/item_4/id = 4
+popup/item_5/text = "Trade Weight"
+popup/item_5/id = 5
 
 [node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Action Panel/HBoxContainer"]
 layout_mode = 2

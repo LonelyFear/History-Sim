@@ -57,7 +57,7 @@ public class HeightmapGenerator
         points = GeneratePoints();
         GD.Print("Point Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
-        GenerateRegions(6);
+        GenerateRegions(WorldGenerator.continents);
         GD.Print("Voronoi Region Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
         GenerateContinents();

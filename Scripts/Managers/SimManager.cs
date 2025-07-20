@@ -152,13 +152,13 @@ public partial class SimManager : Node
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
+                        if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0) || newTile.coastal || newTile.terrainType == TerrainType.WATER)
                         {
                             continue;
                         }
                         int nx = Mathf.PosMod(x + dx, worldSize.X);
                         int ny = Mathf.PosMod(y + dy, worldSize.Y);
-                        if (WorldGenerator.BiomeMap[nx, ny].type == "water" && !newTile.coastal)
+                        if (WorldGenerator.BiomeMap[nx, ny].type == "water")
                         {
                             newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
                             newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);
@@ -254,7 +254,7 @@ public partial class SimManager : Node
                         culture = testRegion.pops[0].culture;
                     }
                 }
-                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, Profession.FARMER, 10f);
+                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, Profession.FARMER);
             }
         }
     }
@@ -332,10 +332,13 @@ public partial class SimManager : Node
                     
                     region.MergePops();
                     region.CheckPopulation();
+
+                    // Economy
                     region.CalcBaseWealth();
                     region.CalcTradeWeight();
                     region.CalcTaxes();
                     // region trade goes here
+                    region.UpdateWealth();
                     if (region.owner != null && region.frontier && region.owner.rulingPop != null)
                     {
                         region.NeutralConquest();
@@ -489,7 +492,7 @@ public partial class SimManager : Node
     #endregion
     #region Creation
     #region Pops Creation
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER, float wealth = 0f)
+    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER)
     {
         currentBatch += 1;
         if (currentBatch > 12)
@@ -505,7 +508,6 @@ public partial class SimManager : Node
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
-            wealth = wealth
         };
         //pop.ChangePopulation(workforce, dependents);
 

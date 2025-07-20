@@ -10,10 +10,13 @@ public class Region : PopObject
     public bool habitable;
     public bool coastal;
     public float tradeWeight;
+    public float lastWealth = 0;
+    public float lastBaseWealth = 0;
     public float baseWealth;
+    public float wealth;
     public float taxIncome;
     public float tradeIncome;
-    public float wealth;
+    
 
     public Vector2I pos;
     public float navigability;
@@ -26,7 +29,7 @@ public class Region : PopObject
     public List<Army> armies;
 
     // Demographics
-    public long maxPopulation = 0;
+    public long maxFarmers = 0;
     public Economy economy = new Economy();
     public List<Region> borderingRegions = new List<Region>();
 
@@ -101,20 +104,7 @@ public class Region : PopObject
     }
     public void CalcMaxPopulation()
     {
-        for (int x = 0; x < simManager.tilesPerRegion; x++)
-        {
-            for (int y = 0; y < simManager.tilesPerRegion; y++)
-            {
-                Biome biome = biomes[x, y];
-                Tile tile = tiles[x, y];
-
-                tile.maxPopulation = 0;
-                if (tile.IsLand())
-                {
-                    maxPopulation += (long)(Pop.ToNativePopulation(1000) * tile.navigability);
-                }
-            }
-        }
+        maxFarmers = (long)(Pop.ToNativePopulation(225) * arableLand);
     }
     #region Nations
     public void StateBordering()
@@ -192,6 +182,8 @@ public class Region : PopObject
 
     public void CalcBaseWealth()
     {
+        lastBaseWealth = baseWealth;
+        lastWealth = wealth;
         float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
         float farmerProduction = ((Pop.FromNativePopulation(professions[Profession.FARMER]) * 0.01f) + (Pop.FromNativePopulation(dependents) * 0.0033f)) * (arableLand / landCount) * techFactor;
         baseWealth = farmerProduction;
@@ -234,9 +226,9 @@ public class Region : PopObject
         float politySizeTradeWeight = 0f;
         if (owner != null && owner.capital == this)
         {
-            politySizeTradeWeight = owner.regions.Count * 0.1f;
+            politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
-        tradeWeight = (navigability + populationTradeWeight + politySizeTradeWeight) * navigability;
+        tradeWeight = ((navigability * 3f) + populationTradeWeight + politySizeTradeWeight) * navigability;
     }    
     public void UpdateWealth()
     {
@@ -289,7 +281,7 @@ public class Region : PopObject
         return migrateable && habitable;
     }
 
-    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents, float movedWealth = 0f)
+    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)
     {
         if (destination == null || destination == this)
         {
@@ -306,10 +298,9 @@ public class Region : PopObject
                 movedDependents = pop.dependents;
             }
             SimManager.m.WaitOne();
-            Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession, movedWealth);
+            Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
             npop.canMove = false;
             pop.ChangePopulation(-movedWorkforce, -movedDependents);
-            pop.wealth -= movedWealth;
             SimManager.m.ReleaseMutex();
         }
     }

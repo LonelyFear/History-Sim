@@ -19,6 +19,7 @@ public static class WorldGenerator
     public static float WorldMult = 3f;
     public static float SeaLevel = 0.6f;
     public static int Seed;
+    public static int continents = 12;
     public static EventHandler worldgenFinishedEvent;
     public static float[,] HeightMap;
     public static float[,] RainfallMap;
