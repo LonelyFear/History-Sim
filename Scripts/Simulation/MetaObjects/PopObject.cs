@@ -15,6 +15,8 @@ public abstract class PopObject {
         {Profession.FARMER, 0},
         { Profession.MERCHANT, 0},
         {Profession.ARISTOCRAT, 0},
+        {Profession.ARTISAN, 0},
+        {Profession.SOLDIER, 0},
     };
     
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
@@ -33,7 +35,8 @@ public abstract class PopObject {
         {
             {Profession.FARMER, 0},
             {Profession.MERCHANT, 0},
-            {Profession.SOLDIER, 0},
+            {Profession.ARTISAN, 0},
+            { Profession.SOLDIER, 0},
             { Profession.ARISTOCRAT, 0},
         };
         Culture currentLargest = null;

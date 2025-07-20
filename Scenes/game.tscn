@@ -140,7 +140,7 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -132.0
-offset_top = -103.0
+offset_top = -168.0
 offset_right = 132.0
 offset_bottom = 72.0
 grow_horizontal = 2
@@ -173,14 +173,17 @@ theme_override_constants/separation = 10
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "Population: 1,000
+Free Land:
 Farmers:
-Merchants:"
+Merchants:
+Aristocrats:
+Artisans:"
 
 [node name="Manpower" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-text = "UniqueStat: 1000
-Food:"
+text = "Arable Land:
+Wealth:"
 
 [node name="Action Panel" type="Panel" parent="UI"]
 anchors_preset = 2

@@ -42,6 +42,8 @@ public partial class ObjectInfo : Control
                     populationLabel.Text += "\nFree Land: " + region.freeLand;
                     populationLabel.Text += "\nFarmers: " + Pop.FromNativePopulation(region.professions[Profession.FARMER]).ToString("#,###0");
                     populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
+                    populationLabel.Text += "\nAristocrats: " + Pop.FromNativePopulation(region.professions[Profession.ARISTOCRAT]).ToString("#,###0");
+                    populationLabel.Text += "\nArtisans: " + Pop.FromNativePopulation(region.professions[Profession.ARTISAN]).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";
                     specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand/region.landCount).ToString("0.0%") + "\n";
                     specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");

@@ -11,7 +11,7 @@ public class Pop
     public long dependents = 0;
 
     public float baseBirthRate = 0.30f;
-    public float baseDeathRate = 0.28f;
+    public float baseDeathRate = 0.29f;
     public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;
     public float netIncome = 0f;
@@ -148,8 +148,9 @@ public class Pop
         // And removes the people who switched to the new profession
         ChangePopulation(-workforceDelta, -dependentDelta);
         // Land Stuff
-        newWorkers.ClaimLand(landMoved);
+
         ClaimLand(-landMoved);
+        newWorkers.ClaimLand(landMoved);
         
         return newWorkers;
     }
@@ -162,41 +163,45 @@ public class Pop
             ClaimLand(1);
             CalcMaxPopulation();
         }
-        if (population < maxPopulation / 2)
+        if (population < maxPopulation / 2 && ownedLand > 1)
         {
             ClaimLand(-1);
             CalcMaxPopulation();            
-        }
-
-        switch (profession)
-        {
-            case Profession.FARMER:
-                break;
         }
     }
 
     public void ProfessionTransitions()
     {
+        bool regionHasAristocrats = region.professions[Profession.ARISTOCRAT] > 1000;
         switch (profession)
-        {
+        {   
             case Profession.FARMER:
                 if (region.professions[Profession.FARMER] > region.maxFarmers)
                 {
                     // To Merchant
                     float changedPercent = 0.1f;
-                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.MERCHANT, (int)(ownedLand * changedPercent));
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.MERCHANT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
+                    
                     break;
                 }
                 break;
             case Profession.MERCHANT:
+                // To Farmer
                 bool farmersNeeded = region.professions[Profession.FARMER] < region.maxFarmers * 0.8f;
                 if (farmersNeeded && rng.NextSingle() < 0.001f)
                 {
-                    // To Farmer
+                    GD.Print("Merchants Became Farmers");
                     float changedPercent = 0.1f;
-                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.CeilToInt(ownedLand * changedPercent));
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
                     break;
                 }
+                if (!regionHasAristocrats && rng.NextSingle() < region.wealth * 0.001f)
+                {
+                    float changedPercent = 0.2f;
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.ARISTOCRAT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
+                    break;                   
+                }
+                // To Aristocrat
                 break;           
         }
     }
@@ -209,7 +214,7 @@ public class Pop
         // Simple Migration
         if (population >= maxPopulation)
         {
-            migrateChance = 0.9f;
+            migrateChance = 0.7f;
         }
         if (profession == Profession.ARISTOCRAT)
         {
@@ -238,16 +243,14 @@ public class Pop
     public float GetDeathRate()
     {
         float deathRate = baseDeathRate;
-        deathRate += Mathf.Clamp(starvationCurve.Sample(starvingPercentage * 0.8f), 0f, 1f);
-        //GD.Print(rateInBracket); 
         return deathRate;
     }
     public float GetBirthRate()
     {
         float birthRate = baseBirthRate;
-        if (netIncome < -0.1f)
+        if (population < maxPopulation * 0.5f)
         {
-            birthRate *= 0.7f;
+            birthRate *= 1.5f;
         }
         return birthRate;
     }
@@ -279,7 +282,7 @@ public class Pop
     public void CalcMaxPopulation()
     {
         float techFactor = 1 + (tech.societyLevel * 0.1f);
-        maxPopulation = ToNativePopulation((long)(1000 * techFactor * (1 + ownedLand) *  (region.arableLand/region.landCount)));
+        maxPopulation = ToNativePopulation((long)(1000f * techFactor * (1 + ownedLand) * (region.arableLand/region.landCount)));
     }    
     #endregion
     public void ClaimLand(int amount)
@@ -296,7 +299,7 @@ public class Pop
         }
         else
         {
-            fixedAmount = Mathf.Clamp(amount, 0, ownedLand);
+            fixedAmount = Mathf.Clamp(Mathf.Abs(amount), 0, ownedLand);
             ownedLand -= fixedAmount;
 
             SimManager.m.WaitOne();
