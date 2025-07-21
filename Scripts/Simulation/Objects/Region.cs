@@ -107,6 +107,31 @@ public class Region : PopObject
         maxFarmers = (long)(Pop.ToNativePopulation(225) * arableLand);
     }
     #region Nations
+    public void TryFormState()
+    {
+        if (professions[Profession.ARISTOCRAT] > 0 && rng.NextSingle() > wealth * 0.001f && owner == null)
+        {
+            SimManager.m.WaitOne();
+            simManager.CreateState(this);
+            SimManager.m.ReleaseMutex();
+
+            owner.population = population;
+            owner.workforce = workforce;
+            Pop rulingPop = null;
+            foreach (Pop pop in pops)
+            {
+                if (pop.profession == Profession.ARISTOCRAT)
+                {
+                    rulingPop = pop;
+                    break;
+                }
+            }
+
+            owner.rulingPop = rulingPop;
+            owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
+            owner.UpdateDisplayName();
+        }
+    }
     public void StateBordering()
     {
         border = false;

@@ -210,10 +210,6 @@ public partial class MapManager : Area2D
                     }
 
                 }
-                if (region.tradeWeight > 100)
-                {
-                    color = new Color(1,1,1,1);
-                }
                 if (selectedMetaObj != null)
                 {
                     switch (selectedMetaObj.GetObjectType())

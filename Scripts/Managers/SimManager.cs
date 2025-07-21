@@ -290,11 +290,10 @@ public partial class SimManager : Node
                 pop.income = 0f;
                 pop.expenses = 0f;
                 pop.EconomyUpdate();
-                pop.ProfessionTransitions();
-
                 pop.GrowPop();
                 if (pop.batchId == timeManager.GetMonth())
                 {
+                    pop.ProfessionTransitions();
                     pop.Migrate();
                 }
             }            
@@ -343,7 +342,7 @@ public partial class SimManager : Node
                     {
                         region.NeutralConquest();
                     }
-                    //region.RandomStateFormation();
+                    region.TryFormState();
                     if (region.owner != null)
                     {
                         region.StateBordering();
@@ -524,6 +523,7 @@ public partial class SimManager : Node
         {
             pop.region.owner.rulingPop = null;
         }
+        pop.ClaimLand(-pop.ownedLand);
         pop.region.RemovePop(pop, pop.region);
         pop.culture.RemovePop(pop, pop.culture);
         pops.Remove(pop);

@@ -161,27 +161,28 @@ public class Pop
         if (population > maxPopulation && region.freeLand > 0)
         {
             ClaimLand(1);
-            CalcMaxPopulation();
         }
         if (population < maxPopulation / 2 && ownedLand > 1)
         {
             ClaimLand(-1);
-            CalcMaxPopulation();            
         }
+        CalcMaxPopulation();
     }
 
     public void ProfessionTransitions()
     {
         bool regionHasAristocrats = region.professions[Profession.ARISTOCRAT] > 1000;
+        bool takeableAristocracy = !regionHasAristocrats && (region.owner == null || (region.owner != null && region.owner.capital == region));
+        long popMaxFarmers = (long)(region.maxFarmers * (workforce/(float)region.professions[Profession.FARMER]));
         switch (profession)
-        {   
+        {
             case Profession.FARMER:
-                if (region.professions[Profession.FARMER] > region.maxFarmers)
+                long excessPopulation = workforce - popMaxFarmers;
+                if (workforce >= popMaxFarmers)
                 {
                     // To Merchant
-                    float changedPercent = 0.1f;
+                    float changedPercent = excessPopulation / ((float)workforce);
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.MERCHANT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
-                    
                     break;
                 }
                 break;
@@ -190,19 +191,20 @@ public class Pop
                 bool farmersNeeded = region.professions[Profession.FARMER] < region.maxFarmers * 0.8f;
                 if (farmersNeeded && rng.NextSingle() < 0.001f)
                 {
-                    GD.Print("Merchants Became Farmers");
+                    //GD.Print("Merchants Became Farmers");
                     float changedPercent = 0.1f;
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
                     break;
                 }
-                if (!regionHasAristocrats && rng.NextSingle() < region.wealth * 0.001f)
+
+                if (takeableAristocracy && rng.NextSingle() < region.wealth * 0.0005f && region.wealth > 20f)
                 {
                     float changedPercent = 0.2f;
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.ARISTOCRAT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
-                    break;                   
+                    break;
                 }
                 // To Aristocrat
-                break;           
+                break;
         }
     }
     #endregion
