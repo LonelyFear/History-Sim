@@ -21,11 +21,12 @@ public partial class MapManager : Area2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
+    int regionResolution = 8;
 
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
 
-
+    // NOTE: Painted regions are updated in TimeManager.cs
     public override void _Ready()
     {
         simManager = GetNode<SimManager>("/root/Game/Simulation");
@@ -34,9 +35,10 @@ public partial class MapManager : Area2D
         showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");
     }
     public void InitMapManager(){
-        Scale = simManager.terrainMap.Scale * simManager.tilesPerRegion;
+        Scale = simManager.terrainMap.Scale * (simManager.tilesPerRegion/(float)regionResolution);
         worldSize = SimManager.worldSize;
-        regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
+        //GD.Print(worldSize.X * regionResolution);
+        regionImage = Image.CreateEmpty(worldSize.X * regionResolution, worldSize.Y * regionResolution, true, Image.Format.Rgba8);
         regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
         initialized = true;
     }
@@ -206,7 +208,7 @@ public partial class MapManager : Area2D
                     }
                     if (region.owner.capital == region)
                     {
-                        //color = new Color(1,0,0);
+                        color = new Color(1,0,0);
                     }
 
                 }
@@ -310,10 +312,78 @@ public partial class MapManager : Area2D
         int index = (lx * worldSize.Y) + ly;
         return simManager.regions[index];
     }
-    public void SetRegionColor(int x, int y, Color color){
-        if (regionImage.GetPixel(x,y) != color){
+    public void SetRegionColor(int x, int y, Color color)
+    {
+        /*
+        if (regionImage.GetPixel(x, y) != color)
+        {
             regionImage.SetPixel(x, y, color);
-            mapUpdate = true;            
+            mapUpdate = true;
+        }
+        */
+        Region r = GetRegion(x, y);
+        for (int rx = 0; rx < regionResolution; rx++)
+        {
+            for (int ry = 0; ry < regionResolution; ry++)
+            {
+                int posX = (x * regionResolution) + rx;
+                int posY = (y * regionResolution) + ry;
+                Color finalColor = color;
+                int resMinus = regionResolution - 1;
+
+                // Lines
+
+                // Top
+                if (ry == 0 && r.DrawBorder(r.borderingRegions[1]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                // Left
+                if (rx == 0 && r.DrawBorder(r.borderingRegions[0]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                // Bottom
+                if (ry == resMinus && r.DrawBorder(r.borderingRegions[2]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                // Right
+                if (rx == resMinus && r.DrawBorder(r.borderingRegions[3]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                /*
+                // Corners
+
+                // Top Left
+                if (rx == 0 && ry == 0 && r.DrawBorder(r.diagonalRegions[0]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                // Bottom Left
+                if (rx == 0 && ry == resMinus && r.DrawBorder(r.diagonalRegions[1]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                // Top Right
+                if (rx == resMinus && ry == 0 && r.DrawBorder(r.diagonalRegions[2]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                // Bottom Right
+                if (rx == resMinus && ry == resMinus && r.DrawBorder(r.diagonalRegions[3]))
+                {
+                    finalColor = new Color(0, 0, 0);
+                }
+                */
+
+                if (regionImage.GetPixel(posX, posY) != finalColor)
+                {
+                    regionImage.SetPixel(posX, posY, finalColor);
+                    mapUpdate = true;
+                }
+            }
         }
     }
     public void UpdateMap(){

@@ -21,6 +21,7 @@ public partial class SimManager : Node
     public Tile[,] tiles;
     public List<Region> regions = new List<Region>();
     public List<Region> habitableRegions = new List<Region>();
+    public List<Region> paintedRegions = new List<Region>();
     public Vector2I terrainSize;
     public static Vector2I worldSize;
     public static System.Threading.Mutex m = new System.Threading.Mutex();
@@ -222,16 +223,25 @@ public partial class SimManager : Node
     {
         Parallel.ForEach(regions, region =>
         {
+            int i = 0;
             for (int dx = -1; dx < 2; dx++)
             {
                 for (int dy = -1; dy < 2; dy++)
                 {
-                    if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
                     {
                         continue;
                     }
                     Region r = GetRegion(region.pos.X + dx, region.pos.Y + dy);
-                    region.borderingRegions.Add(r);
+                    region.borderingRegions[i] = r;
+                    i++;
+
+                    if (r.habitable || region.habitable)
+                    {
+                        m.WaitOne();
+                        paintedRegions.Add(region);
+                        m.ReleaseMutex();
+                    }
                 }
             }
 

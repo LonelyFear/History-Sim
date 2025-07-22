@@ -16,6 +16,7 @@ public class Region : PopObject
     public float wealth;
     public float taxIncome;
     public float tradeIncome;
+    public bool habitableAdjacent;
     
 
     public Vector2I pos;
@@ -32,7 +33,7 @@ public class Region : PopObject
     public long maxFarmers = 0;
     public long maxSoldiers = 0;
     public Economy economy = new Economy();
-    public List<Region> borderingRegions = new List<Region>();
+    public Region[] borderingRegions = new Region[4];
 
     public int currentMonth;
     public bool border;
@@ -158,12 +159,29 @@ public class Region : PopObject
             }
         }
     }
-
+    public bool DrawBorder(Region r)
+    {
+        if (r == null)
+        {
+            return false;
+        }
+        bool hasPops = pops.Count > 0;
+        bool targetHasPops = r.pops.Count > 0;
+        if (hasPops != targetHasPops || (hasPops && r.owner != owner))
+        {
+            return true;
+        }
+        return false;
+    }
     public void NeutralConquest()
     {
         SimManager.m.WaitOne();
-        Region region = borderingRegions[rng.Next(0, borderingRegions.Count)];
+        Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
         SimManager.m.ReleaseMutex();
+        if (region == null)
+        {
+            return;
+        }
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
         {
             Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower() / 2, (long)(region.workforce * 0.95f));
@@ -396,11 +414,14 @@ public class Region : PopObject
     }
     public Region PickRandomBorder()
     {
-        if (borderingRegions.Count > 0)
+        Region border = null;
+        int attempts = 50;
+        while (border == null && attempts > 0)
         {
-            return borderingRegions[rng.Next(0, borderingRegions.Count)];
+            attempts--;
+            border = borderingRegions[rng.Next(0, borderingRegions.Length)];
         }
-        return null;
+        return border;
     }
 
     public float GetFoodSurplus()

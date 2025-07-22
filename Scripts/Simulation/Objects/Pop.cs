@@ -10,7 +10,7 @@ public class Pop
     public long workforce = 0;
     public long dependents = 0;
 
-    public float baseBirthRate = 0.30f;
+    public float baseBirthRate = 0.35f;
     public float baseDeathRate = 0.29f;
     public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;
@@ -184,10 +184,6 @@ public class Pop
         // Military Transitions
         long soldieringWorkforce = region.workforce - region.professions[Profession.ARISTOCRAT] - region.professions[Profession.MERCHANT];
         long soldiersRequiredOfPop = (long)((region.maxSoldiers - region.professions[Profession.SOLDIER]) * (workforce/(float)soldieringWorkforce));
-        if (region.owner == null)
-        {
-            soldiersRequiredOfPop = -workforce;
-        }
 
         switch (profession)
         {
@@ -268,7 +264,7 @@ public class Pop
         // If the pop migrates
         if (rng.NextSingle() <= migrateChance)
         {
-            Region target = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
+            Region target = region.PickRandomBorder();
 
             bool canMigrate = profession == Profession.FARMER || region.owner != null;
             bool professionAllows = true;

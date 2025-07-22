@@ -85,7 +85,7 @@ public partial class TimeManager : Node
                             monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
                         }
                         TickGame();
-                        mapManager.UpdateRegionColors(simManager.habitableRegions);
+                        mapManager.UpdateRegionColors(simManager.paintedRegions);
                         
                     }
 
