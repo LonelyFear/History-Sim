@@ -39,11 +39,11 @@ public partial class ObjectInfo : Control
                     break;
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
-                    populationLabel.Text += "\nFree Land: " + region.freeLand;
+                    populationLabel.Text += "\nRequired Farmers: " + Pop.FromNativePopulation(region.maxFarmers - region.professions[Profession.FARMER]);
                     populationLabel.Text += "\nFarmers: " + Pop.FromNativePopulation(region.professions[Profession.FARMER]).ToString("#,###0");
                     populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
                     populationLabel.Text += "\nAristocrats: " + Pop.FromNativePopulation(region.professions[Profession.ARISTOCRAT]).ToString("#,###0");
-                    populationLabel.Text += "\nArtisans: " + Pop.FromNativePopulation(region.professions[Profession.ARTISAN]).ToString("#,###0");
+                    populationLabel.Text += "\nSoldiers: " + Pop.FromNativePopulation(region.professions[Profession.SOLDIER]).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";
                     specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand/region.landCount).ToString("0.0%") + "\n";
                     specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");

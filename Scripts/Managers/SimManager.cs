@@ -202,7 +202,7 @@ public partial class SimManager : Node
                     habitableRegions.Add(newRegion);
                 }
                 // Calc max populaiton
-                newRegion.CalcMaxPopulation();
+                newRegion.CalcProfessionRequirements();
                 // Adds pops
                 if (newRegion.habitable)
                 {
@@ -331,6 +331,7 @@ public partial class SimManager : Node
                     
                     region.MergePops();
                     region.CheckPopulation();
+                    region.CalcProfessionRequirements();
 
                     // Economy
                     region.CalcBaseWealth();

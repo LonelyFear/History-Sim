@@ -30,6 +30,7 @@ public class Region : PopObject
 
     // Demographics
     public long maxFarmers = 0;
+    public long maxSoldiers = 0;
     public Economy economy = new Economy();
     public List<Region> borderingRegions = new List<Region>();
 
@@ -102,9 +103,14 @@ public class Region : PopObject
             habitable = false;
         }
     }
-    public void CalcMaxPopulation()
+    public void CalcProfessionRequirements()
     {
-        maxFarmers = (long)(Pop.ToNativePopulation(225) * arableLand);
+        maxFarmers = (long)(Pop.ToNativePopulation(230) * arableLand);
+        maxSoldiers = 0;
+        if (owner != null)
+        {
+            maxSoldiers = (long)(workforce * owner.mobilizationRate);
+        }
     }
     #region Nations
     public void TryFormState()
@@ -210,8 +216,12 @@ public class Region : PopObject
         lastBaseWealth = baseWealth;
         lastWealth = wealth;
         float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
-        float farmerProduction = ((Pop.FromNativePopulation(professions[Profession.FARMER]) * 0.01f) + (Pop.FromNativePopulation(dependents) * 0.0033f)) * (arableLand / landCount) * techFactor;
-        baseWealth = farmerProduction;
+
+        long farmers = Pop.FromNativePopulation(professions[Profession.FARMER]);
+        long nonFarmers = Pop.FromNativePopulation(workforce - professions[Profession.FARMER]);
+
+        float baseProduction = (farmers * 0.01f) + (nonFarmers * 0.005f) + (Pop.FromNativePopulation(dependents) * 0.002f);
+        baseWealth = baseProduction * (arableLand / landCount) * techFactor;
         taxIncome = 0;
         tradeIncome = 0;
     }

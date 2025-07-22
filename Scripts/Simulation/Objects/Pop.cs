@@ -173,37 +173,80 @@ public class Pop
     {
         bool regionHasAristocrats = region.professions[Profession.ARISTOCRAT] > 1000;
         bool takeableAristocracy = !regionHasAristocrats && (region.owner == null || (region.owner != null && region.owner.capital == region));
-        long popMaxFarmers = (long)(region.maxFarmers * (workforce/(float)region.professions[Profession.FARMER]));
+
+        long regionProductiveWorkforce = region.workforce - region.professions[Profession.ARISTOCRAT];
+        long farmersRequiredOfPop = (long)((region.maxFarmers - region.professions[Profession.FARMER]) * (workforce/(float)regionProductiveWorkforce));
+        if (profession == Profession.ARISTOCRAT)
+        {
+            farmersRequiredOfPop = 0;
+        }
+
+        // Military Transitions
+        long soldieringWorkforce = region.workforce - region.professions[Profession.ARISTOCRAT] - region.professions[Profession.MERCHANT];
+        long soldiersRequiredOfPop = (long)((region.maxSoldiers - region.professions[Profession.SOLDIER]) * (workforce/(float)soldieringWorkforce));
+        if (region.owner == null)
+        {
+            soldiersRequiredOfPop = -workforce;
+        }
+
         switch (profession)
         {
             case Profession.FARMER:
-                long excessPopulation = workforce - popMaxFarmers;
-                if (workforce >= popMaxFarmers)
+                long excessPopulation = -farmersRequiredOfPop;
+                // Converts farmers to more advanced professions
+                if (farmersRequiredOfPop < -ToNativePopulation(100))
                 {
                     // To Merchant
                     float changedPercent = excessPopulation / ((float)workforce);
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.MERCHANT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
                     break;
                 }
+                if (soldiersRequiredOfPop > ToNativePopulation(100))
+                {
+                    float changedPercent = soldiersRequiredOfPop / ((float)workforce);
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.SOLDIER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
+                    break;
+                }
                 break;
             case Profession.MERCHANT:
                 // To Farmer
-                bool farmersNeeded = region.professions[Profession.FARMER] < region.maxFarmers * 0.8f;
-                if (farmersNeeded && rng.NextSingle() < 0.001f)
+                bool farmersNeeded = farmersRequiredOfPop > 0;
+                if (farmersNeeded && rng.NextSingle() < 0.01f)
                 {
                     //GD.Print("Merchants Became Farmers");
-                    float changedPercent = 0.1f;
+                    float changedPercent = farmersRequiredOfPop / ((float)workforce);
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
                     break;
                 }
 
-                if (takeableAristocracy && rng.NextSingle() < region.wealth * 0.0005f && region.wealth > 20f)
+                if (takeableAristocracy && rng.NextSingle() < 0.005f && region.wealth >= 30f)
                 {
                     float changedPercent = 0.2f;
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.ARISTOCRAT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
                     break;
                 }
-                // To Aristocrat
+                break;
+            case Profession.SOLDIER:
+                excessPopulation = -soldiersRequiredOfPop;
+                farmersNeeded = farmersRequiredOfPop > ToNativePopulation(100);
+                // Soldiers go back to their fields
+
+                // TODO: Add morale, make it fall with sustained casualties, unpopular leadership, defeats, etc
+                // TODO: Make the chance of soldiers leaving rise as morale falls. 
+
+                if (farmersNeeded && rng.NextSingle() < 0.001f)
+                {
+                    //GD.Print("Merchants Became Farmers");
+                    float changedPercent = farmersRequiredOfPop * 0.5f / workforce;
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
+                    break;
+                }
+                // Excess soldiers go back to tending their fields/doing other work
+                if (soldiersRequiredOfPop < 0)
+                {
+                    float changedPercent = excessPopulation / ((float)workforce);
+                    ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
+                }
                 break;
         }
     }
@@ -228,12 +271,28 @@ public class Pop
             Region target = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
 
             bool canMigrate = profession == Profession.FARMER || region.owner != null;
+            bool professionAllows = true;
             if (region.owner != null && region.owner.rulingPop == this)
             {
                 canMigrate = region.owner == target.owner;
             }
+            switch (profession)
+            {
+                case Profession.SOLDIER:
+                    if (target.owner != region.owner)
+                    {
+                        professionAllows = false;
+                    }
+                    break;
+                case Profession.ARISTOCRAT:
+                    if (target.owner != region.owner)
+                    {
+                        professionAllows = false;
+                    }
+                    break;
+            }
 
-            if (target.Migrateable(this) && canMigrate && (rng.NextSingle() < target.navigability) && (rng.NextSingle() < target.arableLand / target.landCount))
+            if (target.Migrateable(this) && canMigrate && professionAllows && (rng.NextSingle() < target.navigability) && (rng.NextSingle() < target.arableLand / target.landCount))
             {
                 long movedDependents = (long)(dependents * Mathf.Lerp(0.05, 0.5, rng.NextDouble()));
                 long movedWorkforce = (long)(workforce * Mathf.Lerp(0.05, 0.5, rng.NextDouble()));
