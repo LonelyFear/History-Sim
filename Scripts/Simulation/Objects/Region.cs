@@ -184,7 +184,8 @@ public class Region : PopObject
         }
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
         {
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower() / 2, (long)(region.workforce * 0.95f));
+            long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians * 0.5f));
 
             SimManager.m.WaitOne();
             if (result.victor == Conflict.Side.AGRESSOR)
@@ -193,7 +194,7 @@ public class Region : PopObject
             }
 
             owner.TakeLosses(result.attackerLosses, owner);
-            region.TakeLosses(result.defenderLosses);
+            region.TakeLosses(result.defenderLosses, null, true);
             SimManager.m.ReleaseMutex();
         }
     }

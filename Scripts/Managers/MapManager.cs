@@ -11,6 +11,7 @@ public partial class MapManager : Area2D
     SimManager simManager;
     Vector2I worldSize;
     Sprite2D regionOverlay;
+    ImageTexture regionTexture;
     Image regionImage;
     public MapModes mapMode;
     public Vector2 mousePos;
@@ -21,7 +22,7 @@ public partial class MapManager : Area2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    int regionResolution = 8;
+    int regionResolution = 4;
 
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
@@ -39,7 +40,8 @@ public partial class MapManager : Area2D
         worldSize = SimManager.worldSize;
         //GD.Print(worldSize.X * regionResolution);
         regionImage = Image.CreateEmpty(worldSize.X * regionResolution, worldSize.Y * regionResolution, true, Image.Format.Rgba8);
-        regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
+        regionTexture = ImageTexture.CreateFromImage(regionImage);
+        regionOverlay.Texture = regionTexture;
         initialized = true;
     }
 
@@ -202,10 +204,6 @@ public partial class MapManager : Area2D
                 if (region.owner != null)
                 {
                     color = region.owner.color;
-                    if (region.border || region.frontier)
-                    {
-                        color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
-                    }
                     if (region.owner.capital == region)
                     {
                         color = new Color(1,0,0);
@@ -330,7 +328,6 @@ public partial class MapManager : Area2D
                 int posY = (y * regionResolution) + ry;
                 Color finalColor = color;
                 int resMinus = regionResolution - 1;
-
                 // Lines
 
                 // Top
@@ -390,9 +387,9 @@ public partial class MapManager : Area2D
         if (mapUpdate)
         {
             mapUpdate = false;
-            regionOverlay.Texture = ImageTexture.CreateFromImage(regionImage);
+            regionTexture.Update(regionImage);
+            regionOverlay.Texture = regionTexture;
         }
-
     }
 }
 

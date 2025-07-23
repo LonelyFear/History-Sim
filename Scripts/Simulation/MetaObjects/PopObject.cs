@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 public abstract class PopObject {
@@ -119,23 +120,34 @@ public abstract class PopObject {
         dependents += dependentChange;
         population += workforceChange + dependentChange;
     }
-    public void TakeLosses(long amount, State state = null){
+    public void TakeLosses(long amount, State state = null, bool includeCivilians = false){
         pops.Shuffle();
         long lossesTaken = amount;
-        foreach (Pop pop in pops){
-            if (pop.profession != Profession.ARISTOCRAT){
-                if (pop.workforce >= lossesTaken){
+        Profession[] combatants = { Profession.SOLDIER };
+        if (includeCivilians)
+        {
+            combatants = [Profession.SOLDIER, Profession.FARMER, Profession.MERCHANT];
+        }
+        foreach (Pop pop in pops)
+        {
+            if (combatants.Contains(pop.profession))
+            {
+                if (pop.workforce >= lossesTaken)
+                {
                     lossesTaken = 0;
                     pop.ChangeWorkforce(-lossesTaken);
-                } else {
+                }
+                else
+                {
                     lossesTaken -= pop.workforce;
                     pop.ChangeWorkforce(-pop.workforce);
                 }
-            }    
-            if (lossesTaken < 1){
+            }
+            if (lossesTaken < 1)
+            {
                 lossesTaken = 0;
                 break;
-            } 
+            }
         }
 
         if (state != null){
