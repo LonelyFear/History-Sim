@@ -207,15 +207,16 @@ public class Pop
             case Profession.MERCHANT:
                 // To Farmer
                 bool farmersNeeded = farmersRequiredOfPop > 0;
-                if (farmersNeeded && rng.NextSingle() < 0.01f)
+                if (farmersNeeded && rng.NextSingle() < 0.1f)
                 {
                     //GD.Print("Merchants Became Farmers");
                     float changedPercent = farmersRequiredOfPop / ((float)workforce);
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.FARMER, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
                     break;
                 }
-
-                if (takeableAristocracy && rng.NextSingle() < 0.005f && region.wealth >= 30f)
+                float bestAristocracyWealth = 40f;
+                float clampedWealth = Mathf.Clamp(region.wealth, 0, bestAristocracyWealth) / bestAristocracyWealth;
+                if (takeableAristocracy && rng.NextSingle() < 0.05f * clampedWealth)
                 {
                     float changedPercent = 0.2f;
                     ChangeProfession((long)(workforce * changedPercent), (long)(dependents * changedPercent), Profession.ARISTOCRAT, Mathf.Clamp((int)(ownedLand * changedPercent), 1, 64));
@@ -255,7 +256,7 @@ public class Pop
         // Simple Migration
         if (population >= maxPopulation)
         {
-            migrateChance = 0.7f;
+            migrateChance = 1f;
         }
         if (profession == Profession.ARISTOCRAT)
         {
@@ -339,7 +340,7 @@ public class Pop
     public void CalcMaxPopulation()
     {
         float techFactor = 1 + (tech.societyLevel * 0.1f);
-        maxPopulation = ToNativePopulation((long)(1000f * techFactor * (1 + ownedLand) * (region.arableLand/region.landCount)));
+        maxPopulation = ToNativePopulation((long)(Region.populationPerLand * techFactor * (1 + ownedLand) * (region.arableLand/region.landCount)));
     }    
     #endregion
     public void ClaimLand(int amount)

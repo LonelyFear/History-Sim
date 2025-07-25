@@ -321,50 +321,53 @@ public partial class SimManager : Node
         uint countedPoppedRegions = 0;
         ulong tickStartTime = Time.GetTicksMsec();
         long worldPop = 0;
-        int regionBatches = 8;
+        //int regionBatches = 8;
+        foreach (Region region in regions)
+        {
+            region.tradeWeight = Mathf.Clamp(region.tradeWeight, 0f, 100f);
+            region.tradeWeight -= 1;
+            region.economy.RotPerishables();
+
+            if (region.pops.Count > 0)
+            {
+                m.WaitOne();
+                countedPoppedRegions += 1;
+                m.ReleaseMutex();
+
+                region.MergePops();
+                region.CheckPopulation();
+                region.CalcProfessionRequirements();
+
+                // Economy
+                region.CalcBaseWealth();
+                region.CalcTradeWeight();
+                region.CalcTaxes();
+                // region trade goes here
+                region.UpdateWealth();
+                if (region.owner != null && region.frontier && region.owner.rulingPop != null)
+                {
+                    region.NeutralConquest();
+                }
+                region.TryFormState();
+                if (region.owner != null)
+                {
+                    region.StateBordering();
+                }
+
+                m.WaitOne();
+                worldPop += region.population;
+                m.ReleaseMutex();
+            }            
+        }
+        /*
         Parallel.For(1, regionBatches + 1, (batch) =>
         {
             for (int i = habitableRegions.Count / regionBatches * (batch - 1); i < habitableRegions.Count / regionBatches * batch - 1; i++)
             {
-                Region region = habitableRegions[i];
-                // Trade Route Decay
 
-                region.tradeWeight = Mathf.Clamp(region.tradeWeight, 0f, 100f);
-                region.tradeWeight -= 1;
-                region.economy.RotPerishables();
-
-                if (region.pops.Count > 0)
-                {
-                    m.WaitOne();
-                    countedPoppedRegions += 1;
-                    m.ReleaseMutex();
-                    
-                    region.MergePops();
-                    region.CheckPopulation();
-                    region.CalcProfessionRequirements();
-
-                    // Economy
-                    region.CalcBaseWealth();
-                    region.CalcTradeWeight();
-                    region.CalcTaxes();
-                    // region trade goes here
-                    region.UpdateWealth();
-                    if (region.owner != null && region.frontier && region.owner.rulingPop != null)
-                    {
-                        region.NeutralConquest();
-                    }
-                    region.TryFormState();
-                    if (region.owner != null)
-                    {
-                        region.StateBordering();
-                    }
-
-                    m.WaitOne();
-                    worldPop += region.population;
-                    m.ReleaseMutex();
-                }                
-            }
+            }                
         });
+        */
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
         // GD.Print("Region Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");

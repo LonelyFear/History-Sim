@@ -43,6 +43,9 @@ public class Region : PopObject
     public List<Crop> plantableCrops = new List<Crop>();
     public float arableLand;
 
+    public static int populationPerLand = 600;
+    public static int farmersPerLand = 140;
+
     public void CalcAverages()
     {
         name = "Region";
@@ -106,7 +109,7 @@ public class Region : PopObject
     }
     public void CalcProfessionRequirements()
     {
-        maxFarmers = (long)(Pop.ToNativePopulation(230) * arableLand);
+        maxFarmers = (long)(Pop.ToNativePopulation(farmersPerLand) * arableLand);
         maxSoldiers = 0;
         if (owner != null)
         {

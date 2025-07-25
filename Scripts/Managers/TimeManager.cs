@@ -11,8 +11,9 @@ public partial class TimeManager : Node
     public delegate void TickEventHandler();
     [Signal]
     public delegate void YearEventHandler();
+    string[] months = { "January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
-    public const uint daysPerTick = 7;
+    public const uint daysPerTick = 28;
     public const uint ticksPerMonth = 28;
     public const uint ticksPerYear = ticksPerMonth*12;
     uint monthCounter = 0;
@@ -209,6 +210,10 @@ public partial class TimeManager : Node
         string month = GetMonth(tick).ToString("00");
         string year = GetYear(tick).ToString("0000");
         string date = $"{month}/{day}/{year}";
+        if (daysPerTick >= ticksPerMonth)
+        {
+            date = $"{month}/{year}";
+        }
         return date;
     }
 }

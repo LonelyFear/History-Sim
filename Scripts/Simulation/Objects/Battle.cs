@@ -19,8 +19,8 @@ public class Battle{
             attackerStrength = attackers,
             defenderStrength = defenders
         };
-        long baseAttackerPower = Pop.FromNativePopulation(attackers) + Pop.FromNativePopulation((long)(attackingMilitia * 0.4f));
-        long baseDefenderPower = Pop.FromNativePopulation(defenders) + Pop.FromNativePopulation((long)(defendingMilitia * 0.4f));
+        long baseAttackerPower = Pop.FromNativePopulation(attackers) + Pop.FromNativePopulation((long)(attackingMilitia * 0.8f));
+        long baseDefenderPower = Pop.FromNativePopulation(defenders) + Pop.FromNativePopulation((long)(defendingMilitia * 0.8f));
         double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.9, 1.1, rng.NextDouble()));
         double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.9, 1.1, rng.NextDouble()));
         
