@@ -24,6 +24,7 @@ public partial class ActionPanel : Panel
 
     public void OnMainMenuClick()
     {
+        SimManager.m.Close();
         GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
         GetNode<Game>("/root/Game").QueueFree();
     }

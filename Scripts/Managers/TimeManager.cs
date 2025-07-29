@@ -13,7 +13,7 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
     string[] months = { "January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
-    public const uint daysPerTick = 28;
+    public const uint daysPerTick = 14;
     public const uint ticksPerMonth = 28;
     public const uint ticksPerYear = ticksPerMonth*12;
     uint monthCounter = 0;
@@ -145,7 +145,7 @@ public partial class TimeManager : Node
         {
             simManager.SimTick();
         }    
-        if (monthCounter > 30)
+        if (monthCounter >= ticksPerMonth)
         {
             monthCounter = 0;
             monthStartTime = Time.GetTicksMsec(); 
@@ -160,7 +160,7 @@ public partial class TimeManager : Node
             }
         }
         
-        if (yearCounter > ticksPerYear){
+        if (yearCounter >= ticksPerYear){
             yearCounter = 0;
             if (!debuggerMode)
             {
@@ -194,7 +194,7 @@ public partial class TimeManager : Node
         if (tick == 0){
             tick = ticks;
         }
-        return (uint)Mathf.PosMod(tick/ticksPerMonth, 12) + 1;
+        return (uint)Mathf.PosMod(tick/(float)ticksPerMonth, 12) + 1;
     }
     public uint GetYear(uint tick = 0){
         if (tick == 0){

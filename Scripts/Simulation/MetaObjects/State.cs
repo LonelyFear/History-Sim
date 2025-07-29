@@ -30,6 +30,7 @@ public class State : PopObject
     public List<Conflict> conflicts = new List<Conflict>();
     public List<War> wars = new List<War>();
     public List<State> enemies = new List<State>();
+    public int maxSize = 1;
 
     // Government
     public long wealth;

@@ -14,7 +14,7 @@ public abstract class PopObject {
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
     {
         {Profession.FARMER, 0},
-        { Profession.MERCHANT, 0},
+        {Profession.MERCHANT, 0},
         {Profession.ARISTOCRAT, 0},
         {Profession.ARTISAN, 0},
         {Profession.SOLDIER, 0},

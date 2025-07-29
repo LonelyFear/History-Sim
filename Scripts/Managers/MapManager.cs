@@ -331,25 +331,29 @@ public partial class MapManager : Area2D
                 // Lines
 
                 // Top
-                if (ry == 0 && r.DrawBorder(r.borderingRegions[1]))
+                if (mapMode == MapModes.POLITIY)
                 {
-                    finalColor = new Color(0, 0, 0);
+                    if (ry == 0 && r.DrawBorder(r.borderingRegions[1]))
+                    {
+                        finalColor = new Color(0, 0, 0);
+                    }
+                    // Left
+                    if (rx == 0 && r.DrawBorder(r.borderingRegions[0]))
+                    {
+                        finalColor = new Color(0, 0, 0);
+                    }
+                    // Bottom
+                    if (ry == resMinus && r.DrawBorder(r.borderingRegions[2]))
+                    {
+                        finalColor = new Color(0, 0, 0);
+                    }
+                    // Right
+                    if (rx == resMinus && r.DrawBorder(r.borderingRegions[3]))
+                    {
+                        finalColor = new Color(0, 0, 0);
+                    }                    
                 }
-                // Left
-                if (rx == 0 && r.DrawBorder(r.borderingRegions[0]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
-                // Bottom
-                if (ry == resMinus && r.DrawBorder(r.borderingRegions[2]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
-                // Right
-                if (rx == resMinus && r.DrawBorder(r.borderingRegions[3]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
+
                 /*
                 // Corners
 

@@ -64,7 +64,6 @@ shape = SubResource("RectangleShape2D_7nbq1")
 [node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("timeManager")]
 script = ExtResource("1_o5yvi")
 timeManager = NodePath("../Time Manager")
-complexEconomy = true
 
 [node name="Terrain Map" type="Node2D" parent="."]
 z_index = -10

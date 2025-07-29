@@ -193,7 +193,7 @@
 		"minMoisture":1500,
 		"maxMoisture":4000,
 		"plantDensity":1.2,
-		"color":"2E6049",
+		"color":"2E5E4F",
 		"textureX": 3,
 		"textureY": 0,
 		"navigability":0.4,

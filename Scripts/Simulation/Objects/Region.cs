@@ -25,7 +25,7 @@ public class Region : PopObject
     public float avgRainfall;
     public float avgElevation;
     public int landCount;
-    public int freeLand;    
+    public int freeLand = 16;    
     public State owner = null;
     public List<Army> armies;
 
@@ -34,8 +34,8 @@ public class Region : PopObject
     public long maxSoldiers = 0;
     public Economy economy = new Economy();
     public Region[] borderingRegions = new Region[4];
+    public Region[] habitableBorderingRegions = new Region[4];
 
-    public int currentMonth;
     public bool border;
     public bool frontier;
     public bool needsJobs { private set; get; }
@@ -43,8 +43,8 @@ public class Region : PopObject
     public List<Crop> plantableCrops = new List<Crop>();
     public float arableLand;
 
-    public static int populationPerLand = 600;
-    public static int farmersPerLand = 140;
+    public static int populationPerLand = 500;
+    public static int farmersPerLand = 115;
 
     public void CalcAverages()
     {
@@ -117,6 +117,10 @@ public class Region : PopObject
         }
     }
     #region Nations
+    /// <summary>
+    /// Function to be used with professions
+    /// Disabled to increase the speed of development
+    /// </summary>
     public void TryFormState()
     {
         if (professions[Profession.ARISTOCRAT] > 0 && rng.NextSingle() > wealth * 0.001f && owner == null)
@@ -140,6 +144,28 @@ public class Region : PopObject
             owner.rulingPop = rulingPop;
             owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
             owner.UpdateDisplayName();
+        }
+    }
+    public void RandomStateFormation()
+    {
+        if (rng.NextSingle() < 0.001)
+        {
+            SimManager.m.WaitOne();
+            simManager.CreateState(this);
+            SimManager.m.ReleaseMutex();
+
+            owner.population = population;
+            owner.workforce = workforce;
+            Pop rulingPop = null;
+            foreach (Pop pop in pops)
+            {
+                rulingPop = pop;
+                break;
+            }
+
+            owner.rulingPop = rulingPop;
+            owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
+            owner.UpdateDisplayName();            
         }
     }
     public void StateBordering()
@@ -181,14 +207,14 @@ public class Region : PopObject
         SimManager.m.WaitOne();
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
         SimManager.m.ReleaseMutex();
-        if (region == null)
+        if (region == null )
         {
             return;
         }
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.005f)
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f / (1f + (owner.regions.Count /(float)owner.maxSize)))
         {
             long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians * 0.5f));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians));
 
             SimManager.m.WaitOne();
             if (result.victor == Conflict.Side.AGRESSOR)
@@ -196,8 +222,8 @@ public class Region : PopObject
                 owner.AddRegion(region);
             }
 
-            owner.TakeLosses(result.attackerLosses, owner);
-            region.TakeLosses(result.defenderLosses, null, true);
+            //owner.TakeLosses(result.attackerLosses, owner);
+            //region.TakeLosses(result.defenderLosses, null, true);
             SimManager.m.ReleaseMutex();
         }
     }
@@ -249,7 +275,7 @@ public class Region : PopObject
     }
     public void CalcTaxes()
     {
-        if (owner != null && owner.capital != null)
+        if (owner != null && owner.capital != null && owner.capital != this)
         {
             float totalTaxIncome = baseWealth * owner.taxRate;
             float capitalTaxIncome = totalTaxIncome * 0.1f;
@@ -356,7 +382,6 @@ public class Region : PopObject
             }
             SimManager.m.WaitOne();
             Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
-            npop.canMove = false;
             pop.ChangePopulation(-movedWorkforce, -movedDependents);
             SimManager.m.ReleaseMutex();
         }
@@ -418,13 +443,8 @@ public class Region : PopObject
     }
     public Region PickRandomBorder()
     {
-        Region border = null;
-        int attempts = 50;
-        while (border == null && attempts > 0)
-        {
-            attempts--;
-            border = borderingRegions[rng.Next(0, borderingRegions.Length)];
-        }
+        Region border;
+        border = borderingRegions[rng.Next(0, habitableBorderingRegions.Length)];
         return border;
     }
 

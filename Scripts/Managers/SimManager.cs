@@ -16,7 +16,6 @@ public partial class SimManager : Node
     public TileMapLayer reliefs;
     [Export]
     public TimeManager timeManager { get; set; }
-    [Export] public bool complexEconomy = false;
 
     public Tile[,] tiles;
     public List<Region> regions = new List<Region>();
@@ -47,8 +46,8 @@ public partial class SimManager : Node
 
     public int maxPopsPerRegion = 50;
     public long popTaskId = 0;
+    public uint currentBatch = 2;
 
-    int currentBatch = 0;
     Random rng = new Random();
 
     // Events
@@ -204,13 +203,6 @@ public partial class SimManager : Node
                 }
                 // Calc max populaiton
                 newRegion.CalcProfessionRequirements();
-                // Adds pops
-                if (newRegion.habitable)
-                {
-                    // Add pops here
-                    long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(20, 100));
-                    //CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), newRegion, new Tech(), CreateCulture());
-                }
             }
         }
         #endregion
@@ -223,6 +215,7 @@ public partial class SimManager : Node
     {
         Parallel.ForEach(regions, region =>
         {
+            int habitableBorderCount = 0;
             int i = 0;
             for (int dx = -1; dx < 2; dx++)
             {
@@ -235,7 +228,10 @@ public partial class SimManager : Node
                     Region r = GetRegion(region.pos.X + dx, region.pos.Y + dy);
                     region.borderingRegions[i] = r;
                     i++;
-
+                    if (r.habitable)
+                    {
+                        habitableBorderCount++;
+                    }
                     if (r.habitable || region.habitable)
                     {
                         m.WaitOne();
@@ -244,18 +240,36 @@ public partial class SimManager : Node
                     }
                 }
             }
+            region.habitableBorderingRegions = new Region[habitableBorderCount];
+            i = 0;
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
+                    {
+                        continue;
+                    }
+                    Region r = GetRegion(region.pos.X + dx, region.pos.Y + dy);
+                    if (r.habitable)
+                    {
+                        region.habitableBorderingRegions[i] = r;
+                        i++;
+                    }
 
+                }
+            }
         });
     }
     void InitPops()
     {
         foreach (Region region in habitableRegions)
         {
-            double nodeChance = 0.005;
+            double nodeChance = 0.004;
 
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
-                long startingPopulation = Pop.ToNativePopulation(rng.NextInt64(1000, 2000));
+                long startingPopulation = Pop.ToNativePopulation(10000);
                 Culture culture = CreateCulture();
                 foreach (Region testRegion in habitableRegions)
                 {
@@ -272,19 +286,12 @@ public partial class SimManager : Node
     #region Pop Update
     public void UpdatePops()
     {
-        int popBatches = Mathf.Clamp(8, 0, pops.Count());
-        /*
-        Parallel.For(1, popBatches + 1, (batch) =>
+        int popBatches = Mathf.Clamp(8, 0, (int)(pops.Count() / 4f));
+        Parallel.ForEach(pops.ToArray(), (pop) =>
         {
-            //GD.Print("Pop Batch " + batch + " Running");
-            for (int i = pops.Count / popBatches * (batch - 1); i < pops.Count / popBatches * batch - 1; i++)
-            {
-                Pop pop = pops[i];
 
-
-            }
         });
-        */
+        GD.Print(timeManager.GetMonth());
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
@@ -296,38 +303,64 @@ public partial class SimManager : Node
             }
             else
             {
-                pop.canMove = true;
-                pop.income = 0f;
-                pop.expenses = 0f;
-                pop.EconomyUpdate();
-                pop.GrowPop();
-                if (pop.batchId == timeManager.GetMonth())
+                try
                 {
-                    pop.ProfessionTransitions();
-                    pop.Migrate();
+                    pop.EconomyUpdate();
+                    pop.GrowPop();
+                    if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
+                    {
+                        //pop.ProfessionTransitions();
+                        pop.Migrate();
+                    }
                 }
-            }            
+                catch (Exception e)
+                {
+                    GD.PushError(e);
+                }
+            }
+        }
+        /*
+        Parallel.For(1, popBatches + 1, (batch) =>
+        {
+            GD.Print("Pop Batch " + batch + " Running");
+            try
+            {
+                for (int i = pops.Count / popBatches * (batch - 1); i < pops.Count / popBatches * batch - 1; i++)
+                {
+                    GD.Print("Pop");
+                    Pop pop = pops[i];
+
+                }
+            }
+            catch (Exception e)
+            {
+                GD.PushError(e);
+            }
+
+        });
+        foreach (Pop pop in pops.ToArray())
+        {
+          
         }
 
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
         // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
         // GD.Print("  Pops Grow Time: " + growTime + " ms");
         // GD.Print("  Pops Move Time: " + migrateTime + " ms");
+        */
     }
     #endregion
     #region Region Update
     public void UpdateRegions()
     {
         uint countedPoppedRegions = 0;
-        ulong tickStartTime = Time.GetTicksMsec();
+        
         long worldPop = 0;
         //int regionBatches = 8;
+        float totalRegionTime = 0;
         foreach (Region region in regions)
         {
-            region.tradeWeight = Mathf.Clamp(region.tradeWeight, 0f, 100f);
-            region.tradeWeight -= 1;
-            region.economy.RotPerishables();
-
+            ulong rStartTime = Time.GetTicksMsec();
             if (region.pops.Count > 0)
             {
                 m.WaitOne();
@@ -348,7 +381,7 @@ public partial class SimManager : Node
                 {
                     region.NeutralConquest();
                 }
-                region.TryFormState();
+                region.RandomStateFormation();
                 if (region.owner != null)
                 {
                     region.StateBordering();
@@ -357,8 +390,10 @@ public partial class SimManager : Node
                 m.WaitOne();
                 worldPop += region.population;
                 m.ReleaseMutex();
-            }            
+            }
+            totalRegionTime += Time.GetTicksMsec() - rStartTime;
         }
+        //GD.Print("Region Processing Time " + totalRegionTime.ToString("#,##0 msec"));
         /*
         Parallel.For(1, regionBatches + 1, (batch) =>
         {
@@ -421,6 +456,7 @@ public partial class SimManager : Node
     {
         foreach (State state in states.ToArray())
         {
+            state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             state.age++;
             if (state.regions.Count < 1)
             {
@@ -507,12 +543,11 @@ public partial class SimManager : Node
     #region Pops Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER)
     {
-        currentBatch += 1;
+        currentBatch++;
         if (currentBatch > 12)
         {
-            currentBatch = 1;
+            currentBatch = 2;
         }
-
         Pop pop = new Pop()
         {
             batchId = currentBatch,
