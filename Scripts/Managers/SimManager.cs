@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -39,9 +40,7 @@ public partial class SimManager : Node
     public List<State> states = new List<State>();
     public List<Army> armies = new List<Army>();
     public List<Character> characters = new List<Character>();
-    public List<Conflict> conflicts = new List<Conflict>();
     public List<War> wars = new List<War>();
-    public List<Conflict> resolvedConflicts = new List<Conflict>();
     public List<War> endedWars = new List<War>();
 
     public int maxPopsPerRegion = 50;
@@ -166,7 +165,7 @@ public partial class SimManager : Node
                         }
                     }
                 }
-                }
+            }
         }
         #endregion
         #region Region Creation
@@ -286,11 +285,6 @@ public partial class SimManager : Node
     #region Pop Update
     public void UpdatePops()
     {
-        int popBatches = Mathf.Clamp(8, 0, (int)(pops.Count() / 4f));
-        Parallel.ForEach(pops.ToArray(), (pop) =>
-        {
-
-        });
         GD.Print(timeManager.GetMonth());
         foreach (Pop pop in pops.ToArray())
         {
@@ -354,19 +348,27 @@ public partial class SimManager : Node
     public void UpdateRegions()
     {
         uint countedPoppedRegions = 0;
-        
+
         long worldPop = 0;
         //int regionBatches = 8;
         float totalRegionTime = 0;
-        foreach (Region region in regions)
+        ParallelOptions options = new ParallelOptions
         {
-            ulong rStartTime = Time.GetTicksMsec();
+            MaxDegreeOfParallelism = System.Environment.ProcessorCount - 2
+        };
+        var partitioner = Partitioner.Create(habitableRegions);
+        ulong rStartTime = Time.GetTicksMsec();
+        Parallel.ForEach(partitioner, options, (region) =>
+        {
             if (region.pops.Count > 0)
             {
-                m.WaitOne();
-                countedPoppedRegions += 1;
-                m.ReleaseMutex();
 
+            }
+        });
+        foreach (Region region in habitableRegions)
+        {
+            if (region.pops.Count > 0)
+            {
                 region.MergePops();
                 region.CheckPopulation();
                 region.CalcProfessionRequirements();
@@ -386,14 +388,19 @@ public partial class SimManager : Node
                 {
                     region.StateBordering();
                 }
-
-                m.WaitOne();
+                countedPoppedRegions += 1;
                 worldPop += region.population;
-                m.ReleaseMutex();
             }
-            totalRegionTime += Time.GetTicksMsec() - rStartTime;
         }
-        //GD.Print("Region Processing Time " + totalRegionTime.ToString("#,##0 msec"));
+        /*
+        Parallel.ForEach(partitioner, (region) =>
+        {
+
+            
+        });
+        */
+        totalRegionTime = Time.GetTicksMsec() - rStartTime;
+        GD.Print("Region Processing Time " + totalRegionTime.ToString("#,##0 msec"));
         /*
         Parallel.For(1, regionBatches + 1, (batch) =>
         {
@@ -464,11 +471,11 @@ public partial class SimManager : Node
                 continue;
             }
 
-            state.borderingStates = new List<State>();
-
             state.UpdateCapital();
             state.CountStatePopulation();
             state.Recruitment();
+            state.UpdateEnemies();
+
             if (state.rulingPop != null)
             {
                 state.RulersCheck();
@@ -482,6 +489,8 @@ public partial class SimManager : Node
                     state.RemoveRegion(r);
                 }
             }
+
+            state.borderingStates = new List<State>();
         }
     }
     #endregion
@@ -645,7 +654,7 @@ public partial class SimManager : Node
         {
             name = charName,
             culture = pop.culture,
-            agression = rng.Next(0, 101),
+            agression = rng.Next(0, 4 + 1),
             age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
         };
         pop.AddCharacter(character);
@@ -693,55 +702,28 @@ public partial class SimManager : Node
         }
     }
     #endregion
-    #region Armies Creation
-    public Army CreateArmy(Region region, State state, ulong strength)
+    #region Diplomacy Creation
+    public War StartWar(State agressor, State defender)
     {
-        Army army = new Army
+        War war = new War()
         {
-            headquarters = region,
-            strength = strength,
+            start = timeManager.ticks
         };
-        state.AddArmy(army);
-        region.AddArmy(army);
-        armies.Add(army);
-        return army;
+        war.AddParticipant(agressor, true);
+        war.AddParticipant(defender, false);
+        return war;
     }
-
-    public void DestroyArmy(Army army)
+    public void EndWar(War war)
     {
-        armies.Remove(army);
-        army.state.RemoveArmy(army);
-        army.location.RemoveArmy(army);
-    }
-    #endregion
-    #region Diplomacy Manager
-    public Conflict StartConflict(State agressor, State defender, List<State> agressorSupporters, List<State> defenderSupporters, Conflict.Type type)
-    {
-        Conflict conflict = new Conflict()
+        foreach (State state in war.agressors)
         {
-            type = type,
-            simManager = this
-        };
-
-        conflict.AddParticipant(agressor, Conflict.Side.AGRESSOR);
-        conflict.AddParticipant(defender, Conflict.Side.DEFENDER);
-
-        foreach (State state in agressorSupporters)
-        {
-            conflict.AddParticipant(state, Conflict.Side.AGRESSOR);
+            war.RemoveParticipant(state);
         }
-        foreach (State state in defenderSupporters)
+        foreach (State state in war.defenders)
         {
-            conflict.AddParticipant(state, Conflict.Side.AGRESSOR);
+            war.RemoveParticipant(state);
         }
-
-        conflicts.Add(conflict);
-        return conflict;
-    }
-
-    public void StartWar(Conflict conflict)
-    {
-
+        war.end = timeManager.ticks;
     }
     #endregion
     #endregion

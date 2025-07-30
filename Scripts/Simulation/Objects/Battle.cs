@@ -9,7 +9,7 @@ public class Battle{
     public long defenderStrength;
     public long attackerLosses;
     public long defenderLosses;
-    public Conflict.Side victor = Conflict.Side.DEFENDER;
+    public bool attackSuccessful;
     static Random rng = new Random();
     public static Battle CalcBattle(Region loc, State atk, State def, long attackers, long defenders, long attackingMilitia = 0, long defendingMilitia = 0){
         Battle result = new Battle(){
@@ -29,12 +29,12 @@ public class Battle{
         double totalPower = attackPower + defendPower;
 
         if (rng.NextDouble() <= attackPower/totalPower){
-            result.victor = Conflict.Side.AGRESSOR;
+            result.attackSuccessful = true;
         }
         float attackerLossRatio = (float)(defendPower / totalPower);
         float defenderLossRatio = (float)(attackPower / totalPower);
 
-        if (result.victor == Conflict.Side.AGRESSOR){
+        if (result.attackSuccessful){
             defenderLossRatio += Mathf.Lerp(0.1f, 0.2f, rng.NextSingle());
         } else {
             attackerLossRatio += Mathf.Lerp(0.1f, 0.2f, rng.NextSingle());

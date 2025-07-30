@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -47,7 +48,8 @@ public partial class MapManager : Area2D
 
     public void UpdateRegionColors(IEnumerable<Region> regions)
     {
-        Parallel.ForEach(regions, region =>
+        var partitioner = Partitioner.Create(regions);
+        Parallel.ForEach(partitioner, (region) =>
         {
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         });

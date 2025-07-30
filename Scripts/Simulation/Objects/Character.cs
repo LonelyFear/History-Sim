@@ -16,46 +16,55 @@ public class Character
     public Pop pop;
     public Gender gender = Gender.MALE;
     public static SimManager simManager;
-    
+
     public Random rng = new Random();
     public int childCooldown = 12;
 
     // Family 
     public Character parent;
-    public Character spouse;    
-    public List<Character> children = new List<Character>();    
+    public Character spouse;
+    public List<Character> children = new List<Character>();
 
     // Traits
-    public int agression = 0;
-    public int wisdom = 0;
+    public TraitLevel agression = 0;
 
-    public const uint maturityAge = 18*TimeManager.ticksPerYear;
+    public const uint maturityAge = 18 * TimeManager.ticksPerYear;
 
-    public void Die(){  
+    public void Die()
+    {
         simManager.DeleteCharacter(this);
     }
-    public void HaveChild(){
-        if (children.Count <= 20){
-            Character child = simManager.CreateCharacter(pop, 0, 0, (Character.Gender)rng.Next(0, 2));
+    public void HaveChild()
+    {
+        if (children.Count <= 20)
+        {
+            Character child = simManager.CreateCharacter(pop, 0, 0, (Gender)rng.Next(0, 2));
             child.parent = this;
             children.Add(child);
         }
     }
 
-    public void ChildUpdate(){
-        if (parent != null){
-            agression = (int)Mathf.Lerp(agression, parent.agression, rng.Next(0,2));
+    public void ChildUpdate()
+    {
+        if (parent != null)
+        {
         }
     }
-    public Character GetHeir(){
-        foreach (Character child in children){
-            if (child.gender == Gender.MALE){
+    public Character GetHeir()
+    {
+        foreach (Character child in children)
+        {
+            if (child.gender == Gender.MALE)
+            {
                 return child;
             }
         }
-        if (parent != null){
-            foreach (Character sibling in parent.children){
-                if (sibling.gender == Gender.MALE){
+        if (parent != null)
+        {
+            foreach (Character sibling in parent.children)
+            {
+                if (sibling.gender == Gender.MALE)
+                {
                     return sibling;
                 }
             }
@@ -63,22 +72,39 @@ public class Character
         return null;
     }
 
-    public bool CanHaveChild(){
+    public bool CanHaveChild()
+    {
         return (state.leader == this || state.leader == parent) && age > maturityAge && childCooldown < 1;
     }
-    public double GetDeathChance(){
-        if (age < 60*TimeManager.ticksPerYear){
+    public double GetDeathChance()
+    {
+        if (age < 60 * TimeManager.ticksPerYear)
+        {
             return 0.0001;
-        } else if (age < 90*TimeManager.ticksPerYear){
+        }
+        else if (age < 90 * TimeManager.ticksPerYear)
+        {
             return 0.01;
-        } else {
+        }
+        else
+        {
             return 0.1;
         }
     }
 
-    public enum Gender{
+    public enum Gender
+    {
         MALE = 0,
         FEMALE = 1
     }
+}
+
+public enum TraitLevel
+{
+    VERY_LOW,
+    LOW,
+    MEDIUM,
+    HIGH,
+    VERY_HIGH,
 }
 

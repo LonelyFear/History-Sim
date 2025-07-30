@@ -25,7 +25,8 @@ public class Region : PopObject
     public float avgRainfall;
     public float avgElevation;
     public int landCount;
-    public int freeLand = 16;    
+    public int freeLand = 16;
+    public State occupier = null;
     public State owner = null;
     public List<Army> armies;
 
@@ -172,6 +173,7 @@ public class Region : PopObject
     {
         border = false;
         frontier = false;
+        List<State> borders = new List<State>();
         foreach (Region region in borderingRegions)
         {
             if (region.owner == null)
@@ -183,10 +185,14 @@ public class Region : PopObject
                 border = true;
                 if (!owner.borderingStates.Contains(region.owner))
                 {
-                    owner.borderingStates.Append(region.owner);
+                    borders.Add(region.owner);
+ 
                 }
             }
         }
+        SimManager.m.WaitOne();
+        owner.borderingStates.AddRange(borders);
+        SimManager.m.ReleaseMutex();        
     }
     public bool DrawBorder(Region r)
     {
@@ -217,7 +223,7 @@ public class Region : PopObject
             Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians));
 
             SimManager.m.WaitOne();
-            if (result.victor == Conflict.Side.AGRESSOR)
+            if (result.attackSuccessful)
             {
                 owner.AddRegion(region);
             }
