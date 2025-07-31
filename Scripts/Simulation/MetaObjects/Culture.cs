@@ -8,12 +8,6 @@ public class Culture : PopObject
 
     // Increases the chance states of this culture declare wars
     public TraitLevel agression = TraitLevel.MEDIUM;
-    
-    // Decreases descrimination by units of this culture
-    public TraitLevel acceptance = TraitLevel.MEDIUM;
-
-    // Determines if female characters can become leaders
-    public TraitLevel equity = TraitLevel.MEDIUM;
     public List<Culture> hatedCultures = new List<Culture>();
 
     // public void AddPop(Pop pop){
@@ -36,12 +30,4 @@ public class Culture : PopObject
     public static bool CheckCultureSimilarity(Culture a, Culture b){
         return a == b;
     }
-}
-
-public enum TraitLevel {
-    VERY_HIGH = 2,
-    HIGH = 1,
-    MEDIUM = 0,
-    LOW = -1,
-    VERY_LOW = -2,
 }

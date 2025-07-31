@@ -206,11 +206,14 @@ public partial class MapManager : Area2D
                 if (region.owner != null)
                 {
                     color = region.owner.color;
+                    if (region.occupier != null)
+                    {
+                        color = region.occupier.color;
+                    }
                     if (region.owner.capital == region)
                     {
-                        color = new Color(1,0,0);
+                        color = region.owner.capitalColor;
                     }
-
                 }
                 if (selectedMetaObj != null)
                 {

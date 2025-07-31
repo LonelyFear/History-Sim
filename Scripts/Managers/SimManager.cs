@@ -285,7 +285,6 @@ public partial class SimManager : Node
     #region Pop Update
     public void UpdatePops()
     {
-        GD.Print(timeManager.GetMonth());
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
@@ -351,20 +350,7 @@ public partial class SimManager : Node
 
         long worldPop = 0;
         //int regionBatches = 8;
-        float totalRegionTime = 0;
-        ParallelOptions options = new ParallelOptions
-        {
-            MaxDegreeOfParallelism = System.Environment.ProcessorCount - 2
-        };
-        var partitioner = Partitioner.Create(habitableRegions);
         ulong rStartTime = Time.GetTicksMsec();
-        Parallel.ForEach(partitioner, options, (region) =>
-        {
-            if (region.pops.Count > 0)
-            {
-
-            }
-        });
         foreach (Region region in habitableRegions)
         {
             if (region.pops.Count > 0)
@@ -379,44 +365,23 @@ public partial class SimManager : Node
                 region.CalcTaxes();
                 // region trade goes here
                 region.UpdateWealth();
-                if (region.owner != null && region.frontier && region.owner.rulingPop != null)
+                if (region.owner != null && region.frontier && region.owner.rulingPop != null && region.occupier == null)
                 {
                     region.NeutralConquest();
+                    
                 }
                 region.RandomStateFormation();
                 if (region.owner != null)
                 {
                     region.StateBordering();
+                    region.MilitaryConquest();
                 }
                 countedPoppedRegions += 1;
                 worldPop += region.population;
             }
         }
-        /*
-        Parallel.ForEach(partitioner, (region) =>
-        {
-
-            
-        });
-        */
-        totalRegionTime = Time.GetTicksMsec() - rStartTime;
-        GD.Print("Region Processing Time " + totalRegionTime.ToString("#,##0 msec"));
-        /*
-        Parallel.For(1, regionBatches + 1, (batch) =>
-        {
-            for (int i = habitableRegions.Count / regionBatches * (batch - 1); i < habitableRegions.Count / regionBatches * batch - 1; i++)
-            {
-
-            }                
-        });
-        */
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
-        // GD.Print("Region Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
-        // GD.Print("  Region Merge Time: " + mergeTime + " ms");
-        // GD.Print("  Region Census Time: " + checkTime + " ms");
-        // GD.Print("  Region Conquest Time: " + conquestTime + " ms");
-        // GD.Print("  Region Border Time: " + borderTime + " ms");
     }
     #endregion
     #region Character Update
@@ -461,37 +426,55 @@ public partial class SimManager : Node
     #region State Update
     public void UpdateStates()
     {
-        foreach (State state in states.ToArray())
+        try
         {
-            state.maxSize = 6 + state.rulingPop.tech.societyLevel;
-            state.age++;
-            if (state.regions.Count < 1)
+            foreach (State state in states.ToArray())
             {
-                DeleteState(state);
-                continue;
-            }
-
-            state.UpdateCapital();
-            state.CountStatePopulation();
-            state.Recruitment();
-            state.UpdateEnemies();
-
-            if (state.rulingPop != null)
-            {
-                state.RulersCheck();
-            }
-            else
-            {
-                // State Collapse or Smth
-                if (rng.NextSingle() < 0.2f)
+                if (state.rulingPop != null)
                 {
-                    Region r = state.regions[rng.Next(0, state.regions.Count)];
-                    state.RemoveRegion(r);
+                    state.maxSize = 6 + state.rulingPop.tech.societyLevel;
                 }
-            }
+                
+                state.age += TimeManager.daysPerTick;
+                if (state.regions.Count < 1)
+                {
+                    DeleteState(state);
+                    continue;
+                }
+                
+                state.UpdateCapital();
+                state.CountStatePopulation();
+                state.Capitualate();
 
-            state.borderingStates = new List<State>();
+                state.Recruitment();
+                state.RelationsUpdate();
+                state.UpdateDiplomacy();
+                state.EndWars();
+                state.StartWars();
+                state.UpdateEnemies();
+
+                if (state.rulingPop != null)
+                {
+                    state.RulersCheck();
+                }
+                else
+                {
+                    // State Collapse or Smth
+                    if (rng.NextSingle() < 0.5f)
+                    {
+                        Region r = state.regions[rng.Next(0, state.regions.Count)];
+                        state.RemoveRegion(r);
+                    }
+                }
+
+                state.borderingStates = new List<State>();
+            }
         }
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+
     }
     #endregion
     #region Culture Update
@@ -503,19 +486,19 @@ public partial class SimManager : Node
         }
     }
     #endregion
-    #region Army Update
-    public void UpdateArmies()
+    #region War Update
+    public void UpdateWars()
     {
-        foreach (Army army in armies.ToArray())
+        foreach (War war in wars)
         {
-            army.age += TimeManager.daysPerTick;
+            war.age += TimeManager.daysPerTick;
         }
     }
     #endregion
     #region SimTick
     public void SimTick()
     {
-        UpdateArmies();
+        UpdateWars();
     }
     public void SimMonth()
     {
@@ -624,8 +607,8 @@ public partial class SimManager : Node
                 capital = region,
                 foundTick = timeManager.ticks
             };
-            states.Add(state);
             state.AddRegion(region);
+            states.Add(state);
         }
     }
 
@@ -654,7 +637,7 @@ public partial class SimManager : Node
         {
             name = charName,
             culture = pop.culture,
-            agression = rng.Next(0, 4 + 1),
+            agression = (TraitLevel)rng.Next(0, 4 + 1),
             age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
         };
         pop.AddCharacter(character);
@@ -705,6 +688,10 @@ public partial class SimManager : Node
     #region Diplomacy Creation
     public War StartWar(State agressor, State defender)
     {
+        if (agressor.enemies.Contains(defender) || defender.enemies.Contains(agressor))
+        {
+            return null;
+        }
         War war = new War()
         {
             start = timeManager.ticks

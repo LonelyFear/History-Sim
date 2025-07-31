@@ -14,10 +14,10 @@ public partial class ObjectInfo : Control
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         panel = GetNode<Panel>("ObjectInfo");
-        nameLabel = GetNode<Label>("ObjectInfo/VBoxContainer/Name");
-        typeLabel = GetNode<Label>("ObjectInfo/VBoxContainer/Type");
-        populationLabel = GetNode<Label>("ObjectInfo/VBoxContainer/Population");
-        specialLabel = GetNode<Label>("ObjectInfo/VBoxContainer/Manpower");
+        nameLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Name");
+        typeLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Type");
+        populationLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Population");
+        specialLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Manpower");
     }
 
     public override void _Process(double delta)
@@ -36,6 +36,12 @@ public partial class ObjectInfo : Control
                     State state = (State)metaObject;
                     nameLabel.Text = state.displayName;
                     specialLabel.Text = "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0") + "\n";
+                    foreach (var pair in state.relations)
+                    {
+                        State subject = pair.Key;
+                        Relation relation = pair.Value;
+                        specialLabel.Text += "\n" + $"{subject.displayName}: {relation.opinion}";
+                    }
                     break;
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;

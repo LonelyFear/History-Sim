@@ -145,30 +145,31 @@ offset_bottom = 72.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/ObjectInfo"]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/InfoHolder/ObjectInfo"]
 layout_mode = 0
-offset_left = 5.0
-offset_top = 4.0
-offset_right = 139.0
-offset_bottom = 107.0
+offset_right = 263.0
+offset_bottom = 239.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/ObjectInfo/ScrollContainer"]
+layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Name" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Name" type="Label" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "Nation Name"
 
-[node name="Type" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Type" type="Label" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 14
 text = "Nation"
 
-[node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Population" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Population" type="Label" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "Population: 1,000
@@ -178,7 +179,7 @@ Merchants:
 Aristocrats:
 Artisans:"
 
-[node name="Manpower" type="Label" parent="UI/InfoHolder/ObjectInfo/VBoxContainer"]
+[node name="Manpower" type="Label" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 text = "Arable Land:

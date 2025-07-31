@@ -12,6 +12,7 @@ public class Region : PopObject
     public float tradeWeight;
     public float lastWealth = 0;
     public float lastBaseWealth = 0;
+    public float control = 1f;
     public float baseWealth;
     public float wealth;
     public float taxIncome;
@@ -149,7 +150,7 @@ public class Region : PopObject
     }
     public void RandomStateFormation()
     {
-        if (rng.NextSingle() < 0.001)
+        if (rng.NextSingle() < 0.0005f)
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -233,6 +234,36 @@ public class Region : PopObject
             SimManager.m.ReleaseMutex();
         }
     }
+    public State GetController()
+    {
+        if (occupier != null)
+        {
+            return occupier;
+        }
+        return owner;
+    }
+    public void MilitaryConquest()
+    {
+        SimManager.m.WaitOne();
+        Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
+        SimManager.m.ReleaseMutex();
+
+        if (region != null && GetController().enemies.Contains(region.GetController()))
+        {
+            Battle result = Battle.CalcBattle(region, GetController(), null, GetController().GetArmyPower(), region.owner.GetArmyPower());
+
+            SimManager.m.WaitOne();
+            if (result.attackSuccessful)
+            {
+                region.occupier = owner;
+            }
+            if (region.occupier == region.owner)
+            {
+                region.occupier = null;
+            }
+            SimManager.m.ReleaseMutex();
+        }
+    }
 
     public void AddArmy(Army army)
     {
@@ -262,6 +293,14 @@ public class Region : PopObject
         if (population < Pop.ToNativePopulation(1) && owner != null)
         {
             owner.RemoveRegion(this);
+        }
+        if (GetController() != owner)
+        {
+            control = 0f;
+        }
+        else
+        {
+            control = Mathf.Lerp(control, 1f, 0.1f);
         }
     }
 

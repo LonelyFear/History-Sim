@@ -3,8 +3,8 @@ using System.Reflection.PortableExecutable;
 
 public class War
 {
-    public List<State> agressors;
-    public List<State> defenders;
+    public List<State> agressors = new List<State>();
+    public List<State> defenders = new List<State>();
     public ulong start;
     public ulong age;
     public ulong end;
@@ -23,7 +23,7 @@ public class War
                 {
                     defenders.Add(state);
                 }
-                state.wars.Add(this);
+                //state.wars.Add(this);
                 foreach (State vassal in state.vassals)
                 {
                     if (!agressors.Contains(vassal) && !defenders.Contains(vassal))
@@ -36,7 +36,7 @@ public class War
                         {
                             defenders.Add(state);
                         }
-                        vassal.wars.Add(this);
+                        //vassal.wars.Add(this);
                     }
                 }
             }
@@ -56,7 +56,7 @@ public class War
                 {
                     defenders.Remove(state);
                 }     
-                state.wars.Remove(this);  
+                //state.wars.Remove(this);  
                 foreach (State vassal in state.vassals)
                 {
                     if (agressors.Contains(vassal) || defenders.Contains(vassal))
@@ -69,7 +69,7 @@ public class War
                         {
                             defenders.Remove(state);
                         }
-                        vassal.wars.Remove(this);
+                        //vassal.wars.Remove(this);
                     }
                 }
             }
