@@ -125,7 +125,7 @@ public class Region : PopObject
     /// </summary>
     public void TryFormState()
     {
-        if (professions[Profession.ARISTOCRAT] > 0 && rng.NextSingle() > wealth * 0.001f && owner == null)
+        if (professions[Profession.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -150,7 +150,7 @@ public class Region : PopObject
     }
     public void RandomStateFormation()
     {
-        if (rng.NextSingle() < 0.0005f)
+        if (rng.NextSingle() < 0.0005f && population > Pop.ToNativePopulation(1000))
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -195,8 +195,9 @@ public class Region : PopObject
         owner.borderingStates.AddRange(borders);
         SimManager.m.ReleaseMutex();        
     }
-    public bool DrawBorder(Region r)
+    public bool DrawBorder(Region r, ref Color color)
     {
+        color = new Color(0, 0, 0);
         if (r == null)
         {
             return false;
@@ -205,6 +206,10 @@ public class Region : PopObject
         bool targetHasPops = r.pops.Count > 0;
         if (hasPops != targetHasPops || (hasPops && r.owner != owner))
         {
+            if (r.owner != null && owner != null && (owner.vassals.Contains(r.owner) || owner.liege == r.owner))
+            {
+                color = new Color(0.5f, 0.5f, 0.5f);
+            }
             return true;
         }
         return false;
@@ -221,7 +226,7 @@ public class Region : PopObject
         if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f / (1f + (owner.regions.Count /(float)owner.maxSize)))
         {
             long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians * 0.001f));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)

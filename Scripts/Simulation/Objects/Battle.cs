@@ -28,7 +28,7 @@ public class Battle{
 
         double totalPower = attackPower + defendPower;
 
-        if (rng.NextDouble() <= attackPower/totalPower){
+        if (rng.NextDouble() < attackPower/totalPower){
             result.attackSuccessful = true;
         }
         float attackerLossRatio = (float)(defendPower / totalPower);

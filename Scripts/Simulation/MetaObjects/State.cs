@@ -19,7 +19,7 @@ public class State : PopObject
     public float taxRate = 0.1f;
     public float tribute = 0.1f;
     public List<State> vassals = new List<State>();
-    State liege;
+    public State liege = null;
     public Dictionary<State, Relation> relations = new Dictionary<State, Relation>();
     public List<State> enemies = new List<State>();
     public List<State> borderingStates = new List<State>();
@@ -67,6 +67,15 @@ public class State : PopObject
             if (!borderingStates.Contains(pair.Key) && !enemies.Contains(pair.Key))
             {
                 relations.Remove(pair.Key);
+                continue;
+            }
+            if (enemies.Contains(pair.Key))
+            {
+                pair.Value.truce += (int)(TimeManager.ticksPerMonth / 2f);
+            }
+            else
+            {
+                pair.Value.truce -= TimeManager.ticksPerMonth;
             }
         }
         foreach (State state in borderingStates)
@@ -86,6 +95,10 @@ public class State : PopObject
                 opinion = opinion
             });
         }
+        else
+        {
+            relations[state].opinion = opinion;
+        }
     }
     public void UpdateEnemies()
     {
@@ -100,14 +113,14 @@ public class State : PopObject
         {
             State state = pair.Key;
             Relation relation = pair.Value;
-            if (relation.opinion < 0 && !enemies.Contains(state))
+            if (relation.opinion < 0 && !enemies.Contains(state) && relation.truce <= 0)
             {
-                float warDeclarationChance = Mathf.Lerp(0.005f, 0.05f, relation.opinion / (float)Relation.minOpinionValue);
+                float warDeclarationChance = 1f;//Mathf.Lerp(0.1f, 0.5f, relation.opinion / (float)Relation.minOpinionValue);
                 if (liege == state || vassals.Contains(state))
                 {
                     warDeclarationChance = 0f;
                 }
-                if (warDeclarationChance <= rng.NextSingle())
+                if (rng.NextSingle() < warDeclarationChance)
                 {
                     StartWar(state);
                     relation.opinion = Relation.minOpinionValue;
@@ -128,14 +141,14 @@ public class State : PopObject
 
                 if (relation.opinion > 0 && enemies.Contains(state))
                 {
-                    if (0.001f < rng.NextSingle())
+                    if (rng.NextSingle() < 0.0001f)
                     {
                         EndWar(state);
                     }
                 }
-                if (capital.occupier == state)
+                if (capital.occupier == state && liege == null)
                 {
-                    EndWar(state);
+                    EndWar(state, true);
                     state.AddVassal(this);
                 }
             }
@@ -143,14 +156,14 @@ public class State : PopObject
     }
     public void Capitualate()
     {
-        if (capital.occupier != this || capital.occupier != null)
+        if (capital.occupier != this && capital.occupier != null)
         {
             foreach (Region region in regions)
             {
                 if (capital.occupier == this || capital.occupier == null)
                 {
                     region.occupier = capital.occupier;
-                }
+                } 
             }
         }
     }
@@ -218,13 +231,13 @@ public class State : PopObject
 
                 relationImproveChance = Mathf.Clamp(relationImproveChance, 0, 1);
                 badOutcomeChance = Mathf.Clamp(badOutcomeChance, 0, 1);
-                if (relationImproveChance < rng.NextSingle())
+                if (rng.NextSingle() < badOutcomeChance)
                 {
                     relations.ChangeOpinion(1);
                 }
                 else
                 {
-                    if (badOutcomeChance < rng.NextSingle())
+                    if (rng.NextSingle() < badOutcomeChance)
                     {
                         relations.ChangeOpinion(-1);
                     }
@@ -274,19 +287,101 @@ public class State : PopObject
         switch (government)
         {
             case GovernmentTypes.REPUBLIC:
-                govtName = "Republic";
+                switch (sovereignty)
+                {
+                    case Sovereignty.COLONY:
+                        govtName = "Colony";
+                        break;
+                    case Sovereignty.PUPPET:
+                        govtName = "Mandate";
+                        break;
+                    case Sovereignty.PROVINCE:
+                        govtName = "Department";
+                        break;
+                    default:
+                        govtName = "Free State";
+                        if (vassals.Count > 0)
+                        {
+                            govtName = "Republic";
+                        }
+                        else if (vassals.Count > 3)
+                        {
+                            govtName = "Commonwealth";
+                        }
+                        break;
+                }
                 break;
             case GovernmentTypes.MONARCHY:
-                govtName = "Kingdom";
+                switch (sovereignty)
+                {
+                    case Sovereignty.COLONY:
+                        govtName = "Crown Colony";
+                        break;
+                    case Sovereignty.PUPPET:
+                        govtName = "Protectorate";
+                        break;
+                    case Sovereignty.PROVINCE:
+                        govtName = "Duchy";
+                        break;
+                    default:
+                        govtName = "Grand Duchy";
+                        if (vassals.Count > 0)
+                        {
+                            govtName = "Kingdom";
+                        }
+                        else if (vassals.Count > 3)
+                        {
+                            govtName = "Empire";
+                        }
+                        break;
+                }
                 break;
             case GovernmentTypes.AUTOCRACY:
-                govtName = "Dictatorship";
+                switch (sovereignty)
+                {
+                    case Sovereignty.COLONY:
+                        govtName = "Territory";
+                        break;
+                    case Sovereignty.PUPPET:
+                        govtName = "Client State";
+                        break;
+                    case Sovereignty.PROVINCE:
+                        govtName = "Province";
+                        break;
+                    default:
+                        govtName = "State";
+                        if (vassals.Count > 0)
+                        {
+                            govtName = "Autocracy";
+                        }
+                        else if (vassals.Count > 3)
+                        {
+                            govtName = "Imperium";
+                        }
+                        break;
+                }
                 break;
             default:
                 govtName = "State";
                 break;
         }
         displayName = govtName + " of " + name;
+    }
+    public void UpdateDisplayColor()
+    {
+        displayColor = color;
+        switch (sovereignty)
+        {
+            case Sovereignty.COLONY:
+                displayColor = liege.color;
+                break;
+            case Sovereignty.PROVINCE:
+                displayColor = liege.color;
+                break;
+            case Sovereignty.PUPPET:
+                displayColor = Utility.MultiColourLerp([liege.color, color], 0.25f);
+                break;
+        }
     }
     public void CountStatePopulation()
     {
@@ -488,47 +583,43 @@ public class State : PopObject
     }
     public void StartWar(State state)
     {
-        State attacker = GetHighestLiege(this);
-        State defender = GetHighestLiege(state);
-        attacker.EstablishRelations(defender, Relation.minOpinionValue);
-        defender.EstablishRelations(attacker, Relation.minOpinionValue);
-        if (!attacker.enemies.Contains(defender))
+        EstablishRelations(state, Relation.minOpinionValue);
+        state.EstablishRelations(this, Relation.minOpinionValue);
+        if (!enemies.Contains(state))
         {
-            attacker.enemies.Add(defender);
+            enemies.Add(state);
         }
-        if (!defender.enemies.Contains(attacker))
+        if (!state.enemies.Contains(this))
         {
-            defender.enemies.Add(attacker);
+            state.enemies.Add(this);
         }
     }
-    public void EndWar(State state)
+    public void RemoveOccupationFromState(State state)
     {
-        State attacker = GetHighestLiege(this);
-        State defender = GetHighestLiege(state);
-
-        if (attacker.enemies.Contains(defender))
+        foreach (Region region in regions)
         {
-            attacker.enemies.Add(defender);
-        }
-        if (defender.enemies.Contains(attacker))
-        {
-            defender.enemies.Add(attacker);
-        }
-
-        foreach (Region region in attacker.regions)
-        {
-            if (region.occupier == defender)
+            if (region.occupier == state)
             {
                 region.occupier = null;
             }
-        }  
-        foreach (Region region in defender.regions)
+        }
+    }
+    public void EndWar(State state, bool returnTerritories = false)
+    {
+        if (enemies.Contains(state))
         {
-            if (region.occupier == attacker)
-            {
-                region.occupier = null;
-            }
-        }      
+            enemies.Remove(state);
+        }
+        if (state.enemies.Contains(this))
+        {
+            state.enemies.Remove(this);
+        }
+        if (returnTerritories)
+        {
+            state.RemoveOccupationFromState(this);
+            RemoveOccupationFromState(state);            
+        }
+
     }
     #endregion
 }   

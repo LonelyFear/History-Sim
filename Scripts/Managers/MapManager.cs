@@ -23,7 +23,7 @@ public partial class MapManager : Area2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    int regionResolution = 4;
+    int regionResolution = 6;
 
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
@@ -205,10 +205,10 @@ public partial class MapManager : Area2D
                 }
                 if (region.owner != null)
                 {
-                    color = region.owner.color;
+                    color = region.owner.displayColor;
                     if (region.occupier != null)
                     {
-                        color = region.occupier.color;
+                        color = region.occupier.displayColor;
                     }
                     if (region.owner.capital == region)
                     {
@@ -338,24 +338,25 @@ public partial class MapManager : Area2D
                 // Top
                 if (mapMode == MapModes.POLITIY)
                 {
-                    if (ry == 0 && r.DrawBorder(r.borderingRegions[1]))
+                    Color borderColor = color;
+                    if (ry == 0 && r.DrawBorder(r.borderingRegions[1], ref borderColor))
                     {
-                        finalColor = new Color(0, 0, 0);
+                        finalColor = borderColor;
                     }
                     // Left
-                    if (rx == 0 && r.DrawBorder(r.borderingRegions[0]))
+                    if (rx == 0 && r.DrawBorder(r.borderingRegions[0], ref borderColor))
                     {
-                        finalColor = new Color(0, 0, 0);
+                        finalColor = borderColor;
                     }
                     // Bottom
-                    if (ry == resMinus && r.DrawBorder(r.borderingRegions[2]))
+                    if (ry == resMinus && r.DrawBorder(r.borderingRegions[2], ref borderColor))
                     {
-                        finalColor = new Color(0, 0, 0);
+                        finalColor = borderColor;
                     }
                     // Right
-                    if (rx == resMinus && r.DrawBorder(r.borderingRegions[3]))
+                    if (rx == resMinus && r.DrawBorder(r.borderingRegions[3], ref borderColor))
                     {
-                        finalColor = new Color(0, 0, 0);
+                        finalColor = borderColor;
                     }                    
                 }
 

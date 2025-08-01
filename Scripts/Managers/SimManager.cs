@@ -380,6 +380,20 @@ public partial class SimManager : Node
                 worldPop += region.population;
             }
         }
+        foreach (Region region in habitableRegions)
+        {
+            if (region.owner != null)
+            {
+                if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
+                {
+                    region.occupier = null;
+                }
+            }
+            else
+            {
+                region.occupier = null;
+            }
+        }
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
@@ -466,7 +480,8 @@ public partial class SimManager : Node
                         state.RemoveRegion(r);
                     }
                 }
-
+                state.UpdateDisplayColor();
+                state.UpdateDisplayName();
                 state.borderingStates = new List<State>();
             }
         }
