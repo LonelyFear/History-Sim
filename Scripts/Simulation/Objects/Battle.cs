@@ -11,7 +11,7 @@ public class Battle{
     public long defenderLosses;
     public bool attackSuccessful;
     static Random rng = new Random();
-    public static Battle CalcBattle(Region loc, State atk, State def, long attackers, long defenders, long attackingMilitia = 0, long defendingMilitia = 0){
+    public static Battle CalcBattle(Region loc, State atk, State def, long attackers, long defenders){
         Battle result = new Battle(){
             location = loc,
             attacker = atk,
@@ -19,12 +19,10 @@ public class Battle{
             attackerStrength = attackers,
             defenderStrength = defenders
         };
-        long baseAttackerPower = Pop.FromNativePopulation(attackers) + Pop.FromNativePopulation((long)(attackingMilitia * 0.8f));
-        long baseDefenderPower = Pop.FromNativePopulation(defenders) + Pop.FromNativePopulation((long)(defendingMilitia * 0.8f));
-        double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.9, 1.1, rng.NextDouble()));
-        double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.9, 1.1, rng.NextDouble()));
-        
-        defendPower = defendPower * 1.2;
+        long baseAttackerPower = Pop.FromNativePopulation(attackers);
+        long baseDefenderPower = Pop.FromNativePopulation(defenders);
+        double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 2, rng.NextDouble()));
+        double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 2, rng.NextDouble()));
 
         double totalPower = attackPower + defendPower;
 
