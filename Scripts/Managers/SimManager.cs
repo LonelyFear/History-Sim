@@ -351,6 +351,7 @@ public partial class SimManager : Node
         long worldPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
+
         foreach (Region region in habitableRegions)
         {
             if (region.pops.Count > 0)
@@ -368,7 +369,7 @@ public partial class SimManager : Node
                 if (region.owner != null && region.frontier && region.owner.rulingPop != null && region.occupier == null)
                 {
                     region.NeutralConquest();
-                    
+
                 }
                 region.RandomStateFormation();
                 if (region.owner != null)
@@ -442,25 +443,27 @@ public partial class SimManager : Node
     {
         try
         {
+            foreach (State state in states)
+            {
+                state.GetRealmBorders();
+            }
             foreach (State state in states.ToArray())
             {
                 if (state.rulingPop != null)
                 {
                     state.maxSize = 6 + state.rulingPop.tech.societyLevel;
                 }
-                
+
                 state.age += TimeManager.daysPerTick;
                 if (state.regions.Count < 1)
                 {
                     DeleteState(state);
                     continue;
                 }
-                
-                state.UpdateCapital();
-                state.CountStatePopulation();
-                state.Capitualate();
 
-                state.Recruitment();
+                state.UpdateCapital();
+
+                state.Capitualate();
                 state.RelationsUpdate();
                 state.UpdateDiplomacy();
                 state.EndWars();
@@ -480,10 +483,17 @@ public partial class SimManager : Node
                         state.RemoveRegion(r);
                     }
                 }
+            }
+            var partitioner = Partitioner.Create(states);
+            Parallel.ForEach(partitioner, (state) =>
+            {
+                state.CountStatePopulation();                
+                state.Recruitment();
                 state.UpdateDisplayColor();
                 state.UpdateDisplayName();
                 state.borderingStates = new List<State>();
-            }
+                state.borderingRegions = 0;                
+            });
         }
         catch (Exception e)
         {

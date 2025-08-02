@@ -184,10 +184,10 @@ public class Region : PopObject
             if (region.owner != null && region.owner != owner)
             {
                 border = true;
+                owner.borderingRegions++;
                 if (!owner.borderingStates.Contains(region.owner))
                 {
                     borders.Add(region.owner);
- 
                 }
             }
         }
@@ -206,7 +206,10 @@ public class Region : PopObject
         bool targetHasPops = r.pops.Count > 0;
         if (hasPops != targetHasPops || (hasPops && r.owner != owner))
         {
-            if (r.owner != null && owner != null && (owner.vassals.Contains(r.owner) || owner.liege == r.owner))
+            if (r.owner == null || owner == null) {
+                return true;
+            }
+            if (owner.vassals.Contains(r.owner) || owner.liege == r.owner || (owner.liege != null && owner.liege.vassals.Contains(r.owner)))
             {
                 color = new Color(0.5f, 0.5f, 0.5f);
             }
@@ -223,10 +226,10 @@ public class Region : PopObject
         {
             return;
         }
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.01f / (1f + (owner.regions.Count /(float)owner.maxSize)))
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.1f)
         {
             long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), 0, 0, (long)(defendingCivilians * 0.001f));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), (long)(Pop.ToNativePopulation(10000) + (Pop.ToNativePopulation(10000)*region.navigability)));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
@@ -260,7 +263,7 @@ public class Region : PopObject
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
             {
-                region.occupier = owner;
+                region.occupier = GetController();
             }
             if (region.occupier == region.owner)
             {

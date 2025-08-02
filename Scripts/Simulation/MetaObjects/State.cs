@@ -23,6 +23,7 @@ public class State : PopObject
     public Dictionary<State, Relation> relations = new Dictionary<State, Relation>();
     public List<State> enemies = new List<State>();
     public List<State> borderingStates = new List<State>();
+    public uint borderingRegions = 0;
     public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
 
 
@@ -109,24 +110,50 @@ public class State : PopObject
     }
     public void StartWars()
     {
-        foreach (var pair in relations)
+        if (sovereignty == Sovereignty.INDEPENDENT)
         {
-            State state = pair.Key;
-            Relation relation = pair.Value;
-            if (relation.opinion < 0 && !enemies.Contains(state) && relation.truce <= 0)
+            foreach (var pair in relations)
             {
-                float warDeclarationChance = 1f;//Mathf.Lerp(0.1f, 0.5f, relation.opinion / (float)Relation.minOpinionValue);
-                if (liege == state || vassals.Contains(state))
+                State state = pair.Key;
+                Relation relation = pair.Value;
+                if (relation.opinion < 0 && !enemies.Contains(state) && relation.truce <= 0 && state.sovereignty == Sovereignty.INDEPENDENT)
                 {
-                    warDeclarationChance = 0f;
+                    float warDeclarationChance = 1f;//Mathf.Lerp(0.1f, 0.5f, relation.opinion / (float)Relation.minOpinionValue);
+                    if (liege == state || vassals.Contains(state))
+                    {
+                        warDeclarationChance = 0f;
+                    }
+                    if (rng.NextSingle() < warDeclarationChance)
+                    {
+                        StartWar(state);
+                        relation.opinion = Relation.minOpinionValue;
+                        GD.Print("War");
+                        return;
+                    }
                 }
-                if (rng.NextSingle() < warDeclarationChance)
+            }            
+        }
+    }
+    public void GetRealmBorders()
+    {
+        if (vassals.Count > 0)
+        {
+            foreach (State vassal in vassals)
+            {
+                foreach (State state in vassal.borderingStates)
                 {
-                    StartWar(state);
-                    relation.opinion = Relation.minOpinionValue;
-                    GD.Print("War");
-                    return;
+                    if (!borderingStates.Contains(state))
+                    {
+                        borderingStates.Add(state);
+                    }
                 }
+            }
+        }
+        foreach (State state in borderingStates.ToArray())
+        {
+            if (state.liege != null && !borderingStates.Contains(state.liege))
+            {
+                borderingStates.Add(state.liege);
             }
         }
     }
@@ -553,7 +580,7 @@ public class State : PopObject
     #region Military
     public long GetArmyPower()
     {
-        return (long)(manpower / (float)regions.Count);
+        return (long)(manpower / (float)borderingRegions);
     }
     #endregion
     #region Utility
