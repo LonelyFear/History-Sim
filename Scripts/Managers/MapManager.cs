@@ -202,19 +202,24 @@ public partial class MapManager : Area2D
                 if (region.pops.Count > 0)
                 {
                     color = new Color(0.2f, 0.2f, 0.2f);
-                }
-                if (region.owner != null)
-                {
-                    color = region.owner.displayColor;
-                    if (region.occupier != null)
+                    if (region.owner != null)
                     {
-                        color = region.occupier.displayColor;
+                        color = region.owner.displayColor;
+                        if (region.occupier != null)
+                        {
+                            color = region.occupier.displayColor;
+                        }
+                        if (region.owner.capital == region)
+                        {
+                            color = region.owner.capitalColor;
+                        }
                     }
-                    if (region.owner.capital == region)
+                    if (simManager.tradeCenters.Contains(region))
                     {
-                        color = region.owner.capitalColor;
-                    }
+                        color = Utility.MultiColourLerp([color, new Color(0f, 0f, 0f)], 0.9f);
+                    }                     
                 }
+               
                 if (selectedMetaObj != null)
                 {
                     switch (selectedMetaObj.GetObjectType())

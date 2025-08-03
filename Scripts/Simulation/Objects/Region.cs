@@ -16,9 +16,13 @@ public class Region : PopObject
     public float baseWealth;
     public float wealth;
     public float taxIncome;
-    public float tradeIncome;
-    public bool habitableAdjacent;
     
+    public bool habitableAdjacent;
+
+    // trade
+    public float tradeIncome;
+    public int zoneSize;
+    public Region tradeLink = null;
 
     public Vector2I pos;
     public float navigability;
@@ -37,6 +41,7 @@ public class Region : PopObject
     public Economy economy = new Economy();
     public Region[] borderingRegions = new Region[4];
     public Region[] habitableBorderingRegions = new Region[4];
+    public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
 
     public bool border;
     public bool frontier;
@@ -226,10 +231,10 @@ public class Region : PopObject
         {
             return;
         }
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.1f)
+        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.05f)
         {
             long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), (long)(Pop.ToNativePopulation(10000) + (Pop.ToNativePopulation(10000)*region.navigability)));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), (long)(Pop.ToNativePopulation(1000000) + (Pop.ToNativePopulation(1000000)*region.navigability)));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
@@ -349,22 +354,41 @@ public class Region : PopObject
             }
         }
     }
-    public void Trade()
+    public void LinkTrade()
     {
-        
+        Region selectedLink = null;
+        foreach (Region region in borderingRegions)
+        {
+            if (region.tradeWeight > tradeWeight)
+            {
+                if (selectedLink == null || region.tradeWeight > selectedLink.tradeWeight)
+                {
+                    selectedLink = region;
+                }
+            }
+        }
+        if (selectedLink != null)
+        {
+            selectedLink.zoneSize += zoneSize;
+            selectedLink.tradeIncome += baseWealth * 0.1f;
+        }
+        tradeLink = selectedLink;
     }
     public void CalcTradeWeight()
     {
         tradeWeight = 0f;
-        long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
-        long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
-        float populationTradeWeight = (notMerchants * 0.005f) + (merchants * 0.01f);
+        //long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
+        //long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
+        float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.005f;
+        float zoneSizeTradeWeight = zoneSize * 0.5f;
+
         float politySizeTradeWeight = 0f;
         if (owner != null && owner.capital == this)
         {
             politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
-        tradeWeight = ((navigability * 3f) + populationTradeWeight + politySizeTradeWeight) * navigability;
+        // Add trade links
+        tradeWeight = ((navigability * 3f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
     }    
     public void UpdateWealth()
     {
@@ -441,12 +465,14 @@ public class Region : PopObject
     }
 
     #endregion
-    public static bool GetPathToRegion(Region start, Region goal, out List<Region> path)
+    public static bool GetPathToRegion(Region start, Region goal, int maxDist, out List<Region> path)
     {
         path = null;
         bool validPath = false;
 
         PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
+        PriorityQueue<int, float> distFrontier = new PriorityQueue<int, float>();
+        distFrontier.Enqueue(0, 0);
         frontier.Enqueue(start.pos, 0);
         Dictionary<Vector2I, Vector2I> flow = new Dictionary<Vector2I, Vector2I>();
         flow[start.pos] = new Vector2I(0, 0);
@@ -458,10 +484,15 @@ public class Region : PopObject
         while (attempts < 10000 && frontier.Count > 0)
         {
             attempts++;
+            int currentDist = distFrontier.Dequeue();
             Vector2I current = frontier.Dequeue();
             if (current == goal.pos)
             {
                 validPath = true;
+                break;
+            }
+            if (maxDist != 0 && currentDist > maxDist)
+            {
                 break;
             }
             for (int dx = -1; dx < 2; dx++)
@@ -477,6 +508,7 @@ public class Region : PopObject
                     if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && simManager.GetRegion(next).habitable)
                     {
                         frontier.Enqueue(next, newCost);
+                        distFrontier.Enqueue(currentDist + 1, newCost);
                         flowCost[next] = newCost;
                         flow[next] = current;
                     }
@@ -485,6 +517,7 @@ public class Region : PopObject
         }
         if (validPath)
         {
+            path = new List<Region>();
             Vector2I pos = goal.pos;
             while (pos != start.pos)
             {

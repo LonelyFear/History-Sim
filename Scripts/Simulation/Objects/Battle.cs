@@ -23,7 +23,7 @@ public class Battle{
         long baseDefenderPower = Pop.FromNativePopulation(defenders);
         double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 2, rng.NextDouble()));
         double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 2, rng.NextDouble()));
-
+        defendPower *= 1.2f;
         double totalPower = attackPower + defendPower;
 
         if (rng.NextDouble() < attackPower/totalPower){

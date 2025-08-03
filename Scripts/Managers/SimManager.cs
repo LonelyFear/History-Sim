@@ -21,6 +21,7 @@ public partial class SimManager : Node
     public Tile[,] tiles;
     public List<Region> regions = new List<Region>();
     public List<Region> habitableRegions = new List<Region>();
+    public List<Region> tradeCenters = new List<Region>();
     public List<Region> paintedRegions = new List<Region>();
     public Vector2I terrainSize;
     public static Vector2I worldSize;
@@ -351,50 +352,75 @@ public partial class SimManager : Node
         long worldPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
-
-        foreach (Region region in habitableRegions)
+        try
         {
-            if (region.pops.Count > 0)
+            foreach (Region region in habitableRegions)
             {
-                region.MergePops();
-                region.CheckPopulation();
-                region.CalcProfessionRequirements();
-
-                // Economy
-                region.CalcBaseWealth();
-                region.CalcTradeWeight();
-                region.CalcTaxes();
-                // region trade goes here
-                region.UpdateWealth();
-                if (region.owner != null && region.frontier && region.owner.rulingPop != null && region.occupier == null)
+                region.zoneSize = 1;
+            }
+            foreach (Region region in habitableRegions)
+            {
+                
+                if (region.pops.Count > 0)
                 {
-                    region.NeutralConquest();
+                    region.MergePops();
+                    region.CheckPopulation();
+                    region.CalcProfessionRequirements();
 
+                    // Economy
+                    region.CalcBaseWealth();
+                    region.CalcTradeWeight();
+                    region.LinkTrade();
+                    region.CalcTaxes();
+                    if (region.owner != null && region.frontier && region.owner.rulingPop != null && region.occupier == null)
+                    {
+                        region.NeutralConquest();
+
+                    }
+                    region.RandomStateFormation();
+                    if (region.owner != null)
+                    {
+                        region.StateBordering();
+                        region.MilitaryConquest();
+                    }
+                    countedPoppedRegions += 1;
+                    worldPop += region.population;
                 }
-                region.RandomStateFormation();
+            }
+            tradeCenters = new List<Region>();
+            foreach (Region region in habitableRegions)
+            {
+                if (region.tradeLink == null)
+                {
+                    tradeCenters.Add(region);
+                }
+            }        
+            foreach (Region region in habitableRegions)
+            {
+                if (region.pops.Count > 0)
+                {
+                    region.UpdateWealth();
+                }
+
+                
                 if (region.owner != null)
                 {
-                    region.StateBordering();
-                    region.MilitaryConquest();
+                    if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
+                    {
+                        region.occupier = null;
+                    }
                 }
-                countedPoppedRegions += 1;
-                worldPop += region.population;
-            }
-        }
-        foreach (Region region in habitableRegions)
-        {
-            if (region.owner != null)
-            {
-                if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
+                else
                 {
                     region.occupier = null;
                 }
             }
-            else
-            {
-                region.occupier = null;
-            }
         }
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
