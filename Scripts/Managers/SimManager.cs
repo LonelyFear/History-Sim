@@ -352,6 +352,7 @@ public partial class SimManager : Node
         long worldPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
+        
         try
         {
             foreach (Region region in habitableRegions)
@@ -360,7 +361,7 @@ public partial class SimManager : Node
             }
             foreach (Region region in habitableRegions)
             {
-                
+
                 if (region.pops.Count > 0)
                 {
                     region.MergePops();
@@ -394,15 +395,43 @@ public partial class SimManager : Node
                 {
                     tradeCenters.Add(region);
                 }
-            }        
+            }
             foreach (Region region in habitableRegions)
             {
+                // Trade routes
                 if (region.pops.Count > 0)
                 {
+                    if (region.tradeLink == null)
+                    {
+                        foreach (Region tradeCenter in tradeCenters)
+                        {
+                            if (!region.regionPaths.ContainsKey(tradeCenter))
+                            {
+                                List<Region> path = Region.GetPathToRegion(region, tradeCenter, 12);
+                                region.regionPaths[tradeCenter] = path;
+                            }
+                            if (region.regionPaths[tradeCenter] != null)
+                            {
+                                foreach (Region tradeNode in region.regionPaths[tradeCenter])
+                                {
+                                    if (tradeNode == region || tradeNode == tradeCenter)
+                                    {
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        tradeNode.tradeIncome = Mathf.Max(tradeNode.tradeIncome, Mathf.Min(region.tradeIncome, tradeCenter.tradeIncome) * 0.9f);
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }
+                    // End Trade Routes
                     region.UpdateWealth();
                 }
 
-                
+
                 if (region.owner != null)
                 {
                     if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))

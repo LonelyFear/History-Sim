@@ -374,6 +374,29 @@ public class Region : PopObject
         }
         tradeLink = selectedLink;
     }
+    public void CalcTradeRoutes()
+    {
+        if (!simManager.tradeCenters.Contains(this))
+        {
+            return;
+        }
+        foreach (Region tradeCenter in simManager.tradeCenters)
+        {
+            GD.Print(regionPaths);
+            regionPaths[tradeCenter] = GetPathToRegion(this, tradeCenter, 8);
+            if (regionPaths[tradeCenter] != null)
+            {
+                foreach (Region tradeNode in regionPaths[tradeCenter])
+                {
+                    if (tradeNode.pops.Count < 1)
+                    {
+                        continue;
+                    }
+                    tradeNode.tradeIncome = Mathf.Max(tradeNode.tradeIncome, Mathf.Min(tradeCenter.tradeIncome, tradeIncome) * 200);
+                }
+            }             
+        }
+    }
     public void CalcTradeWeight()
     {
         tradeWeight = 0f;
@@ -465,9 +488,9 @@ public class Region : PopObject
     }
 
     #endregion
-    public static bool GetPathToRegion(Region start, Region goal, int maxDist, out List<Region> path)
+    public static List<Region> GetPathToRegion(Region start, Region goal, int maxDist)
     {
-        path = null;
+        List<Region> path = null;
         bool validPath = false;
 
         PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
@@ -504,7 +527,7 @@ public class Region : PopObject
                         continue;
                     }
                     Vector2I next = new Vector2I(Mathf.PosMod(current.X + dx, SimManager.worldSize.X), Mathf.PosMod(current.Y + dy, SimManager.worldSize.Y));
-                    float newCost = 1;
+                    float newCost = 1 - simManager.GetRegion(next).navigability;
                     if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && simManager.GetRegion(next).habitable)
                     {
                         frontier.Enqueue(next, newCost);
@@ -525,7 +548,7 @@ public class Region : PopObject
                 pos = flow[pos];
             }
         }
-        return validPath;
+        return path;
     }
     public Region PickRandomBorder()
     {
