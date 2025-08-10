@@ -21,9 +21,9 @@ public class Battle{
         };
         long baseAttackerPower = Pop.FromNativePopulation(attackers);
         long baseDefenderPower = Pop.FromNativePopulation(defenders);
-        double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 2, rng.NextDouble()));
-        double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 2, rng.NextDouble()));
-        defendPower *= 1.2f;
+        double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
+        double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
+        defendPower *= Mathf.Lerp(1.2f, 3f, 1f - loc.navigability);
         double totalPower = attackPower + defendPower;
 
         if (rng.NextDouble() < attackPower/totalPower){

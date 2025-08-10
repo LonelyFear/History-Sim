@@ -9,10 +9,12 @@ public partial class ObjectInfo : Control
     public Label populationLabel;
     public Label specialLabel;
     public MapManager mapManager;
+    TimeManager timeManager;
 
     public override void _Ready()
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
+        timeManager = GetNode<TimeManager>("/root/Game/Time Manager");
         panel = GetNode<Panel>("ObjectInfo");
         nameLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Name");
         typeLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Type");
@@ -35,12 +37,26 @@ public partial class ObjectInfo : Control
                 case PopObject.ObjectType.STATE:
                     State state = (State)metaObject;
                     nameLabel.Text = state.displayName;
-                    specialLabel.Text = "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0") + "\n";
+                    uint yearAge = timeManager.GetYear(state.age);
+                    uint monthAge = timeManager.GetMonth(state.age);
+                    specialLabel.Text = $"Founded in {timeManager.GetYear(state.tickFounded)} AC";
+                    specialLabel.Text +=  "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
+                    specialLabel.Text += "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0");
+                    specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower()).ToString("#,###0") + "\n";
+                    specialLabel.Text += "\n" + "Relations: ";
                     foreach (var pair in state.relations)
                     {
                         State subject = pair.Key;
                         Relation relation = pair.Value;
-                        specialLabel.Text += "\n" + $"{subject.displayName}: {relation.opinion}";
+                        
+                        if (state.vassals.Contains(subject))
+                        {
+                            specialLabel.Text += "\n" + $"{subject.displayName}: Vassal";
+                        }
+                        else
+                        {
+                            specialLabel.Text += "\n" + $"{subject.displayName}: {relation.opinion}";
+                        }
                     }
                     break;
                 case PopObject.ObjectType.REGION:

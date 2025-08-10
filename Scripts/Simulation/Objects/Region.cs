@@ -9,13 +9,17 @@ public class Region : PopObject
     public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
-    public float tradeWeight;
+    private float tradeWeight = 0;
+    private float baseTradeWeight = 0;
+    public bool hasTradeWeight;
+    public bool hasBaseTradeWeight;
     public float lastWealth = 0;
     public float lastBaseWealth = 0;
     public float control = 1f;
     public float baseWealth;
     public float wealth;
     public float taxIncome;
+    public int linkUpdateCountdown = 4;
     
     public bool habitableAdjacent;
 
@@ -23,6 +27,7 @@ public class Region : PopObject
     public float tradeIncome;
     public int zoneSize;
     public Region tradeLink = null;
+    public List<Region> connectedTiles = new List<Region>();
 
     public Vector2I pos;
     public float navigability;
@@ -149,7 +154,6 @@ public class Region : PopObject
             }
 
             owner.rulingPop = rulingPop;
-            owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
             owner.UpdateDisplayName();
         }
     }
@@ -171,7 +175,6 @@ public class Region : PopObject
             }
 
             owner.rulingPop = rulingPop;
-            owner.SetLeader(simManager.CreateCharacter(owner.rulingPop));
             owner.UpdateDisplayName();            
         }
     }
@@ -181,7 +184,7 @@ public class Region : PopObject
         frontier = false;
         List<State> borders = new List<State>();
         foreach (Region region in borderingRegions)
-        {
+        {     
             if (region.owner == null)
             {
                 frontier = true;
@@ -189,7 +192,6 @@ public class Region : PopObject
             if (region.owner != null && region.owner != owner)
             {
                 border = true;
-                owner.borderingRegions++;
                 if (!owner.borderingStates.Contains(region.owner))
                 {
                     borders.Add(region.owner);
@@ -231,10 +233,10 @@ public class Region : PopObject
         {
             return;
         }
-        if (region != null && region.pops.Count != 0 && region.owner == null && rng.NextSingle() < 0.05f)
+        if (region != null && region.pops.Count != 0 && region.owner == null)
         {
-            long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), (long)(Pop.ToNativePopulation(1000000) + (Pop.ToNativePopulation(1000000)*region.navigability)));
+            //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(300000));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
@@ -313,7 +315,7 @@ public class Region : PopObject
         }
         else
         {
-            control = Mathf.Lerp(control, 1f, 0.1f);
+            control = Mathf.Clamp(control + 0.05f, 0f, 1f);
         }
     }
 
@@ -359,20 +361,25 @@ public class Region : PopObject
         Region selectedLink = null;
         foreach (Region region in borderingRegions)
         {
-            if (region.tradeWeight > tradeWeight)
+            if (region.GetTradeWeight() > GetTradeWeight())
             {
-                if (selectedLink == null || region.tradeWeight > selectedLink.tradeWeight)
+                if (selectedLink == null || region.GetTradeWeight() > selectedLink.GetTradeWeight())
                 {
                     selectedLink = region;
                 }
             }
         }
+
         if (selectedLink != null)
         {
-            selectedLink.zoneSize += zoneSize;
-            selectedLink.tradeIncome += baseWealth * 0.1f;
+            lock (selectedLink)
+            {
+                selectedLink.zoneSize += zoneSize;
+                selectedLink.connectedTiles.Add(this);
+                selectedLink.tradeIncome += baseWealth * 0.1f;
+            }
         }
-        tradeLink = selectedLink;
+        tradeLink = selectedLink;            
     }
     public void CalcTradeRoutes()
     {
@@ -380,30 +387,64 @@ public class Region : PopObject
         {
             return;
         }
-        foreach (Region tradeCenter in simManager.tradeCenters)
+        foreach (Region tradeCenter in simManager.tradeCenters.ToArray())
         {
-            GD.Print(regionPaths);
-            regionPaths[tradeCenter] = GetPathToRegion(this, tradeCenter, 8);
-            if (regionPaths[tradeCenter] != null)
+            List<Region> path = GetPathToRegion(this, tradeCenter, 8);
+            if (path == null)
             {
-                foreach (Region tradeNode in regionPaths[tradeCenter])
+                continue;
+            }
+            foreach (Region tradeNode in path)
+            {
+                if (tradeNode.pops.Count < 1)
                 {
-                    if (tradeNode.pops.Count < 1)
-                    {
-                        continue;
-                    }
-                    tradeNode.tradeIncome = Mathf.Max(tradeNode.tradeIncome, Mathf.Min(tradeCenter.tradeIncome, tradeIncome) * 200);
+                    continue;
                 }
-            }             
+                tradeNode.tradeIncome = Mathf.Max(tradeNode.tradeIncome, Mathf.Min(tradeCenter.tradeIncome, tradeIncome) * 200);
+            }          
         }
     }
-    public void CalcTradeWeight()
+    public float GetTradeWeight()
     {
-        tradeWeight = 0f;
+        if (hasTradeWeight)
+        {
+            return tradeWeight;
+        }
+        if (!hasBaseTradeWeight)
+        {
+            CalcBaseTradeWeight();
+        }
+
+        hasTradeWeight = true;
+        if (tradeLink == null)
+        {
+            tradeWeight = baseTradeWeight;
+            return tradeWeight;
+        }
+        int depth = 0;
+        List<float> tradeWeights = new List<float>();
+        float multiplier = 1.0f;
+        Region currentRegion = this;
+        do
+        {
+            depth++;
+            multiplier -= 0.1f;
+            currentRegion = currentRegion.tradeLink;
+            if (currentRegion != null)
+            {
+                tradeWeights.Add(currentRegion.baseTradeWeight * multiplier);
+            }
+        } while (currentRegion != null && depth < 7);
+        tradeWeight = tradeWeights.Max();
+        return tradeWeight;
+    }
+    public void CalcBaseTradeWeight()
+    {
+        hasBaseTradeWeight = true;
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
         //long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
         float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.005f;
-        float zoneSizeTradeWeight = zoneSize * 0.5f;
+        float zoneSizeTradeWeight = zoneSize;
 
         float politySizeTradeWeight = 0f;
         if (owner != null && owner.capital == this)
@@ -411,7 +452,7 @@ public class Region : PopObject
             politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
         // Add trade links
-        tradeWeight = ((navigability * 3f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
+        baseTradeWeight = ((navigability * 3f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
     }    
     public void UpdateWealth()
     {
@@ -420,7 +461,10 @@ public class Region : PopObject
 
     public void DistributeWealth()
     {
-        
+        foreach (Pop pop in pops)
+        {
+            pop.wealth = (tradeIncome + taxIncome) * (pop.ownedLand / (float)landCount);
+        }
     }
 
     #endregion
@@ -462,29 +506,6 @@ public class Region : PopObject
             migrateable = false;
         }
         return migrateable && habitable;
-    }
-
-    public void MovePop(Pop pop, Region destination, long movedWorkforce, long movedDependents)
-    {
-        if (destination == null || destination == this)
-        {
-            return;
-        }
-        if (movedWorkforce >= Pop.ToNativePopulation(1) || movedDependents >= Pop.ToNativePopulation(1))
-        {
-            if (movedWorkforce > pop.workforce)
-            {
-                movedWorkforce = pop.workforce;
-            }
-            if (movedDependents > pop.dependents)
-            {
-                movedDependents = pop.dependents;
-            }
-            SimManager.m.WaitOne();
-            Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, pop.tech, pop.culture, pop.profession);
-            pop.ChangePopulation(-movedWorkforce, -movedDependents);
-            SimManager.m.ReleaseMutex();
-        }
     }
 
     #endregion

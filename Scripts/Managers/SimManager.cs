@@ -36,7 +36,8 @@ public partial class SimManager : Node
     public long workforceChange = 0;
     public long dependentsChange = 0;
     public uint populatedRegions;
-    public float maxAvgWealth;
+    public float maxWealth = 0;
+    public float maxTradeWeight = 0;
     public List<Culture> cultures = new List<Culture>();
     public List<State> states = new List<State>();
     public List<Army> armies = new List<Army>();
@@ -56,7 +57,7 @@ public partial class SimManager : Node
     public override void _Ready()
     {
         terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
-        timeManager = GetParent().GetNode<TimeManager>("Time Manager");
+        timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
         mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
 
         // Connection
@@ -95,7 +96,6 @@ public partial class SimManager : Node
     {
         PopObject.simManager = this;
         Army.simManager = this;
-        Character.simManager = this;
         Pop.simManager = this;
 
         // Load Resources Before Buildings        
@@ -286,56 +286,49 @@ public partial class SimManager : Node
     #region Pop Update
     public void UpdatePops()
     {
+        /*
+        try
+        {
+            var partitioner = Partitioner.Create(pops.ToArray());
+            Parallel.ForEach(partitioner, (pop) =>
+            {
+
+            });
+        }
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }  
+        */      
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
-            if (pop.population <= Pop.ToNativePopulation(1 + pop.characters.Count))
+            if (pop.population <= Pop.ToNativePopulation(1))
             {
-                m.WaitOne();
+                //m.WaitOne();
                 DestroyPop(pop);
-                m.ReleaseMutex();
+                //m.ReleaseMutex();
             }
             else
             {
-                try
+                pop.EconomyUpdate();
+                pop.GrowPop();
+                if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
-                    pop.EconomyUpdate();
-                    pop.GrowPop();
-                    if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
+                    //pop.ProfessionTransitions();
+                    try
                     {
-                        //pop.ProfessionTransitions();
                         pop.Migrate();
                     }
-                }
-                catch (Exception e)
-                {
-                    GD.PushError(e);
+                    catch (Exception e)
+                    {
+                        GD.PushError(e);
+                    }
+                    
                 }
             }
         }
         /*
-        Parallel.For(1, popBatches + 1, (batch) =>
-        {
-            GD.Print("Pop Batch " + batch + " Running");
-            try
-            {
-                for (int i = pops.Count / popBatches * (batch - 1); i < pops.Count / popBatches * batch - 1; i++)
-                {
-                    GD.Print("Pop");
-                    Pop pop = pops[i];
-
-                }
-            }
-            catch (Exception e)
-            {
-                GD.PushError(e);
-            }
-
-        });
-        foreach (Pop pop in pops.ToArray())
-        {
-          
-        }
 
         // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
         // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
@@ -352,38 +345,70 @@ public partial class SimManager : Node
         long worldPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
-        
+        ulong totalPopTime = 0;
+        ulong totalEconomyTime = 0;
+        ulong distributionTime = 0;
+        ulong totalConquestTime = 0;
         try
         {
-            foreach (Region region in habitableRegions)
+            var partitioner = Partitioner.Create(regions);
+            ulong startTime = Time.GetTicksMsec();
+            Parallel.ForEach(partitioner, (region) =>
             {
+                //region.CalcTradeRoutes();
+                region.UpdateWealth();
+                region.DistributeWealth();
                 region.zoneSize = 1;
-            }
+                region.connectedTiles = new List<Region>();
+                region.hasBaseTradeWeight = false;
+                region.hasTradeWeight = false;
+                region.linkUpdateCountdown--;
+            });
+            distributionTime = Time.GetTicksMsec() - startTime; 
+            
             foreach (Region region in habitableRegions)
             {
-
                 if (region.pops.Count > 0)
                 {
+                    startTime = Time.GetTicksMsec();
                     region.MergePops();
+                    //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.CheckPopulation();
-                    region.CalcProfessionRequirements();
-
+                    //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+                    region.CalcProfessionRequirements();    
+                    totalPopTime += Time.GetTicksMsec() - startTime;                
+                    startTime = Time.GetTicksMsec();
                     // Economy
                     region.CalcBaseWealth();
-                    region.CalcTradeWeight();
-                    region.LinkTrade();
-                    region.CalcTaxes();
-                    if (region.owner != null && region.frontier && region.owner.rulingPop != null && region.occupier == null)
+                    if (region.tradeLink != null)
                     {
-                        region.NeutralConquest();
-
+                        region.LinkTrade();
                     }
+                    else if (region.linkUpdateCountdown < 1)
+                    {
+                        region.linkUpdateCountdown = 4;
+                        region.LinkTrade();
+                    }
+                    
+                    
+                    //region.CalcTaxes();
+                    totalEconomyTime += Time.GetTicksMsec() - startTime;
+                    //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.RandomStateFormation();
+                    startTime = Time.GetTicksMsec();
                     if (region.owner != null)
                     {
                         region.StateBordering();
+                        if (region.frontier && region.owner.rulingPop != null && region.occupier == null)
+                        {
+                            region.NeutralConquest();
+
+                        }
                         region.MilitaryConquest();
                     }
+                    totalConquestTime += Time.GetTicksMsec() - startTime;
+                    startTime = Time.GetTicksMsec();
+                    //GD.Print("  Conquest Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     countedPoppedRegions += 1;
                     worldPop += region.population;
                 }
@@ -391,6 +416,7 @@ public partial class SimManager : Node
             tradeCenters = new List<Region>();
             foreach (Region region in habitableRegions)
             {
+
                 if (region.tradeLink == null)
                 {
                     tradeCenters.Add(region);
@@ -398,40 +424,6 @@ public partial class SimManager : Node
             }
             foreach (Region region in habitableRegions)
             {
-                // Trade routes
-                if (region.pops.Count > 0)
-                {
-                    if (region.tradeLink == null)
-                    {
-                        foreach (Region tradeCenter in tradeCenters)
-                        {
-                            if (!region.regionPaths.ContainsKey(tradeCenter))
-                            {
-                                List<Region> path = Region.GetPathToRegion(region, tradeCenter, 12);
-                                region.regionPaths[tradeCenter] = path;
-                            }
-                            if (region.regionPaths[tradeCenter] != null)
-                            {
-                                foreach (Region tradeNode in region.regionPaths[tradeCenter])
-                                {
-                                    if (tradeNode == region || tradeNode == tradeCenter)
-                                    {
-                                        continue;
-                                    }
-                                    else
-                                    {
-                                        tradeNode.tradeIncome = Mathf.Max(tradeNode.tradeIncome, Mathf.Min(region.tradeIncome, tradeCenter.tradeIncome) * 0.9f);
-                                    }
-                                    
-                                }
-                            }
-                        }
-                    }
-                    // End Trade Routes
-                    region.UpdateWealth();
-                }
-
-
                 if (region.owner != null)
                 {
                     if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
@@ -443,54 +435,27 @@ public partial class SimManager : Node
                 {
                     region.occupier = null;
                 }
+                if (region.wealth > maxWealth)
+                {
+                    maxWealth = region.wealth;
+                }
+                if (region.GetTradeWeight() > maxTradeWeight)
+                {
+                    maxTradeWeight = region.GetTradeWeight();
+                }
             }
         }
         catch (Exception e)
         {
             GD.PushError(e);
         }
-        
+        GD.Print("Regions Time: " + (Time.GetTicksMsec() - rStartTime).ToString("#,##0 ms"));
+        GD.Print("  Pop Time: " + totalPopTime.ToString("#,##0 ms"));
+        GD.Print("  Economy Time: " + totalEconomyTime.ToString("#,##0 ms"));
+        GD.Print("  Economy Completion Time: " + distributionTime.ToString("#,##0 ms"));
+        GD.Print("  Conquest Time: " + totalConquestTime.ToString("#,##0 ms"));
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
-    }
-    #endregion
-    #region Character Update
-    public void UpdateCharacters()
-    {
-        ulong tickStartTime = Time.GetTicksMsec();
-        foreach (Character character in characters.ToArray())
-        {
-            character.age += TimeManager.ticksPerMonth;
-            character.existTime += TimeManager.ticksPerMonth;
-            character.childCooldown--;
-
-            bool exists = true;
-
-            if (exists)
-            {
-                if (character.childCooldown <= 0)
-                {
-                    character.childCooldown = 0;
-                }
-                if (character.age < Character.maturityAge)
-                {
-                    character.ChildUpdate();
-                }
-
-                if (character.CanHaveChild() && rng.NextDouble() <= 1d - Mathf.Pow(1d - 0.05, 1d / 12d))
-                {
-                    character.HaveChild();
-                    character.childCooldown = 12;
-                }
-                // Gets Death Chance Per Month
-                double realDeathChance = 1d - Mathf.Pow(1d - character.GetDeathChance(), 1d / 12d);
-                //GD.Print(realDeathChance);
-                if (rng.NextDouble() <= realDeathChance)
-                {
-                    character.Die();
-                }
-            }
-        }
     }
     #endregion
     #region State Update
@@ -509,7 +474,7 @@ public partial class SimManager : Node
                     state.maxSize = 6 + state.rulingPop.tech.societyLevel;
                 }
 
-                state.age += TimeManager.daysPerTick;
+                state.age += TimeManager.ticksPerMonth;
                 if (state.regions.Count < 1)
                 {
                     DeleteState(state);
@@ -525,11 +490,7 @@ public partial class SimManager : Node
                 state.StartWars();
                 state.UpdateEnemies();
 
-                if (state.rulingPop != null)
-                {
-                    state.RulersCheck();
-                }
-                else
+                if (state.rulingPop == null)
                 {
                     // State Collapse or Smth
                     if (rng.NextSingle() < 0.5f)
@@ -547,7 +508,7 @@ public partial class SimManager : Node
                 state.UpdateDisplayColor();
                 state.UpdateDisplayName();
                 state.borderingStates = new List<State>();
-                state.borderingRegions = 0;                
+                //state.borderingRegions = 0;                
             });
         }
         catch (Exception e)
@@ -582,6 +543,7 @@ public partial class SimManager : Node
     }
     public void SimMonth()
     {
+        ulong startTime = Time.GetTicksMsec();
         try
         {
             UpdatePops();
@@ -590,9 +552,14 @@ public partial class SimManager : Node
         {
             GD.PushError(e);
         }
+        GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        startTime = Time.GetTicksMsec();
         UpdateRegions();
+       // startTime = Time.GetTicksMsec();
         UpdateStates();
-        UpdateCharacters();
+        //GD.Print("States Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        //startTime = Time.GetTicksMsec();
+        //GD.Print("Character Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         UpdateCultures();
     }
     public void SimYear()
@@ -630,27 +597,44 @@ public partial class SimManager : Node
             population = workforce + dependents,
         };
         //pop.ChangePopulation(workforce, dependents);
-
-        pops.Add(pop);
-        culture.AddPop(pop, culture);
-        region.AddPop(pop, region);
+        lock (pops)
+        {
+            pops.Add(pop);
+        }
+        lock (culture)
+        {
+            culture.AddPop(pop, culture);
+        }
+        lock (region)
+        {
+            region.AddPop(pop, region);
+        }
 
         return pop;
     }
 
     public void DestroyPop(Pop pop)
     {
+        
         if (pop.region.owner != null && pop.region.owner.rulingPop == pop)
         {
-            pop.region.owner.rulingPop = null;
+            lock (pop.region.owner)
+            {
+                pop.region.owner.rulingPop = null;
+            }
         }
         pop.ClaimLand(-pop.ownedLand);
-        pop.region.RemovePop(pop, pop.region);
-        pop.culture.RemovePop(pop, pop.culture);
-        pops.Remove(pop);
-        foreach (Character character in pop.characters.ToArray())
+        lock (pop.region)
         {
-            DeleteCharacter(character);
+            pop.region.RemovePop(pop, pop.region);
+        }
+        lock (pop.culture)
+        {
+            pop.culture.RemovePop(pop, pop.culture);
+        }
+        lock (pops)
+        {
+            pops.Remove(pop);
         }
     }
     #endregion
@@ -664,7 +648,7 @@ public partial class SimManager : Node
         {
             name = "Culturism",
             color = new Color(r, g, b),
-            foundTick = timeManager.ticks
+            tickFounded = timeManager.ticks
         };
 
         cultures.Append(culture);
@@ -685,7 +669,7 @@ public partial class SimManager : Node
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
-                foundTick = timeManager.ticks
+                tickFounded = timeManager.ticks
             };
             state.AddRegion(region);
             states.Add(state);
@@ -699,71 +683,9 @@ public partial class SimManager : Node
         {
             state.RemoveRegion(region);
         }
-        foreach (Character character in state.characters.ToArray())
-        {
-            DeleteCharacter(character);
-        }
     }
     #endregion
     #region Characters Creation
-    public Character CreateCharacter(Pop pop, int minAge = 0, int maxAge = 30, Character.Gender gender = Character.Gender.MALE)
-    {
-        string charName = NameGenerator.GenerateCharacterName();
-        if (gender == Character.Gender.FEMALE)
-        {
-            charName = NameGenerator.GenerateCharacterName(true);
-        }
-        Character character = new Character()
-        {
-            name = charName,
-            culture = pop.culture,
-            agression = (TraitLevel)rng.Next(0, 4 + 1),
-            age = (uint)rng.Next(minAge * 12, (maxAge + 1) * 12),
-        };
-        pop.AddCharacter(character);
-        if (pop == null)
-        {
-            GD.PushError("No pop to add character to");
-        }
-        else if (pop.region == null)
-        {
-            GD.PushError("No region to add character to");
-        }
-        else if (pop.region.owner == null)
-        {
-            GD.PushError("No state to add character to");
-        }
-        else
-        {
-            pop.region.owner.AddCharacter(character);
-        }
-        characters.Add(character);
-        return character;
-    }
-
-    public void DeleteCharacter(Character character)
-    {
-        //GD.Print("Character Deleted");
-        try
-        {
-            if (character.pop != null)
-                character.pop.RemoveCharacter(character);
-            if (character.state != null)
-            {
-                character.state.RemoveCharacter(character);
-            }
-            if (character.parent != null)
-            {
-                character.parent.children.Remove(character);
-            }
-
-            characters.Remove(character);
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-    }
     #endregion
     #region Diplomacy Creation
     public War StartWar(State agressor, State defender)

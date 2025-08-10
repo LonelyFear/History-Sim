@@ -5,7 +5,7 @@ using Godot;
 
 public abstract class PopObject {
     public string name;
-    public uint foundTick;
+    public uint tickFounded;
     public uint age;
     public long population = 0;
     public long dependents = 0;    

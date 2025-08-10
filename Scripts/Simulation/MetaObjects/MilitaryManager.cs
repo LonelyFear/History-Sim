@@ -4,11 +4,12 @@ static class MilitaryManager
 {
     public static void Recruitment(this State state)
     {
-        state.manpower = 0;
+        long mp = 0;
         foreach (Region region in state.regions)
         {
-            state.manpower += (long)(region.workforce * state.mobilizationRate * region.control);
+            mp += (long)(region.workforce * state.mobilizationRate);
         }
-        
+        state.manpower = mp;
+        //GD.Print(state.GetArmyPower());
     }
 }

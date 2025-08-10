@@ -23,7 +23,7 @@ public partial class MapManager : Area2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    int regionResolution = 6;
+    int regionResolution = 1;
 
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
@@ -214,10 +214,12 @@ public partial class MapManager : Area2D
                             color = region.owner.capitalColor;
                         }
                     }
+                    /*
                     if (simManager.tradeCenters.Contains(region))
                     {
                         color = Utility.MultiColourLerp([color, new Color(0f, 0f, 0f)], 0.9f);
-                    }                     
+                    } 
+                    */                    
                 }
                
                 if (selectedMetaObj != null)
@@ -279,7 +281,7 @@ public partial class MapManager : Area2D
             case MapModes.WEALTH:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], region.wealth / 200f);
+                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], region.wealth / simManager.maxWealth);
                 }
                 else if (region.habitable)
                 {
@@ -289,7 +291,11 @@ public partial class MapManager : Area2D
             case MapModes.TRADE_WEIGHT:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / 100f);
+                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.GetTradeWeight() / simManager.maxTradeWeight);
+                    if (region.tradeLink == null)
+                    {
+                        color = new Color(1f, 1f, 0f);
+                    }
                 }
                 else if (region.habitable)
                 {
@@ -341,7 +347,7 @@ public partial class MapManager : Area2D
                 // Lines
 
                 // Top
-                if (mapMode == MapModes.POLITIY)
+                if (mapMode == MapModes.POLITIY && regionResolution > 3)
                 {
                     Color borderColor = color;
                     if (ry == 0 && r.DrawBorder(r.borderingRegions[1], ref borderColor))

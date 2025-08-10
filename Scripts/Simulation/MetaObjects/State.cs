@@ -14,7 +14,7 @@ public class State : PopObject
     public GovernmentTypes government = GovernmentTypes.MONARCHY;
     public List<Region> regions = new List<Region>();
     public Region capital;
-    public long manpower;
+    public long manpower = 0;
     public float mobilizationRate = 0.3f;
     public float taxRate = 0.1f;
     public float tribute = 0.1f;
@@ -23,7 +23,7 @@ public class State : PopObject
     public Dictionary<State, Relation> relations = new Dictionary<State, Relation>();
     public List<State> enemies = new List<State>();
     public List<State> borderingStates = new List<State>();
-    public uint borderingRegions = 0;
+    public int borderingRegions = 0;
     public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
 
 
@@ -127,7 +127,6 @@ public class State : PopObject
                     {
                         StartWar(state);
                         relation.opinion = Relation.minOpinionValue;
-                        GD.Print("War");
                         return;
                     }
                 }
@@ -204,6 +203,7 @@ public class State : PopObject
             {
                 float relationImproveChance = 0.5f;
                 float badOutcomeChance = 0.5f;
+                /*
                 if (leader != null)
                 {
                     switch (leader.agression)
@@ -245,6 +245,7 @@ public class State : PopObject
                             break;
                     }
                 }
+                */
 
                 if (rulingPop != null && state.rulingPop != null && state.rulingPop.culture != rulingPop.culture)
                 {
@@ -274,40 +275,6 @@ public class State : PopObject
     }
     #endregion
     #region Government
-    public void RulersCheck()
-    {
-        tech = rulingPop.tech;
-        monthsSinceElection++;
-        switch (government)
-        {
-            case GovernmentTypes.MONARCHY:
-                if (leader != null)
-                {
-                    heir = leader.GetHeir();
-                }
-                if (leader == null)
-                {
-                    SetLeader(heir);
-                }
-                break;
-            case GovernmentTypes.REPUBLIC:
-                if (monthsSinceElection > 48 || leader == null)
-                {
-                    RunElection();
-                }
-                break;
-        }
-    }
-    public void RunElection()
-    {
-        monthsSinceElection = 0;
-        Character newLeader = simManager.CreateCharacter(rulingPop, 20, 50);
-        if (characters.Count > 0)
-        {
-            newLeader = characters[rng.Next(0, characters.Count - 1)];
-        }
-        SetLeader(newLeader);
-    }
     public void UpdateDisplayName()
     {
         string govtName;
@@ -422,12 +389,16 @@ public class State : PopObject
             countedProfessions.Add(profession, 0);
         }
         Dictionary<Culture, long> cCultures = new Dictionary<Culture, long>();
-
+        borderingRegions = 0;
         foreach (Region region in regions.ToArray())
         {
             countedP += region.population;
             countedW += region.workforce;
             countedPops.AddRange(region.pops);
+            if (region.frontier || region.border)
+            {
+                borderingRegions++;
+            }
 
             foreach (Profession profession in region.professions.Keys)
             {
@@ -450,23 +421,6 @@ public class State : PopObject
         population = countedP;
         workforce = countedW;
         pops = countedPops;
-    }
-
-    public void SetLeader(Character newLeader)
-    {
-        if (newLeader != null)
-        {
-            if (!characters.Contains(newLeader))
-            {
-                AddCharacter(newLeader);
-            }
-        }
-        leader = newLeader;
-        // Removes our heir if the new leader was the heir.
-        if (newLeader == heir && newLeader != null)
-        {
-            heir = null;
-        }
     }
     #endregion
     #region Regions
@@ -544,36 +498,6 @@ public class State : PopObject
             state.liege = null;
             state.sovereignty = Sovereignty.INDEPENDENT;
             vassals.Remove(state);
-        }
-    }
-    #endregion
-    #region Characters
-    public void AddCharacter(Character character)
-    {
-        if (!characters.Contains(character))
-        {
-            if (character.state != null)
-            {
-                character.state.RemoveCharacter(character);
-            }
-            character.state = this;
-            characters.Add(character);
-        }
-    }
-    public void RemoveCharacter(Character character)
-    {
-        if (characters.Contains(character))
-        {
-            if (leader == character)
-            {
-                SetLeader(null);
-            }
-            if (heir == character)
-            {
-                heir = null;
-            }
-            characters.Remove(character);
-            character.state = null;
         }
     }
     #endregion

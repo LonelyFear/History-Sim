@@ -10,7 +10,7 @@ public class Pop
     public long workforce = 0;
     public long dependents = 0;
 
-    public float baseBirthRate = .30f;
+    public float baseBirthRate = 30f;
     public float baseDeathRate = 0.29f;
     public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;
@@ -87,43 +87,6 @@ public class Pop
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public void AddCharacter(Character character)
-    {
-        try
-        {
-            if (character == null)
-            {
-                GD.PushError("Error: Null character added, something is probably broken");
-            }
-            else if (character != null && !characters.Contains(character))
-            {
-                if (character.pop != null)
-                {
-                    character.pop.RemoveCharacter(character);
-                }
-                if (region == null)
-                {
-                    GD.Print("wtf");
-                    GD.Print(Enum.GetName(typeof(Profession), profession));
-                }
-                character.state = region.owner;
-                character.pop = this;
-                characters.Add(character);
-            }
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-    }
-    public void RemoveCharacter(Character character)
-    {
-        if (characters.Contains(character))
-        {
-            characters.Remove(character);
-            character.pop = null;
-        }
-    }
     public Pop ChangeProfession(long workforceDelta, long dependentDelta, Profession newProfession, int landMoved)
     {
         // Makes sure the profession is actually changing
@@ -158,7 +121,6 @@ public class Pop
     #region Economy
     public void EconomyUpdate()
     {
-        SimManager.m.WaitOne();
         if (population > maxPopulation && region.freeLand > 0)
         {
             ClaimLand(1);
@@ -168,7 +130,6 @@ public class Pop
             ClaimLand(-1);
         }
         CalcMaxPopulation();
-        SimManager.m.ReleaseMutex();
     }
 
     public void ProfessionTransitions()
@@ -267,33 +228,59 @@ public class Pop
         // If the pop migrates
         if (rng.NextSingle() <= migrateChance)
         {
-            SimManager.m.WaitOne();
-            Region target = region.PickRandomBorder();
-            SimManager.m.ReleaseMutex();
-            bool professionAllows = true;
-            switch (profession)
-            {
-                case Profession.SOLDIER:
-                    if (target.owner != region.owner)
+            lock (region) {
+                Region target = region.PickRandomBorder();
+                bool professionAllows = true;
+                switch (profession)
+                {
+                    case Profession.SOLDIER:
+                        if (target.owner != region.owner)
+                        {
+                            professionAllows = false;
+                        }
+                        break;
+                    case Profession.ARISTOCRAT:
+                        if (target.owner != region.owner)
+                        {
+                            professionAllows = false;
+                        }
+                        break;
+                }
+                lock (target)
+                {
+                    if (target.Migrateable(this) && professionAllows && (rng.NextSingle() < target.navigability))
                     {
-                        professionAllows = false;
-                    }
-                    break;
-                case Profession.ARISTOCRAT:
-                    if (target.owner != region.owner)
-                    {
-                        professionAllows = false;
-                    }
-                    break;
+                        float movedPercentage = (population - maxPopulation) / (float)population;
+                        long movedDependents = (long)(dependents * movedPercentage);
+                        long movedWorkforce = (long)(workforce * movedPercentage);
+
+                        MovePop(target, movedWorkforce, movedDependents);
+                    }                    
+                }
+
             }
-
-            if (target.Migrateable(this) && professionAllows && (rng.NextSingle() < target.navigability))
+        }
+    }
+    public void MovePop(Region destination, long movedWorkforce, long movedDependents)
+    {
+        if (destination == null || destination == region)
+        {
+            return;
+        }
+        if (movedWorkforce >= ToNativePopulation(1) || movedDependents >= ToNativePopulation(1))
+        {
+            if (movedWorkforce > workforce)
             {
-                float movedPercentage = (population - maxPopulation) / (float)population;
-                long movedDependents = (long)(dependents * movedPercentage);
-                long movedWorkforce = (long)(workforce * movedPercentage);
-
-                region.MovePop(this, target, movedWorkforce, movedDependents);
+                movedWorkforce = workforce;
+            }
+            if (movedDependents > dependents)
+            {
+                movedDependents = dependents;
+            }
+            lock (simManager)
+            {
+                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
+                ChangePopulation(-movedWorkforce, -movedDependents);     
             }
         }
     }
@@ -339,30 +326,28 @@ public class Pop
     public void CalcMaxPopulation()
     {
         float techFactor = 1 + (tech.societyLevel * 0.1f);
-        maxPopulation = ToNativePopulation((long)(Region.populationPerLand * techFactor * ownedLand * (region.arableLand/region.landCount)));
+        float wealthFactor = 0;
+        maxPopulation = ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand/region.landCount)));
     }    
     #endregion
     public void ClaimLand(int amount)
     {
-        int fixedAmount;
-        if (amount >= 0)
-        {
-            fixedAmount = Mathf.Clamp(amount, 0, region.freeLand);
-            ownedLand += fixedAmount;
+        lock (region) {
+            int fixedAmount;
+            if (amount >= 0)
+            {
+                fixedAmount = Mathf.Clamp(amount, 0, region.freeLand);
+                ownedLand += fixedAmount;
 
-            SimManager.m.WaitOne();
-            region.freeLand -= fixedAmount;
-            SimManager.m.ReleaseMutex();
-        }
-        else
-        {
-            fixedAmount = Mathf.Clamp(Mathf.Abs(amount), 0, ownedLand);
-            ownedLand -= fixedAmount;
+                region.freeLand -= fixedAmount;
+            }
+            else
+            {
+                fixedAmount = Mathf.Clamp(Mathf.Abs(amount), 0, ownedLand);
+                ownedLand -= fixedAmount;
 
-            SimManager.m.WaitOne();
-            region.freeLand += fixedAmount;
-            SimManager.m.ReleaseMutex();
-
+                region.freeLand += fixedAmount;
+            }            
         }
     }
 }
