@@ -176,6 +176,12 @@ public partial class MapManager : Area2D
                         selectedMetaObj = null;
                     }
                     break;
+                case MapModes.TRADE_WEIGHT:
+                    if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
+                    {
+                        selectedMetaObj = hoveredRegion;
+                    }
+                    break;
             }
             if (smo != selectedMetaObj)
             {

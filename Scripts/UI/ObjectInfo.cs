@@ -62,10 +62,17 @@ public partial class ObjectInfo : Control
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
                     populationLabel.Text += "\nRequired Farmers: " + Pop.FromNativePopulation(region.maxFarmers - region.professions[Profession.FARMER]);
-                    populationLabel.Text += "\nFarmers: " + Pop.FromNativePopulation(region.professions[Profession.FARMER]).ToString("#,###0");
-                    populationLabel.Text += "\nMerchants: " + Pop.FromNativePopulation(region.professions[Profession.MERCHANT]).ToString("#,###0");
-                    populationLabel.Text += "\nAristocrats: " + Pop.FromNativePopulation(region.professions[Profession.ARISTOCRAT]).ToString("#,###0");
-                    populationLabel.Text += "\nSoldiers: " + Pop.FromNativePopulation(region.professions[Profession.SOLDIER]).ToString("#,###0");
+                    populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0.0");
+                    populationLabel.Text += "\n" + "    Pop Trade Weight: " + (Pop.FromNativePopulation(region.workforce) * 0.0004f).ToString("#,###0");
+                    if (region.tradeLink == null)
+                    {
+                        populationLabel.Text += "\n" + "    Zone Weight: " + (region.zoneSize * 4f).ToString("#,###0");
+                    }
+                    else
+                    {
+                        populationLabel.Text += "\n" + "    Zone Weight: 0";
+                    }
+                    populationLabel.Text += "\n" + "    Nav Weight: " + (region.navigability * 10f).ToString("#,###0");
                     nameLabel.Text = "Disorganized Tribes";
                     specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand/region.landCount).ToString("0.0%") + "\n";
                     specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");

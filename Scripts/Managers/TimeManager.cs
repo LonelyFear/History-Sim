@@ -102,7 +102,7 @@ public partial class TimeManager : Node
         switch (gameSpeed)
         {
             case GameSpeed.ONE_WEEK_PER_SECOND:
-                waitTime = 1d / (7d / daysPerTick);
+                waitTime = float.MaxValue;
                 break;
             case GameSpeed.ONE_MONTH_PER_SECOND:
                 waitTime = 1d / monthTime;

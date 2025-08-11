@@ -412,7 +412,7 @@ public class Region : PopObject
         }
         if (!hasBaseTradeWeight)
         {
-            CalcBaseTradeWeight();
+            GetBaseTradeWeight();
         }
 
         hasTradeWeight = true;
@@ -422,29 +422,34 @@ public class Region : PopObject
             return tradeWeight;
         }
         int depth = 0;
+        int maxDepth = 14;
         List<float> tradeWeights = new List<float>();
         float multiplier = 1.0f;
         Region currentRegion = this;
         do
         {
             depth++;
-            multiplier -= 0.1f;
+            multiplier -= 1.0f / maxDepth;
             currentRegion = currentRegion.tradeLink;
             if (currentRegion != null)
             {
                 tradeWeights.Add(currentRegion.baseTradeWeight * multiplier);
             }
-        } while (currentRegion != null && depth < 7);
+        } while (currentRegion != null && depth < maxDepth);
         tradeWeight = tradeWeights.Max();
         return tradeWeight;
     }
-    public void CalcBaseTradeWeight()
+    public float GetBaseTradeWeight()
     {
         hasBaseTradeWeight = true;
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
         //long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
-        float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.005f;
-        float zoneSizeTradeWeight = zoneSize;
+        float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.0004f;
+        float zoneSizeTradeWeight = 0;
+        if (tradeLink == null)
+        {
+            zoneSizeTradeWeight = zoneSize * 4f;
+        }
 
         float politySizeTradeWeight = 0f;
         if (owner != null && owner.capital == this)
@@ -452,7 +457,8 @@ public class Region : PopObject
             politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
         // Add trade links
-        baseTradeWeight = ((navigability * 3f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
+        baseTradeWeight = ((navigability * 10f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
+        return baseTradeWeight;
     }    
     public void UpdateWealth()
     {

@@ -394,7 +394,7 @@ public partial class SimManager : Node
                     //region.CalcTaxes();
                     totalEconomyTime += Time.GetTicksMsec() - startTime;
                     //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    region.RandomStateFormation();
+                    //region.RandomStateFormation();
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)
                     {
