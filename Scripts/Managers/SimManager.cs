@@ -382,7 +382,7 @@ public partial class SimManager : Node
                     startTime = Time.GetTicksMsec();
                     // Economy
                     region.CalcBaseWealth();
-                    if (region.linkUpdateCountdown < 1)
+                    if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
                     {
                         region.linkUpdateCountdown = 12;
                         region.LinkTrade();

@@ -238,7 +238,7 @@ public class Region : PopObject
         if (region != null && region.pops.Count != 0 && region.owner == null)
         {
             //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation((long)(300000 * 0.001f)));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(300000));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
