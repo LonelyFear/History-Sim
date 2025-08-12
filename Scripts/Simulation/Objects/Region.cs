@@ -18,6 +18,7 @@ public class Region : PopObject
     public float control = 1f;
     public float baseWealth;
     public float wealth;
+    public bool isCoT = false;
     public float taxIncome;
     public int linkUpdateCountdown = 4;
     
@@ -62,6 +63,7 @@ public class Region : PopObject
     {
         name = "Region";
         landCount = 0;
+        tradeWeight = rng.Next();
         for (int x = 0; x < simManager.tilesPerRegion; x++)
         {
             for (int y = 0; y < simManager.tilesPerRegion; y++)
@@ -236,7 +238,7 @@ public class Region : PopObject
         if (region != null && region.pops.Count != 0 && region.owner == null)
         {
             //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(300000));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation((long)(300000 * 0.001f)));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
@@ -333,41 +335,22 @@ public class Region : PopObject
         taxIncome = 0;
         tradeIncome = 0;
     }
-    public void CalcTaxes()
-    {
-        if (owner != null && owner.capital != null && owner.capital != this)
-        {
-            float totalTaxIncome = baseWealth * owner.taxRate;
-            float capitalTaxIncome = totalTaxIncome * 0.1f;
-            float distributedTaxIncome = (totalTaxIncome * 0.9f) / (owner.regions.Count - 1);
-
-            SimManager.m.WaitOne();
-            owner.capital.taxIncome += capitalTaxIncome;
-            SimManager.m.ReleaseMutex();
-            
-            foreach (Region r in owner.regions)
-            {
-                if (r != owner.capital)
-                {
-                    SimManager.m.WaitOne();
-                    r.taxIncome += distributedTaxIncome;
-                    SimManager.m.ReleaseMutex();
-                }
-            }
-        }
-    }
     public void LinkTrade()
     {
         Region selectedLink = null;
+        bool lowerLinks = true;
         foreach (Region region in borderingRegions)
         {
+            if (region.GetTradeWeight() >= GetTradeWeight())
+                lowerLinks = false;
             if (region.GetTradeWeight() > GetTradeWeight())
-            {
-                if (selectedLink == null || region.GetTradeWeight() > selectedLink.GetTradeWeight())
                 {
-                    selectedLink = region;
+                    
+                    if (selectedLink == null || region.GetTradeWeight() > selectedLink.GetTradeWeight())
+                    {
+                        selectedLink = region;
+                    }
                 }
-            }
         }
 
         if (selectedLink != null)
@@ -379,6 +362,8 @@ public class Region : PopObject
                 selectedLink.tradeIncome += baseWealth * 0.1f;
             }
         }
+        isCoT = lowerLinks && selectedLink == null;
+
         tradeLink = selectedLink;            
     }
     public void CalcTradeRoutes()
@@ -406,6 +391,7 @@ public class Region : PopObject
     }
     public float GetTradeWeight()
     {
+        //return GetBaseTradeWeight();
         if (hasTradeWeight)
         {
             return tradeWeight;
@@ -414,41 +400,48 @@ public class Region : PopObject
         {
             GetBaseTradeWeight();
         }
-
-        hasTradeWeight = true;
-        if (tradeLink == null)
-        {
-            tradeWeight = baseTradeWeight;
-            return tradeWeight;
-        }
         int depth = 0;
-        int maxDepth = 14;
+        int maxDepth = 7;
         List<float> tradeWeights = new List<float>();
         float multiplier = 1.0f;
         Region currentRegion = this;
         do
         {
             depth++;
-            multiplier -= 1.0f / maxDepth;
-            currentRegion = currentRegion.tradeLink;
-            if (currentRegion != null)
+            multiplier -= 0.1f;
+            Region nextRegion = currentRegion.tradeLink;
+            if (nextRegion != null)
             {
-                tradeWeights.Add(currentRegion.baseTradeWeight * multiplier);
+                tradeWeights.Add(nextRegion.baseTradeWeight * multiplier);
+                currentRegion = nextRegion;
+            }
+            else
+            {
+                break;
             }
         } while (currentRegion != null && depth < maxDepth);
-        tradeWeight = tradeWeights.Max();
+
+        if (tradeWeights.Count > 0)
+        {
+            tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
+        }
+        else
+        {
+            tradeWeight = (int)baseTradeWeight;
+        }
+        hasTradeWeight = true;
         return tradeWeight;
     }
     public float GetBaseTradeWeight()
     {
-        hasBaseTradeWeight = true;
+        
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
         //long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
         float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.0004f;
         float zoneSizeTradeWeight = 0;
-        if (tradeLink == null)
+        if (isCoT)
         {
-            zoneSizeTradeWeight = zoneSize * 4f;
+            zoneSizeTradeWeight = zoneSize;
         }
 
         float politySizeTradeWeight = 0f;
@@ -457,7 +450,8 @@ public class Region : PopObject
             politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
         // Add trade links
-        baseTradeWeight = ((navigability * 10f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
+        hasBaseTradeWeight = true;
+        baseTradeWeight = ((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
         return baseTradeWeight;
     }    
     public void UpdateWealth()

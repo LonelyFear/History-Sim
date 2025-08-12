@@ -10,7 +10,7 @@ public class Pop
     public long workforce = 0;
     public long dependents = 0;
 
-    public float baseBirthRate = 30f;
+    public float baseBirthRate = .30f;
     public float baseDeathRate = 0.29f;
     public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;

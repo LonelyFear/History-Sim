@@ -66,7 +66,7 @@ public partial class ObjectInfo : Control
                     populationLabel.Text += "\n" + "    Pop Trade Weight: " + (Pop.FromNativePopulation(region.workforce) * 0.0004f).ToString("#,###0");
                     if (region.tradeLink == null)
                     {
-                        populationLabel.Text += "\n" + "    Zone Weight: " + (region.zoneSize * 4f).ToString("#,###0");
+                        populationLabel.Text += "\n" + "    Zone Weight: " + region.zoneSize.ToString("#,###0");
                     }
                     else
                     {

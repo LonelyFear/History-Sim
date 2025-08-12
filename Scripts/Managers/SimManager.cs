@@ -234,12 +234,14 @@ public partial class SimManager : Node
                     }
                     if (r.habitable || region.habitable)
                     {
-                        m.WaitOne();
-                        paintedRegions.Add(region);
-                        m.ReleaseMutex();
+                        lock (paintedRegions)
+                        {
+                            paintedRegions.Add(region);
+                        }
                     }
                 }
             }
+            //GD.Print(habitableBorderCount);
             region.habitableBorderingRegions = new Region[habitableBorderCount];
             i = 0;
             for (int dx = -1; dx < 2; dx++)
@@ -264,8 +266,8 @@ public partial class SimManager : Node
     void InitPops()
     {
         foreach (Region region in habitableRegions)
-        {
-            double nodeChance = 0.004;
+        {   
+            double nodeChance = 4;
 
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
@@ -364,8 +366,8 @@ public partial class SimManager : Node
                 region.hasTradeWeight = false;
                 region.linkUpdateCountdown--;
             });
+
             distributionTime = Time.GetTicksMsec() - startTime; 
-            
             foreach (Region region in habitableRegions)
             {
                 if (region.pops.Count > 0)
@@ -375,26 +377,23 @@ public partial class SimManager : Node
                     //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.CheckPopulation();
                     //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    region.CalcProfessionRequirements();    
-                    totalPopTime += Time.GetTicksMsec() - startTime;                
+                    region.CalcProfessionRequirements();
+                    totalPopTime += Time.GetTicksMsec() - startTime;
                     startTime = Time.GetTicksMsec();
                     // Economy
                     region.CalcBaseWealth();
-                    if (region.tradeLink != null)
+                    if (region.linkUpdateCountdown < 1)
                     {
+                        region.linkUpdateCountdown = 12;
                         region.LinkTrade();
                     }
-                    else if (region.linkUpdateCountdown < 1)
-                    {
-                        region.linkUpdateCountdown = 4;
-                        region.LinkTrade();
-                    }
-                    
-                    
+
+
+
                     //region.CalcTaxes();
                     totalEconomyTime += Time.GetTicksMsec() - startTime;
                     //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    //region.RandomStateFormation();
+                    region.RandomStateFormation();
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)
                     {
@@ -412,16 +411,12 @@ public partial class SimManager : Node
                     countedPoppedRegions += 1;
                     worldPop += region.population;
                 }
-            }
-            tradeCenters = new List<Region>();
-            foreach (Region region in habitableRegions)
-            {
-
-                if (region.tradeLink == null)
+                else
                 {
-                    tradeCenters.Add(region);
+                    region.linkUpdateCountdown = 0;
                 }
             }
+            tradeCenters = new List<Region>();
             foreach (Region region in habitableRegions)
             {
                 if (region.owner != null)
@@ -449,11 +444,11 @@ public partial class SimManager : Node
         {
             GD.PushError(e);
         }
-        GD.Print("Regions Time: " + (Time.GetTicksMsec() - rStartTime).ToString("#,##0 ms"));
-        GD.Print("  Pop Time: " + totalPopTime.ToString("#,##0 ms"));
-        GD.Print("  Economy Time: " + totalEconomyTime.ToString("#,##0 ms"));
-        GD.Print("  Economy Completion Time: " + distributionTime.ToString("#,##0 ms"));
-        GD.Print("  Conquest Time: " + totalConquestTime.ToString("#,##0 ms"));
+        //GD.Print("Regions Time: " + (Time.GetTicksMsec() - rStartTime).ToString("#,##0 ms"));
+        //GD.Print("  Pop Time: " + totalPopTime.ToString("#,##0 ms"));
+        //GD.Print("  Economy Time: " + totalEconomyTime.ToString("#,##0 ms"));
+        //GD.Print("  Economy Completion Time: " + distributionTime.ToString("#,##0 ms"));
+        //GD.Print("  Conquest Time: " + totalConquestTime.ToString("#,##0 ms"));
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
@@ -552,7 +547,7 @@ public partial class SimManager : Node
         {
             GD.PushError(e);
         }
-        GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        //GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         startTime = Time.GetTicksMsec();
         UpdateRegions();
        // startTime = Time.GetTicksMsec();
