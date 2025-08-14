@@ -9,8 +9,8 @@ public class Region : PopObject
     public Biome[,] biomes;
     public bool habitable;
     public bool coastal;
-    private float tradeWeight = 0;
-    private float baseTradeWeight = 0;
+    private int tradeWeight = 0;
+    private int baseTradeWeight = 0;
     public bool hasTradeWeight;
     public bool hasBaseTradeWeight;
     public float lastWealth = 0;
@@ -18,15 +18,16 @@ public class Region : PopObject
     public float control = 1f;
     public float baseWealth;
     public float wealth;
-    public bool isCoT = false;
-    public float taxIncome;
     public int linkUpdateCountdown = 4;
     
     public bool habitableAdjacent;
 
     // trade
-    public float tradeIncome;
-    public int zoneSize;
+    public TradeZone tradeZone;
+    public bool isCoT = false;    
+    public float tradeIncome = 0;
+    public float taxIncome = 0;
+    public int zoneSize = 1;
     public Region tradeLink = null;
     public List<Region> connectedTiles = new List<Region>();
 
@@ -63,7 +64,6 @@ public class Region : PopObject
     {
         name = "Region";
         landCount = 0;
-        tradeWeight = rng.Next();
         for (int x = 0; x < simManager.tilesPerRegion; x++)
         {
             for (int y = 0; y < simManager.tilesPerRegion; y++)
@@ -87,27 +87,12 @@ public class Region : PopObject
                 }
             }
         }
-        if (landCount > 0)
-        {
-            //GD.Print(arableLand);            
-        }
         freeLand = landCount;
 
         navigability /= landCount;
         avgTemperature /= tiles.Length;
         avgRainfall /= tiles.Length;
         avgElevation /= tiles.Length;
-        //economy.ChangeResourceAmount(simManager.GetResource("grain"), 100);
-
-        foreach (Crop crop in AssetManager.crops.Values)
-        {
-            bool goodTemp = crop.maxTemperature >= avgTemperature && crop.minTemperature <= avgTemperature;
-            bool goodRain = crop.maxRainfall >= avgRainfall && crop.minRainfall <= avgRainfall;
-            if (goodTemp && goodRain)
-            {
-                plantableCrops.Add(crop);
-            }
-        }
     }
 
     public void CheckHabitability()
@@ -161,7 +146,7 @@ public class Region : PopObject
     }
     public void RandomStateFormation()
     {
-        if (rng.NextSingle() < 0.0005f && population > Pop.ToNativePopulation(1000))
+        if (rng.NextSingle() < 0.0001f && population > Pop.ToNativePopulation(1000))
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -238,7 +223,7 @@ public class Region : PopObject
         if (region != null && region.pops.Count != 0 && region.owner == null)
         {
             //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(300000));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(200000));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
@@ -332,8 +317,6 @@ public class Region : PopObject
 
         float baseProduction = (farmers * 0.01f) + (nonFarmers * 0.005f) + (Pop.FromNativePopulation(dependents) * 0.002f);
         baseWealth = baseProduction * (arableLand / landCount) * techFactor;
-        taxIncome = 0;
-        tradeIncome = 0;
     }
     public void LinkTrade()
     {
@@ -344,27 +327,33 @@ public class Region : PopObject
             if (region.GetTradeWeight() >= GetTradeWeight())
                 lowerLinks = false;
             if (region.GetTradeWeight() > GetTradeWeight())
-                {
-                    
-                    if (selectedLink == null || region.GetTradeWeight() > selectedLink.GetTradeWeight())
-                    {
-                        selectedLink = region;
-                    }
-                }
-        }
-
-        if (selectedLink != null)
-        {
-            lock (selectedLink)
             {
-                selectedLink.zoneSize += zoneSize;
-                selectedLink.connectedTiles.Add(this);
-                selectedLink.tradeIncome += baseWealth * 0.1f;
+
+                if (selectedLink == null || region.GetTradeWeight() > selectedLink.GetTradeWeight())
+                {
+                    selectedLink = region;
+                }
             }
         }
-        isCoT = lowerLinks && selectedLink == null;
 
-        tradeLink = selectedLink;            
+        if (selectedLink != null && selectedLink.tradeZone != null)
+        {
+            selectedLink.tradeZone.AddRegion(this);
+        }
+
+        isCoT = lowerLinks && selectedLink == null;
+        if (isCoT && (tradeZone == null || tradeZone.CoT != this))
+        {
+            tradeZone = new TradeZone(this);
+        }
+        if (!isCoT && tradeZone != null && tradeZone.CoT == this)
+        {
+            tradeZone.DestroyZone();
+        }
+
+        tradeLink = selectedLink;      
+        if (tradeLink != null)
+            tradeLink.tradeIncome += baseWealth * 0.1f;      
     }
     public void CalcTradeRoutes()
     {
@@ -389,7 +378,7 @@ public class Region : PopObject
             }          
         }
     }
-    public float GetTradeWeight()
+    public int GetTradeWeight()
     {
         //return GetBaseTradeWeight();
         if (hasTradeWeight)
@@ -432,16 +421,16 @@ public class Region : PopObject
         hasTradeWeight = true;
         return tradeWeight;
     }
-    public float GetBaseTradeWeight()
+    public int GetBaseTradeWeight()
     {
         
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
         //long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
-        float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.0004f;
+        float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.001f;
         float zoneSizeTradeWeight = 0;
         if (isCoT)
         {
-            zoneSizeTradeWeight = zoneSize;
+            zoneSizeTradeWeight = tradeZone.GetZoneSize();
         }
 
         float politySizeTradeWeight = 0f;
@@ -451,7 +440,8 @@ public class Region : PopObject
         }
         // Add trade links
         hasBaseTradeWeight = true;
-        baseTradeWeight = ((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability;
+
+        baseTradeWeight = (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
         return baseTradeWeight;
     }    
     public void UpdateWealth()

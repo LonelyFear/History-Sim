@@ -267,7 +267,7 @@ public partial class SimManager : Node
     {
         foreach (Region region in habitableRegions)
         {   
-            double nodeChance = 4;
+            double nodeChance = 0.004;
 
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
@@ -360,11 +360,14 @@ public partial class SimManager : Node
                 //region.CalcTradeRoutes();
                 region.UpdateWealth();
                 region.DistributeWealth();
-                region.zoneSize = 1;
+                //region.zoneSize = 1;
                 region.connectedTiles = new List<Region>();
                 region.hasBaseTradeWeight = false;
                 region.hasTradeWeight = false;
+                region.tradeIncome = 0f;
+                region.taxIncome = 0f;
                 region.linkUpdateCountdown--;
+                region.zoneSize = region.connectedTiles.Count;
             });
 
             distributionTime = Time.GetTicksMsec() - startTime; 

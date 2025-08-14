@@ -378,7 +378,7 @@ public class HeightmapGenerator
         erosion.SetFractalType(FastNoiseLite.FractalType.Ridged);
         erosion.SetFractalOctaves(4);
         erosion.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        float scale = 2f;
+        float scale = 1f;
         float erosionScale = 0.5f;
         float maxNoiseValue = float.MinValue;
         float minNoiseValue = float.MaxValue;
@@ -420,7 +420,7 @@ public class HeightmapGenerator
                     if (tiles[x, y].region.continental)
                     {
                         // Land hills
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 20f, noiseValue)), 0f, 1f);
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 30f, noiseValue)), 0f, 1f);
                         float topDist = 1f - seaLevel - 0.05f;
                         heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
                         heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);

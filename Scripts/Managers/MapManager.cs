@@ -298,6 +298,10 @@ public partial class MapManager : Area2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.GetTradeWeight() / simManager.maxTradeWeight);
+                    if (region.tradeZone != null)
+                    {
+                        color = region.tradeZone.color;
+                    }
                     if (region.isCoT)
                     {
                         color = new Color(1f, 1f, 0f);

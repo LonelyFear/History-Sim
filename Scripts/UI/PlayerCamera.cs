@@ -22,20 +22,22 @@ public partial class PlayerCamera : Camera2D
             MousePan();
         }
     }
-
-    void ZoomCamera(double delta)
+    public override void _UnhandledInput(InputEvent evnt)
     {
-        if (Input.IsActionJustReleased("Zoom_In"))
+        if (evnt.IsAction("Zoom_In"))
         {
             zoomTarget *= 1.1f;
         }
-        else if (Input.IsActionJustReleased("Zoom_Out"))
+        else if (evnt.IsAction("Zoom_Out"))
         {
             zoomTarget *= 0.9f;
         }
         zoomTarget.X = Mathf.Clamp(zoomTarget.X, maxZoom, minZoom);
-        zoomTarget.Y = Mathf.Clamp(zoomTarget.Y, maxZoom, minZoom);
+        zoomTarget.Y = Mathf.Clamp(zoomTarget.Y, maxZoom, minZoom);        
+    }
 
+    void ZoomCamera(double delta)
+    {
         float oldZoom = Zoom.X;
         Zoom = Zoom.Slerp(zoomTarget, (float)(zoomSpeed * delta));
 

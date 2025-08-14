@@ -10,7 +10,7 @@ public class Pop
     public long workforce = 0;
     public long dependents = 0;
 
-    public float baseBirthRate = .30f;
+    public float baseBirthRate = 0.3f;
     public float baseDeathRate = 0.29f;
     public float starvingPercentage = 0f;
     public float targetDependencyRatio = 0.75f;
@@ -326,7 +326,7 @@ public class Pop
     public void CalcMaxPopulation()
     {
         float techFactor = 1 + (tech.societyLevel * 0.1f);
-        float wealthFactor = 0;
+        float wealthFactor = wealth;
         maxPopulation = ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand/region.landCount)));
     }    
     #endregion

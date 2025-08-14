@@ -33,9 +33,9 @@ public class Battle{
         float defenderLossRatio = (float)(attackPower / totalPower);
 
         if (result.attackSuccessful){
-            defenderLossRatio += Mathf.Lerp(0.1f, 0.2f, rng.NextSingle());
+            defenderLossRatio += Mathf.Lerp(0f, 0.05f, rng.NextSingle());
         } else {
-            attackerLossRatio += Mathf.Lerp(0.1f, 0.2f, rng.NextSingle());
+            attackerLossRatio += Mathf.Lerp(0f, 0.05f, rng.NextSingle());
         }
 
         attackerLossRatio = Mathf.Clamp(attackerLossRatio, 0f, 1f);

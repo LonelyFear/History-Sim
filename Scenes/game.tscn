@@ -310,4 +310,5 @@ limit_top = 0
 limit_right = 1280
 limit_bottom = 720
 position_smoothing_enabled = true
+zoomSpeed = 5.0
 minZoom = 25.0

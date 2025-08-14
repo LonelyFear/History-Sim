@@ -5,7 +5,7 @@ using System.Diagnostics.Contracts;
 using Godot;
 public static class WorldGenerator
 {
-    public const float HillThreshold = 0.8f;
+    public const float HillThreshold = 0.76f;
     public const float MountainThreshold = 0.9f;
     public const float MaxTemperature = 35;
     public const float MinTemperature = -30;
@@ -16,7 +16,7 @@ public static class WorldGenerator
     public static Vector2I WorldSize = new Vector2I(360, 180);
     public static float Width;
     public static float Height;
-    public static float WorldMult = 2f;
+    public static float WorldMult = 3f;
     public static float SeaLevel = 0.6f;
     public static int Seed;
     public static int continents = 12;
@@ -148,7 +148,13 @@ public static class WorldGenerator
                     else
                     {
                         Color biomeColor = Color.FromString(BiomeMap[x, y].color, new Color(0, 0, 0));
-                        image.SetPixel(x, y, biomeColor * HeightMap[x,y]);
+                        /*
+                        if (HeightMap[x, y] > HillThreshold)
+                            biomeColor = new Color(0.5f, 0.5f, 0.5f);
+                        if (HeightMap[x, y] > MountainThreshold)
+                            biomeColor = new Color(0.2f, 0.2f, 0.2f);
+                        */
+                        image.SetPixel(x, y, biomeColor * HeightMap[x, y]);
                     }
                 }
             }

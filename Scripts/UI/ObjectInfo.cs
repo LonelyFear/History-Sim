@@ -62,11 +62,11 @@ public partial class ObjectInfo : Control
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
                     populationLabel.Text += "\nRequired Farmers: " + Pop.FromNativePopulation(region.maxFarmers - region.professions[Profession.FARMER]);
-                    populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0.0");
+                    populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0");
                     populationLabel.Text += "\n" + "    Pop Trade Weight: " + (Pop.FromNativePopulation(region.workforce) * 0.0004f).ToString("#,###0");
-                    if (region.tradeLink == null)
+                    if (region.isCoT)
                     {
-                        populationLabel.Text += "\n" + "    Zone Weight: " + region.zoneSize.ToString("#,###0");
+                        populationLabel.Text += "\n" + "    Zone Weight: " + region.tradeZone.GetZoneSize().ToString("#,###0");
                     }
                     else
                     {
