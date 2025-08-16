@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class State : PopObject
 {
@@ -12,9 +13,12 @@ public class State : PopObject
     public Color capitalColor;
     public List<Army> armies = new List<Army>();
     public GovernmentTypes government = GovernmentTypes.MONARCHY;
+    public List<Region> realmRegions = new List<Region>(); 
     public List<Region> regions = new List<Region>();
     public Region capital;
     public long manpower = 0;
+    public int occupiedLand = 0;
+    public float totalWealth = 0;
     public float mobilizationRate = 0.3f;
     public float taxRate = 0.1f;
     public float tribute = 0.1f;
@@ -24,6 +28,7 @@ public class State : PopObject
     public List<State> enemies = new List<State>();
     public List<State> borderingStates = new List<State>();
     public int borderingRegions = 0;
+    public int externalBorderingRegions = 0;
     public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
 
 
@@ -76,7 +81,7 @@ public class State : PopObject
             }
             else
             {
-                pair.Value.truce -= TimeManager.ticksPerMonth;
+                pair.Value.truce -= (int)TimeManager.ticksPerMonth;
             }
         }
         foreach (State state in borderingStates)
@@ -89,6 +94,11 @@ public class State : PopObject
     }
     public void EstablishRelations(State state, int opinion = 0)
     {
+        if (state == this)
+        {
+            return;
+        }
+
         if (!relations.Keys.Contains(state))
         {
             relations.Add(state, new Relation()
@@ -182,7 +192,7 @@ public class State : PopObject
     }
     public void Capitualate()
     {
-        if (capital.occupier != this && capital.occupier != null)
+        if (capital.GetController() != GetHighestLiege())
         {
             foreach (Region region in regions)
             {
@@ -201,73 +211,17 @@ public class State : PopObject
             Relation relations = pair.Value;
             if (liege != state && !vassals.Contains(state))
             {
-                float relationImproveChance = 0.5f;
-                float badOutcomeChance = 0.5f;
-                /*
-                if (leader != null)
+                float relationChangeChance = 0.5f;
+                float relationDamageChance = 0.5f;
+                if (rng.NextSingle() < relationChangeChance)
                 {
-                    switch (leader.agression)
-                    {
-                        case TraitLevel.VERY_LOW:
-                            relationImproveChance = 0.8f;
-                            badOutcomeChance = 0.2f;
-                            break;
-                        case TraitLevel.LOW:
-                            relationImproveChance = 0.6f;
-                            badOutcomeChance = 0.4f;
-                            break;
-                        case TraitLevel.HIGH:
-                            relationImproveChance = 0.4f;
-                            badOutcomeChance = 0.8f;
-                            break;
-                        case TraitLevel.VERY_HIGH:
-                            relationImproveChance = 0.2f;
-                            badOutcomeChance = 1f;
-                            break;
-                    }
-                    switch (leader.culture.agression)
-                    {
-                        case TraitLevel.VERY_LOW:
-                            relationImproveChance += 0.1f;
-                            badOutcomeChance -= 0.05f;
-                            break;
-                        case TraitLevel.LOW:
-                            relationImproveChance += 0.05f;
-                            badOutcomeChance -= 0.025f;
-                            break;
-                        case TraitLevel.HIGH:
-                            relationImproveChance -= 0.1f;
-                            badOutcomeChance += 0.05f;
-                            break;
-                        case TraitLevel.VERY_HIGH:
-                            relationImproveChance -= 0.15f;
-                            badOutcomeChance += 0.1f;
-                            break;
-                    }
-                }
-                */
-
-                if (rulingPop != null && state.rulingPop != null && state.rulingPop.culture != rulingPop.culture)
-                {
-                    badOutcomeChance += 0.05f;
-                    relationImproveChance -= 0.1f;
-                }
-                if (enemies.Contains(state))
-                {
-                    relationImproveChance *= 0.5f;
-                }
-
-                relationImproveChance = Mathf.Clamp(relationImproveChance, 0, 1);
-                badOutcomeChance = Mathf.Clamp(badOutcomeChance, 0, 1);
-                if (rng.NextSingle() < badOutcomeChance)
-                {
-                    relations.ChangeOpinion(1);
-                }
-                else
-                {
-                    if (rng.NextSingle() < badOutcomeChance)
+                    if (rng.NextSingle() < relationDamageChance)
                     {
                         relations.ChangeOpinion(-1);
+                    }
+                    else
+                    {
+                        relations.ChangeOpinion(1);
                     }
                 }
             }
@@ -318,7 +272,7 @@ public class State : PopObject
                         govtName = "Duchy";
                         break;
                     default:
-                        govtName = "Grand Duchy";
+                        govtName = "Principality";
                         if (vassals.Count > 0)
                         {
                             govtName = "Kingdom";
@@ -379,25 +333,54 @@ public class State : PopObject
     }
     public void CountStatePopulation()
     {
+        realmRegions = GetRealmRegions();
         long countedP = 0;
         long countedW = 0;
 
         List<Pop> countedPops = new List<Pop>();
+        List<State> borders = new List<State>();
         Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
         foreach (Profession profession in Enum.GetValues(typeof(Profession)))
         {
             countedProfessions.Add(profession, 0);
         }
+        
         Dictionary<Culture, long> cCultures = new Dictionary<Culture, long>();
         borderingRegions = 0;
-        foreach (Region region in regions.ToArray())
+        float countedWealth = 0;
+        int occRegions = 0;
+        foreach (Region region in realmRegions)
         {
             countedP += region.population;
             countedW += region.workforce;
+            countedWealth += region.wealth;
             countedPops.AddRange(region.pops);
             if (region.frontier || region.border)
             {
+                if (region.occupier != null && regions.Contains(region))
+                {
+                    occRegions++;
+                }
                 borderingRegions++;
+                bool bordersOtherState = false;
+                // Gets the borders of our state
+                foreach (Region border in region.borderingRegions)
+                {
+                    if (border.owner != null && border.owner != this)
+                    {
+                        if (!borders.Contains(border.owner))
+                        {
+                            borders.Add(border.owner);
+                        }
+                        bordersOtherState = !IsStateInRealm(border.owner);
+                    }
+                }
+                // External Bordering Regions is the borders on the outside of the realm
+                // (NO INTERIOR BORDERS)
+                if (bordersOtherState)
+                {
+                    externalBorderingRegions++;
+                }
             }
 
             foreach (Profession profession in region.professions.Keys)
@@ -416,6 +399,9 @@ public class State : PopObject
                 }
             }
         }
+        occupiedLand = occRegions;
+        borderingStates = borders;
+        totalWealth = countedWealth;
         professions = countedProfessions;
         cultures = cCultures;
         population = countedP;
@@ -504,18 +490,49 @@ public class State : PopObject
     #region Military
     public long GetArmyPower()
     {
-        return (long)(manpower / (float)borderingRegions);
+        float interiorArmyPower = GetRealmManpower() / (float)realmRegions.Count;
+        return (long)interiorArmyPower;
+    }
+    public long GetRealmManpower()
+    {
+        long mp = manpower;
+        foreach (State state in vassals)
+        {
+            mp += state.manpower;
+        }
+        return mp;
+    }
+    public List<Region> GetRealmRegions()
+    {
+        List<Region> realmRegions = [.. regions];
+        foreach (State state in vassals)
+        {
+            realmRegions.AddRange(state.regions);
+        }
+        return realmRegions;
+    }
+    public int GetRealmBorderLength() {
+        int size = externalBorderingRegions;
+        foreach (State state in vassals)
+        {
+            size += state.externalBorderingRegions;
+        }
+        return size;
     }
     #endregion
     #region Utility
-    public static State GetHighestLiege(State state)
+    public State GetHighestLiege()
     {
-        while (state.liege != null)
+        State state = this;
+        while (state != null && state.liege != null)
         {
             state = state.liege;
         }
         return state;
     }
+    public bool IsStateInRealm(State state) {
+        return GetHighestLiege() == state.GetHighestLiege();
+    }   
     public State[] GetAllVassals()
     {
         List<State> collectedVassals = new List<State>();

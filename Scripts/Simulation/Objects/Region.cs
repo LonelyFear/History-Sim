@@ -169,7 +169,6 @@ public class Region : PopObject
     {
         border = false;
         frontier = false;
-        List<State> borders = new List<State>();
         foreach (Region region in borderingRegions)
         {     
             if (region.owner == null)
@@ -179,15 +178,8 @@ public class Region : PopObject
             if (region.owner != null && region.owner != owner)
             {
                 border = true;
-                if (!owner.borderingStates.Contains(region.owner))
-                {
-                    borders.Add(region.owner);
-                }
             }
-        }
-        SimManager.m.WaitOne();
-        owner.borderingStates.AddRange(borders);
-        SimManager.m.ReleaseMutex();        
+        }  
     }
     public bool DrawBorder(Region r, ref Color color)
     {
@@ -220,10 +212,14 @@ public class Region : PopObject
         {
             return;
         }
-        if (region != null && region.pops.Count != 0 && region.owner == null)
+        bool checks = GetController() == owner && region != null && region.pops.Count != 0 && region.owner == null;
+        int stateMaxRegions = 10 + (owner.rulingPop.tech.militaryLevel * 4);
+        float overSizeExpandChance = stateMaxRegions/(float)owner.regions.Count * 0.5f;
+
+        if (checks && rng.NextSingle() < overSizeExpandChance)
         {
             //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(200000));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(2500));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)
@@ -242,7 +238,11 @@ public class Region : PopObject
         {
             return occupier;
         }
-        return owner;
+        if (owner != null)
+        {
+            return owner.GetHighestLiege();
+        }
+        return null;
     }
     public void MilitaryConquest()
     {
@@ -353,7 +353,7 @@ public class Region : PopObject
 
         tradeLink = selectedLink;      
         if (tradeLink != null)
-            tradeLink.tradeIncome += baseWealth * 0.1f;      
+            tradeLink.tradeIncome += (baseWealth * 0.1f) + (tradeIncome * 0.1f);      
     }
     public void CalcTradeRoutes()
     {

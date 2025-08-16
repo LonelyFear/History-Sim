@@ -504,9 +504,7 @@ public partial class SimManager : Node
                 state.CountStatePopulation();                
                 state.Recruitment();
                 state.UpdateDisplayColor();
-                state.UpdateDisplayName();
-                state.borderingStates = new List<State>();
-                //state.borderingRegions = 0;                
+                state.UpdateDisplayName();          
             });
         }
         catch (Exception e)

@@ -7,6 +7,7 @@ public class RiverGenerator
     public int attemptedRivers = 100;
     public float minRiverDist = 5f;
     public float minRiverLength = 5;
+    public bool allowCornerConnections = true;
     public float maxRiverLength = Mathf.Inf;
     public bool riverMustEndInWater = true;
     public float minRiverHeight = 0.6f;
@@ -81,7 +82,7 @@ public class RiverGenerator
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if (/*(dx != 0 && dy != 0) ||*/ (dx == 0 && dy == 0))
+                        if ((dx != 0 && dy != 0 && !allowCornerConnections) || (dx == 0 && dy == 0))
                         {
                             continue;
                         }

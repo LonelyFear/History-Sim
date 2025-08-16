@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 
 public partial class ObjectInfo : Control
 {
@@ -39,12 +40,12 @@ public partial class ObjectInfo : Control
                     nameLabel.Text = state.displayName;
                     uint yearAge = timeManager.GetYear(state.age);
                     uint monthAge = timeManager.GetMonth(state.age);
-                    specialLabel.Text = $"Founded in {timeManager.GetYear(state.tickFounded)} AC";
+                    specialLabel.Text = $"Founded in Month {timeManager.GetMonth(state.tickFounded)} of Year {timeManager.GetYear(state.tickFounded)}";
                     specialLabel.Text +=  "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
                     specialLabel.Text += "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0");
                     specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower()).ToString("#,###0") + "\n";
                     specialLabel.Text += "\n" + "Relations: ";
-                    foreach (var pair in state.relations)
+                    foreach (var pair in state.relations.ToArray())
                     {
                         State subject = pair.Key;
                         Relation relation = pair.Value;
@@ -57,6 +58,21 @@ public partial class ObjectInfo : Control
                         {
                             specialLabel.Text += "\n" + $"{subject.displayName}: {relation.opinion}";
                         }
+                    }
+                    switch (state.sovereignty)
+                    {
+                        case Sovereignty.COLONY:
+                            typeLabel.Text = "Colonial State";
+                            break;
+                        case Sovereignty.PROVINCE:
+                            typeLabel.Text = "Provincial State";
+                            break;
+                        case Sovereignty.PUPPET:
+                            typeLabel.Text = "Puppet State";
+                            break;
+                        case Sovereignty.INDEPENDENT:
+                            typeLabel.Text = "Sovereign State";
+                            break;
                     }
                     break;
                 case PopObject.ObjectType.REGION:
