@@ -317,6 +317,7 @@ public partial class SimManager : Node
                 pop.GrowPop();
                 if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
+                    pop.TechnologyUpdate();
                     //pop.ProfessionTransitions();
                     try
                     {
@@ -586,7 +587,7 @@ public partial class SimManager : Node
         Pop pop = new Pop()
         {
             batchId = currentBatch,
-            tech = tech,
+            tech = tech.Clone(),
             profession = profession,
             workforce = workforce,
             dependents = dependents,

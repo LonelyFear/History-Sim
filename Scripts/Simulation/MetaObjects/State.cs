@@ -128,7 +128,7 @@ public class State : PopObject
                 Relation relation = pair.Value;
                 if (relation.opinion < 0 && !enemies.Contains(state) && relation.truce <= 0 && state.sovereignty == Sovereignty.INDEPENDENT)
                 {
-                    float warDeclarationChance = 1f;//Mathf.Lerp(0.1f, 0.5f, relation.opinion / (float)Relation.minOpinionValue);
+                    float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, relation.opinion / (float)Relation.minOpinionValue);
                     if (liege == state || vassals.Contains(state))
                     {
                         warDeclarationChance = 0f;
@@ -175,9 +175,9 @@ public class State : PopObject
                 State state = pair.Key;
                 Relation relation = pair.Value;
 
-                if (relation.opinion > 0 && enemies.Contains(state))
+                if (relation.opinion >= 0 && enemies.Contains(state))
                 {
-                    if (rng.NextSingle() < 0.0001f)
+                    if (rng.NextSingle() < 0.01f * (relation.opinion + 1)) 
                     {
                         EndWar(state);
                     }
@@ -213,6 +213,10 @@ public class State : PopObject
             {
                 float relationChangeChance = 0.5f;
                 float relationDamageChance = 0.5f;
+                if (enemies.Contains(state))
+                {
+                    relationChangeChance *= 0.75f;
+                }
                 if (rng.NextSingle() < relationChangeChance)
                 {
                     if (rng.NextSingle() < relationDamageChance)
@@ -327,7 +331,7 @@ public class State : PopObject
                 displayColor = liege.color;
                 break;
             case Sovereignty.PUPPET:
-                displayColor = Utility.MultiColourLerp([liege.color, color], 0.25f);
+                displayColor = liege.color;
                 break;
         }
     }

@@ -12,6 +12,21 @@ public class Battle{
     public bool attackSuccessful;
     static Random rng = new Random();
     public static Battle CalcBattle(Region loc, State atk, State def, long attackers, long defenders){
+        int borderingEnemyRegions = 0;
+        bool nearStronghold = false;
+        State locationState = loc.owner;
+        foreach (Region r in loc.borderingRegions)
+        {
+            if (r.GetController() == atk.GetHighestLiege())
+            {
+                borderingEnemyRegions++;
+            }
+            bool isNearCapital = locationState != null && (locationState.capital == r || loc == locationState.capital);
+            if (isNearCapital)
+            {
+                nearStronghold = true;
+            }
+        }
         Battle result = new Battle(){
             location = loc,
             attacker = atk,
@@ -23,7 +38,11 @@ public class Battle{
         long baseDefenderPower = Pop.FromNativePopulation(defenders);
         double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
         double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
-        defendPower *= Mathf.Lerp(1.2f, 3f, 1f - loc.navigability);
+
+        float surroundedModifier = Mathf.Clamp(1.50f - (0.25f * borderingEnemyRegions), 0, 1);
+        float strongholdModifier = Mathf.Max(1f, Convert.ToInt32(nearStronghold) * 3f);
+        defendPower *= Mathf.Lerp(1.2f, 2.2f, 1f - loc.navigability) * strongholdModifier * surroundedModifier;
+
         double totalPower = attackPower + defendPower;
 
         if (rng.NextDouble() < attackPower/totalPower){

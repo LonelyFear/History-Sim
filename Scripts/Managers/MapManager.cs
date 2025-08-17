@@ -235,13 +235,25 @@ public partial class MapManager : Area2D
                         case PopObject.ObjectType.REGION:
                             if (region != selectedMetaObj)
                             {
-                                color = (color * 0.6f) + (new Color(0, 0, 0) * 0.4f);
+                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.4f);
                             }
                             break;
                         case PopObject.ObjectType.STATE:
+                            Color cBefore = color;
+                            // Darkens unrelated states
                             if (region.owner != selectedMetaObj)
                             {
-                                color = (color * 0.6f) + (new Color(0, 0, 0) * 0.4f);
+                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.7f);
+                            }
+                            if (region.owner == null || region.owner == selectedMetaObj)
+                            {
+                                break;
+                            }
+
+                            // Highlights Realms
+                            if (region.owner.GetHighestLiege() == selectedMetaObj)
+                            {
+                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.4f);;
                             }
                             break;
                     }
@@ -283,6 +295,26 @@ public partial class MapManager : Area2D
                 }                
                 break;
             case MapModes.TECH:
+                if (region.habitable)
+                {
+                    float indAverage = 0;
+                    float milAverage = 0;
+                    float sciAverage = 0;
+                    float socAverage = 0;
+                    foreach (Pop pop in region.pops.ToArray())
+                    {
+                        socAverage += pop.tech.societyLevel;
+                        milAverage += pop.tech.militaryLevel;
+                        sciAverage += pop.tech.scienceLevel;
+                        indAverage += pop.tech.industryLevel;
+                    }
+                    indAverage /= region.pops.Count;
+                    milAverage /= region.pops.Count;
+                    sciAverage /= region.pops.Count;
+                    socAverage /= region.pops.Count;
+
+                    color = new Color(milAverage / 20f, indAverage / 20f, socAverage / 20f);
+                }
                 break;
             case MapModes.WEALTH:
                 if (region.habitable && region.pops.Count > 0)

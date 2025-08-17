@@ -19,7 +19,7 @@ public class Pop
     public Culture culture;
     public Profession profession = Profession.FARMER;
 
-    public Tech tech;
+    public Tech tech = new Tech();
     public uint batchId = 1;
 
     public const float workforceNutritionNeed = 1f;
@@ -132,13 +132,27 @@ public class Pop
         CalcMaxPopulation();
     }
 
+    public void TechnologyUpdate()
+    {
+        double militaryTechChance = 0.0001;
+        double societyTechChance = 0.0001;
+
+        if (rng.NextDouble() < militaryTechChance)
+        {
+            tech.militaryLevel++;
+        }
+        if (rng.NextDouble() < societyTechChance)
+        {
+            tech.societyLevel++;
+        }       
+    }
     public void ProfessionTransitions()
     {
         bool regionHasAristocrats = region.professions[Profession.ARISTOCRAT] > 1000;
         bool takeableAristocracy = !regionHasAristocrats && (region.owner == null || (region.owner != null && region.owner.capital == region));
 
         long regionProductiveWorkforce = region.workforce - region.professions[Profession.ARISTOCRAT];
-        long farmersRequiredOfPop = (long)((region.maxFarmers - region.professions[Profession.FARMER]) * (workforce/(float)regionProductiveWorkforce));
+        long farmersRequiredOfPop = (long)((region.maxFarmers - region.professions[Profession.FARMER]) * (workforce / (float)regionProductiveWorkforce));
         if (profession == Profession.ARISTOCRAT)
         {
             farmersRequiredOfPop = 0;
@@ -146,7 +160,7 @@ public class Pop
 
         // Military Transitions
         long soldieringWorkforce = region.workforce - region.professions[Profession.ARISTOCRAT] - region.professions[Profession.MERCHANT];
-        long soldiersRequiredOfPop = (long)((region.maxSoldiers - region.professions[Profession.SOLDIER]) * (workforce/(float)soldieringWorkforce));
+        long soldiersRequiredOfPop = (long)((region.maxSoldiers - region.professions[Profession.SOLDIER]) * (workforce / (float)soldieringWorkforce));
 
         switch (profession)
         {
