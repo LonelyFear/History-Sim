@@ -8,6 +8,7 @@ public abstract class PopObject {
     public uint tickFounded;
     public uint age;
     public long population = 0;
+    public long highestPossiblePopulation = 0; 
     public long dependents = 0;    
     public long workforce = 0;
     public List<Pop> pops = new List<Pop>();
@@ -27,6 +28,7 @@ public abstract class PopObject {
 
     public void CountPopulation()
     {
+        long maxPopulation = 0;
         long countedPopulation = 0;
         long countedDependents = 0;
         long countedWorkforce = 0;
@@ -43,6 +45,7 @@ public abstract class PopObject {
         Culture currentLargest = null;
         foreach (Pop pop in pops)
         {
+            maxPopulation += pop.GetMaxPopulation();
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
@@ -68,7 +71,7 @@ public abstract class PopObject {
         }
         largestCulture = currentLargest;
 
-
+        highestPossiblePopulation = maxPopulation;
         professions = countedProfessions;
         population = countedPopulation;
         dependents = countedDependents;
@@ -154,7 +157,7 @@ public abstract class PopObject {
             state.manpower -= amount - lossesTaken;
         }
     }
-
+    
 
     public enum ObjectType{
         STATE,

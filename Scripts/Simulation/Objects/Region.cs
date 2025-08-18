@@ -49,6 +49,8 @@ public class Region : PopObject
     public Region[] borderingRegions = new Region[4];
     public Region[] habitableBorderingRegions = new Region[4];
     public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
+    public int stability = 100;
+    public int unrest = 0;
 
     public bool border;
     public bool frontier;
@@ -120,6 +122,14 @@ public class Region : PopObject
     /// Function to be used with professions
     /// Disabled to increase the speed of development
     /// </summary>
+
+    public void UpdateOccupation()
+    {
+        if (occupier != null && !owner.GetHighestLiege().enemies.Contains(occupier))
+        {
+            occupier = null;
+        }
+    }
     public void TryFormState()
     {
         if (professions[Profession.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
@@ -146,7 +156,7 @@ public class Region : PopObject
     }
     public void RandomStateFormation()
     {
-        if (rng.NextSingle() < 0.0001f && population > Pop.ToNativePopulation(1000))
+        if (rng.NextSingle() < 0.0001f * navigability && population > Pop.ToNativePopulation(1000))
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -213,13 +223,12 @@ public class Region : PopObject
             return;
         }
         bool checks = GetController() == owner && region != null && region.pops.Count != 0 && region.owner == null;
-        int stateMaxRegions = 10 + (owner.rulingPop.tech.militaryLevel * 4);
-        float overSizeExpandChance = stateMaxRegions/(float)owner.regions.Count * 0.5f;
+        //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
 
-        if (checks && rng.NextSingle() < overSizeExpandChance)
+        if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())
         {
             //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(2500));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(250000));
 
             SimManager.m.WaitOne();
             if (result.attackSuccessful)

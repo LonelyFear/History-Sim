@@ -398,9 +398,11 @@ public partial class SimManager : Node
                     totalEconomyTime += Time.GetTicksMsec() - startTime;
                     //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.RandomStateFormation();
+                    region.UpdateOccupation();
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)
                     {
+                        
                         region.StateBordering();
                         if (region.frontier && region.owner.rulingPop != null && region.occupier == null)
                         {
@@ -685,32 +687,6 @@ public partial class SimManager : Node
     #region Characters Creation
     #endregion
     #region Diplomacy Creation
-    public War StartWar(State agressor, State defender)
-    {
-        if (agressor.enemies.Contains(defender) || defender.enemies.Contains(agressor))
-        {
-            return null;
-        }
-        War war = new War()
-        {
-            start = timeManager.ticks
-        };
-        war.AddParticipant(agressor, true);
-        war.AddParticipant(defender, false);
-        return war;
-    }
-    public void EndWar(War war)
-    {
-        foreach (State state in war.agressors)
-        {
-            war.RemoveParticipant(state);
-        }
-        foreach (State state in war.defenders)
-        {
-            war.RemoveParticipant(state);
-        }
-        war.end = timeManager.ticks;
-    }
     #endregion
     #endregion
 }

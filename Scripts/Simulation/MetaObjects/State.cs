@@ -1,9 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Godot;
-using System.ComponentModel.DataAnnotations.Schema;
 
 public class State : PopObject
 {
@@ -12,7 +10,7 @@ public class State : PopObject
     public Color displayColor;
     public Color capitalColor;
     public List<Army> armies = new List<Army>();
-    public GovernmentTypes government = GovernmentTypes.MONARCHY;
+    public GovernmentType government = GovernmentType.MONARCHY;
     public List<Region> realmRegions = new List<Region>(); 
     public List<Region> regions = new List<Region>();
     public Region capital;
@@ -25,6 +23,7 @@ public class State : PopObject
     public List<State> vassals = new List<State>();
     public State liege = null;
     public Dictionary<State, Relation> relations = new Dictionary<State, Relation>();
+    public Dictionary<War, bool> wars = new Dictionary<War, bool>();
     public List<State> enemies = new List<State>();
     public List<State> borderingStates = new List<State>();
     public int borderingRegions = 0;
@@ -66,6 +65,54 @@ public class State : PopObject
         }
     }
     #region Diplomacy
+    public void UpdateEnemies()
+    {
+        List<State> atWarWith = new List<State>();
+        foreach (var pair in wars)
+        {
+            War war = pair.Key;
+            bool attacker = pair.Value;
+            if (attacker)
+            {
+                foreach (State state in war.defenders)
+                {
+                    atWarWith.Add(state);
+                }
+            }
+            else
+            {
+                foreach (State state in war.attackers)
+                {
+                    atWarWith.Add(state);
+                }
+            }
+        }
+        enemies = atWarWith;
+    }
+    public List<War> GetWarsWithState(State state)
+    {
+        List<War> ws = new List<War>();
+        foreach (var pair in wars)
+        {
+            War war = pair.Key;
+            bool attacker = pair.Value;
+            if (attacker)
+            {
+                if (war.defenders.Contains(state))
+                {
+                    ws.Add(war);
+                }
+            }
+            else
+            {
+                if (war.attackers.Contains(state))
+                {
+                    ws.Add(war);
+                }
+            }
+        }
+        return ws;
+    }
     public void RelationsUpdate()
     {
         foreach (var pair in relations)
@@ -111,13 +158,6 @@ public class State : PopObject
             relations[state].opinion = opinion;
         }
     }
-    public void UpdateEnemies()
-    {
-        if (sovereignty != Sovereignty.INDEPENDENT)
-        {
-            enemies = liege.enemies;
-        }
-    }
     public void StartWars()
     {
         if (sovereignty == Sovereignty.INDEPENDENT)
@@ -135,7 +175,7 @@ public class State : PopObject
                     }
                     if (rng.NextSingle() < warDeclarationChance)
                     {
-                        StartWar(state);
+                        StartWar(state, WarType.CONQUEST);
                         relation.opinion = Relation.minOpinionValue;
                         return;
                     }
@@ -174,17 +214,20 @@ public class State : PopObject
             {
                 State state = pair.Key;
                 Relation relation = pair.Value;
-
+                
                 if (relation.opinion >= 0 && enemies.Contains(state))
                 {
-                    if (rng.NextSingle() < 0.01f * (relation.opinion + 1)) 
+                    if (rng.NextSingle() < 0.01f * (relation.opinion + 1))
                     {
-                        EndWar(state);
+                        EndWar(GetWarsWithState(state).PickRandom(rng));
                     }
                 }
                 if (capital.occupier == state && liege == null)
                 {
-                    EndWar(state, true);
+                    foreach (War war in GetWarsWithState(state))
+                    {
+                        EndWar(war);
+                    }
                     state.AddVassal(this);
                 }
             }
@@ -238,7 +281,7 @@ public class State : PopObject
         string govtName;
         switch (government)
         {
-            case GovernmentTypes.REPUBLIC:
+            case GovernmentType.REPUBLIC:
                 switch (sovereignty)
                 {
                     case Sovereignty.COLONY:
@@ -263,7 +306,7 @@ public class State : PopObject
                         break;
                 }
                 break;
-            case GovernmentTypes.MONARCHY:
+            case GovernmentType.MONARCHY:
                 switch (sovereignty)
                 {
                     case Sovereignty.COLONY:
@@ -288,7 +331,7 @@ public class State : PopObject
                         break;
                 }
                 break;
-            case GovernmentTypes.AUTOCRACY:
+            case GovernmentType.AUTOCRACY:
                 switch (sovereignty)
                 {
                     case Sovereignty.COLONY:
@@ -435,6 +478,10 @@ public class State : PopObject
             regions.Remove(region);
         }
     }
+    public int GetMaxRegionsCount()
+    {
+        return 6 + (tech.societyLevel * 2);
+    }
     #endregion
     #region Vassals
     public void SetStateSovereignty(State state, Sovereignty sovereignty)
@@ -467,6 +514,19 @@ public class State : PopObject
     {
         if (sovereignty != Sovereignty.INDEPENDENT)
         {
+            if (state.sovereignty == Sovereignty.INDEPENDENT)
+            {
+                foreach (War war in state.wars.Keys)
+                {
+                    war.RemoveParticipants(state.GetAllVassals());
+                }  
+                                
+            }
+
+            foreach (State vassal in state.vassals.ToArray())
+            {
+                state.RemoveVassal(vassal);
+            }          
             if (state.liege != null)
             {
                 state.liege.RemoveVassal(state);
@@ -474,10 +534,6 @@ public class State : PopObject
             state.liege = this;
             state.sovereignty = sovereignty;
             vassals.Add(state);
-            foreach (State vassal in state.vassals.ToArray())
-            {
-                state.RemoveVassal(vassal);
-            }
         }
     }
 
@@ -537,7 +593,7 @@ public class State : PopObject
     public bool IsStateInRealm(State state) {
         return GetHighestLiege() == state.GetHighestLiege();
     }   
-    public State[] GetAllVassals()
+    public List<State> GetAllVassals()
     {
         List<State> collectedVassals = new List<State>();
         foreach (State vassal in vassals)
@@ -551,20 +607,13 @@ public class State : PopObject
                 }
             }
         }
-        return collectedVassals.ToArray();
+        return collectedVassals;
     }
-    public void StartWar(State state)
+    public void StartWar(State state, WarType type)
     {
         EstablishRelations(state, Relation.minOpinionValue);
         state.EstablishRelations(this, Relation.minOpinionValue);
-        if (!enemies.Contains(state))
-        {
-            enemies.Add(state);
-        }
-        if (!state.enemies.Contains(this))
-        {
-            state.enemies.Add(this);
-        }
+        War war = new War(GetAllVassals(), state.GetAllVassals(), type);
     }
     public void RemoveOccupationFromState(State state)
     {
@@ -576,35 +625,30 @@ public class State : PopObject
             }
         }
     }
-    public void EndWar(State state, bool returnTerritories = false)
+    public void EndWar(War war)
     {
-        if (enemies.Contains(state))
-        {
-            enemies.Remove(state);
-        }
-        if (state.enemies.Contains(this))
-        {
-            state.enemies.Remove(this);
-        }
-        if (returnTerritories)
-        {
-            state.RemoveOccupationFromState(this);
-            RemoveOccupationFromState(state);            
-        }
-
+        war.EndWar();       
     }
     #endregion
 }   
 
-public enum GovernmentTypes {
+public enum GovernmentType {
     REPUBLIC,
     MONARCHY,
     AUTOCRACY,
 }
 
-public enum Sovereignty {
+public enum Sovereignty
+{
     INDEPENDENT,
     PUPPET,
-    COLONY, 
+    COLONY,
     PROVINCE
+}
+
+public enum WarType
+{
+    CONQUEST,
+    CIVIL_WAR,
+    REVOLT
 }
