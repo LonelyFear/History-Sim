@@ -24,7 +24,7 @@ public class State : PopObject
     public State liege = null;
     public Dictionary<State, Relation> relations = new Dictionary<State, Relation>();
     public Dictionary<War, bool> wars = new Dictionary<War, bool>();
-    public Dictionary<State, WarType> enemies = new Dictionary<State, WarType>();
+    public List<State> enemies = new List<State>();
     public List<State> borderingStates = new List<State>();
     public int borderingRegions = 0;
     public int externalBorderingRegions = 0;
@@ -70,8 +70,6 @@ public class State : PopObject
     #region Diplomacy
     public void UpdateEnemies()
     {
-        enemies = GetHighestLiege().enemies;
-        /*
         List<State> atWarWith = new List<State>();
         foreach (var pair in wars)
         {
@@ -79,21 +77,14 @@ public class State : PopObject
             bool attacker = pair.Value;
             if (attacker)
             {
-                foreach (State state in war.defenders)
-                {
-                    atWarWith.Add(state);
-                }
+                atWarWith.AddRange(war.defenders);
             }
             else
             {
-                foreach (State state in war.attackers)
-                {
-                    atWarWith.Add(state);
-                }
+                atWarWith.AddRange(war.attackers);
             }
         }
         enemies = atWarWith;
-        */
     }
     public List<War> GetWarsWithState(State state)
     {
@@ -123,12 +114,12 @@ public class State : PopObject
     {
         foreach (var pair in relations)
         {
-            if (!borderingStates.Contains(pair.Key) && !enemies.ContainsKey(pair.Key))
+            if (!borderingStates.Contains(pair.Key) && !enemies.Contains(pair.Key))
             {
                 relations.Remove(pair.Key);
                 continue;
             }
-            if (enemies.Keys.Contains(pair.Key))
+            if (enemies.Contains(pair.Key))
             {
                 pair.Value.truce += (int)(TimeManager.ticksPerMonth / 2f);
             }
@@ -172,7 +163,7 @@ public class State : PopObject
             {
                 State state = pair.Key;
                 Relation relation = pair.Value;
-                if (relation.opinion < 0 && !enemies.ContainsKey(state) && relation.truce <= 0 && state.sovereignty == Sovereignty.INDEPENDENT)
+                if (relation.opinion < 0 && !enemies.Contains(state) && relation.truce <= 0 && state.sovereignty == Sovereignty.INDEPENDENT)
                 {
                     float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, relation.opinion / (float)Relation.minOpinionValue);
                     if (liege == state || vassals.Contains(state))
@@ -221,16 +212,16 @@ public class State : PopObject
                 State state = pair.Key;
                 Relation relation = pair.Value;
                 
-                if (relation.opinion >= 0 && enemies.ContainsKey(state))
+                if (relation.opinion >= 0 && enemies.Contains(state))
                 {
                     if (rng.NextSingle() < 0.01f * (relation.opinion + 1))
                     {
-                        EndWar(state);
+                        EndWarsWithState(state);
                     }
                 }
                 if (capital.occupier == state && liege == null)
                 {
-                    EndWar(state);
+                    EndWarsWithState(state);
                     state.AddVassal(this);
                 }
             }
@@ -259,7 +250,7 @@ public class State : PopObject
             {
                 float relationChangeChance = 0.5f;
                 float relationDamageChance = 0.5f;
-                if (enemies.ContainsKey(state))
+                if (enemies.Contains(state))
                 {
                     relationChangeChance *= 0.75f;
                 }
@@ -281,30 +272,27 @@ public class State : PopObject
     {
         EstablishRelations(state, Relation.minOpinionValue);
         state.EstablishRelations(this, Relation.minOpinionValue);
-        if (!enemies.ContainsKey(state))
-        {
-            enemies.Add(state, type);
-        }
-        if (!state.enemies.ContainsKey(this))
-        {
-            state.enemies.Add(this, type);
-        }
+        _ = new War(GetRealmStates(), state.GetRealmStates(), type, this, state);
     }
-    public void EndWar(State state)
+    public void EndWar(War war)
     {
-        if (enemies.ContainsKey(state))
+        
+    }
+    public void EndWarsWithState(State state)
+    {
+        foreach (War war in wars.Keys.ToArray())
         {
-            enemies.Remove(state);
+            if (war.participants.Contains(state))
+            {
+                war.EndWar();
+            }
         }
-        if (state.enemies.ContainsKey(this))
-        {
-            state.enemies.Remove(this);
-        }    
     }   
     #endregion
     #region Government
     public void UpdateDisplayName()
     {
+        bool useDemonym = true;
         string govtName;
         switch (government)
         {
@@ -313,9 +301,11 @@ public class State : PopObject
                 {
                     case Sovereignty.COLONY:
                         govtName = "Colony";
+                        useDemonym = false;
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Mandate";
+                        useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Department";
@@ -338,15 +328,19 @@ public class State : PopObject
                 {
                     case Sovereignty.COLONY:
                         govtName = "Crown Colony";
+                        useDemonym = false;
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Protectorate";
+                        useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Duchy";
+                        useDemonym = false;
                         break;
                     default:
                         govtName = "Principality";
+                        
                         if (vassals.Count > 0)
                         {
                             govtName = "Kingdom";
@@ -354,6 +348,10 @@ public class State : PopObject
                         else if (vassals.Count > 3)
                         {
                             govtName = "Empire";
+                        }
+                        else
+                        {
+                            useDemonym = false;
                         }
                         break;
                 }
@@ -366,9 +364,11 @@ public class State : PopObject
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Client State";
+                        useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Province";
+                        useDemonym = false;
                         break;
                     default:
                         govtName = "State";
@@ -387,7 +387,16 @@ public class State : PopObject
                 govtName = "State";
                 break;
         }
-        displayName = govtName + " of " + name;
+        string demonym = NameGenerator.GetDemonym(name);
+        if (useDemonym)
+        {
+            displayName = $"{demonym} {govtName}";
+        }
+        else
+        {
+            displayName = $"{govtName} of {name}";
+        }
+        
     }
     public void UpdateDisplayColor()
     {
@@ -511,7 +520,11 @@ public class State : PopObject
     }
     public void UpdateStability()
     {
-        
+        double stabilityDecreaseChance = 0.001;
+        if (rng.NextDouble() <= stabilityDecreaseChance)
+        {
+            stability--;
+        }
     }
     #endregion
     #region Vassals
@@ -523,7 +536,10 @@ public class State : PopObject
         {
             loyaltyDecreaseChance += (GetArmyPower() / liege.GetArmyPower() - 1.0) * 0.5;
         }
-        loyaltyDecreaseChance += liege.stability / 1000.0;
+        if (liege.stability < 50)
+        {
+            loyaltyDecreaseChance += liege.stability / 100.0;
+        }
 
         if (rng.NextDouble() <= loyaltyDecreaseChance)
         {

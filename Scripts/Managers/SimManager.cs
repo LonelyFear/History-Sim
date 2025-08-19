@@ -427,7 +427,7 @@ public partial class SimManager : Node
             {
                 if (region.owner != null)
                 {
-                    if (region.occupier != null && !region.owner.enemies.Keys.Contains(region.occupier))
+                    if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
                     {
                         region.occupier = null;
                     }

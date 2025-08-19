@@ -123,7 +123,7 @@ public class Region : PopObject
 
     public void UpdateOccupation()
     {
-        if (occupier != null && !owner.GetHighestLiege().enemies.ContainsKey(occupier))
+        if (occupier != null && !owner.GetHighestLiege().enemies.Contains(occupier))
         {
             occupier = null;
         }
@@ -259,7 +259,7 @@ public class Region : PopObject
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
         SimManager.m.ReleaseMutex();
 
-        if (region != null && region.GetController() != null && GetController().enemies.ContainsKey(region.GetController()))
+        if (region != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
         {
             Battle result = Battle.CalcBattle(region, GetController(), null, GetController().GetArmyPower(), region.owner.GetArmyPower());
 
@@ -305,7 +305,7 @@ public class Region : PopObject
         {
             owner.RemoveRegion(this);
         }
-        if (GetController() != owner.GetHighestLiege())
+        if (owner != null && GetController() != owner.GetHighestLiege())
         {
             control = 0f;
         }
