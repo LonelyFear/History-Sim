@@ -49,8 +49,6 @@ public class Region : PopObject
     public Region[] borderingRegions = new Region[4];
     public Region[] habitableBorderingRegions = new Region[4];
     public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
-    public int stability = 100;
-    public int unrest = 0;
 
     public bool border;
     public bool frontier;
@@ -125,7 +123,7 @@ public class Region : PopObject
 
     public void UpdateOccupation()
     {
-        if (occupier != null && !owner.GetHighestLiege().enemies.Contains(occupier))
+        if (occupier != null && !owner.GetHighestLiege().enemies.ContainsKey(occupier))
         {
             occupier = null;
         }
@@ -151,6 +149,7 @@ public class Region : PopObject
             }
 
             owner.rulingPop = rulingPop;
+            owner.tech = rulingPop.tech;
             owner.UpdateDisplayName();
         }
     }
@@ -172,6 +171,7 @@ public class Region : PopObject
             }
 
             owner.rulingPop = rulingPop;
+            owner.tech = rulingPop.tech;
             owner.UpdateDisplayName();            
         }
     }
@@ -259,7 +259,7 @@ public class Region : PopObject
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
         SimManager.m.ReleaseMutex();
 
-        if (region != null && GetController().enemies.Contains(region.GetController()))
+        if (region != null && region.GetController() != null && GetController().enemies.ContainsKey(region.GetController()))
         {
             Battle result = Battle.CalcBattle(region, GetController(), null, GetController().GetArmyPower(), region.owner.GetArmyPower());
 
@@ -305,13 +305,13 @@ public class Region : PopObject
         {
             owner.RemoveRegion(this);
         }
-        if (GetController() != owner)
+        if (GetController() != owner.GetHighestLiege())
         {
             control = 0f;
         }
         else
         {
-            control = Mathf.Clamp(control + 0.05f, 0f, 1f);
+            control = Mathf.Clamp(control + 0.005f, 0f, 1f);
         }
     }
 

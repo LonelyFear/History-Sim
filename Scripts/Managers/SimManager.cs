@@ -97,6 +97,7 @@ public partial class SimManager : Node
         PopObject.simManager = this;
         Army.simManager = this;
         Pop.simManager = this;
+        War.simManager = this;
 
         // Load Resources Before Buildings        
         terrainSize = WorldGenerator.WorldSize;
@@ -407,7 +408,6 @@ public partial class SimManager : Node
                         if (region.frontier && region.owner.rulingPop != null && region.occupier == null)
                         {
                             region.NeutralConquest();
-
                         }
                         region.MilitaryConquest();
                     }
@@ -427,7 +427,7 @@ public partial class SimManager : Node
             {
                 if (region.owner != null)
                 {
-                    if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
+                    if (region.occupier != null && !region.owner.enemies.Keys.Contains(region.occupier))
                     {
                         region.occupier = null;
                     }
@@ -466,6 +466,10 @@ public partial class SimManager : Node
         {
             foreach (State state in states)
             {
+                if (state.rulingPop != null)
+                {
+                    state.tech = state.rulingPop.tech;
+                }
                 state.GetRealmBorders();
             }
             foreach (State state in states.ToArray())
@@ -476,6 +480,10 @@ public partial class SimManager : Node
                 }
 
                 state.age += TimeManager.ticksPerMonth;
+                if (state.sovereignty != Sovereignty.INDEPENDENT)
+                {
+                    state.timeAsVassal += TimeManager.ticksPerMonth;
+                }
                 if (state.regions.Count < 1)
                 {
                     DeleteState(state);
@@ -551,15 +559,14 @@ public partial class SimManager : Node
         {
             GD.PushError(e);
         }
-        //GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         startTime = Time.GetTicksMsec();
         UpdateRegions();
-       // startTime = Time.GetTicksMsec();
+        startTime = Time.GetTicksMsec();
         UpdateStates();
-        //GD.Print("States Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-        //startTime = Time.GetTicksMsec();
-        //GD.Print("Character Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        GD.Print("States Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         UpdateCultures();
+        UpdateWars();
     }
     public void SimYear()
     {

@@ -33,7 +33,7 @@ public static class Utility
             r = rng;
         }
         int length = array.Count();
-        return array[r.Next(0, length - 1)];
+        return array[r.Next(0, length)];
     }
     public static PopObject.ObjectType GetObjectType(this PopObject popObject)
     {

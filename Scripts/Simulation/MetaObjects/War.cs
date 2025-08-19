@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 
 public class War
 {
     public List<State> attackers;
     public List<State> defenders;
     public WarType warType = WarType.CONQUEST;
+    public static SimManager simManager;
     public uint tickStarted;
     public uint age;
     public uint tickEnded;
@@ -23,6 +25,25 @@ public class War
         foreach (State state in defenders)
         {
             state.wars.Add(this, false);
+        }
+        simManager.wars.Add(this);
+    }
+    public void AddParticipants(List<State> states, bool attacker)
+    {
+        foreach (State state in states)
+        {
+            state.wars.Add(this, attacker);
+        }
+
+        if (!states.All(attackers.Contains))
+        {
+            // States are attackers
+            attackers.AddRange(states);
+        }
+        else if (!states.All(defenders.Contains))
+        {
+            // States are defenders
+            defenders.AddRange(states);
         }
     }
     public void RemoveParticipants(List<State> states)
@@ -48,6 +69,7 @@ public class War
     }
     public void EndWar()
     {
+        simManager.wars.Remove(this);
         foreach (State state in attackers.Concat(defenders))
         {
             state.wars.Remove(this);
