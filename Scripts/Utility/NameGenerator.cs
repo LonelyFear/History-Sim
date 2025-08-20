@@ -52,7 +52,7 @@ public class NameGenerator
         {
             demonym = name[..^1] + "er";
         }
-        else if (name.EndsWith("n"))
+        else if (name.EndsWith("n") || name.EndsWith("r"))
         {
             demonym = name + "i";
         }

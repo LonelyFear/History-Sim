@@ -44,6 +44,7 @@ public class State : PopObject
     public Character heir;
     public int stability = 100;
     public int loyalty = 100;
+    public const int minRebellionLoyalty = 70;
     public uint timeAsVassal = 0;
     public void UpdateCapital()
     {
@@ -528,6 +529,28 @@ public class State : PopObject
     }
     #endregion
     #region Vassals
+    public List<State> GatherRebels()
+    {
+        List<State> rebels = [this];
+        foreach (State vassal in liege.vassals)
+        {
+            if (vassal.loyalty > minRebellionLoyalty)
+            {
+                continue;
+            }
+            double joinChance = 0.01;
+            joinChance += (1.0 - (vassal.loyalty / minRebellionLoyalty)) * 0.3;
+            if (vassal.loyalty < loyalty)
+            {
+                joinChance += (loyalty - vassal.loyalty) / (double)loyalty * 0.6;
+            }
+            if (rng.NextDouble() < joinChance)
+            {
+                rebels.Add(vassal);
+            }
+        }
+        return rebels;
+    }
     public void UpdateLoyalty()
     {
         int yearsAsVassal = (int)(timeAsVassal / (double)TimeManager.ticksPerYear);
@@ -538,7 +561,7 @@ public class State : PopObject
         }
         if (liege.stability < 50)
         {
-            loyaltyDecreaseChance += liege.stability / 100.0;
+            loyaltyDecreaseChance += 1.0 - (liege.stability / 50.0);
         }
 
         if (rng.NextDouble() <= loyaltyDecreaseChance)
@@ -558,7 +581,16 @@ public class State : PopObject
             {
                 if (vassals.Contains(state))
                 {
+                    if (sovereignty < state.sovereignty)
+                    {
+                        state.loyalty -= 15;
+                    }
+                    else
+                    {
+                        state.loyalty += 10;
+                    }
                     state.sovereignty = sovereignty;
+                    
                 }
                 else
                 {
@@ -585,6 +617,7 @@ public class State : PopObject
             state.sovereignty = sovereignty;
             vassals.Add(state);
             state.timeAsVassal = 0;
+            state.loyalty = 100;
         }
     }
 
@@ -596,6 +629,7 @@ public class State : PopObject
             state.sovereignty = Sovereignty.INDEPENDENT;
             vassals.Remove(state);
             state.timeAsVassal = 0;
+            state.loyalty = 100;
         }
     }
     #endregion
@@ -689,11 +723,11 @@ public enum GovernmentType {
 
 public enum Sovereignty
 {
-    INDEPENDENT,
-    REBELLIOUS,
-    PUPPET,
-    COLONY,
-    PROVINCE
+    INDEPENDENT = 4,
+    REBELLIOUS = 3,
+    PUPPET = 2,
+    COLONY = 1,
+    PROVINCE = 0
 }
 
 public enum WarType

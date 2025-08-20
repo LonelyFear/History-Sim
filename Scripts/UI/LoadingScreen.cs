@@ -11,8 +11,7 @@ public partial class LoadingScreen : Control
     Camera2D camera;
 
     public int seed;
-    public int tilesPerRegionFactor;
-    public int worldSizeFactor;
+    public int worldMult;
     bool textureGenerated;
     TerrainMap map;
     
@@ -30,8 +29,9 @@ public partial class LoadingScreen : Control
     public override void _Process(double delta)
     {
         if (task == null){
+            WorldGenerator.WorldMult = worldMult;
             WorldGenerator.Seed = seed;
-            sim.tilesPerRegion *= tilesPerRegionFactor;
+            //sim.tilesPerRegion *= tilesPerRegionFactor;
 
             task = Task.Run(WorldGenerator.GenerateWorld);
         }

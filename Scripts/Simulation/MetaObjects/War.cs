@@ -41,9 +41,9 @@ public class War
             case WarType.CONQUEST:
                 string[] warNames = { "War", "Conflict"};
                 warName = $"{agressorLeader.name}-{defenderLeader.name} {warNames.PickRandom()}";
-                if (rng.NextSingle() < 0.5f)
+                if (rng.NextSingle() < 0.25f)
                 {
-                    warNames = ["Invasion Of", "War Against"];
+                    warNames = ["Invasion of"];
                     warName = $"{NameGenerator.GetDemonym(agressorLeader.name)} {warNames.PickRandom()} {defenderLeader.name}";
                 }
                 break;

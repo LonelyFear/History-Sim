@@ -70,7 +70,7 @@ public partial class SimManager : Node
         return (Vector2I)(pos / (terrainMap.Scale * 16)) / tilesPerRegion;
     }
 
-    public Vector2 RegionToGlobalPos(Vector2I regionPos)
+    public Vector2 RegionToGlobalPos(Vector2 regionPos)
     {
         return tilesPerRegion * (regionPos * (terrainMap.Scale * 16));
     }
@@ -483,6 +483,7 @@ public partial class SimManager : Node
                 if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
+                    state.UpdateLoyalty();
                 }
                 if (state.regions.Count < 1)
                 {
@@ -559,12 +560,12 @@ public partial class SimManager : Node
         {
             GD.PushError(e);
         }
-        GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        //GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         startTime = Time.GetTicksMsec();
         UpdateRegions();
         startTime = Time.GetTicksMsec();
         UpdateStates();
-        GD.Print("States Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        //GD.Print("States Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         UpdateCultures();
         UpdateWars();
     }
