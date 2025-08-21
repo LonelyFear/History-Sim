@@ -44,6 +44,14 @@ public partial class ObjectInfo : Control
                     specialLabel.Text +=  "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
                     specialLabel.Text += "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0");
                     specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower()).ToString("#,###0") + "\n";
+                    
+                    specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("#,###0");
+                    if (state.liege != null)
+                    {
+                        specialLabel.Text += "\n" + "Loyalty: " + state.loyalty.ToString("#,###0");
+                    }
+                    
+                    
                     specialLabel.Text += "\n" + "Wars: ";
                     if (state.wars.Count > 0)
                     {

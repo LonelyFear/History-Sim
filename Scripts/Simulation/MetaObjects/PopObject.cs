@@ -12,6 +12,7 @@ public abstract class PopObject {
     public long dependents = 0;    
     public long workforce = 0;
     public List<Pop> pops = new List<Pop>();
+    public static TimeManager timeManager;
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
     {
         {Profession.FARMER, 0},

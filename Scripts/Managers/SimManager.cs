@@ -95,6 +95,7 @@ public partial class SimManager : Node
     private void OnWorldgenFinished(object sender, EventArgs e)
     {
         PopObject.simManager = this;
+        PopObject.timeManager = timeManager;
         Army.simManager = this;
         Pop.simManager = this;
         War.simManager = this;

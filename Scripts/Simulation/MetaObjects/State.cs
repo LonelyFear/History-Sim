@@ -42,8 +42,8 @@ public class State : PopObject
     public Character leader;
     public Pop rulingPop;
     public Character heir;
-    public int stability = 100;
-    public int loyalty = 100;
+    public double stability = 10;
+    public double loyalty = 100;
     public const int minRebellionLoyalty = 70;
     public uint timeAsVassal = 0;
     public void UpdateCapital()
@@ -553,21 +553,23 @@ public class State : PopObject
     }
     public void UpdateLoyalty()
     {
-        int yearsAsVassal = (int)(timeAsVassal / (double)TimeManager.ticksPerYear);
-        double loyaltyDecreaseChance = yearsAsVassal / 1000.0;
-        if (GetArmyPower() > liege.GetArmyPower())
-        {
-            loyaltyDecreaseChance += (GetArmyPower() / liege.GetArmyPower() - 1.0) * 0.5;
-        }
-        if (liege.stability < 50)
-        {
-            loyaltyDecreaseChance += 1.0 - (liege.stability / 50.0);
-        }
+        double loyaltyChangeChance = 0.1;
+        double loyaltyDamageChance = 0.5;
 
-        if (rng.NextDouble() <= loyaltyDecreaseChance)
+        if (rng.NextDouble() < loyaltyChangeChance)
         {
-            loyalty -= 1;
+            if (rng.NextDouble() < loyaltyDamageChance)
+            {
+                loyalty -= rng.Next(1, 11);
+            }
+            else
+            {
+                loyalty += rng.Next(0, 6);
+            }
         }
+        double baseLoyalty = 50 + (liege.totalWealth / liege.GetRealmRegions().Count() * 1.5);
+        double grievances = timeManager.GetYear(timeAsVassal) * 0.5;
+        loyalty = Mathf.Lerp(loyalty, Mathf.Clamp(baseLoyalty - grievances, 0, 100), 0.02);
     }
     public void SetStateSovereignty(State state, Sovereignty sovereignty)
     {
