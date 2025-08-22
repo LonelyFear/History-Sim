@@ -481,6 +481,7 @@ public partial class SimManager : Node
                 }
 
                 state.age += TimeManager.ticksPerMonth;
+                state.UpdateStability();
                 if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
