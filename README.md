@@ -20,7 +20,8 @@ Thanks to:
 - PyskeDoesStuff
 - Catenium
 - Fella4Socks
-- And more
+- Raccoon
+- FoxAtreides
 
 The links to NFB's youtube and discord are below.
 
