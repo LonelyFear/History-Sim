@@ -15,7 +15,7 @@ The simulation goes in depth with the following features:
 # Credits
 Huge thanks to NFB for inspiration and the people over in his discord for help on this project. 
 
-Thanks to:
+Including:
 - ElementlHero
 - PyskeDoesStuff
 - Catenium
