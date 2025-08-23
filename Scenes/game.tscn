@@ -273,10 +273,10 @@ alignment = 1
 
 [node name="VSeparator" type="VSeparator" parent="UI/Action Panel/HBoxContainer"]
 layout_mode = 2
-theme_override_constants/separation = 493
+theme_override_constants/separation = 464
 theme_override_styles/separator = SubResource("StyleBoxEmpty_iivbl")
 
-[node name="MainMenuButton" type="Button" parent="UI/Action Panel/HBoxContainer"]
+[node name="MenuButton" type="Button" parent="UI/Action Panel/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("4_exi56")
@@ -296,6 +296,66 @@ theme_override_font_sizes/font_size = 13
 text = "Region Data:
 Population: 100"
 script = ExtResource("9_iivbl")
+
+[node name="Options Panel" type="Panel" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 358.0
+offset_top = 79.0
+offset_right = 640.0
+offset_bottom = 279.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Options Panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -111.0
+offset_top = -84.0
+offset_right = 112.0
+offset_bottom = 99.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="UI/Options Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("8_7t8sx")
+theme_override_font_sizes/font_size = 31
+text = "Options"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="UI/Options Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 17
+
+[node name="MainMenuButton" type="Button" parent="UI/Options Panel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 26
+text = "Main Menu"
+
+[node name="OptionsButton" type="Button" parent="UI/Options Panel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 26
+disabled = true
+text = "Options
+"
+
+[node name="SaveButton" type="Button" parent="UI/Options Panel/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 26
+text = "Save"
 
 [node name="Loading" type="CanvasLayer" parent="."]
 

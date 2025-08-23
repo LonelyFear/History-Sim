@@ -4,12 +4,17 @@ using System.ComponentModel;
 
 public partial class ActionPanel : Panel
 {
+    public Button menuButton;
     public Button mainMenuButton;
+    public Panel menuPanel;
     bool uiVisible = true;
     public override void _Ready()
     {
-        mainMenuButton = GetNode<Button>("HBoxContainer/MainMenuButton");
-        mainMenuButton.Pressed += OnMainMenuClick;
+        menuPanel = GetNode<Panel>("/root/Game/UI/Options Panel");
+        mainMenuButton = GetNode<Button>("/root/Game/UI/Options Panel/VBoxContainer/MainMenuButton");
+        menuButton = GetNode<Button>("HBoxContainer/MenuButton");
+        menuButton.Pressed += OnMenuClick;
+        mainMenuButton.Pressed += OnMainMenu;
     }
 
     public override void _Process(double delta)
@@ -21,12 +26,16 @@ public partial class ActionPanel : Panel
         }
     }
 
-
-    public void OnMainMenuClick()
+    public void OnMainMenu()
     {
         SimManager.m.Close();
         GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
-        GetNode<Game>("/root/Game").QueueFree();
+        GetNode<Game>("/root/Game").QueueFree();        
+    }
+
+    public void OnMenuClick()
+    {
+        menuPanel.Visible = !menuPanel.Visible;
     }
 
     public void OnUiToggle(bool toggle)
