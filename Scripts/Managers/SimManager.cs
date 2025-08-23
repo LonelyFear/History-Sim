@@ -27,6 +27,7 @@ public partial class SimManager : Node
     public static Vector2I worldSize;
     public static System.Threading.Mutex m = new System.Threading.Mutex();
     MapManager mapManager;
+    public WorldGenerator worldGenerator = LoadingScreen.generator;
 
     // Population
     public List<Pop> pops = new List<Pop>();
@@ -101,7 +102,7 @@ public partial class SimManager : Node
         War.simManager = this;
 
         // Load Resources Before Buildings        
-        terrainSize = WorldGenerator.WorldSize;
+        terrainSize = worldGenerator.WorldSize;
         worldSize = terrainSize / tilesPerRegion;
         #region Tile Initialization
         tiles = new Tile[terrainSize.X, terrainSize.Y];
@@ -112,10 +113,10 @@ public partial class SimManager : Node
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
 
-                newTile.biome = WorldGenerator.BiomeMap[x, y];
-                newTile.temperature = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x, y]);
-                newTile.moisture = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x, y]);
-                newTile.elevation = WorldGenerator.GetUnitElevation(WorldGenerator.HeightMap[x, y]);
+                newTile.biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
+                newTile.temperature = worldGenerator.GetUnitTemp(worldGenerator.TempMap[x, y]);
+                newTile.moisture = worldGenerator.GetUnitRainfall(worldGenerator.RainfallMap[x, y]);
+                newTile.elevation = worldGenerator.GetUnitElevation(worldGenerator.HeightMap[x, y]);
 
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
@@ -135,14 +136,14 @@ public partial class SimManager : Node
                 }
                 if (newTile.terrainType == TerrainType.LAND)
                 {
-                    if (WorldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
+                    if (worldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
                     {
                         newTile.navigability *= 0.25f;
                         newTile.arability *= 0.25f;
                         newTile.survivalbility *= 0.8f;
                         newTile.terrainType = TerrainType.MOUNTAINS;
                     }
-                    else if (WorldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
+                    else if (worldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
                     {
                         newTile.navigability *= 0.5f;
                         newTile.arability *= 0.5f;
@@ -160,7 +161,7 @@ public partial class SimManager : Node
                         }
                         int nx = Mathf.PosMod(x + dx, worldSize.X);
                         int ny = Mathf.PosMod(y + dy, worldSize.Y);
-                        if (WorldGenerator.BiomeMap[nx, ny].type == "water")
+                        if (AssetManager.GetBiome(worldGenerator.BiomeMap[nx, ny]).type == "water")
                         {
                             newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
                             newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);

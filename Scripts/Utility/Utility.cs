@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using Godot;
 using Vector2 = System.Numerics.Vector2;
 
@@ -25,6 +26,14 @@ public static class Utility
             list[k] = list[n];
             list[n] = value;
         }
+    }
+    public static int Vec2ToIndex(Vector2I gridSize, Vector2I pos)
+    {
+        return pos.X * gridSize.Y + pos.Y;
+    }
+    public static int Vec2ToIndex(Vector2I gridSize, int x, int y)
+    {
+        return x * gridSize.Y + y;
     }
     public static T PickRandom<T>(this IList<T> array, Random r = null)
     {

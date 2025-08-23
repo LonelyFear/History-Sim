@@ -3,18 +3,18 @@ using Godot;
 
 public class BiomeGenerator
 {
-    public Biome[,] map;
-    public Biome[,] GenerateBiomes()
+    public string[,] map;
+    public string[,] GenerateBiomes(WorldGenerator world)
     {
-        map = new Biome[WorldGenerator.WorldSize.X, WorldGenerator.WorldSize.Y];
-        for (int x = 0; x < WorldGenerator.WorldSize.X; x++)
+        map = new string[world.WorldSize.X, world.WorldSize.Y];
+        for (int x = 0; x < world.WorldSize.X; x++)
         {
-            for (int y = 0; y < WorldGenerator.WorldSize.Y; y++)
+            for (int y = 0; y < world.WorldSize.Y; y++)
             {
                 Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
-                float temp = WorldGenerator.GetUnitTemp(WorldGenerator.TempMap[x, y]);
-                float elevation = WorldGenerator.HeightMap[x, y];
-                float moist = WorldGenerator.GetUnitRainfall(WorldGenerator.RainfallMap[x, y]);
+                float temp = world.GetUnitTemp(world.TempMap[x, y]);
+                float elevation = world.HeightMap[x, y];
+                float moist = world.GetUnitRainfall(world.RainfallMap[x, y]);
                 Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
 
                 foreach (Biome biome in AssetManager.biomes.Values)
@@ -22,16 +22,16 @@ public class BiomeGenerator
                     bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
                     bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
 
-                    if (tempInRange && moistInRange && elevation >= WorldGenerator.SeaLevel)
+                    if (tempInRange && moistInRange && elevation >= world.SeaLevel)
                     {
                         candidates.Add(biome, 0);
                     }
-                    if (elevation < WorldGenerator.SeaLevel)
+                    if (elevation < world.SeaLevel)
                     {
                         if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
                         {
                             selectedBiome = AssetManager.GetBiome("ice_sheet");
-                            WorldGenerator.HeightMap[x, y] = 1f;
+                            world.HeightMap[x, y] = 1f;
                             break;
                         }
                         else
@@ -65,12 +65,12 @@ public class BiomeGenerator
 
                 }
                 
-                // if (WorldGenerator.HydroMap[x, y] > 11f && elevation >= WorldGenerator.SeaLevel)
+                // if (world.HydroMap[x, y] > 11f && elevation >= world.SeaLevel)
                 // {
                 //     selectedBiome = AssetManager.GetBiome("river");
                 // }
                 
-                map[x, y] = selectedBiome;
+                map[x, y] = selectedBiome.id;
             }
         }
         return map;

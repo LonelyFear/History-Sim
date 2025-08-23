@@ -6,6 +6,7 @@ public partial class LoadingScreen : Control
 {
     Task task;
     SimManager sim;
+    TimeManager time;
     CanvasLayer ui;
     Label splash;
     Camera2D camera;
@@ -14,11 +15,13 @@ public partial class LoadingScreen : Control
     public int worldMult;
     bool textureGenerated;
     TerrainMap map;
-    
+    public static WorldGenerator generator = new WorldGenerator();
     public override void _Ready()
     {
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
         sim = GetNode<SimManager>("/root/Game/Simulation");
+        time = GetNode<TimeManager>("/root/Game/Time Manager");
+
         ui = GetNode<CanvasLayer>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
         camera = GetNode<Camera2D>("/root/Game/PlayerCamera");
@@ -28,17 +31,28 @@ public partial class LoadingScreen : Control
     }
     public override void _Process(double delta)
     {
-        if (task == null){
-            WorldGenerator.WorldMult = worldMult;
-            WorldGenerator.Seed = seed;
+        WorldGenerator worldSave = WorldGenerator.LoadFromSave("Save1");
+        if (worldSave != null)
+        {
+            generator = worldSave;
+        }
+        
+        sim.worldGenerator = generator;
+        time.worldGenerator = generator;
+        map.world = generator;
+
+        if (task == null && generator.WorldExists == false)
+        {
+            generator.WorldMult = worldMult;
+            generator.Seed = seed;
             //sim.tilesPerRegion *= tilesPerRegionFactor;
 
-            task = Task.Run(WorldGenerator.GenerateWorld);
+            task = Task.Run(generator.GenerateWorld);
         }
 
-        float tileCount = WorldGenerator.WorldSize.X * WorldGenerator.WorldSize.Y;
-        GetNode<TextureProgressBar>("ProgressBar").Value = WorldGenerator.Stage/5f;
-        switch (WorldGenerator.Stage){
+        float tileCount = generator.WorldSize.X * generator.WorldSize.Y;
+        GetNode<TextureProgressBar>("ProgressBar").Value = generator.Stage/5f;
+        switch (generator.Stage){
             case 0:
                 splash.Text = "Colliding Plates...";
             break;
@@ -60,16 +74,16 @@ public partial class LoadingScreen : Control
         }
         //splash.Text = "Generating World";
 
-        if (task.IsCompleted && WorldGenerator.WorldExists && !textureGenerated)
+        if ((task == null || task.IsCompleted) && generator.WorldExists && !textureGenerated)
         {
             textureGenerated = true;
             splash.Text = "Finishing Up...";
             map.Init();
-            map.SetMapImageTexture(WorldGenerator.GetTerrainImage());
+            map.SetMapImageTexture(generator.GetTerrainImage());
         }
-        else if (task.IsCompleted)
+        else if (task == null || task.IsCompleted)
         {
-            WorldGenerator.FinishWorldgen();
+            generator.FinishWorldgen();
             camera.Set("controlEnabled", true);
             ui.Visible = true;
             QueueFree();

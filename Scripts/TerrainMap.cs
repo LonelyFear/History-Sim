@@ -4,6 +4,7 @@ using System;
 public partial class TerrainMap : Node2D
 {
     Sprite2D terrainMap;
+    public WorldGenerator world = LoadingScreen.generator;
     [Export] bool switchMap;
     bool isBiomeMap = false;
     public override void _Ready()
@@ -12,20 +13,20 @@ public partial class TerrainMap : Node2D
     }
     public void Init()
     {
-        Scale = new Vector2(1, 1) * 80f / WorldGenerator.WorldSize.X;
+        Scale = new Vector2(1, 1) * 80f / world.WorldSize.X;
     }
     public override void _Process(double delta)
     {
-        if (switchMap && WorldGenerator.WorldExists)
+        if (switchMap && world.WorldExists)
         {
             switchMap = false;
             if (isBiomeMap)
             {
                 isBiomeMap = false;
-                SetMapImageTexture(WorldGenerator.GetTerrainImage(true));
+                SetMapImageTexture(world.GetTerrainImage(true));
             } else {
                 isBiomeMap = true;
-                SetMapImageTexture(WorldGenerator.GetTerrainImage(false));
+                SetMapImageTexture(world.GetTerrainImage(false));
             }
         }
     }

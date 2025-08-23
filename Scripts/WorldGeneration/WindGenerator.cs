@@ -9,16 +9,16 @@ public class WindGenerator()
     float[,] heightMap;
     Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/PrevailingWindCurve.tres");
 
-    public void GeneratePrevailingWinds()
+    public void GeneratePrevailingWinds(WorldGenerator world)
     {
-        worldSize = WorldGenerator.WorldSize;
-        heightMap = WorldGenerator.HeightMap;
+        worldSize = world.WorldSize;
+        heightMap = world.HeightMap;
         windDirMap = new float[worldSize.X, worldSize.Y];
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                float latitudeFactor = Mathf.Abs(y - (WorldGenerator.WorldSize.Y / 2f)) / (WorldGenerator.WorldSize.Y / 2f);
+                float latitudeFactor = Mathf.Abs(y - (world.WorldSize.Y / 2f)) / (world.WorldSize.Y / 2f);
                 windDirMap[x, y] = prevailingWindCurve.Sample(latitudeFactor);
             }
         }

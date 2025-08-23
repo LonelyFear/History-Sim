@@ -14,19 +14,19 @@ public class RiverGenerator
     int invalidRivers = 0;
     List<Vector2I> validPositions = new List<Vector2I>();
     bool[,] rivers;
-    void GeneratePoints()
+    void GeneratePoints(WorldGenerator world)
     {
         Random rng = WorldGenerator.rng;
 
         for (int i = 0; i < attemptedRivers; i++)
         {
             bool posGood = true;
-            Vector2I pos = new Vector2I(rng.Next(0, WorldGenerator.WorldSize.X), rng.Next(0, WorldGenerator.WorldSize.Y));
-            if (!validPositions.Contains(pos) && WorldGenerator.HeightMap[pos.X, pos.Y] > minRiverHeight && rng.NextSingle() < WorldGenerator.RainfallMap[pos.X, pos.Y] && WorldGenerator.BiomeMap[pos.X, pos.Y].type == "land")
+            Vector2I pos = new Vector2I(rng.Next(0, world.WorldSize.X), rng.Next(0, world.WorldSize.Y));
+            if (!validPositions.Contains(pos) && world.HeightMap[pos.X, pos.Y] > minRiverHeight && rng.NextSingle() < world.RainfallMap[pos.X, pos.Y] && AssetManager.GetBiome(world.BiomeMap[pos.X, pos.Y]).type == "land")
             {
                 foreach (Vector2I oPos in validPositions)
                 {
-                    if (Utility.WrappedDistanceSquaredTo(pos, oPos, WorldGenerator.WorldSize) <= minRiverDist * minRiverDist)
+                    if (Utility.WrappedDistanceSquaredTo(pos, oPos, world.WorldSize) <= minRiverDist * minRiverDist)
                     {
                         posGood = false;
                         break;
@@ -49,19 +49,19 @@ public class RiverGenerator
         }
         GD.Print("Attempting to generate " + validPositions.Count + " rivers");
     }
-    public void RunRiverGeneration()
+    public void RunRiverGeneration(WorldGenerator world)
     {
         GD.Print("Generating Rivers, Make sure you got a good heightmap!");
-        rivers = new bool[WorldGenerator.WorldSize.X, WorldGenerator.WorldSize.Y];
-        GeneratePoints();
-        GenerateRivers();
-        BiomeRivers();
+        rivers = new bool[world.WorldSize.X, world.WorldSize.Y];
+        GeneratePoints(world);
+        GenerateRivers(world);
+        BiomeRivers(world);
         GD.Print("Generated " + (attemptedRivers - invalidRivers) + " rivers");
     }
 
-    void GenerateRivers()
+    void GenerateRivers(WorldGenerator world)
     {
-        float[,] heightmap = WorldGenerator.HeightMap;
+        float[,] heightmap = world.HeightMap;
         int maxAttempts = 10000;
         foreach (Vector2I riverStart in validPositions)
         {
@@ -86,7 +86,7 @@ public class RiverGenerator
                         {
                             continue;
                         }
-                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, WorldGenerator.WorldSize.X), Mathf.PosMod(pos.Y + dy, WorldGenerator.WorldSize.Y));
+                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, world.WorldSize.X), Mathf.PosMod(pos.Y + dy, world.WorldSize.Y));
                         if (heightmap[next.X, next.Y] <= lowestElevation && !currentRiver.Contains(next))
                         {
                             lowestElevation = heightmap[next.X, next.Y];
@@ -95,7 +95,7 @@ public class RiverGenerator
                     }
                 }
                 currentRiver.Add(lowestPos);
-                if (heightmap[lowestPos.X, lowestPos.Y] < WorldGenerator.SeaLevel)
+                if (heightmap[lowestPos.X, lowestPos.Y] < world.SeaLevel)
                 {
                     endFound = true;
                     waterEnd = true;
@@ -136,15 +136,15 @@ public class RiverGenerator
         }
     }
 
-    void BiomeRivers()
+    void BiomeRivers(WorldGenerator world)
     {
-        for (int x = 0; x < WorldGenerator.WorldSize.X; x++)
+        for (int x = 0; x < world.WorldSize.X; x++)
         {
-            for (int y = 0; y < WorldGenerator.WorldSize.Y; y++)
+            for (int y = 0; y < world.WorldSize.Y; y++)
             {
                 if (rivers[x, y])
                 {
-                    WorldGenerator.BiomeMap[x,y] = AssetManager.GetBiome("river");
+                    world.BiomeMap[x,y] = "river";
                 }
             }
         }

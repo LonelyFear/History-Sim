@@ -44,12 +44,12 @@ public class HeightmapGenerator
 
 
 
-    public float[,] GenerateHeightmap()
+    public float[,] GenerateHeightmap(WorldGenerator world)
     {
-        rng = new Random(WorldGenerator.Seed);
-        seaLevel = WorldGenerator.SeaLevel - shelfDepth;
-        worldSize = WorldGenerator.WorldSize;
-        worldMult = WorldGenerator.WorldMult;
+        rng = new Random(world.Seed);
+        seaLevel = world.SeaLevel - shelfDepth;
+        worldSize = world.WorldSize;
+        worldMult = world.WorldMult;
         heightmap = new float[worldSize.X, worldSize.Y];
         midpoints = new bool[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
@@ -57,7 +57,7 @@ public class HeightmapGenerator
         points = GeneratePoints();
         GD.Print("Point Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
-        GenerateRegions(WorldGenerator.continents);
+        GenerateRegions(world.continents);
         GD.Print("Voronoi Region Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
         GenerateContinents();
@@ -97,14 +97,14 @@ public class HeightmapGenerator
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                if (heightmap[x, y] > WorldGenerator.SeaLevel) {
+                if (heightmap[x, y] > world.SeaLevel) {
                     avgElevationAboveSea += heightmap[x, y];
                     aboveSeaLevelTiles++;
                 }
             }
         }
         avgElevationAboveSea /= aboveSeaLevelTiles;
-        GD.Print("Avg Elevation Above Sea Level: " + WorldGenerator.GetUnitElevation(avgElevationAboveSea).ToString("#,###0 meters"));
+        GD.Print("Avg Elevation Above Sea Level: " + world.GetUnitElevation(avgElevationAboveSea).ToString("#,###0 meters"));
         */
         return heightmap;
     }
