@@ -6,15 +6,18 @@ public partial class ActionPanel : Panel
 {
     public Button menuButton;
     public Button mainMenuButton;
+    public Button saveButton;
     public Panel menuPanel;
     bool uiVisible = true;
     public override void _Ready()
     {
         menuPanel = GetNode<Panel>("/root/Game/UI/Options Panel");
         mainMenuButton = GetNode<Button>("/root/Game/UI/Options Panel/VBoxContainer/MainMenuButton");
+        saveButton = GetNode<Button>("/root/Game/UI/Options Panel/VBoxContainer/SaveButton");
         menuButton = GetNode<Button>("HBoxContainer/MenuButton");
         menuButton.Pressed += OnMenuClick;
         mainMenuButton.Pressed += OnMainMenu;
+        saveButton.Pressed += OnSimSave;
     }
 
     public override void _Process(double delta)
@@ -36,6 +39,13 @@ public partial class ActionPanel : Panel
     public void OnMenuClick()
     {
         menuPanel.Visible = !menuPanel.Visible;
+    }
+    public void OnSimSave()
+    {
+        SimManager sim = GetNode<SimManager>("/root/Game/Simulation");;
+        WorldGenerator world = LoadingScreen.generator;
+        world.SaveTerrainToFile("Save1");
+        //sim.SaveSimToFile("Save1");
     }
 
     public void OnUiToggle(bool toggle)

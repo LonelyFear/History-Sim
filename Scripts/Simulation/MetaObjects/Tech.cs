@@ -2,10 +2,10 @@ using System;
 
 public class Tech
 {
-    public int militaryLevel;
-    public int scienceLevel;
-    public int societyLevel;
-    public int industryLevel;
+    public int militaryLevel { get; set; }
+    public int scienceLevel { get; set; }
+    public int societyLevel { get; set; }
+    public int industryLevel { get; set; }
 
     public static bool sameTech(Tech a, Tech b)
     {

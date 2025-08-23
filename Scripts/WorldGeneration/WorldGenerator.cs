@@ -25,8 +25,6 @@ public class WorldGenerator
     public float[,] RainfallMap { get; set; } 
     public float[,] TempMap { get; set; } 
     public string[,] BiomeMap { get; set; } 
-    public string[,] Features { get; set; }  // for denoting special stuff such as oasises, waterfalls, ore veins, etc
-    public float[,] HydroMap { get; set; } 
     public static Random rng;
     public bool TempDone;
     public bool RainfallDone;
@@ -62,8 +60,6 @@ public class WorldGenerator
         Stage = 0;
         WorldExists = false;
         WorldSize = new Vector2I(Mathf.RoundToInt(360 * WorldMult), Mathf.RoundToInt(180 * WorldMult));
-        HydroMap = new float[WorldSize.X, WorldSize.Y];
-        Features = new string[WorldSize.X, WorldSize.Y];
         rng = new Random(Seed);
     }
     void Generate()
@@ -144,9 +140,8 @@ public class WorldGenerator
         if (DirAccess.Open($"user://saves/{saveName}") == null) {
             DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
         }
-        DirAccess saveDir = DirAccess.Open($"user://saves/{saveName}");
 
-        Godot.FileAccess save = Godot.FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", Godot.FileAccess.ModeFlags.Write);
+        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", Godot.FileAccess.ModeFlags.Write);
         save.StoreLine(JsonSerializer.Serialize(this, options));
     }
     public static WorldGenerator LoadFromSave(string saveName)

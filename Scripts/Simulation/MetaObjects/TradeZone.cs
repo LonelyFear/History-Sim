@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Godot;
-
+[Serializable]
 public class TradeZone
 {
-    public Region CoT;
-    List<Region> regions = new List<Region>();
-    public Color color;
+    public Region CoT { get; set; }
+    List<Region> regions { get; set; } = new List<Region>();
+    public Color color { get; set; }
     static Random rng = new Random();
     public TradeZone(Region region)
     {

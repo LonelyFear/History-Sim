@@ -2,33 +2,33 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Godot;
-
+[Serializable]
 public class State : PopObject
 {
-    public string displayName = "Nation";
-    public Color color;
+    public string displayName { get; set; } = "Nation";
+    public Color color { get; set; }
     public Color displayColor;
     public Color capitalColor;
-    public List<Army> armies = new List<Army>();
-    public GovernmentType government = GovernmentType.MONARCHY;
+
+    public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     public List<Region> realmRegions = new List<Region>(); 
-    public List<Region> regions = new List<Region>();
-    public Region capital;
-    public long manpower = 0;
-    public int occupiedLand = 0;
-    public float totalWealth = 0;
-    public float mobilizationRate = 0.3f;
-    public float taxRate = 0.1f;
-    public float tribute = 0.1f;
-    public List<State> vassals = new List<State>();
-    public State liege = null;
-    public Dictionary<State, Relation> relations = new Dictionary<State, Relation>();
-    public Dictionary<War, bool> wars = new Dictionary<War, bool>();
-    public List<State> enemies = new List<State>();
-    public List<State> borderingStates = new List<State>();
-    public int borderingRegions = 0;
-    public int externalBorderingRegions = 0;
-    public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
+    public List<Region> regions { get; set; } = new List<Region>();
+    public Region capital { get; set; }
+    public long manpower { get; set; } = 0;
+    public int occupiedLand { get; set; } = 0;
+    public float totalWealth { get; set; } = 0;
+    public float mobilizationRate { get; set; } = 0.3f;
+    public float taxRate { get; set; } = 0.1f;
+    public float tribute { get; set; } = 0.1f;
+    public List<State> vassals { get; set; } = new List<State>();
+    public State liege { get; set; } = null;
+    public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
+    public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
+    public List<State> enemies { get; set; } = new List<State>();
+    public List<State> borderingStates { get; set; } = new List<State>();
+    public int borderingRegions { get; set; } = 0;
+    public int externalBorderingRegions { get; set; }= 0;
+    public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
 
 
     public List<Character> characters = new List<Character>();

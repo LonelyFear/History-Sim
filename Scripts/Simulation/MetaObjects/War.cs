@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
+[Serializable]
 public class War
 {
-    public string warName = "War";
-    public List<State> attackers = new List<State>();
-    public List<State> defenders = new List<State>();
-    public List<State> participants = new List<State>();
-    public WarType warType = WarType.CONQUEST;
+    public string warName { get; set; } = "War";
+    public List<State> attackers { get; set; } = new List<State>();
+    public List<State> defenders { get; set; } = new List<State>();
+    public List<State> participants { get; set; } = new List<State>();
+    public WarType warType { get; set; } = WarType.CONQUEST;
     static Random rng = new Random();
     public static SimManager simManager;
     public uint tickStarted;
@@ -39,7 +40,7 @@ public class War
         switch (warType)
         {
             case WarType.CONQUEST:
-                string[] warNames = { "War", "Conflict"};
+                string[] warNames = { "War", "Conflict" };
                 warName = $"{agressorLeader.name}-{defenderLeader.name} {warNames.PickRandom()}";
                 if (rng.NextSingle() < 0.25f)
                 {
@@ -75,7 +76,7 @@ public class War
             if (isInWar)
             {
                 state.wars.Add(this, attacker);
-                participants.Add(state);                
+                participants.Add(state);
             }
         }
     }
@@ -91,7 +92,7 @@ public class War
             if (isInWar)
             {
                 state.wars.Remove(this);
-                participants.Remove(state);           
+                participants.Remove(state);
             }
         }
         if (attackers.Count < 1 || defenders.Count < 1)
@@ -105,6 +106,6 @@ public class War
         foreach (State state in attackers.Concat(defenders))
         {
             state.wars.Remove(this);
-        }      
+        }
     }
 }

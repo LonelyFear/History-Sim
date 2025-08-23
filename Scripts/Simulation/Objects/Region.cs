@@ -2,60 +2,55 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Godot;
-
+[Serializable]
 public class Region : PopObject
 {
-    public Tile[,] tiles;
-    public Biome[,] biomes;
-    public bool habitable;
-    public bool coastal;
-    private int tradeWeight = 0;
-    private int baseTradeWeight = 0;
+    public Tile[,] tiles { get; set; }
+    public Biome[,] biomes { get; set; }
+    public bool habitable { get; set; }
+    public bool coastal { get; set; }
+    private int tradeWeight { get; set; } = 0;
+    private int baseTradeWeight { get; set; } = 0;
     public bool hasTradeWeight;
     public bool hasBaseTradeWeight;
-    public float lastWealth = 0;
-    public float lastBaseWealth = 0;
-    public float control = 1f;
-    public float baseWealth;
-    public float wealth;
-    public int linkUpdateCountdown = 4;
-    
-    public bool habitableAdjacent;
+    public float lastWealth { get; set; } = 0;
+    public float lastBaseWealth { get; set; } = 0;
+    public float control { get; set; } = 1f;
+    public float baseWealth { get; set; }
+    public float wealth { get; set; }
+    public int linkUpdateCountdown { get; set; } = 4;
 
     // trade
-    public TradeZone tradeZone;
-    public bool isCoT = false;    
+    public TradeZone tradeZone { get; set; }
+    public bool isCoT { get; set; } = false;    
     public float tradeIncome = 0;
     public float taxIncome = 0;
     public int zoneSize = 1;
-    public Region tradeLink = null;
-    public List<Region> connectedTiles = new List<Region>();
+    public Region tradeLink { get; set; } = null;
+    public List<Region> connectedTiles { get; set; } = new List<Region>();
 
-    public Vector2I pos;
-    public float navigability;
-    public float avgTemperature;
-    public float avgRainfall;
-    public float avgElevation;
-    public int landCount;
-    public int freeLand = 16;
-    public State occupier = null;
-    public State owner = null;
+    public Vector2I pos { get; set; }
+    public float navigability { get; set; }
+    public float avgTemperature { get; set; }
+    public float avgRainfall { get; set; }
+    public float avgElevation { get; set; }
+    public int landCount { get; set; }
+    public int freeLand { get; set; } = 16;
+    public State occupier { get; set; } = null;
+    public State owner { get; set; } = null;
     public List<Army> armies;
 
     // Demographics
-    public long maxFarmers = 0;
-    public long maxSoldiers = 0;
-    public Economy economy = new Economy();
-    public Region[] borderingRegions = new Region[4];
-    public Region[] habitableBorderingRegions = new Region[4];
+    public long maxFarmers { get; set; } = 0;
+    public long maxSoldiers { get; set; } = 0;
+
+    public Region[] borderingRegions { get; set; } = new Region[4];
+    public Region[] habitableBorderingRegions { get; set; } = new Region[4];
     public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
 
-    public bool border;
-    public bool frontier;
-    public bool needsJobs { private set; get; }
-    public bool needsWorkers { private set; get; }
-    public List<Crop> plantableCrops = new List<Crop>();
-    public float arableLand;
+    public bool border { get; set; }
+    public bool frontier { get; set; }
+    public float arableLand { get; set; }
 
     public static int populationPerLand = 500;
     public static int farmersPerLand = 115;
@@ -575,10 +570,5 @@ public class Region : PopObject
         Region border;
         border = borderingRegions[rng.Next(0, habitableBorderingRegions.Length)];
         return border;
-    }
-
-    public float GetFoodSurplus()
-    {
-        return ((Pop.FromNativePopulation(workforce) * Pop.workforceNutritionNeed) + (Pop.FromNativePopulation(dependents) * Pop.dependentNutritionNeed))/(float)economy.GetTotalNutrition() - 1f;
     }
 }

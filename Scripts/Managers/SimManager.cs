@@ -4,10 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Godot;
 using FileAccess = Godot.FileAccess;
 
+[Serializable]
 public partial class SimManager : Node
 {
     public Node2D terrainMap;
@@ -16,12 +19,12 @@ public partial class SimManager : Node
     [Export]
     public TileMapLayer reliefs;
     [Export]
-    public TimeManager timeManager { get; set; }
+    public TimeManager timeManager;
 
     public Tile[,] tiles;
-    public List<Region> regions = new List<Region>();
+    public List<Region> regions { get; set; } = new List<Region>();
     public List<Region> habitableRegions = new List<Region>();
-    public List<Region> tradeCenters = new List<Region>();
+    public List<Region> tradeCenters { get; set; } = new List<Region>();
     public List<Region> paintedRegions = new List<Region>();
     public Vector2I terrainSize;
     public static Vector2I worldSize;
@@ -30,20 +33,18 @@ public partial class SimManager : Node
     public WorldGenerator worldGenerator = LoadingScreen.generator;
 
     // Population
-    public List<Pop> pops = new List<Pop>();
-    public long worldPopulation = 0;
-    public long worldWorkforce = 0;
-    public long worldDependents = 0;
-    public long workforceChange = 0;
-    public long dependentsChange = 0;
+    public List<Pop> pops { get; set; } = new List<Pop>();
+    public long worldPopulation { get; set; } = 0;
+    public long worldWorkforce { get; set; } = 0;
+    public long worldDependents { get; set; } = 0;
     public uint populatedRegions;
     public float maxWealth = 0;
     public float maxTradeWeight = 0;
-    public List<Culture> cultures = new List<Culture>();
-    public List<State> states = new List<State>();
-    public List<Army> armies = new List<Army>();
-    public List<Character> characters = new List<Character>();
-    public List<War> wars = new List<War>();
+    public List<Culture> cultures { get; set; } = new List<Culture>();
+    public List<State> states { get; set; } = new List<State>();
+    public List<Army> armies { get; set; } = new List<Army>();
+    public List<Character> characters { get; set; } = new List<Character>();
+    public List<War> wars { get; set; } = new List<War>();
     public List<War> endedWars = new List<War>();
 
     public int maxPopsPerRegion = 50;
@@ -90,6 +91,29 @@ public partial class SimManager : Node
 
         int index = (lx * worldSize.Y) + ly;
         return regions[index];
+    }
+    #endregion
+    #region Saving & Loading
+    public void SaveSimToFile(string saveName)
+    {
+        JsonSerializerOptions options = new()
+        {
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
+            WriteIndented = true,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
+        };
+        options.Converters.Add(new TwoDimensionalArrayConverter<Tile>());
+        options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
+        if (DirAccess.Open("user://saves") == null)
+        {
+            DirAccess.MakeDirAbsolute("user://saves");
+        }
+        if (DirAccess.Open($"user://saves/{saveName}") == null)
+        {
+            DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
+        }
+        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", Godot.FileAccess.ModeFlags.Write);
+        save.StoreLine(JsonSerializer.Serialize(this, options));
     }
     #endregion
     #region Initialization
@@ -578,16 +602,6 @@ public partial class SimManager : Node
     }
     #endregion
 
-    #region Stat Update
-    void UpdateStats()
-    {
-        worldDependents += dependentsChange;
-        worldWorkforce += workforceChange;
-        dependentsChange = 0;
-        workforceChange = 0;
-        worldPopulation = worldDependents + worldWorkforce;
-    }
-    #endregion
     #region Creation
     #region Pops Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER)

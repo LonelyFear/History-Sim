@@ -2,35 +2,31 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using Godot;
-
+[Serializable]
 public class Pop
 {
-    public long maxPopulation = 0;
-    public long population = 0;
-    public long workforce = 0;
-    public long dependents = 0;
+    public long maxPopulation { get; set; } = 0;
+    public long population { get; set; } = 0;
+    public long workforce { get; set; } = 0;
+    public long dependents { get; set; } = 0;
 
-    public float baseBirthRate = 0.3f;
-    public float baseDeathRate = 0.29f;
-    public float starvingPercentage = 0f;
-    public float targetDependencyRatio = 0.75f;
-    public float netIncome = 0f;
-    public Region region;
-    public Culture culture;
-    public Profession profession = Profession.FARMER;
+    public float baseBirthRate { get; set; } = 0.3f;
+    public float baseDeathRate { get; set; } = 0.29f;
 
-    public Tech tech = new Tech();
-    public uint batchId = 1;
+    public float targetDependencyRatio { get; set; } = 0.75f;
+    public float netIncome { get; set; } = 0f;
+    public Region region { get; set; }
+    public Culture culture { get; set; }
+    public Profession profession { get; set; } = Profession.FARMER;
 
-    public const float workforceNutritionNeed = 1f;
-    public const float dependentNutritionNeed = .8f;
-    public List<Character> characters = new List<Character>();
+    public Tech tech { get; set; } = new Tech();
+    public uint batchId { get; set; } = 1;
+
+    public List<Character> characters { get; set; } = new List<Character>();
     public static SimManager simManager;
     public static Random rng = new Random();
-    public float income = 0f;
-    public float expenses = 0f;
-    public float wealth = 0f;
-    public int ownedLand = 0;
+    public float wealth { get; set; } = 0f;
+    public int ownedLand { get; set; } = 0;
     public static Curve starvationCurve = GD.Load<Curve>("res://Curves/Simulation/StarvationCurve.tres");
     public static Curve farmerProductionCurve = GD.Load<Curve>("res://Curves/Simulation/FarmerProductivityCurve.tres");
 

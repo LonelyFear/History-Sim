@@ -4,13 +4,13 @@ using System.Linq;
 using Godot;
 
 public abstract class PopObject {
-    public string name;
-    public uint tickFounded;
-    public uint age;
-    public long population = 0;
-    public long highestPossiblePopulation = 0; 
-    public long dependents = 0;    
-    public long workforce = 0;
+    public string name { get; set; }
+    public uint tickFounded { get; set; }
+    public uint age { get; set; }
+    public long population { get; set; } = 0;
+    public long highestPossiblePopulation { get; set; } = 0; 
+    public long dependents { get; set; } = 0;    
+    public long workforce { get; set; } = 0;
     public List<Pop> pops = new List<Pop>();
     public static TimeManager timeManager;
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
