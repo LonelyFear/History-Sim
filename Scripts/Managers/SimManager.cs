@@ -14,7 +14,7 @@ using MessagePack.Resolvers;
 using FileAccess = Godot.FileAccess;
 
 [MessagePackObject(keyAsPropertyName: true)]
-public partial class SimManager : Node
+public class SimManager
 {
     [IgnoreMember]
     public Node2D terrainMap;
@@ -39,7 +39,7 @@ public partial class SimManager : Node
     [IgnoreMember]
     public static System.Threading.Mutex m = new System.Threading.Mutex();
     [IgnoreMember]
-    MapManager mapManager;
+    public MapManager mapManager;
     [IgnoreMember]
     public WorldGenerator worldGenerator = LoadingScreen.generator;
 
@@ -65,17 +65,6 @@ public partial class SimManager : Node
     // Events
     public delegate void SimulationInitializedEventHandler();
     #region Utility
-    public override void _Ready()
-    {
-        terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
-        timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
-        mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
-
-        // Connection
-        worldGenerator = LoadingScreen.generator;
-        WorldGenerator.worldgenFinishedEvent += OnWorldgenFinished;
-        //Connect("WorldgenFinished", new Callable(this, nameof()));
-    }
 
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
@@ -114,18 +103,18 @@ public partial class SimManager : Node
         {
             DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
         }
-    var resolver = CompositeResolver.Create(
-        [new Vector2IFormatter()],
-        [StandardResolver.Instance]
-    );
+        var resolver = CompositeResolver.Create(
+            [new Vector2IFormatter(), new ColorFormatter(), new NodePathFormatter(), new GDStringNameFormatter()],
+            [StandardResolver.Instance]
+        );
 
-    var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/simData.pxsave", FileAccess.ModeFlags.Write);
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+        FileAccess save = FileAccess.Open($"user://saves/{saveName}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         save.StoreBuffer(MessagePackSerializer.Serialize(this, options));
     }
     #endregion
     #region Initialization
-    private void OnWorldgenFinished(object sender, EventArgs e)
+    public void OnWorldgenFinished(object sender, EventArgs e)
     {
         PopObject.simManager = this;
         PopObject.timeManager = timeManager;

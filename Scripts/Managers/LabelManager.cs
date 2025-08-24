@@ -14,7 +14,7 @@ public partial class LabelManager : Node
 
 	public override void _Ready()
 	{
-		simManager = GetNode<SimManager>("/root/Game/Simulation");
+		simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
 	}
 
 	public override void _Process(double delta)

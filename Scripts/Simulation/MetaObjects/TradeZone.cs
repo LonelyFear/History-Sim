@@ -5,7 +5,9 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
 public class TradeZone
 {
+    [IgnoreMember]
     public Region CoT { get; set; }
+    [IgnoreMember]
     public List<Region> regions { get; set; } = new List<Region>();
     public Color color { get; set; }
     [IgnoreMember]

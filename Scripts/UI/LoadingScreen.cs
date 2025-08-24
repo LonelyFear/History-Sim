@@ -19,7 +19,7 @@ public partial class LoadingScreen : Control
     public override void _Ready()
     {
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
-        sim = GetNode<SimManager>("/root/Game/Simulation");
+        sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         time = GetNode<TimeManager>("/root/Game/Time Manager");
 
         ui = GetNode<CanvasLayer>("/root/Game/UI");
@@ -28,11 +28,11 @@ public partial class LoadingScreen : Control
         ui.Visible = false;
         Visible = true;
         GetNode<TextureProgressBar>("ProgressBar").Value = 0;
+        AssetManager.LoadMods();
     }
     public override void _Process(double delta)
     {
-        AssetManager.LoadMods();
-        WorldGenerator worldSave = WorldGenerator.LoadFromSave("Save1");
+        WorldGenerator worldSave = null;//WorldGenerator.LoadFromSave("user://saves/Save1");
         if (worldSave != null)
         {
             generator = worldSave;

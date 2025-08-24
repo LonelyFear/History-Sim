@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using MessagePack;
 
-
-public abstract class PopObject
+[MessagePackObject(keyAsPropertyName: true)]
+public class PopObject
 {
     public string name { get; set; }
     public uint tickFounded { get; set; }
@@ -13,7 +14,9 @@ public abstract class PopObject
     public long highestPossiblePopulation { get; set; } = 0;
     public long dependents { get; set; } = 0;
     public long workforce { get; set; } = 0;
+    [IgnoreMember]
     public List<Pop> pops = new List<Pop>();
+    [IgnoreMember]
     public static TimeManager timeManager;
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
     {
@@ -23,10 +26,12 @@ public abstract class PopObject
         {Profession.ARTISAN, 0},
         {Profession.SOLDIER, 0},
     };
-
+    [IgnoreMember]
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public static Random rng = new Random();
+    [IgnoreMember]
     public static SimManager simManager;
+    [IgnoreMember]
     public Culture largestCulture = null;
 
     public void CountPopulation()

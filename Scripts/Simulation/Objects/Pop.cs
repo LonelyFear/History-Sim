@@ -16,7 +16,7 @@ public class Pop
 
     public float targetDependencyRatio { get; set; } = 0.75f;
     public float netIncome { get; set; } = 0f;
-    
+    [IgnoreMember]
     public Region region { get; set; }
     public Culture culture { get; set; }
     public Profession profession { get; set; } = Profession.FARMER;
@@ -30,8 +30,6 @@ public class Pop
     public static Random rng = new Random();
     public float wealth { get; set; } = 0f;
     public int ownedLand { get; set; } = 0;
-    public static Curve starvationCurve = GD.Load<Curve>("res://Curves/Simulation/StarvationCurve.tres");
-    public static Curve farmerProductionCurve = GD.Load<Curve>("res://Curves/Simulation/FarmerProductivityCurve.tres");
 
     public void ChangeWorkforce(long amount)
     {

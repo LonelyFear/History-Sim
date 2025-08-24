@@ -1,11 +1,11 @@
 [gd_scene load_steps=19 format=3 uid="uid://b1mh36mwq3q24"]
 
-[ext_resource type="Script" uid="uid://c5rvkoyk7fbe8" path="res://Scripts/Managers/SimManager.cs" id="1_o5yvi"]
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="Texture2D" uid="uid://dkcv4h7u8elck" path="res://Sprites/Sea.png" id="2_7nbq1"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="4_exi56"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
+[ext_resource type="Script" uid="uid://duwsoblnfw77g" path="res://Scripts/Managers/SimNodeManager.cs" id="6_nnt18"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/TerrainMap.cs" id="7_nnt18"]
 [ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="8_7t8sx"]
@@ -61,9 +61,8 @@ centered = false
 position = Vector2(640, 319.5)
 shape = SubResource("RectangleShape2D_7nbq1")
 
-[node name="Simulation" type="Node" parent="." node_paths=PackedStringArray("timeManager")]
-script = ExtResource("1_o5yvi")
-timeManager = NodePath("../Time Manager")
+[node name="Simulation" type="Node" parent="."]
+script = ExtResource("6_nnt18")
 
 [node name="Terrain Map" type="Node2D" parent="."]
 z_index = -10

@@ -41,7 +41,7 @@ public partial class TimeManager : Node
     public WorldGenerator worldGenerator = LoadingScreen.generator;
     public override void _Ready()
     {
-        simManager = GetNode<SimManager>("/root/Game/Simulation");
+        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");
         // Connection

@@ -31,7 +31,7 @@ public partial class MapManager : Area2D
     // NOTE: Painted regions are updated in TimeManager.cs
     public override void _Ready()
     {
-        simManager = GetNode<SimManager>("/root/Game/Simulation");
+        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         regionOverlay = GetNode<Sprite2D>("Region Map");
         mapModeUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/MapModeHolder/MapMode");
         showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");

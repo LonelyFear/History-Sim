@@ -7,8 +7,11 @@ using MessagePack;
 public class War
 {
     public string warName { get; set; } = "War";
+    [IgnoreMember]
     public List<State> attackers { get; set; } = new List<State>();
+    [IgnoreMember]
     public List<State> defenders { get; set; } = new List<State>();
+    [IgnoreMember]
     public List<State> participants { get; set; } = new List<State>();
     public WarType warType { get; set; } = WarType.CONQUEST;
     [IgnoreMember]

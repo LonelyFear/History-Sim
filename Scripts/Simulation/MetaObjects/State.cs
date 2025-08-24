@@ -12,8 +12,11 @@ public class State : PopObject
     public Color capitalColor;
 
     public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
+    [IgnoreMember]
     public List<Region> realmRegions = new List<Region>(); 
+    [IgnoreMember]
     public List<Region> regions { get; set; } = new List<Region>();
+    [IgnoreMember]
     public Region capital { get; set; }
     public long manpower { get; set; } = 0;
     public int occupiedLand { get; set; } = 0;
@@ -21,11 +24,17 @@ public class State : PopObject
     public float mobilizationRate { get; set; } = 0.3f;
     public float taxRate { get; set; } = 0.1f;
     public float tribute { get; set; } = 0.1f;
+    [IgnoreMember]
     public List<State> vassals { get; set; } = new List<State>();
+    [IgnoreMember]
     public State liege { get; set; } = null;
+    [IgnoreMember]
     public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
+    [IgnoreMember]
     public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
+    [IgnoreMember]
     public List<State> enemies { get; set; } = new List<State>();
+    [IgnoreMember]
     public List<State> borderingStates { get; set; } = new List<State>();
     public int borderingRegions { get; set; } = 0;
     public int externalBorderingRegions { get; set; }= 0;

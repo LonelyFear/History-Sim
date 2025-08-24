@@ -22,13 +22,15 @@ public class Region : PopObject
     public int linkUpdateCountdown { get; set; } = 4;
 
     // trade
-    
+    [IgnoreMember]
     public TradeZone tradeZone { get; set; }
     public bool isCoT { get; set; } = false;    
     public float tradeIncome = 0;
     public float taxIncome = 0;
     public int zoneSize = 1;
+    [IgnoreMember]
     public Region tradeLink { get; set; } = null;
+    [IgnoreMember]
     public List<Region> connectedTiles { get; set; } = new List<Region>();
 
     public Vector2I pos { get; set; }
@@ -38,16 +40,21 @@ public class Region : PopObject
     public float avgElevation { get; set; }
     public int landCount { get; set; }
     public int freeLand { get; set; } = 16;
+    [IgnoreMember]
     public State occupier { get; set; } = null;
+    [IgnoreMember]
     public State owner { get; set; } = null;
+    [IgnoreMember]
     public List<Army> armies;
 
     // Demographics
     public long maxFarmers { get; set; } = 0;
     public long maxSoldiers { get; set; } = 0;
-
+    [IgnoreMember]
     public Region[] borderingRegions { get; set; } = new Region[4];
+    [IgnoreMember]
     public Region[] habitableBorderingRegions { get; set; } = new Region[4];
+    [IgnoreMember]
     public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
 
     public bool border { get; set; }

@@ -3,7 +3,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Godot;
 using MessagePack;
-[MessagePackObject]
+using MessagePack.Resolvers;
+[MessagePackObject][Serializable]
 public class WorldGenerator
 {
     public const float HillThreshold = 0.76f;
@@ -139,17 +140,14 @@ public class WorldGenerator
     }
     public void SaveTerrainToFile(string saveName)
     {
-        /*
         JsonSerializerOptions options = new()
         {
             ReferenceHandler = ReferenceHandler.Preserve,
-            WriteIndented = true,
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
         };
         options.Converters.Add(new TwoDimensionalArrayConverter<float>());
         options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
         options.Converters.Add(new TwoDimensionalArrayConverter<string>());
-        */
         //GD.Print(JsonSerializer.Serialize(BiomeMap, options));
         //GD.Print("Thing");
         if (DirAccess.Open("user://saves") == null)
@@ -159,22 +157,28 @@ public class WorldGenerator
         if (DirAccess.Open($"user://saves/{saveName}") == null) {
             DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
         }
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", Godot.FileAccess.ModeFlags.Write);
+        var resolver = CompositeResolver.Create(
+            [new Vector2IFormatter(), new ColorFormatter(), new NodePathFormatter(), new GDStringNameFormatter()],
+            [StandardResolver.Instance]
+        );
+
+        var moptions = MessagePackSerializerOptions.Standard.WithResolver(resolver);
         
-        GD.Print(save.StoreBuffer(MessagePackSerializer.Typeless.Serialize(this)));
+        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrain_data.pxsave", FileAccess.ModeFlags.Write);
+        
+        GD.Print(save.StoreBuffer(MessagePackSerializer.Typeless.Serialize(this, moptions)));
         //save.StoreLine(JsonSerializer.Serialize(this, options));
     }
-    public static WorldGenerator LoadFromSave(string saveName)
+    public static WorldGenerator LoadFromSave(string path)
     {
-        if (DirAccess.Open($"user://saves/{saveName}") == null)
+        if (DirAccess.Open(path) == null)
         {
-            GD.PushError($"Save at path saves/{saveName} not found");
+            GD.PushError($"Save at path {path} not found");
             return null;
         }
         JsonSerializerOptions options = new()
         {
             ReferenceHandler = ReferenceHandler.Preserve,
-            WriteIndented = true,
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,        
         };
 
@@ -182,7 +186,7 @@ public class WorldGenerator
         options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
         options.Converters.Add(new TwoDimensionalArrayConverter<string>());
        
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", FileAccess.ModeFlags.Read);
+        FileAccess save = FileAccess.Open($"{path}/terrain_data.pxsave", FileAccess.ModeFlags.Read);
         //GD.Print(save.GetAsText());
         WorldGenerator loaded = null;
         try

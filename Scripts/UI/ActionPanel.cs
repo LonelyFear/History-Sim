@@ -43,7 +43,7 @@ public partial class ActionPanel : Panel
     public void OnSimSave()
     {
         GD.Print("Saving Game");
-        SimManager sim = GetNode<SimManager>("/root/Game/Simulation"); ;
+        SimManager sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         WorldGenerator world = LoadingScreen.generator;
         world.SaveTerrainToFile("Save1");
         sim.SaveSimToFile("Save1");
