@@ -213,7 +213,7 @@ public partial class TimeManager : Node
         string date = $"{month}/{day}/{year}";
         if (daysPerTick >= ticksPerMonth)
         {
-            date = $"{month}/{year}";
+            //date = $"{month}/{year}";
         }
         return date;
     }

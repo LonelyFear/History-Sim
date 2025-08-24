@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-
-[Serializable]
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
 public class War
 {
     public string warName { get; set; } = "War";
@@ -11,13 +11,15 @@ public class War
     public List<State> defenders { get; set; } = new List<State>();
     public List<State> participants { get; set; } = new List<State>();
     public WarType warType { get; set; } = WarType.CONQUEST;
+    [IgnoreMember]
     static Random rng = new Random();
+    [IgnoreMember]
     public static SimManager simManager;
     public uint tickStarted;
     public uint age;
     public uint tickEnded;
 
-    public War(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
+    public void StartWar (List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
     {
         attackers = atk;
         defenders = def;

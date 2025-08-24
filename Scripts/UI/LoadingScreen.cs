@@ -31,7 +31,8 @@ public partial class LoadingScreen : Control
     }
     public override void _Process(double delta)
     {
-        WorldGenerator worldSave = null; //WorldGenerator.LoadFromSave("Save1");
+        AssetManager.LoadMods();
+        WorldGenerator worldSave = WorldGenerator.LoadFromSave("Save1");
         if (worldSave != null)
         {
             generator = worldSave;

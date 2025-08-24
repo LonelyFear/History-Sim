@@ -8,17 +8,23 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Godot;
+using MessagePack;
+using MessagePack.Formatters;
+using MessagePack.Resolvers;
 using FileAccess = Godot.FileAccess;
 
-[Serializable]
+[MessagePackObject(keyAsPropertyName: true)]
 public partial class SimManager : Node
 {
+    [IgnoreMember]
     public Node2D terrainMap;
-    [Export(PropertyHint.Range, "4,16,4")]
+    [IgnoreMember] [Export(PropertyHint.Range, "4,16,4")]
     public int tilesPerRegion = 4;
     [Export]
+    [IgnoreMember]
     public TileMapLayer reliefs;
     [Export]
+    [IgnoreMember]
     public TimeManager timeManager;
 
     public Tile[,] tiles;
@@ -26,10 +32,15 @@ public partial class SimManager : Node
     public List<Region> habitableRegions = new List<Region>();
     public List<Region> tradeCenters { get; set; } = new List<Region>();
     public List<Region> paintedRegions = new List<Region>();
+    [IgnoreMember]
     public Vector2I terrainSize;
+    [IgnoreMember]
     public static Vector2I worldSize;
+    [IgnoreMember]
     public static System.Threading.Mutex m = new System.Threading.Mutex();
+    [IgnoreMember]
     MapManager mapManager;
+    [IgnoreMember]
     public WorldGenerator worldGenerator = LoadingScreen.generator;
 
     // Population
@@ -46,11 +57,9 @@ public partial class SimManager : Node
     public List<Character> characters { get; set; } = new List<Character>();
     public List<War> wars { get; set; } = new List<War>();
     public List<War> endedWars = new List<War>();
-
-    public int maxPopsPerRegion = 50;
-    public long popTaskId = 0;
     public uint currentBatch = 2;
-
+    
+    [IgnoreMember]
     Random rng = new Random();
 
     // Events
@@ -63,6 +72,7 @@ public partial class SimManager : Node
         mapManager = (MapManager)GetParent().GetNode<Node>("Map Manager");
 
         // Connection
+        worldGenerator = LoadingScreen.generator;
         WorldGenerator.worldgenFinishedEvent += OnWorldgenFinished;
         //Connect("WorldgenFinished", new Callable(this, nameof()));
     }
@@ -96,14 +106,6 @@ public partial class SimManager : Node
     #region Saving & Loading
     public void SaveSimToFile(string saveName)
     {
-        JsonSerializerOptions options = new()
-        {
-            ReferenceHandler = ReferenceHandler.IgnoreCycles,
-            WriteIndented = true,
-            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
-        };
-        options.Converters.Add(new TwoDimensionalArrayConverter<Tile>());
-        options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
         if (DirAccess.Open("user://saves") == null)
         {
             DirAccess.MakeDirAbsolute("user://saves");
@@ -112,8 +114,14 @@ public partial class SimManager : Node
         {
             DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
         }
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", Godot.FileAccess.ModeFlags.Write);
-        save.StoreLine(JsonSerializer.Serialize(this, options));
+    var resolver = CompositeResolver.Create(
+        [new Vector2IFormatter()],
+        [StandardResolver.Instance]
+    );
+
+    var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+        FileAccess save = FileAccess.Open($"user://saves/{saveName}/simData.pxsave", FileAccess.ModeFlags.Write);
+        save.StoreBuffer(MessagePackSerializer.Serialize(this, options));
     }
     #endregion
     #region Initialization

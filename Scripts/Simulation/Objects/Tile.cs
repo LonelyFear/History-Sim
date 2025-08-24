@@ -1,5 +1,7 @@
 using Godot;
+using MessagePack;
 
+[MessagePackObject(keyAsPropertyName: true)]
 public class Tile
 {
 	public long maxPopulation;

@@ -1,5 +1,6 @@
 using System;
-
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class Tech
 {
     public int militaryLevel { get; set; }

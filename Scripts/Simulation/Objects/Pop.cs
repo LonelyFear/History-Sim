@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using Godot;
-[Serializable]
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class Pop
 {
     public long maxPopulation { get; set; } = 0;
@@ -15,6 +16,7 @@ public class Pop
 
     public float targetDependencyRatio { get; set; } = 0.75f;
     public float netIncome { get; set; } = 0f;
+    
     public Region region { get; set; }
     public Culture culture { get; set; }
     public Profession profession { get; set; } = Profession.FARMER;
@@ -23,6 +25,7 @@ public class Pop
     public uint batchId { get; set; } = 1;
 
     public List<Character> characters { get; set; } = new List<Character>();
+    [IgnoreMember]
     public static SimManager simManager;
     public static Random rng = new Random();
     public float wealth { get; set; } = 0f;

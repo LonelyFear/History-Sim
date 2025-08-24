@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.NetworkInformation;
 using Godot;
-
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class Character
 {
     

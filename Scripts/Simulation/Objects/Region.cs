@@ -2,7 +2,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Godot;
-[Serializable]
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class Region : PopObject
 {
     public Tile[,] tiles { get; set; }
@@ -21,6 +22,7 @@ public class Region : PopObject
     public int linkUpdateCountdown { get; set; } = 4;
 
     // trade
+    
     public TradeZone tradeZone { get; set; }
     public bool isCoT { get; set; } = false;    
     public float tradeIncome = 0;
@@ -348,7 +350,7 @@ public class Region : PopObject
         isCoT = lowerLinks && selectedLink == null;
         if (isCoT && (tradeZone == null || tradeZone.CoT != this))
         {
-            tradeZone = new TradeZone(this);
+            tradeZone = new TradeZone().CreateZone(this);
         }
         if (!isCoT && tradeZone != null && tradeZone.CoT == this)
         {

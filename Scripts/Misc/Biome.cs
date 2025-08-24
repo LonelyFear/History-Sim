@@ -1,7 +1,6 @@
-using Godot;
-using System;
-using System.Collections.Generic;
+using MessagePack;
 
+[MessagePackObject(keyAsPropertyName: true)]
 public class Biome
 {
     public string name { get; set; }

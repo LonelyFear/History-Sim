@@ -2,7 +2,8 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Godot;
-[Serializable]
+using MessagePack;
+[MessagePackObject]
 public class WorldGenerator
 {
     public const float HillThreshold = 0.76f;
@@ -12,25 +13,41 @@ public class WorldGenerator
     public const float MaxRainfall = 3500;
     public const float MinRainfall = 50;
     public const int WorldHeight = 10000;
-
+    [Key(0)]
     public Vector2I WorldSize { get; set; } = new Vector2I(360, 180) ;
+    [IgnoreMember]
     public float Width;
+    [IgnoreMember]
     public float Height;
+    [Key(1)]
     public float WorldMult { get; set; } = 3f;
+    [Key(2)]
     public float SeaLevel { get; set; } = 0.6f;
+    [Key(3)]
     public int Seed { get; set; } 
+    [Key(4)]
     public int continents { get; set; } = 12;
     public static EventHandler worldgenFinishedEvent;
+    [Key(5)]
     public float[,] HeightMap { get; set; } 
+    [Key(6)]
     public float[,] RainfallMap { get; set; } 
+    [Key(7)]
     public float[,] TempMap { get; set; } 
+    [Key(8)]
     public string[,] BiomeMap { get; set; } 
     public static Random rng;
+    [IgnoreMember]
     public bool TempDone;
+    [IgnoreMember]
     public bool RainfallDone;
+    [IgnoreMember]
     public bool HeightmapDone;
+    [IgnoreMember]
     public bool WaterDone;
+    [IgnoreMember]
     public bool WorldExists = false;
+    [IgnoreMember]
     public int Stage;
 
     public void GenerateWorld()
@@ -122,6 +139,7 @@ public class WorldGenerator
     }
     public void SaveTerrainToFile(string saveName)
     {
+        /*
         JsonSerializerOptions options = new()
         {
             ReferenceHandler = ReferenceHandler.Preserve,
@@ -131,6 +149,7 @@ public class WorldGenerator
         options.Converters.Add(new TwoDimensionalArrayConverter<float>());
         options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
         options.Converters.Add(new TwoDimensionalArrayConverter<string>());
+        */
         //GD.Print(JsonSerializer.Serialize(BiomeMap, options));
         //GD.Print("Thing");
         if (DirAccess.Open("user://saves") == null)
@@ -140,13 +159,13 @@ public class WorldGenerator
         if (DirAccess.Open($"user://saves/{saveName}") == null) {
             DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
         }
-
         FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrainData.pxsave", Godot.FileAccess.ModeFlags.Write);
-        save.StoreLine(JsonSerializer.Serialize(this, options));
+        
+        GD.Print(save.StoreBuffer(MessagePackSerializer.Typeless.Serialize(this)));
+        //save.StoreLine(JsonSerializer.Serialize(this, options));
     }
     public static WorldGenerator LoadFromSave(string saveName)
     {
-        AssetManager.LoadMods();
         if (DirAccess.Open($"user://saves/{saveName}") == null)
         {
             GD.PushError($"Save at path saves/{saveName} not found");
@@ -158,6 +177,7 @@ public class WorldGenerator
             WriteIndented = true,
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,        
         };
+
         options.Converters.Add(new TwoDimensionalArrayConverter<float>());
         options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
         options.Converters.Add(new TwoDimensionalArrayConverter<string>());
@@ -167,7 +187,8 @@ public class WorldGenerator
         WorldGenerator loaded = null;
         try
         {
-            loaded = JsonSerializer.Deserialize<WorldGenerator>(save.GetAsText(true), options);
+            loaded = (WorldGenerator)MessagePackSerializer.Typeless.Deserialize(save.GetBuffer((long)save.GetLength()));
+            //loaded = JsonSerializer.Deserialize<WorldGenerator>(save.GetAsText(true), options);
             if (loaded != null)
             {
                 loaded.InitAfterLoad();

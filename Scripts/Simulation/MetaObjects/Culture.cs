@@ -1,7 +1,8 @@
 using System;
 using Godot;
 using System.Collections.Generic;
-[Serializable]
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class Culture : PopObject
 {
     public Color color { get; set; }

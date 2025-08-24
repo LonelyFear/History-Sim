@@ -1,6 +1,7 @@
 using Godot;
+using MessagePack;
 using System;
-
+[MessagePackObject(keyAsPropertyName: true)]
 public class Relation
 {
     public int opinion = 0;

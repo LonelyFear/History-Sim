@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Godot;
-
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class Army
 {
     public string name;
@@ -12,6 +13,7 @@ public class Army
     public uint maxStrength = 5000;
     public Character commander;
     public Queue<Region> currentPath;
+    [IgnoreMember]
     public static SimManager simManager;
 
     public void MoveArmy(Region region)

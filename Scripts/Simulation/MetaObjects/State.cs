@@ -2,7 +2,8 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Godot;
-[Serializable]
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true)]
 public class State : PopObject
 {
     public string displayName { get; set; } = "Nation";
@@ -253,7 +254,7 @@ public class State : PopObject
     {
         EstablishRelations(state, Relation.minOpinionValue);
         state.EstablishRelations(this, Relation.minOpinionValue);
-        _ = new War(GetRealmStates(), state.GetRealmStates(), type, this, state);
+        new War().StartWar(GetRealmStates(), state.GetRealmStates(), type, this, state);
     }
     public void EndWar(War war)
     {

@@ -42,10 +42,12 @@ public partial class ActionPanel : Panel
     }
     public void OnSimSave()
     {
-        SimManager sim = GetNode<SimManager>("/root/Game/Simulation");;
+        GD.Print("Saving Game");
+        SimManager sim = GetNode<SimManager>("/root/Game/Simulation"); ;
         WorldGenerator world = LoadingScreen.generator;
         world.SaveTerrainToFile("Save1");
-        //sim.SaveSimToFile("Save1");
+        sim.SaveSimToFile("Save1");
+        GD.Print("Game saved to Save1");
     }
 
     public void OnUiToggle(bool toggle)

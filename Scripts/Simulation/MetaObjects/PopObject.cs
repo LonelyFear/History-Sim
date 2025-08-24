@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-public abstract class PopObject {
+
+public abstract class PopObject
+{
     public string name { get; set; }
     public uint tickFounded { get; set; }
     public uint age { get; set; }
     public long population { get; set; } = 0;
-    public long highestPossiblePopulation { get; set; } = 0; 
-    public long dependents { get; set; } = 0;    
+    public long highestPossiblePopulation { get; set; } = 0;
+    public long dependents { get; set; } = 0;
     public long workforce { get; set; } = 0;
     public List<Pop> pops = new List<Pop>();
     public static TimeManager timeManager;
@@ -21,7 +23,7 @@ public abstract class PopObject {
         {Profession.ARTISAN, 0},
         {Profession.SOLDIER, 0},
     };
-    
+
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     public static Random rng = new Random();
     public static SimManager simManager;
@@ -61,7 +63,7 @@ public abstract class PopObject {
                 countedCultures[pop.culture] += pop.population;
             }
         }
-        
+
         cultures = countedCultures;
         foreach (Culture culture in cultures.Keys)
         {
@@ -79,52 +81,71 @@ public abstract class PopObject {
         workforce = countedWorkforce;
     }
 
-    public void AddPop(Pop pop, PopObject popObject){
-        if (popObject.GetType() == typeof(Culture)){
+    public void AddPop(Pop pop, PopObject popObject)
+    {
+        if (popObject.GetType() == typeof(Culture))
+        {
             // Adding Pop to Culture
-            if (!pops.Contains(pop)){
-                if (pop.culture != null){
+            if (!pops.Contains(pop))
+            {
+                if (pop.culture != null)
+                {
                     pop.culture.RemovePop(pop, popObject);
                 }
                 pops.Add(pop);
                 pop.culture = (Culture)popObject;
                 population += pop.population;
             }
-        } else if (popObject.GetType() == typeof(Region)){
-            if (!pops.Contains(pop)){
-                if (pop.region != null){
+        }
+        else if (popObject.GetType() == typeof(Region))
+        {
+            if (!pops.Contains(pop))
+            {
+                if (pop.region != null)
+                {
                     pop.region.RemovePop(pop, popObject);
                 }
                 pops.Add(pop);
-                pop.region = (Region)popObject;            
+                pop.region = (Region)popObject;
                 ChangePopulation(pop.workforce, pop.dependents);
             }
-        } else if (popObject.GetType() == typeof(State)){
-            if (!pops.Contains(pop)){
+        }
+        else if (popObject.GetType() == typeof(State))
+        {
+            if (!pops.Contains(pop))
+            {
                 pops.Add(pop);
             }
         }
     }
-    public void RemovePop(Pop pop, PopObject popObject){
-        if (popObject.GetType() == typeof(Culture)){
+    public void RemovePop(Pop pop, PopObject popObject)
+    {
+        if (popObject.GetType() == typeof(Culture))
+        {
             // Adding Pop to Culture
             pops.Remove(pop);
             ChangePopulation(-pop.workforce, -pop.dependents);
             pop.culture = null;
-        } else if (popObject.GetType() == typeof(Region)){
+        }
+        else if (popObject.GetType() == typeof(Region))
+        {
             pops.Remove(pop);
-            ChangePopulation(-pop.workforce, -pop.dependents);                
-            pop.region = null;            
-        } else if (popObject.GetType() == typeof(State)){
+            ChangePopulation(-pop.workforce, -pop.dependents);
+            pop.region = null;
+        }
+        else if (popObject.GetType() == typeof(State))
+        {
             pops.Remove(pop);
         }
     }
-    public void ChangePopulation(long workforceChange, long dependentChange){
+    public void ChangePopulation(long workforceChange, long dependentChange)
+    {
         workforce += workforceChange;
         dependents += dependentChange;
         population += workforceChange + dependentChange;
     }
-    public void TakeLosses(long amount, State state = null, bool includeCivilians = false){
+    public void TakeLosses(long amount, State state = null, bool includeCivilians = false)
+    {
         pops.Shuffle();
         long lossesTaken = amount;
         Profession[] combatants = { Profession.SOLDIER };
@@ -154,13 +175,15 @@ public abstract class PopObject {
             }
         }
 
-        if (state != null){
+        if (state != null)
+        {
             state.manpower -= amount - lossesTaken;
         }
     }
-    
 
-    public enum ObjectType{
+
+    public enum ObjectType
+    {
         STATE,
         REGION,
         CULTURE,

@@ -1,18 +1,22 @@
 using System;
 using System.Collections.Generic;
 using Godot;
-[Serializable]
+using MessagePack;
+[MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
 public class TradeZone
 {
     public Region CoT { get; set; }
-    List<Region> regions { get; set; } = new List<Region>();
+    public List<Region> regions { get; set; } = new List<Region>();
     public Color color { get; set; }
+    [IgnoreMember]
     static Random rng = new Random();
-    public TradeZone(Region region)
+
+    public TradeZone CreateZone(Region region)
     {
         color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
         CoT = region;
         regions = [CoT];
+        return this;
     }
     public void AddRegion(Region region)
     {
