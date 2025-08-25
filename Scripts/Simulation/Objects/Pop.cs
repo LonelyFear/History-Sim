@@ -6,6 +6,7 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class Pop
 {
+    public ulong id;
     public long maxPopulation { get; set; } = 0;
     public long population { get; set; } = 0;
     public long workforce { get; set; } = 0;
@@ -18,6 +19,7 @@ public class Pop
     public float netIncome { get; set; } = 0f;
     [IgnoreMember]
     public Region region { get; set; }
+    public ulong regionID;
     public Culture culture { get; set; }
     public Profession profession { get; set; } = Profession.FARMER;
 
@@ -27,10 +29,15 @@ public class Pop
     public List<Character> characters { get; set; } = new List<Character>();
     [IgnoreMember]
     public static SimManager simManager;
+    [IgnoreMember]
     public static Random rng = new Random();
     public float wealth { get; set; } = 0f;
     public int ownedLand { get; set; } = 0;
 
+    public void PrepareForSave()
+    {
+        regionID = region.id;
+    }
     public void ChangeWorkforce(long amount)
     {
         if (workforce + amount < 0)

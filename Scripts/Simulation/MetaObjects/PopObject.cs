@@ -7,6 +7,7 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class PopObject
 {
+    public ulong id;
     public string name { get; set; }
     public uint tickFounded { get; set; }
     public uint age { get; set; }
@@ -16,6 +17,7 @@ public class PopObject
     public long workforce { get; set; } = 0;
     [IgnoreMember]
     public List<Pop> pops = new List<Pop>();
+    public List<ulong> popsIds;
     [IgnoreMember]
     public static TimeManager timeManager;
     public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
@@ -28,12 +30,17 @@ public class PopObject
     };
     [IgnoreMember]
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
+    [IgnoreMember]
     public static Random rng = new Random();
     [IgnoreMember]
     public static SimManager simManager;
     [IgnoreMember]
     public Culture largestCulture = null;
 
+    public void PreparePopObjectForSave()
+    {
+        popsIds = pops.Count > 0 ?pops.Select(p => p.id).ToList() : null;
+    }
     public void CountPopulation()
     {
         long maxPopulation = 0;

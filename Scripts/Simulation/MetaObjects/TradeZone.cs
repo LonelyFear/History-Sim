@@ -1,23 +1,35 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using MessagePack;
 [MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
 public class TradeZone
 {
+    public ulong id;
     [IgnoreMember]
     public Region CoT { get; set; }
+    public ulong CoTID { get; set; }
     [IgnoreMember]
     public List<Region> regions { get; set; } = new List<Region>();
+    public List<ulong> regionsIDs { get; set; }
     public Color color { get; set; }
     [IgnoreMember]
     static Random rng = new Random();
-
+    [IgnoreMember]
+    public static SimManager simManager;
+    public void PrepareForSave()
+    {
+        CoTID = CoT != null ? CoT.id : 0;
+        regionsIDs = regions.Select(r => r.id).ToList();
+    }
     public TradeZone CreateZone(Region region)
     {
+        id = SimManager.getID();
         color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
         CoT = region;
         regions = [CoT];
+        simManager.tradeZones.Add(this);
         return this;
     }
     public void AddRegion(Region region)
@@ -50,6 +62,7 @@ public class TradeZone
         {
             RemoveRegion(region);
         }
+        simManager.tradeZones.Remove(this);
     }
 
     public int GetZoneSize()

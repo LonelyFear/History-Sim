@@ -16,8 +16,11 @@ public class State : PopObject
     public List<Region> realmRegions = new List<Region>(); 
     [IgnoreMember]
     public List<Region> regions { get; set; } = new List<Region>();
+    public List<ulong> regionsIDs { get; set; }
     [IgnoreMember]
     public Region capital { get; set; }
+    public ulong capitalID;
+
     public long manpower { get; set; } = 0;
     public int occupiedLand { get; set; } = 0;
     public float totalWealth { get; set; } = 0;
@@ -26,16 +29,22 @@ public class State : PopObject
     public float tribute { get; set; } = 0.1f;
     [IgnoreMember]
     public List<State> vassals { get; set; } = new List<State>();
+    public List<ulong> vassalsIDs { get; set; }
     [IgnoreMember]
     public State liege { get; set; } = null;
+    public ulong liegeID;
     [IgnoreMember]
     public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
+    public Dictionary<ulong, Relation> relationsIDs { get; set; }
     [IgnoreMember]
     public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
+    public Dictionary<ulong, bool> warsIDs { get; set; }
     [IgnoreMember]
     public List<State> enemies { get; set; } = new List<State>();
+    public List<ulong> enemiesIDs { get; set; }
     [IgnoreMember]
     public List<State> borderingStates { get; set; } = new List<State>();
+    public List<ulong> borderingStatesIDs { get; set; }
     public int borderingRegions { get; set; } = 0;
     public int externalBorderingRegions { get; set; }= 0;
     public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
@@ -56,6 +65,18 @@ public class State : PopObject
     public double loyalty = 100;
     public const int minRebellionLoyalty = 70;
     public uint timeAsVassal = 0;
+    public void PrepareForSave()
+    {
+        PreparePopObjectForSave();
+        capitalID = capital.id;
+        regionsIDs = regions.Select(r => r.id).ToList();
+        vassalsIDs = vassals.Count > 0 ?vassals.Select(r => r.id).ToList() : null;
+        liegeID = liege != null ? liege.id : 0;
+        relationsIDs = relations.Count > 0 ? relations.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
+        warsIDs = wars.Count > 0 ? wars.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
+        enemiesIDs = enemies.Count > 0 ? enemies.Select(r => r.id).ToList() : null;
+        borderingStatesIDs = borderingStates.Count > 0 ? borderingStates.Select(r => r.id).ToList() : null;
+    }
     public void UpdateCapital()
     {
         if (capital == null)

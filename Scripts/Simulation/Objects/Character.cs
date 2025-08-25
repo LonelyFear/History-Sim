@@ -7,7 +7,7 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class Character
 {
-    
+    public ulong id;
 }
 
 public enum TraitLevel

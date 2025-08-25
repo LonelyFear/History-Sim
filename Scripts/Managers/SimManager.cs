@@ -16,9 +16,11 @@ using FileAccess = Godot.FileAccess;
 [MessagePackObject(keyAsPropertyName: true)]
 public class SimManager
 {
+    public static ulong currentID = 0;
     [IgnoreMember]
     public Node2D terrainMap;
-    [IgnoreMember] [Export(PropertyHint.Range, "4,16,4")]
+    [IgnoreMember]
+    [Export(PropertyHint.Range, "4,16,4")]
     public int tilesPerRegion = 4;
     [Export]
     [IgnoreMember]
@@ -54,11 +56,12 @@ public class SimManager
     public List<Culture> cultures { get; set; } = new List<Culture>();
     public List<State> states { get; set; } = new List<State>();
     public List<Army> armies { get; set; } = new List<Army>();
+    public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
     public List<Character> characters { get; set; } = new List<Character>();
     public List<War> wars { get; set; } = new List<War>();
     public List<War> endedWars = new List<War>();
     public uint currentBatch = 2;
-    
+
     [IgnoreMember]
     Random rng = new Random();
 
@@ -95,6 +98,12 @@ public class SimManager
     #region Saving & Loading
     public void SaveSimToFile(string saveName)
     {
+        regions.ForEach(r => r.PrepareForSave());
+        pops.ForEach(r => r.PrepareForSave());
+        wars.ForEach(r => r.PrepareForSave());
+        states.ForEach(r => r.PrepareForSave());
+        tradeZones.ForEach(r => r.PrepareForSave());
+        cultures.ForEach(r => r.PreparePopObjectForSave());
         if (DirAccess.Open("user://saves") == null)
         {
             DirAccess.MakeDirAbsolute("user://saves");
@@ -108,7 +117,8 @@ public class SimManager
             [StandardResolver.Instance]
         );
 
-        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
+
         FileAccess save = FileAccess.Open($"user://saves/{saveName}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         save.StoreBuffer(MessagePackSerializer.Serialize(this, options));
     }
@@ -116,6 +126,7 @@ public class SimManager
     #region Initialization
     public void OnWorldgenFinished(object sender, EventArgs e)
     {
+        TradeZone.simManager = this;
         PopObject.simManager = this;
         PopObject.timeManager = timeManager;
         Army.simManager = this;
@@ -199,7 +210,10 @@ public class SimManager
             for (int y = 0; y < worldSize.Y; y++)
             {
                 // Creates a region
-                Region newRegion = new Region();
+                Region newRegion = new Region()
+                {
+                    id = getID()
+                };
 
                 newRegion.tiles = new Tile[tilesPerRegion, tilesPerRegion];
                 newRegion.biomes = new Biome[tilesPerRegion, tilesPerRegion];
@@ -290,7 +304,7 @@ public class SimManager
     void InitPops()
     {
         foreach (Region region in habitableRegions)
-        {   
+        {
             double nodeChance = 0.004;
 
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
@@ -325,7 +339,7 @@ public class SimManager
         {
             GD.PushError(e);
         }  
-        */      
+        */
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
@@ -351,7 +365,7 @@ public class SimManager
                     {
                         GD.PushError(e);
                     }
-                    
+
                 }
             }
         }
@@ -386,16 +400,14 @@ public class SimManager
                 region.UpdateWealth();
                 region.DistributeWealth();
                 //region.zoneSize = 1;
-                region.connectedTiles = new List<Region>();
                 region.hasBaseTradeWeight = false;
                 region.hasTradeWeight = false;
                 region.tradeIncome = 0f;
                 region.taxIncome = 0f;
                 region.linkUpdateCountdown--;
-                region.zoneSize = region.connectedTiles.Count;
             });
 
-            distributionTime = Time.GetTicksMsec() - startTime; 
+            distributionTime = Time.GetTicksMsec() - startTime;
             foreach (Region region in habitableRegions)
             {
                 if (region.pops.Count > 0)
@@ -426,7 +438,7 @@ public class SimManager
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)
                     {
-                        
+
                         region.StateBordering();
                         if (region.frontier && region.owner.rulingPop != null && region.occupier == null)
                         {
@@ -537,10 +549,10 @@ public class SimManager
             var partitioner = Partitioner.Create(states);
             Parallel.ForEach(partitioner, (state) =>
             {
-                state.CountStatePopulation();                
+                state.CountStatePopulation();
                 state.Recruitment();
                 state.UpdateDisplayColor();
-                state.UpdateDisplayName();          
+                state.UpdateDisplayName();
             });
         }
         catch (Exception e)
@@ -610,6 +622,7 @@ public class SimManager
         }
         Pop pop = new Pop()
         {
+            id = getID(),
             batchId = currentBatch,
             tech = tech.Clone(),
             profession = profession,
@@ -636,7 +649,7 @@ public class SimManager
 
     public void DestroyPop(Pop pop)
     {
-        
+
         if (pop.region.owner != null && pop.region.owner.rulingPop == pop)
         {
             lock (pop.region.owner)
@@ -667,6 +680,7 @@ public class SimManager
         float b = rng.NextSingle();
         Culture culture = new Culture()
         {
+            id = getID(),
             name = "Culturism",
             color = new Color(r, g, b),
             tickFounded = timeManager.ticks
@@ -687,6 +701,7 @@ public class SimManager
             float b = Mathf.Lerp(0.2f, 1f, rng.NextSingle());
             State state = new State()
             {
+                id = getID(),
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
@@ -711,4 +726,14 @@ public class SimManager
     #region Diplomacy Creation
     #endregion
     #endregion
+
+    public static ulong getID()
+    {
+        currentID++;
+        if (currentID == ulong.MaxValue)
+        {
+            currentID = 1;
+        }
+        return currentID;
+    }
 }

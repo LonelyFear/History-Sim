@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using MessagePack;
+using MessagePack.Formatters;
 [MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
 public class War
 {
     public string warName { get; set; } = "War";
     [IgnoreMember]
     public List<State> attackers { get; set; } = new List<State>();
+    public List<ulong> attackerIds { get; set; }
     [IgnoreMember]
     public List<State> defenders { get; set; } = new List<State>();
+    public List<ulong> defendersIds { get; set; }
     [IgnoreMember]
     public List<State> participants { get; set; } = new List<State>();
     public WarType warType { get; set; } = WarType.CONQUEST;
@@ -21,9 +24,15 @@ public class War
     public uint tickStarted;
     public uint age;
     public uint tickEnded;
-
-    public void StartWar (List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
+    public ulong id;
+    public void PrepareForSave()
     {
+        defendersIds = defenders.Select(s => s.id).ToList();
+        attackerIds = attackers.Select(s => s.id).ToList();
+    }
+    public void StartWar(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
+    {
+        id = SimManager.getID();
         attackers = atk;
         defenders = def;
         this.warType = warType;

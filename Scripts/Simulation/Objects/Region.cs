@@ -24,14 +24,14 @@ public class Region : PopObject
     // trade
     [IgnoreMember]
     public TradeZone tradeZone { get; set; }
+    public ulong tradeZoneID { get; set; }
     public bool isCoT { get; set; } = false;    
     public float tradeIncome = 0;
     public float taxIncome = 0;
     public int zoneSize = 1;
     [IgnoreMember]
     public Region tradeLink { get; set; } = null;
-    [IgnoreMember]
-    public List<Region> connectedTiles { get; set; } = new List<Region>();
+    public ulong tradeLinkID { get; set; }
 
     public Vector2I pos { get; set; }
     public float navigability { get; set; }
@@ -42,8 +42,10 @@ public class Region : PopObject
     public int freeLand { get; set; } = 16;
     [IgnoreMember]
     public State occupier { get; set; } = null;
+    public ulong occupierID { get; set; }
     [IgnoreMember]
     public State owner { get; set; } = null;
+    public ulong ownerID { get; set; }
     [IgnoreMember]
     public List<Army> armies;
 
@@ -52,8 +54,10 @@ public class Region : PopObject
     public long maxSoldiers { get; set; } = 0;
     [IgnoreMember]
     public Region[] borderingRegions { get; set; } = new Region[4];
+    public ulong[] borderingRegionsIDs { get; set; }
     [IgnoreMember]
     public Region[] habitableBorderingRegions { get; set; } = new Region[4];
+    public ulong[] habitableBorderingRegionsIDs { get; set; }
     [IgnoreMember]
     public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
 
@@ -63,7 +67,18 @@ public class Region : PopObject
 
     public static int populationPerLand = 500;
     public static int farmersPerLand = 115;
-
+    #region Data
+    public void PrepareForSave()
+    {
+        PreparePopObjectForSave();
+        tradeZoneID = tradeZone != null ? tradeZone.id : 0;
+        habitableBorderingRegionsIDs = habitableBorderingRegions.Select(r => r.id).ToArray();
+        borderingRegionsIDs = borderingRegions.Select(r => r.id).ToArray();
+        ownerID = owner != null ? owner.id : 0;
+        occupierID = occupier != null ? occupier.id : 0;
+        tradeLinkID = tradeLink != null ? tradeLink.id : 0;
+    }
+    #endregion
     public void CalcAverages()
     {
         name = "Region";
