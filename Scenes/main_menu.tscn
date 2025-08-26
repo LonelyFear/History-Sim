@@ -54,7 +54,15 @@ layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_font_sizes/font_size = 18
 action_mode = 0
-text = "Start Simulation"
+text = "New Simulation"
+alignment = 0
+
+[node name="Load" type="Button" parent="Button Holder"]
+layout_mode = 2
+theme = ExtResource("2_1ehe0")
+theme_override_font_sizes/font_size = 18
+action_mode = 0
+text = "Load Simulation"
 alignment = 0
 
 [node name="Options" type="Button" parent="Button Holder"]
@@ -64,14 +72,6 @@ theme_override_font_sizes/font_size = 18
 disabled = true
 action_mode = 0
 text = "Options"
-alignment = 0
-
-[node name="Load" type="Button" parent="Button Holder"]
-layout_mode = 2
-theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 18
-action_mode = 0
-text = "Load Save"
 alignment = 0
 
 [node name="Exit Game" type="Button" parent="Button Holder"]
@@ -90,6 +90,7 @@ ok_button_text = "Confirm"
 dialog_text = "Are you sure you want to quit the game?"
 
 [connection signal="pressed" from="Button Holder/Start" to="Button Holder" method="_on_start_pressed"]
+[connection signal="pressed" from="Button Holder/Load" to="Button Holder" method="_on_load_pressed"]
 [connection signal="pressed" from="Button Holder/Exit Game" to="Button Holder" method="_on_exit_game_pressed"]
 [connection signal="canceled" from="ConfirmationDialog" to="Button Holder" method="_on_confirmation_dialog_canceled"]
 [connection signal="confirmed" from="ConfirmationDialog" to="Button Holder" method="_on_confirmation_dialog_confirmed"]

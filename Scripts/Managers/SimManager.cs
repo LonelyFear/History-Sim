@@ -41,9 +41,7 @@ public class SimManager
     [IgnoreMember]
     public static System.Threading.Mutex m = new System.Threading.Mutex();
     [IgnoreMember]
-    public MapManager mapManager;
-    [IgnoreMember]
-    public WorldGenerator worldGenerator = LoadingScreen.generator;
+    public WorldGenerator worldGenerator;
 
     // Population
     public List<Pop> pops { get; set; } = new List<Pop>();
@@ -246,7 +244,7 @@ public class SimManager
         #endregion
         BorderingRegions();
         InitPops();
-        mapManager.InitMapManager();
+        SimNodeManager.InvokeEvent();
     }
 
     void BorderingRegions()

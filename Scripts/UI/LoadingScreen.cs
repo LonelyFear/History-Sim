@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 public partial class LoadingScreen : Control
 {
     Task task;
-    SimManager sim;
+    SimNodeManager simNodeManager;
+    SimManager sim = new SimManager();
     TimeManager time;
     CanvasLayer ui;
     Label splash;
@@ -14,14 +15,14 @@ public partial class LoadingScreen : Control
     public int seed;
     public int worldMult;
     bool textureGenerated;
+    bool firstFrame = false;
     TerrainMap map;
     public static WorldGenerator generator = new WorldGenerator();
     public override void _Ready()
     {
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
-        sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         time = GetNode<TimeManager>("/root/Game/Time Manager");
-
+        simNodeManager = GetNode<SimNodeManager>("/root/Game/Simulation");
         ui = GetNode<CanvasLayer>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
         camera = GetNode<Camera2D>("/root/Game/PlayerCamera");
@@ -29,18 +30,27 @@ public partial class LoadingScreen : Control
         Visible = true;
         GetNode<TextureProgressBar>("ProgressBar").Value = 0;
         AssetManager.LoadMods();
-    }
+	}
     public override void _Process(double delta)
     {
-        WorldGenerator worldSave = null;//WorldGenerator.LoadFromSave("user://saves/Save1");
-        if (worldSave != null)
+        if (!firstFrame)
         {
-            generator = worldSave;
+            firstFrame = true;
+            WorldGenerator worldSave = null;//WorldGenerator.LoadFromSave("user://saves/Save1");
+            if (worldSave != null)
+            {
+                generator = worldSave;
+            }
+
+            simNodeManager.simManager = sim;
+            sim.terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
+            sim.timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
+            // Connection
+            WorldGenerator.worldgenFinishedEvent += sim.OnWorldgenFinished;
+            sim.worldGenerator = generator;
+            time.worldGenerator = generator;
+            map.world = generator;            
         }
-        
-        sim.worldGenerator = generator;
-        time.worldGenerator = generator;
-        map.world = generator;
 
         if (task == null && generator.WorldExists == false)
         {

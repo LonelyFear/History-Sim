@@ -25,7 +25,7 @@ public partial class TimeManager : Node
     public double monthDelta = 1;
     public SimManager simManager;
     public MapManager mapManager;
-    bool worldGenFinished = false;
+    bool simStart = false;
     Task tickTask;
     Task monthTask;
     Task yearTask;
@@ -41,16 +41,22 @@ public partial class TimeManager : Node
     public WorldGenerator worldGenerator = LoadingScreen.generator;
     public override void _Ready()
     {
-        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");
         // Connection
-        WorldGenerator.worldgenFinishedEvent += OnWorldgenFinished;
-    }
+		SimNodeManager.simStartEvent += OnSimStart;
+	}
+
+    public void OnSimStart()
+    {
+        
+        simStart = true;
+        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        TickGame();
+	}
 
     public override void _Process(double delta)
     {
-
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
         GetWaitTime();
         currentTime += delta;
@@ -60,7 +66,7 @@ public partial class TimeManager : Node
             bool tickDone = tickTask == null || tickTask.IsCompleted;
             bool yearDone = yearTask == null || yearTask.IsCompleted;
             bool monthDone = monthTask == null || monthTask.IsCompleted;
-            if (worldGenFinished && tickDone)
+            if (simStart && tickDone)
             {
                 if (doMonth && !debuggerMode)
                 {
@@ -124,12 +130,6 @@ public partial class TimeManager : Node
                 waitTime = 0;
                 break;
         }        
-    }
-
-    public void OnWorldgenFinished(object sender, EventArgs e)
-    {
-        TickGame();
-        worldGenFinished = true;
     }
 
     private void TickGame(){

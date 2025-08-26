@@ -14,6 +14,11 @@ public partial class LabelManager : Node
 
 	public override void _Ready()
 	{
+		SimNodeManager.simStartEvent += OnSimStart;
+	}
+
+	public void OnSimStart()
+	{
 		simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
 	}
 
@@ -51,7 +56,7 @@ public partial class LabelManager : Node
 			float scale = state.regions.Count * stateSizeScaleMult;
 			float x = averageWorldPos.X;
 			float y = averageWorldPos.Y;
-			
+
 			currentLabels[state].Position = new Vector2(x, y);
 			currentLabels[state].AddThemeFontSizeOverride("name", (int)(scale));
 			//currentLabels[state].AddThemeFontSizeOverride("name", (int)(10 * scale));

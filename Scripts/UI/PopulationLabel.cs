@@ -7,8 +7,13 @@ public partial class PopulationLabel : Label
 
     public override void _Ready()
     {
+		SimNodeManager.simStartEvent += OnSimStart;
+	}
+
+    public void OnSimStart()
+    {
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
-    }
+	}
 
     public override void _Process(double delta)
     {
