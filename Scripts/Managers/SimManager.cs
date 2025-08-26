@@ -16,6 +16,7 @@ using FileAccess = Godot.FileAccess;
 [MessagePackObject(keyAsPropertyName: true)]
 public class SimManager
 {
+    [IgnoreMember] public SimNodeManager node;
     public static ulong currentID = 0;
     [IgnoreMember]
     public Node2D terrainMap;
@@ -42,6 +43,8 @@ public class SimManager
     public static System.Threading.Mutex m = new System.Threading.Mutex();
     [IgnoreMember]
     public WorldGenerator worldGenerator;
+    [IgnoreMember]
+    bool instanceDeleted = false;
 
     // Population
     public List<Pop> pops { get; set; } = new List<Pop>();
@@ -122,7 +125,7 @@ public class SimManager
     }
     #endregion
     #region Initialization
-    public void OnWorldgenFinished(object sender, EventArgs e)
+    public void OnWorldgenFinished()
     {
         TradeZone.simManager = this;
         PopObject.simManager = this;
@@ -244,7 +247,7 @@ public class SimManager
         #endregion
         BorderingRegions();
         InitPops();
-        SimNodeManager.InvokeEvent();
+        node.InvokeEvent();
     }
 
     void BorderingRegions()

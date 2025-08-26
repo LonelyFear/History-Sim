@@ -44,7 +44,7 @@ public partial class TimeManager : Node
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");
         // Connection
-		SimNodeManager.simStartEvent += OnSimStart;
+		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
 	}
 
     public void OnSimStart()

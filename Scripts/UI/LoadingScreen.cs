@@ -17,9 +17,11 @@ public partial class LoadingScreen : Control
     bool textureGenerated;
     bool firstFrame = false;
     TerrainMap map;
-    public static WorldGenerator generator = new WorldGenerator();
+
+    public static WorldGenerator generator;
     public override void _Ready()
     {
+        generator = new WorldGenerator();
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
         time = GetNode<TimeManager>("/root/Game/Time Manager");
         simNodeManager = GetNode<SimNodeManager>("/root/Game/Simulation");
@@ -43,10 +45,11 @@ public partial class LoadingScreen : Control
             }
 
             simNodeManager.simManager = sim;
+            sim.node = simNodeManager;
             sim.terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
             sim.timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
             // Connection
-            WorldGenerator.worldgenFinishedEvent += sim.OnWorldgenFinished;
+            generator.worldgenFinishedEvent += sim.OnWorldgenFinished;
             sim.worldGenerator = generator;
             time.worldGenerator = generator;
             map.world = generator;            

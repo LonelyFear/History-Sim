@@ -17,7 +17,7 @@ public partial class TerrainMap : Node2D
     }
     public override void _Process(double delta)
     {
-        if (switchMap && world.WorldExists)
+        if (switchMap && world != null && world.WorldExists)
         {
             switchMap = false;
             if (isBiomeMap)

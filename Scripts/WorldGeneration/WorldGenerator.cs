@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Godot;
 using MessagePack;
 using MessagePack.Resolvers;
+public delegate void WorldgenFinished();
 [MessagePackObject][Serializable]
 public class WorldGenerator
 {
@@ -28,7 +29,7 @@ public class WorldGenerator
     public int Seed { get; set; } 
     [Key(4)]
     public int continents { get; set; } = 12;
-    public static EventHandler worldgenFinishedEvent;
+    [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
     [Key(5)]
     public float[,] HeightMap { get; set; } 
     [Key(6)]
@@ -115,7 +116,7 @@ public class WorldGenerator
     }
     public void FinishWorldgen()
     {
-        worldgenFinishedEvent.Invoke(null, EventArgs.Empty);
+        worldgenFinishedEvent.Invoke();
     }
     public float GetUnitTemp(float value)
     {

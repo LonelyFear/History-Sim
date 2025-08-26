@@ -34,7 +34,7 @@ public partial class MapManager : Area2D
         regionOverlay = GetNode<Sprite2D>("Region Map");
         mapModeUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/MapModeHolder/MapMode");
         showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");
-		SimNodeManager.simStartEvent += InitMapManager;
+		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += InitMapManager;
 	}
     public void InitMapManager() {
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
