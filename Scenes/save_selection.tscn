@@ -1,0 +1,97 @@
+[gd_scene load_steps=5 format=3 uid="uid://bsxkj4ns68l28"]
+
+[ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_ts4s4"]
+[ext_resource type="Script" uid="uid://bgunjnlv3hg16" path="res://Scenes/SavesPanel.cs" id="2_fw0v8"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_qasot"]
+[ext_resource type="PackedScene" uid="uid://dpy6hp4i3relw" path="res://Scenes/save_button.tscn" id="3_morf0"]
+
+[node name="Save Selection" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuBG" parent="." instance=ExtResource("1_ts4s4")]
+layout_mode = 0
+anchors_preset = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -79.0
+offset_top = 0.0
+offset_right = 1598.0
+offset_bottom = 837.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="SavesPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -319.0
+offset_top = -341.5
+offset_right = 319.0
+offset_bottom = 341.5
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_fw0v8")
+saveButtonScene = ExtResource("3_morf0")
+
+[node name="Game Title" type="Label" parent="SavesPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -319.5
+offset_right = 319.5
+offset_bottom = 106.0
+grow_horizontal = 2
+theme = ExtResource("2_qasot")
+theme_override_font_sizes/font_size = 70
+text = "Select A Save"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel"]
+layout_mode = 2
+anchor_top = 0.12
+anchor_right = 1.0
+anchor_bottom = 0.919
+offset_top = 8.03999
+offset_bottom = 1.323
+theme_override_constants/separation = 12
+
+[node name="Buttons" type="HBoxContainer" parent="SavesPanel"]
+layout_mode = 0
+offset_top = 633.0
+offset_right = 637.0
+offset_bottom = 680.0
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Back" type="Button" parent="SavesPanel/Buttons"]
+layout_mode = 2
+theme = ExtResource("2_qasot")
+theme_override_font_sizes/font_size = 30
+action_mode = 0
+text = "Back"
+
+[node name="Load" type="Button" parent="SavesPanel/Buttons"]
+layout_mode = 2
+theme = ExtResource("2_qasot")
+theme_override_font_sizes/font_size = 30
+action_mode = 0
+text = "Load Save"
+
+[node name="Delete" type="Button" parent="SavesPanel/Buttons"]
+layout_mode = 2
+theme = ExtResource("2_qasot")
+theme_override_font_sizes/font_size = 30
+action_mode = 0
+text = "Delete Save"

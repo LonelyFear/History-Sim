@@ -15,3 +15,6 @@ func _on_confirmation_dialog_confirmed() -> void:
 
 func _on_confirmation_dialog_canceled() -> void:
 	closeConfirm.hide()
+	
+func _on_load_pressed() -> void:
+	get_tree().change_scene_to_packed(load("res://Scenes/save_selection.tscn"))
