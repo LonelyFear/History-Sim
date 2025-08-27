@@ -30,6 +30,7 @@ public class SimManager
     [Export]
     [IgnoreMember]
     public TimeManager timeManager;
+    public uint tick;
 
     public Tile[,] tiles;
     [IgnoreMember] public List<Region> habitableRegions = new List<Region>();
@@ -116,6 +117,7 @@ public class SimManager
         states.ForEach(r => r.PrepareForSave());
         tradeZones.ForEach(r => r.PrepareForSave());
         cultures.ForEach(r => r.PreparePopObjectForSave());
+        tick = timeManager.ticks;
         if (DirAccess.Open("user://saves") == null)
         {
             DirAccess.MakeDirAbsolute("user://saves");
@@ -155,6 +157,7 @@ public class SimManager
     #region Initialization
     public void RebuildAfterSave()
     {
+        timeManager.ticks = tick;
         foreach (Region region in regions)
         {
             regionsIds.Add(region.id, region);

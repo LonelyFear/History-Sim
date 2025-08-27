@@ -20,7 +20,8 @@ public class Pop
     [IgnoreMember]
     public Region region { get; set; }
     public ulong regionID;
-    public Culture culture { get; set; }
+    [IgnoreMember] public Culture culture { get; set; }
+    public ulong cultureId { get; set; }
     public Profession profession { get; set; } = Profession.FARMER;
 
     public Tech tech { get; set; } = new Tech();
@@ -37,10 +38,12 @@ public class Pop
     public void PrepareForSave()
     {
         regionID = region.id;
+        cultureId = culture.id;
     }
     public void LoadFromSave()
     {
         region = simManager.regionsIds[regionID];
+        culture = simManager.culturesIds[cultureId];
     }
     public void ChangeWorkforce(long amount)
     {

@@ -30,20 +30,26 @@ public class PopObject
     };
     [IgnoreMember]
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
+    public Dictionary<ulong, long> culturesIds;
     [IgnoreMember]
     public static Random rng = new Random();
     [IgnoreMember]
     public static SimManager simManager;
     [IgnoreMember]
     public Culture largestCulture = null;
+    public ulong largestCultureId;
 
     public void PreparePopObjectForSave()
     {
-        popsIds = pops.Count > 0 ?pops.Select(p => p.id).ToList() : null;
+        popsIds = pops.Count > 0 ? pops.Select(p => p.id).ToList() : null;
+        largestCultureId = largestCulture == null ? 0 : largestCulture.id;
+        culturesIds = cultures.Count > 0 ? cultures.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
     }
     public void LoadPopObjectFromSave()
     {
         pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => simManager.popsIds[p]).ToList();
+        largestCulture = largestCultureId == 0 ? null : simManager.culturesIds[largestCultureId];
+        cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => simManager.culturesIds[kv.Key], kv => kv.Value);
     }
     public void CountPopulation()
     {

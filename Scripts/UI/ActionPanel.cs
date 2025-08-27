@@ -81,7 +81,7 @@ public partial class ActionPanel : Panel
         
         world.SaveTerrainToFile(saveName);
         FileAccess save = FileAccess.Open($"user://saves/{saveName}/save_data.json", FileAccess.ModeFlags.Write);
-        save.StoreLine(JsonSerializer.Serialize(data));        
+        save.StoreString(JsonSerializer.Serialize(data));        
         sim.SaveSimToFile(saveName);
         GD.Print("Game saved to " + saveName);            
     }

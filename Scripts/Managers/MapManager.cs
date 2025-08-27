@@ -52,6 +52,11 @@ public partial class MapManager : Area2D
         var partitioner = Partitioner.Create(regions);
         Parallel.ForEach(partitioner, (region) =>
         {
+            if (region == null)
+            {
+                GD.Print(SimManager.worldSize.X * SimManager.worldSize.Y);
+                GD.Print(simManager.paintedRegions.Count);
+            }
             SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
         });
     }
