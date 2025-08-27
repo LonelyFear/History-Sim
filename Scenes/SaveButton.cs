@@ -4,6 +4,7 @@ using System;
 public partial class SaveButton : Button
 {
 	public string saveName;
+	public SaveData saveData;
 	public string savePath;
 	public string displayPath;
 	public bool invalid = false;
@@ -20,8 +21,8 @@ public partial class SaveButton : Button
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		saveNameLabel.Text = saveName.Capitalize();
-		savePathLabel.Text = savePath;
+		saveNameLabel.Text = saveData == null ? "Invalid Save" : saveData.saveName.Capitalize();
+		savePathLabel.Text = displayPath;
 	}
 
     public override void _Pressed()

@@ -50,7 +50,7 @@ public class NameGenerator
         }
         else if (name.EndsWith("land"))
         {
-            demonym = name[..^1] + "er";
+            demonym = name[..^4];
         }
         else if (name.EndsWith("n") || name.EndsWith("r"))
         {

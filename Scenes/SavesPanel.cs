@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 public partial class SavesPanel : Panel
 {
@@ -12,7 +13,7 @@ public partial class SavesPanel : Panel
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		saveButtonContainer = GetNode<VBoxContainer>("SaveButtonContainer");
+		saveButtonContainer = GetNode<VBoxContainer>("ScrollContainer/SaveButtonContainer");
 		GetNode<Button>("Buttons/Back").Pressed += OnBackClicked;
 		GetNode<Button>("Buttons/Load").Pressed += OnLoadSaveClicked;
 		GetNode<Button>("Buttons/Delete").Pressed += OnDeleteSaveClicked;
@@ -35,25 +36,36 @@ public partial class SavesPanel : Panel
 		foreach (string saveName in DirAccess.Open("user://saves").GetDirectories())
 		{
 			string savePath = "user://saves/" + saveName;
-			if (!saves.ContainsKey(savePath) && DirAccess.Open(savePath).FileExists(savePath + "/terrain_data.pxsave") && DirAccess.Open(savePath).FileExists(savePath + "/sim_data.pxsave"))
+			if (saves.ContainsKey(savePath))
 			{
+				continue;
+			}
+
+			bool saveDataExists = FileAccess.FileExists(savePath + "/save_data.json");
+			bool terrainDataExists = FileAccess.FileExists(savePath + "/terrain_data.pxsave");
+			bool simDataExists = FileAccess.FileExists(savePath + "/sim_data.pxsave");
+			
+			if (terrainDataExists && simDataExists && saveDataExists)
+			{
+				FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
+				GD.Print(JsonSerializer.Deserialize<SaveData>(saveDataFile.GetAsText(true)));
+				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveDataFile.GetAsText(true));
 				SaveButton save = saveButtonScene.Instantiate<SaveButton>();
+				save.saveData = saveData;
 				save.saves = this;
-				save.saveName = saveName;
 				save.displayPath = OS.GetUserDataDir() + "/saves/" + saveName;
 				save.savePath = savePath;
 
 				saveButtonContainer.AddChild(save);
 				saves.Add(savePath, save);
 			}
-			else if (!saves.ContainsKey(savePath))
+			else
 			{
 				SaveButton save = saveButtonScene.Instantiate<SaveButton>();
-				save.saveName = "Invalid Save";
+				save.saveData = null;
 				save.displayPath = OS.GetUserDataDir() + "/saves/" + saveName;
 				save.saves = this;
 				save.savePath = savePath;
-				save.invalid = true;
 
 				save.GetNode<Label>("SaveName").Modulate = new Color(1, 0, 0);
 				save.GetNode<Label>("SaveStatus").Modulate = new Color(1, 0, 0);

@@ -5,7 +5,7 @@ extends Panel
 var old_text := ""
 
 func _on_seed_text_changed(new_text: String) -> void:
-	if new_text.is_empty() or new_text.is_valid_int():
+	if (new_text.is_empty() or new_text.is_valid_int()):
 		old_text = new_text
 	else:
 		lineEdit.text = old_text

@@ -58,13 +58,23 @@ text = "Select A Save"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="SavesPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -309.5
+offset_top = -251.0
+offset_right = 309.5
+offset_bottom = 283.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/ScrollContainer"]
+custom_minimum_size = Vector2(619, 100)
 layout_mode = 2
-anchor_top = 0.12
-anchor_right = 1.0
-anchor_bottom = 0.919
-offset_top = 8.03999
-offset_bottom = 1.323
 theme_override_constants/separation = 12
 
 [node name="Buttons" type="HBoxContainer" parent="SavesPanel"]

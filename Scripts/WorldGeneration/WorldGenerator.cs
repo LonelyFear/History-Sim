@@ -141,14 +141,6 @@ public class WorldGenerator
     }
     public void SaveTerrainToFile(string saveName)
     {
-        JsonSerializerOptions options = new()
-        {
-            ReferenceHandler = ReferenceHandler.Preserve,
-            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
-        };
-        options.Converters.Add(new TwoDimensionalArrayConverter<float>());
-        options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
-        options.Converters.Add(new TwoDimensionalArrayConverter<string>());
         //GD.Print(JsonSerializer.Serialize(BiomeMap, options));
         //GD.Print("Thing");
         if (DirAccess.Open("user://saves") == null)
