@@ -47,6 +47,7 @@ public partial class SavesPanel : Panel
 			
 			if (terrainDataExists && simDataExists && saveDataExists)
 			{
+				// TODO: Fix save button throwing errors
 				FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
 				GD.Print(JsonSerializer.Deserialize<SaveData>(saveDataFile.GetAsText(true)));
 				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveDataFile.GetAsText(true));

@@ -49,6 +49,7 @@ public partial class MapManager : Area2D
 
     public void UpdateRegionColors(IEnumerable<Region> regions)
     {
+        // TODO: Fix null region bug
         var partitioner = Partitioner.Create(regions);
         Parallel.ForEach(partitioner, (region) =>
         {
