@@ -94,7 +94,6 @@ public partial class TimeManager : Node
                         }
                         TickGame();
                         mapManager.UpdateRegionColors(simManager.paintedRegions);
-                        
                     }
 
                 }

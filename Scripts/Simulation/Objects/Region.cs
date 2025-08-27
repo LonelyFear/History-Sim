@@ -78,6 +78,16 @@ public class Region : PopObject
         occupierID = occupier != null ? occupier.id : 0;
         tradeLinkID = tradeLink != null ? tradeLink.id : 0;
     }
+    public void LoadFromSave()
+    {
+        LoadPopObjectFromSave();
+        tradeZone = tradeZoneID == 0 ? null : simManager.tradeZonesIds[tradeZoneID];
+        habitableBorderingRegions = habitableBorderingRegionsIDs.Select(r => simManager.regionsIds[r]).ToArray();
+        borderingRegions = borderingRegionsIDs.Select(r => simManager.regionsIds[r]).ToArray();
+        owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
+        occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
+        tradeLink = tradeLinkID == 0 ? null : simManager.regionsIds[tradeLinkID];
+    }
     #endregion
     public void CalcAverages()
     {

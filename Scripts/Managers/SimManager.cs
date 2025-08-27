@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text.Json;
@@ -17,7 +18,7 @@ using FileAccess = Godot.FileAccess;
 public class SimManager
 {
     [IgnoreMember] public SimNodeManager node;
-    public static ulong currentID = 0;
+    [IgnoreMember] public ulong currentID = 0;
     [IgnoreMember]
     public Node2D terrainMap;
     [IgnoreMember]
@@ -31,10 +32,12 @@ public class SimManager
     public TimeManager timeManager;
 
     public Tile[,] tiles;
-    public List<Region> regions { get; set; } = new List<Region>();
-    public List<Region> habitableRegions = new List<Region>();
+    [IgnoreMember] public List<Region> habitableRegions = new List<Region>();
     public List<Region> tradeCenters { get; set; } = new List<Region>();
-    public List<Region> paintedRegions = new List<Region>();
+    [IgnoreMember] public List<Region> paintedRegions = new List<Region>();
+    public List<Region> regions { get; set; } = new List<Region>();
+    [IgnoreMember] public Dictionary<ulong, Region> regionsIds { get; set; } = new Dictionary<ulong, Region>();
+
     [IgnoreMember]
     public Vector2I terrainSize;
     [IgnoreMember]
@@ -47,21 +50,29 @@ public class SimManager
     bool instanceDeleted = false;
 
     // Population
-    public List<Pop> pops { get; set; } = new List<Pop>();
+    
     public long worldPopulation { get; set; } = 0;
     public long worldWorkforce { get; set; } = 0;
     public long worldDependents { get; set; } = 0;
     public uint populatedRegions;
     public float maxWealth = 0;
     public float maxTradeWeight = 0;
+    public List<Pop> pops { get; set; } = new List<Pop>();
+    [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
     public List<Culture> cultures { get; set; } = new List<Culture>();
+    [IgnoreMember] public Dictionary<ulong, Culture> culturesIds { get; set; } = new Dictionary<ulong, Culture>();
     public List<State> states { get; set; } = new List<State>();
+    [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
     public List<Army> armies { get; set; } = new List<Army>();
     public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
+    [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZonesIds { get; set; } = new Dictionary<ulong, TradeZone>();
     public List<Character> characters { get; set; } = new List<Character>();
+    [IgnoreMember] public Dictionary<ulong, Character> charactersIds { get; set; } = new Dictionary<ulong, Character>();
     public List<War> wars { get; set; } = new List<War>();
+    [IgnoreMember] public Dictionary<ulong, War> warsIds { get; set; } = new Dictionary<ulong, War>();
     public List<War> endedWars = new List<War>();
     public uint currentBatch = 2;
+    [IgnoreMember] public bool simLoadedFromSave = false;
 
     [IgnoreMember]
     Random rng = new Random();
@@ -118,27 +129,84 @@ public class SimManager
             [StandardResolver.Instance]
         );
 
-        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
 
         FileAccess save = FileAccess.Open($"user://saves/{saveName}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         save.StoreBuffer(MessagePackSerializer.Serialize(this, options));
     }
+    public static SimManager LoadSimFromFile(string path)
+    {
+        if (DirAccess.Open(path) == null && DirAccess.Open(path).FileExists(path + "/terrain_data.pxsave") && DirAccess.Open(path).FileExists(path + "/sim_data.pxsave"))
+        {
+            GD.PushError($"Save at path {path} not found");
+            return null;
+        }
+        var resolver = CompositeResolver.Create(
+            [new Vector2IFormatter(), new ColorFormatter()],
+            [StandardResolver.Instance]
+        );
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
+        //FileAccess save = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Read);
+        SimManager sim = MessagePackSerializer.Deserialize<SimManager>(FileAccess.GetFileAsBytes($"{path}/sim_data.pxsave"), options);
+        sim.simLoadedFromSave = true;
+        return sim;
+    }
     #endregion
     #region Initialization
-    public void OnWorldgenFinished()
+    public void RebuildAfterSave()
     {
-        TradeZone.simManager = this;
-        PopObject.simManager = this;
-        PopObject.timeManager = timeManager;
-        Army.simManager = this;
-        Pop.simManager = this;
-        War.simManager = this;
+        foreach (Region region in regions)
+        {
+            regionsIds.Add(region.id, region);
+        }
+        foreach (Pop pop in pops)
+        {
+            popsIds.Add(pop.id, pop);
+        }
+        foreach (State state in states)
+        {
+            statesIds.Add(state.id, state);
+        }
+        foreach (Culture culture in cultures)
+        {
+            culturesIds.Add(culture.id, culture);
+        }
+        foreach (War war in wars)
+        {
+            warsIds.Add(war.id, war);
+        }
+        foreach (TradeZone tradeZone in tradeZones)
+        {
+            tradeZonesIds.Add(tradeZone.id, tradeZone);
+        }
 
-        // Load Resources Before Buildings        
-        terrainSize = worldGenerator.WorldSize;
-        worldSize = terrainSize / tilesPerRegion;
-        #region Tile Initialization
+        foreach (Region region in regions)
+        {
+            region.LoadFromSave();
+            // Calc average fertility
+            region.CalcAverages();
+            // Checks habitability
+            region.CheckHabitability();
+            if (region.habitable)
+            {
+                habitableRegions.Add(region);
+            }
+            // Calc max populaiton
+            region.CalcProfessionRequirements();
+        }
+        BorderingRegions();
+
+        pops.ForEach(r => r.LoadFromSave());
+        wars.ForEach(r => r.LoadFromSave());
+        states.ForEach(r => r.LoadFromSave());
+        //GD.Print(tradeZones.Values);
+        tradeZones.ForEach(r => r.LoadFromSave());
+        cultures.ForEach(r => r.LoadPopObjectFromSave());   
+    }
+    public void InitTerrainTiles()
+    {
         tiles = new Tile[terrainSize.X, terrainSize.Y];
+
         for (int x = 0; x < terrainSize.X; x++)
         {
             for (int y = 0; y < terrainSize.Y; y++)
@@ -204,8 +272,10 @@ public class SimManager
                 }
             }
         }
-        #endregion
-        #region Region Creation
+    }
+    public void CreateRegions()
+    {
+        //GD.Print(regions.Count);
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
@@ -244,11 +314,33 @@ public class SimManager
                 newRegion.CalcProfessionRequirements();
             }
         }
-        #endregion
         BorderingRegions();
-        InitPops();
+    }
+    
+    public void OnWorldgenFinished()
+    {
+        TradeZone.simManager = this;
+        PopObject.simManager = this;
+        PopObject.timeManager = timeManager;
+        Army.simManager = this;
+        Pop.simManager = this;
+        War.simManager = this;   
+        terrainSize = worldGenerator.WorldSize;
+        worldSize = terrainSize / tilesPerRegion;
+        
+        if (simLoadedFromSave)
+        {
+            RebuildAfterSave();
+        }
+        else
+        {
+            InitTerrainTiles();
+            CreateRegions();
+            InitPops();            
+        }
         node.InvokeEvent();
     }
+    #endregion
 
     void BorderingRegions()
     {
@@ -271,12 +363,13 @@ public class SimManager
                     {
                         habitableBorderCount++;
                     }
-                    if (r.habitable || region.habitable)
+                    if (r.habitable || region.habitable && !paintedRegions.Contains(region))
                     {
-                        lock (paintedRegions)
+                        if (region == null)
                         {
-                            paintedRegions.Add(region);
+                            GD.PushError("Something is wrong");
                         }
+                        paintedRegions.Add(region);
                     }
                 }
             }
@@ -323,7 +416,6 @@ public class SimManager
             }
         }
     }
-    #endregion
     #region Pop Update
     public void UpdatePops()
     {
@@ -728,7 +820,7 @@ public class SimManager
     #endregion
     #endregion
 
-    public static ulong getID()
+    public ulong getID()
     {
         currentID++;
         if (currentID == ulong.MaxValue)

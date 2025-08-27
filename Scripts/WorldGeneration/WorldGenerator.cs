@@ -163,7 +163,7 @@ public class WorldGenerator
             [StandardResolver.Instance]
         );
 
-        var moptions = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+        var moptions = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
         
         FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrain_data.pxsave", FileAccess.ModeFlags.Write);
         
@@ -177,22 +177,19 @@ public class WorldGenerator
             GD.PushError($"Save at path {path} not found");
             return null;
         }
-        JsonSerializerOptions options = new()
-        {
-            ReferenceHandler = ReferenceHandler.Preserve,
-            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,        
-        };
+        var resolver = CompositeResolver.Create(
+            [new Vector2IFormatter(), new ColorFormatter(), new NodePathFormatter(), new GDStringNameFormatter()],
+            [StandardResolver.Instance]
+        );
 
-        options.Converters.Add(new TwoDimensionalArrayConverter<float>());
-        options.Converters.Add(new TwoDimensionalArrayConverter<Biome>());
-        options.Converters.Add(new TwoDimensionalArrayConverter<string>());
+        var moptions = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
        
         FileAccess save = FileAccess.Open($"{path}/terrain_data.pxsave", FileAccess.ModeFlags.Read);
         //GD.Print(save.GetAsText());
         WorldGenerator loaded = null;
         try
         {
-            loaded = (WorldGenerator)MessagePackSerializer.Typeless.Deserialize(save.GetBuffer((long)save.GetLength()));
+            loaded = MessagePackSerializer.Deserialize<WorldGenerator>(save.GetBuffer((long)save.GetLength()), moptions);
             //loaded = JsonSerializer.Deserialize<WorldGenerator>(save.GetAsText(true), options);
             if (loaded != null)
             {

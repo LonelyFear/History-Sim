@@ -23,9 +23,14 @@ public class TradeZone
         CoTID = CoT != null ? CoT.id : 0;
         regionsIDs = regions.Select(r => r.id).ToList();
     }
+    public void LoadFromSave()
+    {
+        CoT = CoTID == 0 ? null : simManager.regionsIds[CoTID];
+        regions = regionsIDs.Select(r => simManager.regionsIds[r]).ToList();
+    }
     public TradeZone CreateZone(Region region)
     {
-        id = SimManager.getID();
+        id = simManager.getID();
         color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
         CoT = region;
         regions = [CoT];

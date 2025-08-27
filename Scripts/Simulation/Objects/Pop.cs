@@ -38,6 +38,10 @@ public class Pop
     {
         regionID = region.id;
     }
+    public void LoadFromSave()
+    {
+        region = simManager.regionsIds[regionID];
+    }
     public void ChangeWorkforce(long amount)
     {
         if (workforce + amount < 0)

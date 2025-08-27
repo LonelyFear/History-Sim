@@ -16,6 +16,7 @@ public partial class LoadingScreen : Control
     public int worldMult;
     bool textureGenerated;
     bool firstFrame = false;
+    public string savePath = null;
     TerrainMap map;
 
     public static WorldGenerator generator;
@@ -37,12 +38,22 @@ public partial class LoadingScreen : Control
     {
         if (!firstFrame)
         {
-            firstFrame = true;
-            WorldGenerator worldSave = null;//WorldGenerator.LoadFromSave("user://saves/Save1");
-            if (worldSave != null)
+
+            if (savePath != null && DirAccess.Open(savePath) != null)
             {
-                generator = worldSave;
+                WorldGenerator loadedWorld = WorldGenerator.LoadFromSave(savePath);
+                SimManager loadedSim = SimManager.LoadSimFromFile(savePath);
+
+                if (loadedWorld != null)
+                {
+                    generator = loadedWorld;
+                    if (loadedSim != null)
+                    {
+                        sim = loadedSim;
+                    }                    
+                }
             }
+            firstFrame = true;
 
             simNodeManager.simManager = sim;
             sim.node = simNodeManager;

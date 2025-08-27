@@ -41,6 +41,10 @@ public class PopObject
     {
         popsIds = pops.Count > 0 ?pops.Select(p => p.id).ToList() : null;
     }
+    public void LoadPopObjectFromSave()
+    {
+        pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => simManager.popsIds[p]).ToList();
+    }
     public void CountPopulation()
     {
         long maxPopulation = 0;

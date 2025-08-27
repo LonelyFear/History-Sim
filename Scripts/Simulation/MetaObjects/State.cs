@@ -77,6 +77,18 @@ public class State : PopObject
         enemiesIDs = enemies.Count > 0 ? enemies.Select(r => r.id).ToList() : null;
         borderingStatesIDs = borderingStates.Count > 0 ? borderingStates.Select(r => r.id).ToList() : null;
     }
+    public void LoadFromSave()
+    {
+        LoadPopObjectFromSave();
+        capital = simManager.regionsIds[capitalID];
+        regions = regionsIDs.Select(r => simManager.regionsIds[r]).ToList();
+        vassals = vassalsIDs == null ? new List<State>() : vassalsIDs.Select(r => simManager.statesIds[r]).ToList();
+        liege = liegeID == 0 ? null : simManager.statesIds[liegeID];
+        relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);
+        wars = warsIDs == null ? new Dictionary<War, bool>() : warsIDs.ToDictionary(kv => simManager.warsIds[kv.Key], kv => kv.Value);
+        enemies = enemiesIDs == null ? new List<State>() : enemiesIDs.Select(r => simManager.statesIds[r]).ToList();
+        borderingStates = borderingStatesIDs == null ? new List<State>() : borderingStatesIDs.Select(r => simManager.statesIds[r]).ToList();
+    }
     public void UpdateCapital()
     {
         if (capital == null)

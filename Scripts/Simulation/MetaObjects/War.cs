@@ -30,9 +30,14 @@ public class War
         defendersIds = defenders.Select(s => s.id).ToList();
         attackerIds = attackers.Select(s => s.id).ToList();
     }
+    public void LoadFromSave()
+    {
+        defenders = defendersIds.Select(d => simManager.statesIds[d]).ToList();
+        attackers = attackerIds.Select(a => simManager.statesIds[a]).ToList();
+    }
     public void StartWar(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
     {
-        id = SimManager.getID();
+        id = simManager.getID();
         attackers = atk;
         defenders = def;
         this.warType = warType;
