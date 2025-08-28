@@ -317,7 +317,6 @@ public class SimManager
                 newRegion.CalcProfessionRequirements();
             }
         }
-        BorderingRegions();
     }
     
     public void OnWorldgenFinished()
@@ -330,16 +329,18 @@ public class SimManager
         War.simManager = this;   
         terrainSize = worldGenerator.WorldSize;
         worldSize = terrainSize / tilesPerRegion;
-        
+
         if (simLoadedFromSave)
         {
             RebuildAfterSave();
+            BorderingRegions();
         }
         else
         {
             InitTerrainTiles();
             CreateRegions();
-            InitPops();            
+            BorderingRegions();
+            InitPops();
         }
         node.InvokeEvent();
     }

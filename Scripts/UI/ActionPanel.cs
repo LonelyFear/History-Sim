@@ -50,40 +50,34 @@ public partial class ActionPanel : Panel
     }
     public void OnSimSave()
     {
-        string saveName = GetNode<LineEdit>("/root/Game/UI/SaveNamePanel/VBoxContainer/TextEdit").Text;
-        if (saveName == "")
+        // Creates a new saves folder if there isnt any
+        if (DirAccess.Open("user://saves") == null)
         {
-            int saveNum = 1;
-            foreach (string dirName in DirAccess.GetDirectoriesAt("user://saves"))
-            {
-                GD.Print(dirName);
-                if (dirName[..^1] == "Save")
-                {
-                    if (dirName[dirName.Length - 1] > saveNum)
-                    {
-                        saveNum++;
-                    }
-                }
-            }
-            saveName = "Save" + saveNum;
+            DirAccess.MakeDirAbsolute("user://saves");
         }
+
+        string saveName = GetNode<LineEdit>("/root/Game/UI/SaveNamePanel/VBoxContainer/TextEdit").Text;
+        int saveNum = DirAccess.GetDirectoriesAt("user://saves").Length + 1;
+        string saveFileName = "Save" + saveNum;
+
         SaveData data = new SaveData()
         {
             saveName = saveName,
-            saveID = saveName,
+            saveID = saveFileName,
             saveVersion = "Alpha 1"
         };
-        GD.Print("Saving Game");
+
+        // Creates a new save folder
+        DirAccess.MakeDirAbsolute($"user://saves/{saveFileName}");
+
         SimManager sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         WorldGenerator world = LoadingScreen.generator;
 
-
-        
-        world.SaveTerrainToFile(saveName);
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/save_data.json", FileAccess.ModeFlags.Write);
+        world.SaveTerrainToFile(saveFileName);
+        FileAccess save = FileAccess.Open($"user://saves/{saveFileName}/save_data.json", FileAccess.ModeFlags.Write);
+        GD.Print(JsonSerializer.Serialize(data));
         save.StoreString(JsonSerializer.Serialize(data));        
-        sim.SaveSimToFile(saveName);
-        GD.Print("Game saved to " + saveName);            
+        sim.SaveSimToFile(saveFileName);        
     }
 
     public void OnUiToggle(bool toggle)

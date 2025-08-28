@@ -83,6 +83,7 @@ public class WorldGenerator
     }
     void Generate()
     {
+        GD.Print("Seed: " + Seed);
         ulong startTime = Time.GetTicksMsec();
         HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
         GD.Print("Heightmap Generation Finished After " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
@@ -143,13 +144,6 @@ public class WorldGenerator
     {
         //GD.Print(JsonSerializer.Serialize(BiomeMap, options));
         //GD.Print("Thing");
-        if (DirAccess.Open("user://saves") == null)
-        {
-            DirAccess.MakeDirAbsolute("user://saves");
-        }
-        if (DirAccess.Open($"user://saves/{saveName}") == null) {
-            DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
-        }
         var resolver = CompositeResolver.Create(
             [new Vector2IFormatter(), new ColorFormatter(), new NodePathFormatter(), new GDStringNameFormatter()],
             [StandardResolver.Instance]
