@@ -12,7 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -7.68
 offset_top = -7.92
-offset_right = -800.0
+offset_right = -97.0
 offset_bottom = -650.0
 grow_vertical = 2
 script = ExtResource("1_f0tub")
@@ -24,7 +24,7 @@ offset_top = 6.0
 offset_right = 219.0
 offset_bottom = 46.0
 theme = ExtResource("1_lhjyg")
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 47
 text = "Invalid Save"
 
 [node name="SaveStatus" type="Label" parent="."]
@@ -37,5 +37,5 @@ offset_top = -24.0
 offset_right = 247.0
 grow_vertical = 0
 theme = ExtResource("1_lhjyg")
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 25
 text = "Path"

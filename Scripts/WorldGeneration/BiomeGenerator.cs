@@ -64,11 +64,11 @@ public class BiomeGenerator
                     }
 
                 }
-                
-                // if (world.HydroMap[x, y] > 11f && elevation >= world.SeaLevel)
-                // {
-                //     selectedBiome = AssetManager.GetBiome("river");
-                // }
+
+                if (selectedBiome == null)
+                {
+                    selectedBiome = AssetManager.GetBiome("ice_sheet");
+                }
                 
                 map[x, y] = selectedBiome.id;
             }

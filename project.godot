@@ -33,6 +33,10 @@ project/assembly_name="Nations"
 
 movie_writer/movie_file="C:/Users/MY_PC/Godot Recordings/recording.avi"
 
+[gui]
+
+theme/default_font_multichannel_signed_distance_field=true
+
 [input]
 
 Move_Left={

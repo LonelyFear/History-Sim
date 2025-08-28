@@ -3,10 +3,10 @@
 [ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scripts/UI/LoadingScreen.cs" id="1_1opfs"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="2_1opfs"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="3_iom8t"]
+[ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_1opfs"]
 [ext_resource type="Texture2D" uid="uid://bxcobj3k4w7ug" path="res://Sprites/Under.png" id="4_nw6gx"]
 [ext_resource type="Texture2D" uid="uid://gcfy0su0hgup" path="res://Sprites/Over.png" id="5_x8yqx"]
 [ext_resource type="Texture2D" uid="uid://bdyro1h0wkigt" path="res://Sprites/Progress.png" id="6_qbyj8"]
-[ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="7_5emdp"]
 [ext_resource type="Texture2D" uid="uid://dgw77xp2rspt" path="res://Sprites/loading.png" id="8_umxys"]
 [ext_resource type="Script" uid="uid://bn6k8xr4csl48" path="res://Scripts/loading_icon.gd" id="9_4v7p6"]
 
@@ -38,7 +38,8 @@ offset_bottom = -174.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("3_iom8t")
-theme_override_font_sizes/font_size = 70
+theme_override_fonts/font = ExtResource("4_1opfs")
+theme_override_font_sizes/font_size = 120
 text = "Generating World..."
 
 [node name="ProgressBar" type="TextureProgressBar" parent="."]
@@ -78,8 +79,8 @@ offset_right = 103.0
 offset_bottom = 67.5
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_fonts/font = ExtResource("7_5emdp")
-theme_override_font_sizes/font_size = 30
+theme = ExtResource("3_iom8t")
+theme_override_font_sizes/font_size = 50
 text = "Generating A World..."
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

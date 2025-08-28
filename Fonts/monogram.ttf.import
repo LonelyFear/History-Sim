@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://cd5vtrl7uc1q8"
-path="res://.godot/imported/LonelyFont.ttf-d6d7b310bf90ea66edecc1a285ddff75.fontdata"
+uid="uid://dckvh14d5x57o"
+path="res://.godot/imported/monogram.ttf-a07bdc8e90b0a828f5639fcf98c09032.fontdata"
 
 [deps]
 
-source_file="res://LonelyFont.ttf"
-dest_files=["res://.godot/imported/LonelyFont.ttf-d6d7b310bf90ea66edecc1a285ddff75.fontdata"]
+source_file="res://Fonts/monogram.ttf"
+dest_files=["res://.godot/imported/monogram.ttf-a07bdc8e90b0a828f5639fcf98c09032.fontdata"]
 
 [params]
 
@@ -21,14 +21,14 @@ msdf_pixel_range=8
 msdf_size=48
 allow_system_fallback=true
 force_autohinter=false
-hinting=1
+hinting=0
 subpixel_positioning=4
 keep_rounding_remainders=true
-oversampling=0.0
+oversampling=10.0
 Fallbacks=null
 fallbacks=[]
 Compress=null
-compress=false
+compress=true
 preload=[{
 "chars": [],
 "glyphs": [],

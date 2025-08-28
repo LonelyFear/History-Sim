@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://t6atnwvhjhcv"]
 
-[ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://LonelyFont.ttf" id="1_7fr3q"]
+[ext_resource type="FontFile" uid="uid://cd5vtrl7uc1q8" path="res://Fonts/LonelyFont.ttf" id="1_7fr3q"]
 
 [node name="State Label" type="Label"]
 z_index = 10

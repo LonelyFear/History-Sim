@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://bsxkj4ns68l28"]
+[gd_scene load_steps=6 format=3 uid="uid://bsxkj4ns68l28"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_ts4s4"]
 [ext_resource type="Script" uid="uid://bgunjnlv3hg16" path="res://Scenes/SavesPanel.cs" id="2_fw0v8"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_qasot"]
 [ext_resource type="PackedScene" uid="uid://dpy6hp4i3relw" path="res://Scenes/save_button.tscn" id="3_morf0"]
+[ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="5_qb7vq"]
 
 [node name="Save Selection" type="Control"]
 layout_mode = 3
@@ -34,9 +35,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -319.0
+offset_left = -460.0
 offset_top = -341.5
-offset_right = 319.0
+offset_right = 460.0
 offset_bottom = 341.5
 grow_horizontal = 2
 grow_vertical = 2
@@ -53,6 +54,7 @@ offset_right = 319.5
 offset_bottom = 106.0
 grow_horizontal = 2
 theme = ExtResource("2_qasot")
+theme_override_fonts/font = ExtResource("5_qb7vq")
 theme_override_font_sizes/font_size = 70
 text = "Select A Save"
 horizontal_alignment = 1
@@ -65,23 +67,30 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -309.5
-offset_top = -251.0
-offset_right = 309.5
-offset_bottom = 283.0
+offset_left = -426.0
+offset_top = -250.5
+offset_right = 429.0
+offset_bottom = 283.5
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/ScrollContainer"]
-custom_minimum_size = Vector2(619, 100)
+custom_minimum_size = Vector2(855, 100)
 layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Buttons" type="HBoxContainer" parent="SavesPanel"]
-layout_mode = 0
-offset_top = 633.0
-offset_right = 637.0
-offset_bottom = 680.0
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -318.5
+offset_top = -47.0
+offset_right = 318.5
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_constants/separation = 18
 alignment = 1
 

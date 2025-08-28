@@ -45,12 +45,13 @@ public partial class SavesPanel : Panel
 			bool terrainDataExists = FileAccess.FileExists(savePath + "/terrain_data.pxsave");
 			bool simDataExists = FileAccess.FileExists(savePath + "/sim_data.pxsave");
 			
-			if (terrainDataExists && simDataExists && saveDataExists)
+			if (terrainDataExists && simDataExists && saveDataExists && FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read).GetAsText(true).Length > 0)
 			{
 				// TODO: Fix save button throwing errors
 				FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
-				GD.Print(JsonSerializer.Deserialize<SaveData>(saveDataFile.GetAsText(true)));
-				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveDataFile.GetAsText(true));
+				string saveText = saveDataFile.GetAsText(true);
+				GD.Print(saveText);
+				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveText);
 				SaveButton save = saveButtonScene.Instantiate<SaveButton>();
 				save.saveData = saveData;
 				save.saves = this;

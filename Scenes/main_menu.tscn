@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bbnm5jqp5n32i"]
+[gd_scene load_steps=5 format=3 uid="uid://bbnm5jqp5n32i"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_1ehe0"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_1ehe0"]
 [ext_resource type="Script" uid="uid://duckoy5enxdge" path="res://Scripts/button_holder.gd" id="2_48xlc"]
+[ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="3_ce3w2"]
 
 [node name="Main Menu" type="Control"]
 layout_mode = 3
@@ -30,7 +31,10 @@ offset_right = 157.5
 offset_bottom = 223.0
 grow_horizontal = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 90
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 100
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 140
 text = "Pixel History"
 
 [node name="Button Holder" type="VBoxContainer" parent="."]
@@ -52,7 +56,8 @@ script = ExtResource("2_48xlc")
 [node name="Start" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 24
 action_mode = 0
 text = "New Simulation"
 alignment = 0
@@ -60,7 +65,8 @@ alignment = 0
 [node name="Load" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 24
 action_mode = 0
 text = "Load Simulation"
 alignment = 0
@@ -68,7 +74,8 @@ alignment = 0
 [node name="Options" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 24
 disabled = true
 action_mode = 0
 text = "Options"
@@ -77,7 +84,8 @@ alignment = 0
 [node name="Exit Game" type="Button" parent="Button Holder"]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 24
 action_mode = 0
 text = "Quit Game"
 alignment = 0
