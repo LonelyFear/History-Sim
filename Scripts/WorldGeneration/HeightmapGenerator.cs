@@ -358,7 +358,11 @@ public class HeightmapGenerator
             attempts--;
             foreach (VoronoiRegion region in continentalRegions.ToArray())
             {
-                VoronoiRegion border = region.borderingRegions[rng.Next(0, region.borderingRegions.Count - 1)];
+                if (region.borderingRegions.Count == 0)
+                {
+                    continue;
+                }
+                VoronoiRegion border = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
                 if (continentalRegions.Count < Mathf.RoundToInt(voronoiRegions.Count * landCoverage))
                 {
                     SetRegionContinental(true, border);

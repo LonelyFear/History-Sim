@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://dckvh14d5x57o"
-path="res://.godot/imported/monogram.ttf-a07bdc8e90b0a828f5639fcf98c09032.fontdata"
+uid="uid://cf6ixk7i7r1jp"
+path="res://.godot/imported/monogram-extended.ttf-8d8ec509f60892c81310ac0c9cb0ad8f.fontdata"
 
 [deps]
 
-source_file="res://Fonts/monogram.ttf"
-dest_files=["res://.godot/imported/monogram.ttf-a07bdc8e90b0a828f5639fcf98c09032.fontdata"]
+source_file="res://Fonts/monogram-extended.ttf"
+dest_files=["res://.godot/imported/monogram-extended.ttf-8d8ec509f60892c81310ac0c9cb0ad8f.fontdata"]
 
 [params]
 
@@ -21,7 +21,7 @@ msdf_pixel_range=8
 msdf_size=48
 allow_system_fallback=true
 force_autohinter=false
-hinting=0
+hinting=1
 subpixel_positioning=4
 keep_rounding_remainders=true
 oversampling=10.0
@@ -33,8 +33,7 @@ preload=[{
 "chars": [],
 "glyphs": [],
 "name": "New Configuration",
-"size": Vector2i(16, 0),
-&"variation_embolden": 0.0
+"size": Vector2i(16, 0)
 }]
 language_support={}
 script_support={}

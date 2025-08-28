@@ -109,7 +109,7 @@ public class SimManager
     }
     #endregion
     #region Saving & Loading
-    public void SaveSimToFile(string saveName)
+    public void SaveSimToFile(string path)
     {
         regions.ForEach(r => r.PrepareForSave());
         pops.ForEach(r => r.PrepareForSave());
@@ -118,22 +118,15 @@ public class SimManager
         tradeZones.ForEach(r => r.PrepareForSave());
         cultures.ForEach(r => r.PreparePopObjectForSave());
         tick = timeManager.ticks;
-        if (DirAccess.Open("user://saves") == null)
-        {
-            DirAccess.MakeDirAbsolute("user://saves");
-        }
-        if (DirAccess.Open($"user://saves/{saveName}") == null)
-        {
-            DirAccess.MakeDirAbsolute($"user://saves/{saveName}");
-        }
+
         var resolver = CompositeResolver.Create(
             [new Vector2IFormatter(), new ColorFormatter(), new NodePathFormatter(), new GDStringNameFormatter()],
             [StandardResolver.Instance]
         );
 
-        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
 
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/sim_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess save = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         save.StoreBuffer(MessagePackSerializer.Serialize(this, options));
     }
     public static SimManager LoadSimFromFile(string path)
@@ -147,7 +140,7 @@ public class SimManager
             [new Vector2IFormatter(), new ColorFormatter()],
             [StandardResolver.Instance]
         );
-        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
+        var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
         //FileAccess save = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Read);
         SimManager sim = MessagePackSerializer.Deserialize<SimManager>(FileAccess.GetFileAsBytes($"{path}/sim_data.pxsave"), options);
         sim.simLoadedFromSave = true;
@@ -216,7 +209,8 @@ public class SimManager
             {
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
-
+                
+                //GD.Print(worldGenerator);
                 newTile.biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
                 newTile.temperature = worldGenerator.GetUnitTemp(worldGenerator.TempMap[x, y]);
                 newTile.moisture = worldGenerator.GetUnitRainfall(worldGenerator.RainfallMap[x, y]);
@@ -373,7 +367,10 @@ public class SimManager
                         {
                             GD.PushError("Something is wrong");
                         }
-                        paintedRegions.Add(region);
+                        else
+                        {
+                            paintedRegions.Add(region);
+                        }
                     }
                 }
             }
@@ -685,14 +682,7 @@ public class SimManager
     public void SimMonth()
     {
         ulong startTime = Time.GetTicksMsec();
-        try
-        {
-            UpdatePops();
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
+        UpdatePops();
         //GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
         startTime = Time.GetTicksMsec();
         UpdateRegions();
@@ -746,14 +736,21 @@ public class SimManager
 
     public void DestroyPop(Pop pop)
     {
-
-        if (pop.region.owner != null && pop.region.owner.rulingPop == pop)
+        try
         {
-            lock (pop.region.owner)
+            if (pop.region.owner != null && pop.region.owner.rulingPop == pop)
             {
-                pop.region.owner.rulingPop = null;
+                lock (pop.region.owner)
+                {
+                    pop.region.owner.rulingPop = null;
+                }
             }
         }
+        catch (Exception e)
+        {
+            GD.Print(e);
+        }
+
         pop.ClaimLand(-pop.ownedLand);
         lock (pop.region)
         {
@@ -783,7 +780,7 @@ public class SimManager
             tickFounded = timeManager.ticks
         };
 
-        cultures.Append(culture);
+        cultures.Add(culture);
 
         return culture;
     }

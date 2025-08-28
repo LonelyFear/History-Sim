@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://bbnm5jqp5n32i"]
+[gd_scene load_steps=6 format=3 uid="uid://bbnm5jqp5n32i"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_1ehe0"]
+[ext_resource type="Script" uid="uid://dtoolr558r5vr" path="res://Scenes/MainMenu.cs" id="1_n45e2"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_1ehe0"]
 [ext_resource type="Script" uid="uid://duckoy5enxdge" path="res://Scripts/button_holder.gd" id="2_48xlc"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="3_ce3w2"]
@@ -12,6 +13,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_n45e2")
 
 [node name="TextureRect" parent="." instance=ExtResource("1_1ehe0")]
 layout_mode = 1

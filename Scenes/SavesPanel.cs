@@ -41,11 +41,7 @@ public partial class SavesPanel : Panel
 				continue;
 			}
 
-			bool saveDataExists = FileAccess.FileExists(savePath + "/save_data.json");
-			bool terrainDataExists = FileAccess.FileExists(savePath + "/terrain_data.pxsave");
-			bool simDataExists = FileAccess.FileExists(savePath + "/sim_data.pxsave");
-			
-			if (terrainDataExists && simDataExists && saveDataExists && FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read).GetAsText(true).Length > 0)
+			if (Utility.IsSaveValid(savePath))
 			{
 				// TODO: Fix save button throwing errors
 				FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);

@@ -17,6 +17,9 @@ public class Pop
 
     public float targetDependencyRatio { get; set; } = 0.75f;
     public float netIncome { get; set; } = 0f;
+    public double happiness { get; set; } = 1;
+    public double loyalty { get; set; } = 1;
+    public double politicalPower { get; set; } = 1;
     [IgnoreMember]
     public Region region { get; set; }
     public ulong regionID;

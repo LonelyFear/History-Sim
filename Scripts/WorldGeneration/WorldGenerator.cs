@@ -57,15 +57,6 @@ public class WorldGenerator
         Init();
         Generate();
         WorldExists = true;
-
-        try
-        {
-            SaveTerrainToFile("Save1");
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
     }
     void InitAfterLoad()
     {
@@ -85,7 +76,15 @@ public class WorldGenerator
     {
         GD.Print("Seed: " + Seed);
         ulong startTime = Time.GetTicksMsec();
-        HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
+        try
+        {
+            HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
+        }
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        
         GD.Print("Heightmap Generation Finished After " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         Stage++;
         TempMap = new TempmapGenerator().GenerateTempMap(1f, this);
@@ -102,16 +101,9 @@ public class WorldGenerator
             minRiverHeight = 0.7f,
             riverMustEndInWater = true
         };
-        try
-        {
-            BiomeMap = new BiomeGenerator().GenerateBiomes(this);
-            riverGenerator.RunRiverGeneration(this);
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-        
+        BiomeMap = new BiomeGenerator().GenerateBiomes(this);
+        riverGenerator.RunRiverGeneration(this);
+        //GD.Print("Worldgen Started");
         Stage++;
         // TODO: Add water flow simulations
     }
@@ -140,7 +132,7 @@ public class WorldGenerator
         float seaElevation = WorldHeight * SeaLevel;
         return (value * WorldHeight) - seaElevation;
     }
-    public void SaveTerrainToFile(string saveName)
+    public void SaveTerrainToFile(string path)
     {
         //GD.Print(JsonSerializer.Serialize(BiomeMap, options));
         //GD.Print("Thing");
@@ -151,7 +143,7 @@ public class WorldGenerator
 
         var moptions = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4Block);
         
-        FileAccess save = FileAccess.Open($"user://saves/{saveName}/terrain_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess save = FileAccess.Open($"{path}/terrain_data.pxsave", FileAccess.ModeFlags.Write);
         
         GD.Print(save.StoreBuffer(MessagePackSerializer.Typeless.Serialize(this, moptions)));
         //save.StoreLine(JsonSerializer.Serialize(this, options));
