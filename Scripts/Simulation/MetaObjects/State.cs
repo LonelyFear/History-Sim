@@ -459,10 +459,10 @@ public class State : PopObject
 
         List<Pop> countedPops = new List<Pop>();
         List<State> borders = new List<State>();
-        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>();
-        foreach (Profession profession in Enum.GetValues(typeof(Profession)))
+        Dictionary<SocialClass, long> countedSocialClasss = new Dictionary<SocialClass, long>();
+        foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
         {
-            countedProfessions.Add(profession, 0);
+            countedSocialClasss.Add(profession, 0);
         }
         
         Dictionary<Culture, long> cCultures = new Dictionary<Culture, long>();
@@ -503,9 +503,9 @@ public class State : PopObject
                 }
             }
 
-            foreach (Profession profession in region.professions.Keys)
+            foreach (SocialClass profession in region.professions.Keys)
             {
-                countedProfessions[profession] += region.professions[profession];
+                countedSocialClasss[profession] += region.professions[profession];
             }
             foreach (Culture culture in region.cultures.Keys)
             {
@@ -522,7 +522,7 @@ public class State : PopObject
         occupiedLand = occRegions;
         borderingStates = borders;
         totalWealth = countedWealth;
-        professions = countedProfessions;
+        professions = countedSocialClasss;
         cultures = cCultures;
         population = countedP;
         workforce = countedW;

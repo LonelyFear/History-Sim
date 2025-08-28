@@ -135,7 +135,7 @@ public class Region : PopObject
             habitable = false;
         }
     }
-    public void CalcProfessionRequirements()
+    public void CalcSocialClassRequirements()
     {
         maxFarmers = (long)(Pop.ToNativePopulation(farmersPerLand) * arableLand);
         maxSoldiers = 0;
@@ -159,7 +159,7 @@ public class Region : PopObject
     }
     public void TryFormState()
     {
-        if (professions[Profession.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
+        if (professions[SocialClass.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -170,7 +170,7 @@ public class Region : PopObject
             Pop rulingPop = null;
             foreach (Pop pop in pops)
             {
-                if (pop.profession == Profession.ARISTOCRAT)
+                if (pop.profession == SocialClass.ARISTOCRAT)
                 {
                     rulingPop = pop;
                     break;
@@ -256,7 +256,7 @@ public class Region : PopObject
 
         if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())
         {
-            //long defendingCivilians = region.workforce - region.professions[Profession.ARISTOCRAT];
+            //long defendingCivilians = region.workforce - region.professions[SocialClass.ARISTOCRAT];
             Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(200000));
 
             SimManager.m.WaitOne();
@@ -350,8 +350,8 @@ public class Region : PopObject
         lastWealth = wealth;
         float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
 
-        long farmers = Pop.FromNativePopulation(professions[Profession.FARMER]);
-        long nonFarmers = Pop.FromNativePopulation(workforce - professions[Profession.FARMER]);
+        long farmers = Pop.FromNativePopulation(professions[SocialClass.FARMER]);
+        long nonFarmers = Pop.FromNativePopulation(workforce - professions[SocialClass.FARMER]);
 
         float baseProduction = (farmers * 0.01f) + (nonFarmers * 0.005f) + (Pop.FromNativePopulation(dependents) * 0.002f);
         baseWealth = baseProduction * (arableLand / landCount) * techFactor;
@@ -462,8 +462,8 @@ public class Region : PopObject
     public int GetBaseTradeWeight()
     {
         
-        //long notMerchants = Pop.FromNativePopulation(workforce - professions[Profession.MERCHANT]);
-        //long merchants = Pop.FromNativePopulation(professions[Profession.MERCHANT]);
+        //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
+        //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
         float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.001f;
         float zoneSizeTradeWeight = 0;
         if (isCoT)

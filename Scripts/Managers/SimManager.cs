@@ -188,7 +188,7 @@ public class SimManager
                 habitableRegions.Add(region);
             }
             // Calc max populaiton
-            region.CalcProfessionRequirements();
+            region.CalcSocialClassRequirements();
         }
         BorderingRegions();
 
@@ -308,7 +308,7 @@ public class SimManager
                     habitableRegions.Add(newRegion);
                 }
                 // Calc max populaiton
-                newRegion.CalcProfessionRequirements();
+                newRegion.CalcSocialClassRequirements();
             }
         }
     }
@@ -413,7 +413,7 @@ public class SimManager
                         culture = testRegion.pops[0].culture;
                     }
                 }
-                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, Profession.FARMER);
+                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
             }
         }
     }
@@ -450,7 +450,7 @@ public class SimManager
                 if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
                     pop.TechnologyUpdate();
-                    //pop.ProfessionTransitions();
+                    //pop.SocialClassTransitions();
                     try
                     {
                         pop.Migrate();
@@ -511,7 +511,7 @@ public class SimManager
                     //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.CheckPopulation();
                     //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    region.CalcProfessionRequirements();
+                    region.CalcSocialClassRequirements();
                     totalPopTime += Time.GetTicksMsec() - startTime;
                     startTime = Time.GetTicksMsec();
                     // Economy
@@ -700,7 +700,7 @@ public class SimManager
 
     #region Creation
     #region Pops Creation
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, Profession profession = Profession.FARMER)
+    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
     {
         currentBatch++;
         if (currentBatch > 12)

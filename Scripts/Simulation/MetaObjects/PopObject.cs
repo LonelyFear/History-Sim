@@ -20,13 +20,13 @@ public class PopObject
     public List<ulong> popsIds;
     [IgnoreMember]
     public static TimeManager timeManager;
-    public Dictionary<Profession, long> professions = new Dictionary<Profession, long>()
+    public Dictionary<SocialClass, long> professions = new Dictionary<SocialClass, long>()
     {
-        {Profession.FARMER, 0},
-        {Profession.MERCHANT, 0},
-        {Profession.ARISTOCRAT, 0},
-        {Profession.ARTISAN, 0},
-        {Profession.SOLDIER, 0},
+        {SocialClass.FARMER, 0},
+        {SocialClass.MERCHANT, 0},
+        {SocialClass.ARISTOCRAT, 0},
+        {SocialClass.ARTISAN, 0},
+        {SocialClass.SOLDIER, 0},
     };
     [IgnoreMember]
     public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
@@ -59,13 +59,13 @@ public class PopObject
         long countedWorkforce = 0;
 
         Dictionary<Culture, long> countedCultures = new Dictionary<Culture, long>();
-        Dictionary<Profession, long> countedProfessions = new Dictionary<Profession, long>()
+        Dictionary<SocialClass, long> countedSocialClasss = new Dictionary<SocialClass, long>()
         {
-            {Profession.FARMER, 0},
-            {Profession.MERCHANT, 0},
-            {Profession.ARTISAN, 0},
-            { Profession.SOLDIER, 0},
-            { Profession.ARISTOCRAT, 0},
+            {SocialClass.FARMER, 0},
+            {SocialClass.MERCHANT, 0},
+            {SocialClass.ARTISAN, 0},
+            { SocialClass.SOLDIER, 0},
+            { SocialClass.ARISTOCRAT, 0},
         };
         Culture currentLargest = null;
         foreach (Pop pop in pops)
@@ -75,7 +75,7 @@ public class PopObject
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
 
-            countedProfessions[pop.profession] += pop.workforce;
+            countedSocialClasss[pop.profession] += pop.workforce;
             if (!countedCultures.ContainsKey(pop.culture))
             {
                 countedCultures.Add(pop.culture, pop.population);
@@ -97,7 +97,7 @@ public class PopObject
         largestCulture = currentLargest;
 
         highestPossiblePopulation = maxPopulation;
-        professions = countedProfessions;
+        professions = countedSocialClasss;
         population = countedPopulation;
         dependents = countedDependents;
         workforce = countedWorkforce;
@@ -170,10 +170,10 @@ public class PopObject
     {
         pops.Shuffle();
         long lossesTaken = amount;
-        Profession[] combatants = { Profession.SOLDIER };
+        SocialClass[] combatants = { SocialClass.SOLDIER };
         if (includeCivilians)
         {
-            combatants = [Profession.SOLDIER, Profession.FARMER, Profession.MERCHANT];
+            combatants = [SocialClass.SOLDIER, SocialClass.FARMER, SocialClass.MERCHANT];
         }
         foreach (Pop pop in pops)
         {
