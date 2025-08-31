@@ -25,7 +25,7 @@ public class PopObject
         {SocialClass.FARMER, 0},
         {SocialClass.MERCHANT, 0},
         {SocialClass.ARISTOCRAT, 0},
-        {SocialClass.ARTISAN, 0},
+        {SocialClass.LABOURER, 0},
         {SocialClass.SOLDIER, 0},
     };
     [IgnoreMember]
@@ -63,7 +63,7 @@ public class PopObject
         {
             {SocialClass.FARMER, 0},
             {SocialClass.MERCHANT, 0},
-            {SocialClass.ARTISAN, 0},
+            {SocialClass.LABOURER, 0},
             { SocialClass.SOLDIER, 0},
             { SocialClass.ARISTOCRAT, 0},
         };

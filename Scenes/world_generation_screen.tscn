@@ -15,10 +15,6 @@ grow_vertical = 2
 
 [node name="TextureRect2" parent="." instance=ExtResource("4_4g6c4")]
 layout_mode = 1
-offset_left = -719.0
-offset_top = -360.0
-offset_right = 958.0
-offset_bottom = 477.0
 
 [node name="WorldSettingsPanel" type="Panel" parent="."]
 layout_mode = 1

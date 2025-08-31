@@ -21,8 +21,8 @@ public class Pop
     public double loyalty { get; set; } = 1;
     public double politicalPower { get; set; } = 1;
     [IgnoreMember]
-    public Region region { get; set; }
-    public ulong regionID;
+    public Region region;
+    public ulong regionID { get; set; }
     [IgnoreMember] public Culture culture { get; set; }
     public ulong cultureId { get; set; }
     public SocialClass profession { get; set; } = SocialClass.FARMER;
@@ -240,12 +240,108 @@ public class Pop
     }
     #endregion
     #region Nations
-    public void CalculatePoliticalPower()
+    public double CalculatePoliticalPower()
     {
+        double popSizePoliticalPower = FromNativePopulation(workforce) * 0.0005;
+        double basePoliticalPower = 0;
         switch (profession)
         {
+            case SocialClass.FARMER:
+                basePoliticalPower = 0.5;
+                break;
+            case SocialClass.SOLDIER:
+                basePoliticalPower = 1;
+                break;
+            case SocialClass.LABOURER:
+                basePoliticalPower = 1;
+                break;
+            case SocialClass.MERCHANT:
+                basePoliticalPower = 2;
+                break;
+            case SocialClass.ARISTOCRAT:
+                basePoliticalPower = 4;
+                break;
+        }
+        return basePoliticalPower * popSizePoliticalPower;
+    }
+    public void UpdateHappiness()
+    {
+        double happinessTarget = 0.5f;
+        if (region.owner != null)
+        {
+            State state = region.owner;
+            happinessTarget = 1;
+            happinessTarget -= state.wars.Count * 0.05;
+
+            if (culture != state.GetRulingCulture())
+            {
+                happinessTarget -= 0.25;
+            }
+            if (culture != state.largestCulture)
+            {
+                happinessTarget -= 0.25;
+            }
+            happinessTarget += wealth * 0.01;
+            if (state.rulingPop != null)
+            {
+                happinessTarget *= 0.1;
+            }
+            switch (profession)
+            {
+                case SocialClass.FARMER:
+                    happinessTarget -= state.poorTaxRate;
+                    break;
+                case SocialClass.SOLDIER:
+                    happinessTarget -= state.poorTaxRate;
+                    break;
+                case SocialClass.LABOURER:
+                    happinessTarget -= state.middleTaxRate;
+                    break;
+                case SocialClass.MERCHANT:
+                    happinessTarget -= state.middleTaxRate;
+                    break;
+                case SocialClass.ARISTOCRAT:
+                    happinessTarget -= state.richTaxRate;
+                    break;
+            }
             
         }
+        happinessTarget = Mathf.Clamp(happinessTarget, 0, 1);
+        happiness = Mathf.Lerp(happiness, happinessTarget, 0.01f);
+    }
+    public void UpdateLoyalty()
+    {
+        double loyaltyTarget = 0.5f;
+        if (region.owner != null && region.owner.liege != null)
+        {
+            State state = region.owner;
+            State liege = state.liege;
+
+            loyaltyTarget = 1;
+            if (liege.GetRulingCulture() != state.largestCulture)
+            {
+                loyaltyTarget -= 0.25;
+            }
+            loyaltyTarget -= liege.wars.Count * 0.05;
+            loyaltyTarget -= (1 - happiness) * 0.2f;
+            loyaltyTarget *= liege.stability;
+            loyaltyTarget -= liege.tributeRate;
+            loyaltyTarget += liege.totalWealth/liege.realmRegions.Count * 0.01;
+            if (liege.regions.Count < state.regions.Count)
+            {
+                loyaltyTarget -= (state.regions.Count - liege.regions.Count) * 0.01;
+            }
+            if (!state.borderingStates.Contains(liege))
+            {
+                loyaltyTarget *= 0.7;
+            }
+            if (liege.rulingPop == null)
+            {
+                loyaltyTarget *= 0;
+            }
+        }
+        loyaltyTarget = Mathf.Clamp(loyaltyTarget, 0, 1);
+        loyalty = Mathf.Lerp(loyalty, loyaltyTarget, 0.01f);
     }
     #endregion
     #region Demographics
@@ -393,10 +489,9 @@ public class Pop
 
 public enum SocialClass
 {
-    POP,
     FARMER,
     SOLDIER,
-    ARTISAN,
+    LABOURER,
     MERCHANT,
     ARISTOCRAT
 }

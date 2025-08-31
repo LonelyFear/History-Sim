@@ -10,6 +10,7 @@ public class State : PopObject
     public Color color { get; set; }
     public Color displayColor;
     public Color capitalColor;
+    public bool capitualated = false;
 
     public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     [IgnoreMember]
@@ -25,8 +26,10 @@ public class State : PopObject
     public int occupiedLand { get; set; } = 0;
     public float totalWealth { get; set; } = 0;
     public float mobilizationRate { get; set; } = 0.3f;
-    public float taxRate { get; set; } = 0.1f;
-    public float tribute { get; set; } = 0.1f;
+    public float poorTaxRate { get; set; } = 0.3f;
+    public float middleTaxRate { get; set; } = 0.1f;
+    public float richTaxRate { get; set; } = 0.05f;
+    public float tributeRate { get; set; } = 0.1f;
     [IgnoreMember]
     public List<State> vassals { get; set; } = new List<State>();
     public List<ulong> vassalsIDs { get; set; }
@@ -61,9 +64,10 @@ public class State : PopObject
     public Character leader;
     public Pop rulingPop;
     public Character heir;
-    public double stability = 10;
-    public double loyalty = 100;
-    public const int minRebellionLoyalty = 70;
+    public double stability = 1;
+    public double loyalty = 1;
+    [IgnoreMember] public const double minRebellionLoyalty = 0.75;
+    [IgnoreMember] public const double minCollapseStability = 0.75;
     public uint timeAsVassal = 0;
     public void PrepareForSave()
     {
@@ -234,70 +238,169 @@ public class State : PopObject
     {
         if (capital.GetController() != GetHighestLiege())
         {
-            foreach (Region region in regions)
+            if (!capitualated)
             {
-                if (capital.occupier == this || capital.occupier == null)
+                foreach (Region region in regions)
                 {
-                    region.occupier = capital.occupier;
+                    if (capital.occupier == this || capital.occupier == null)
+                    {
+                        region.occupier = capital.occupier;
+                    }
                 }
             }
+            capitualated = true;
+        }
+        else
+        {
+            capitualated = false;
         }
     }    
     public void StartWars()
     {
-        if (sovereignty == Sovereignty.INDEPENDENT)
+        foreach (var pair in relations.ToArray())
         {
-            foreach (var pair in relations)
+            State state = pair.Key;
+            Relation relation = pair.Value;
+            bool canStartWar = !enemies.Contains(state) && relation.truce <= 0;
+            if (!canStartWar) {
+                continue;
+            }
+            // Sovereign Wars
+            if (state.sovereignty == Sovereignty.INDEPENDENT && relation.opinion < 0)
             {
-                State state = pair.Key;
-                Relation relation = pair.Value;
-                if (relation.opinion < 0 && !enemies.Contains(state) && relation.truce <= 0 && state.sovereignty == Sovereignty.INDEPENDENT)
+                float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, relation.opinion / (float)Relation.minOpinionValue);
+                if (liege == state || vassals.Contains(state))
                 {
-                    float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, relation.opinion / (float)Relation.minOpinionValue);
-                    if (liege == state || vassals.Contains(state))
+                    warDeclarationChance = 0f;
+                }
+                if (rng.NextSingle() < warDeclarationChance)
+                {
+                    _ = new War(GetRealmStates(), state.GetRealmStates(), WarType.CONQUEST, this, state);
+                    relation.opinion = Relation.minOpinionValue;
+                    return;
+                }
+            }
+            // Rebellions
+            if (loyalty < minRebellionLoyalty && liege != null)
+            {
+                if (rng.NextSingle() < Mathf.Lerp(loyalty, 0, 0.001))
+                {
+                    List<State> fellowRebels = GatherRebels();
+                    State formerLiege = liege;
+                    foreach (State rebel in fellowRebels)
                     {
-                        warDeclarationChance = 0f;
+                        formerLiege.RemoveVassal(rebel);
                     }
-                    if (rng.NextSingle() < warDeclarationChance)
-                    {
-                        StartWar(state, WarType.CONQUEST);
-                        relation.opinion = Relation.minOpinionValue;
-                        return;
-                    }
+                    _ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
                 }
             }
         }
     }    
     public void EndWars()
     {
-        if (sovereignty == Sovereignty.INDEPENDENT)
+        if (sovereignty != Sovereignty.INDEPENDENT)
         {
-            foreach (var pair in relations.ToArray())
-            {
-                State state = pair.Key;
-                Relation relation = pair.Value;
+            return;
+        }
+        foreach (var warPair in wars)
+        {
+            War war = warPair.Key;
+            bool isAttacker = warPair.Value;
 
-                if (relation.opinion >= 0 && enemies.Contains(state))
-                {
-                    if (rng.NextSingle() < 0.01f * (relation.opinion + 1))
+            if (war.primaryAgressor != this && war.primaryDefender != this)
+            {
+                continue;
+            }
+            // Below is if state has authority to end wars
+            double warEndChance = 0;
+            switch (war.warType)
+            {
+                case WarType.CONQUEST:
+                    if (isAttacker)
                     {
-                        EndWarsWithState(state);
+                        warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
+                        // Attacker
+                        if (rng.NextDouble() < warEndChance || war.primaryDefender.capitualated)
+                        {
+                            EndWar(war);
+                            foreach (State defender in war.defenders)
+                            {
+                                if (!defender.capitualated)
+                                {
+                                    return;
+                                }
+                                defender.capital.occupier.AddVassal(defender);
+                            }
+                        }
                     }
-                }
-                if (capital.occupier == state && liege == null)
+                    else
+                    {
+                        warEndChance = Mathf.Max(relations[war.primaryAgressor].opinion, 0) * 0.01;
+                        // Defender
+                        if (rng.NextDouble() < warEndChance || war.primaryAgressor.capitualated)
+                        {
+                            EndWar(war);
+                            foreach (State attacker in war.attackers)
+                            {
+                                if (!attacker.capitualated)
+                                {
+                                    return;
+                                }
+                                attacker.capital.occupier.AddVassal(attacker);
+                            }
+                        }
+                    }
+                    break;
+                case WarType.REVOLT:
+                    if (isAttacker)
+                    {
+                        warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
+                        // Rebel Leader
+                        if (rng.NextDouble() < warEndChance || war.primaryDefender.capitualated)
+                        {
+                            EndWar(war);
+                            foreach (State ally in war.attackers)
+                            {
+                                AddVassal(ally);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        warEndChance = Mathf.Max(relations[war.primaryAgressor].opinion, 0) * 0.01;
+                        // State
+                        if (rng.NextDouble() < warEndChance || war.primaryAgressor.capitualated)
+                        {
+                            EndWar(war);
+                            foreach (State rebel in war.defenders)
+                            {
+                                AddVassal(rebel);
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        foreach (var pair in relations.ToArray())
+        {
+            State state = pair.Key;
+            Relation relation = pair.Value;
+
+            if (relation.opinion >= 0 && enemies.Contains(state))
+            {
+                if (rng.NextSingle() < 0.01f * (relation.opinion + 1))
                 {
                     EndWarsWithState(state);
-                    state.AddVassal(this);
                 }
+            }
+            if (capital.occupier == state && liege == null)
+            {
+                EndWarsWithState(state);
+                state.AddVassal(this);
             }
         }
     }    
-    public void StartWar(State state, WarType type)
-    {
-        EstablishRelations(state, Relation.minOpinionValue);
-        state.EstablishRelations(this, Relation.minOpinionValue);
-        new War().StartWar(GetRealmStates(), state.GetRealmStates(), type, this, state);
-    }
     public void EndWar(War war)
     {
         war.EndWar();
@@ -451,6 +554,7 @@ public class State : PopObject
                 break;
         }
     }
+    #region Count Stats
     public void CountStatePopulation()
     {
         realmRegions = GetRealmRegions();
@@ -464,7 +568,7 @@ public class State : PopObject
         {
             countedSocialClasss.Add(profession, 0);
         }
-        
+
         Dictionary<Culture, long> cCultures = new Dictionary<Culture, long>();
         borderingRegions = 0;
         float countedWealth = 0;
@@ -529,6 +633,7 @@ public class State : PopObject
         pops = countedPops;
     }
     #endregion
+    #endregion
     #region Regions
     public void AddRegion(Region region)
     {
@@ -557,24 +662,59 @@ public class State : PopObject
     }
     public void UpdateStability()
     {
-        double averageLoyalty = 100;
-        if (vassals.Count > 0)
-        {
-            averageLoyalty = 0;
-            foreach (State vassal in vassals)
-            {
-                averageLoyalty += vassal.loyalty;
-            }
-            averageLoyalty /= vassals.Count;            
-        }
-        double loyaltyFactor = (averageLoyalty / 100);
-        double stabilityIncrease = Mathf.Lerp(0.05, 0.15, rng.NextSingle()) * loyaltyFactor;
-        double stabilityDecrease = Mathf.Lerp(0.05, 0.1, rng.NextSingle());
+        double stabilityTarget = 1;
+        stabilityTarget -= wars.Count * 0.05;
 
-        stability = Mathf.Clamp(stability + (stabilityIncrease - stabilityDecrease), 0, 100);
+        if (largestCulture != GetRulingCulture())
+        {
+            stabilityTarget -= 0.25;
+        }
+
+        stabilityTarget += totalWealth * 0.0001;
+
+        if (rulingPop == null)
+        {
+            stabilityTarget *= 0.1;
+        }
+        if (vassals.Count > GetMaxVassals())
+        {
+            stabilityTarget += (vassals.Count - GetMaxVassals()) * 0.05;
+        }
+
+        stabilityTarget = Mathf.Clamp(stabilityTarget, 0, 1);
+        stability = Mathf.Lerp(stability, stabilityTarget, 0.05);
     }
     #endregion
     #region Vassals
+    public void UpdateLoyalty()
+    {
+        double loyaltyTarget = 1;
+        
+        if (largestCulture != liege.GetRulingCulture())
+        {
+            loyaltyTarget -= 0.1;
+        }
+        if (largestCulture != liege.largestCulture)
+        {
+            loyaltyTarget -= 0.25;
+        }
+        if (regions.Count > liege.regions.Count)
+        {
+            loyaltyTarget -= ((regions.Count - liege.regions.Count)/liege.regions.Count) * 0.5;
+        }
+        if (!borderingStates.Contains(liege))
+        {
+            loyaltyTarget *= 0.5f;
+        }
+        loyaltyTarget -= liege.tributeRate;
+        loyaltyTarget -= Mathf.Min(timeManager.GetYear(timeAsVassal) * 0.001, 0.5);
+
+        loyaltyTarget = Mathf.Clamp(loyaltyTarget, 0, 1);
+        loyalty = Mathf.Lerp(loyalty, loyaltyTarget, 0.05);
+    }
+    public int GetMaxVassals() {
+        return 5 + tech.societyLevel;
+    } 
     public List<State> GatherRebels()
     {
         List<State> rebels = [this];
@@ -584,11 +724,10 @@ public class State : PopObject
             {
                 continue;
             }
-            double joinChance = 0.01;
-            joinChance += (1.0 - (vassal.loyalty / minRebellionLoyalty)) * 0.3;
-            if (vassal.loyalty < loyalty)
+            double joinChance = (1 - vassal.loyalty) * 0.5;
+            if (vassal.GetRulingCulture() != GetRulingCulture())
             {
-                joinChance += (loyalty - vassal.loyalty) / (double)loyalty * 0.6;
+                joinChance -= 0.2;
             }
             if (rng.NextDouble() < joinChance)
             {
@@ -597,23 +736,7 @@ public class State : PopObject
         }
         return rebels;
     }
-    public void UpdateLoyalty()
-    {
-        double loyaltyIncrease = liege.stability / 100;
-        double loyaltyDecrease = (liege.tribute + liege.taxRate) * Mathf.Lerp(0.9, 1.2, rng.NextSingle());
-        
-        if (largestCulture == liege.rulingPop.culture)
-        {
-            loyaltyDecrease *= 2;
-        }
-        switch (sovereignty)
-        {
-            case Sovereignty.PROVINCE:
-                loyaltyDecrease *= 0.75;
-                break;
-        }
-        loyalty = Mathf.Clamp(loyalty + (loyaltyIncrease - loyaltyDecrease), 0, 100);
-    }
+
     public void SetStateSovereignty(State state, Sovereignty sovereignty)
     {
         if (state != this)
@@ -717,6 +840,14 @@ public class State : PopObject
     }
     #endregion
     #region Utility
+    public Culture GetRulingCulture()
+    {
+        if (rulingPop != null)
+        {
+            return rulingPop.culture;
+        }
+        return null;
+    }
     public State GetHighestLiege()
     {
         State state = this;

@@ -15,18 +15,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="MenuBG" parent="." instance=ExtResource("1_ts4s4")]
-layout_mode = 0
-anchors_preset = 0
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = -79.0
-offset_top = 0.0
-offset_right = 1598.0
-offset_bottom = 837.0
-grow_horizontal = 1
-grow_vertical = 1
+layout_mode = 1
 
 [node name="SavesPanel" type="Panel" parent="."]
 layout_mode = 1

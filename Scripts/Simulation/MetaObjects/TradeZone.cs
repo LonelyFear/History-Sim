@@ -28,14 +28,14 @@ public class TradeZone
         CoT = CoTID == 0 ? null : simManager.regionsIds[CoTID];
         regions = regionsIDs.Select(r => simManager.regionsIds[r]).ToList();
     }
-    public TradeZone CreateZone(Region region)
+    public TradeZone(){}
+    public TradeZone(Region region)
     {
         id = simManager.getID();
         color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
         CoT = region;
         regions = [CoT];
-        simManager.tradeZones.Add(this);
-        return this;
+        simManager.tradeZones.Add(this);        
     }
     public void AddRegion(Region region)
     {

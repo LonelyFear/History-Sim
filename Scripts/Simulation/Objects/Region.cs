@@ -325,6 +325,28 @@ public class Region : PopObject
             armies.Remove(army);
         }
     }
+    public double GetStability()
+    {
+        double totalPoliticalPower = 0;
+        double totalHappiness = 0;
+        foreach (Pop pop in pops)
+        {
+            totalPoliticalPower += pop.politicalPower;
+            totalHappiness += pop.politicalPower * pop.happiness;
+        }
+        return totalHappiness / totalPoliticalPower;
+    }
+    public double GetLoyalty()
+    {
+        double totalPoliticalPower = 0;
+        double totalHappiness = 0;
+        foreach (Pop pop in pops)
+        {
+            totalPoliticalPower += pop.politicalPower;
+            totalHappiness += pop.politicalPower * pop.happiness;
+        }
+        return totalHappiness / totalPoliticalPower;
+    }
     #endregion
     #region Economy & Checks
     public void CheckPopulation()
@@ -353,7 +375,7 @@ public class Region : PopObject
         long farmers = Pop.FromNativePopulation(professions[SocialClass.FARMER]);
         long nonFarmers = Pop.FromNativePopulation(workforce - professions[SocialClass.FARMER]);
 
-        float baseProduction = (farmers * 0.01f) + (nonFarmers * 0.005f) + (Pop.FromNativePopulation(dependents) * 0.002f);
+        float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (Pop.FromNativePopulation(dependents) * 0.01f);
         baseWealth = baseProduction * (arableLand / landCount) * techFactor;
     }
     public void LinkTrade()
@@ -382,7 +404,7 @@ public class Region : PopObject
         isCoT = lowerLinks && selectedLink == null;
         if (isCoT && (tradeZone == null || tradeZone.CoT != this))
         {
-            tradeZone = new TradeZone().CreateZone(this);
+            tradeZone = new TradeZone(this);
         }
         if (!isCoT && tradeZone != null && tradeZone.CoT == this)
         {

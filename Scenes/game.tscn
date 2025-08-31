@@ -191,7 +191,7 @@ theme_override_font_sizes/font_size = 30
 text = "Arable Land:
 Wealth:"
 
-[node name="Action Panel" type="Panel" parent="UI" node_paths=PackedStringArray("menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel")]
+[node name="Action Panel" type="Panel" parent="UI" node_paths=PackedStringArray("menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit")]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -207,6 +207,7 @@ saveCancelButton = NodePath("../SaveNamePanel/VBoxContainer/SaveOptions/CancelBu
 overwriteButton = NodePath("../SaveNamePanel/VBoxContainer/OptionButton")
 menuPanel = NodePath("../Options Panel")
 saveNamePanel = NodePath("../SaveNamePanel")
+saveNameEdit = NodePath("../SaveNamePanel/VBoxContainer/TextEdit")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI/Action Panel"]
 layout_mode = 0
@@ -352,7 +353,6 @@ vertical_alignment = 1
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 35
-selected = 0
 
 [node name="TextEdit" type="LineEdit" parent="UI/SaveNamePanel/VBoxContainer"]
 visible = false

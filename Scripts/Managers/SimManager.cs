@@ -23,7 +23,7 @@ public class SimManager
     public Node2D terrainMap;
     [IgnoreMember]
     [Export(PropertyHint.Range, "4,16,4")]
-    public int tilesPerRegion = 4;
+    public int tilesPerRegion = 1;
     [Export]
     [IgnoreMember]
     public TileMapLayer reliefs;
@@ -445,8 +445,11 @@ public class SimManager
             }
             else
             {
+                pop.politicalPower = pop.CalculatePoliticalPower();
                 pop.EconomyUpdate();
                 pop.GrowPop();
+                pop.UpdateHappiness();
+                pop.UpdateLoyalty();
                 if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
                     pop.TechnologyUpdate();

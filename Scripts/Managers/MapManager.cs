@@ -23,7 +23,7 @@ public partial class MapManager : Area2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    int regionResolution = 1;
+    int regionResolution = 4;
 
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;

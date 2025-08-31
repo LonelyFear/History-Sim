@@ -17,20 +17,20 @@ script = ExtResource("1_n45e2")
 
 [node name="TextureRect" parent="." instance=ExtResource("1_1ehe0")]
 layout_mode = 1
-offset_left = -719.0
-offset_top = -360.0
-offset_right = 958.0
-offset_bottom = 477.0
+offset_left = -838.0
+offset_top = -417.5
+offset_right = 838.0
+offset_bottom = 417.5
 
 [node name="Game Title" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -157.5
-offset_top = 117.0
-offset_right = 157.5
-offset_bottom = 223.0
+offset_left = -362.5
+offset_top = 101.0
+offset_right = 362.5
+offset_bottom = 243.917
 grow_horizontal = 2
 theme = ExtResource("2_1ehe0")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -38,6 +38,46 @@ theme_override_constants/outline_size = 100
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 140
 text = "Pixel History"
+
+[node name="Game Version" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -118.0
+offset_top = -40.8333
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("2_1ehe0")
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 100
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 30
+text = "a0.1.0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Its ME" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -47.0
+offset_right = 435.0
+offset_bottom = -10.0
+grow_vertical = 0
+theme = ExtResource("2_1ehe0")
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 100
+theme_override_fonts/font = ExtResource("3_ce3w2")
+theme_override_font_sizes/font_size = 30
+text = "LonelyFear Games"
+vertical_alignment = 1
 
 [node name="Button Holder" type="VBoxContainer" parent="."]
 layout_mode = 1

@@ -15,6 +15,7 @@ public partial class ActionPanel : Panel
     [Export] public OptionButton overwriteButton;
     [Export] public Panel menuPanel;
     [Export] public Panel saveNamePanel;
+    [Export] public LineEdit saveNameEdit;
     List<string> saveOverwritePaths;
     bool uiVisible = true;
     public override void _Ready()
@@ -33,6 +34,7 @@ public partial class ActionPanel : Panel
         {
             uiVisible = !uiVisible;
         }
+        saveNameEdit.Visible = overwriteButton.Selected == 0;
     }
 
     public void OnMainMenu()
@@ -51,14 +53,20 @@ public partial class ActionPanel : Panel
     {
         saveOverwritePaths = new List<string>();
         saveNamePanel.Visible = !saveNamePanel.Visible;
+        
         for (int i = 0; i < overwriteButton.ItemCount; i++)
         {
             overwriteButton.RemoveItem(i);
         }
+        if (overwriteButton.ItemCount > 0)
+        {
+            overwriteButton.RemoveItem(0);
+        }
+
         string[] directories = DirAccess.GetDirectoriesAt("user://saves");
         overwriteButton.AddItem("Create New Save", 0);
-        saveOverwritePaths.Add("New Save");
         overwriteButton.Select(0);
+        saveOverwritePaths.Add("New Save");
         for (int i = 0; i < directories.Length; i++)
         {
             string dirName = directories[i];
@@ -67,7 +75,7 @@ public partial class ActionPanel : Panel
             {
                 FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
                 string saveText = saveDataFile.GetAsText(true);
-                overwriteButton.AddItem(JsonSerializer.Deserialize<SaveData>(saveText).saveName);
+                overwriteButton.AddItem($"Overwrite '{JsonSerializer.Deserialize<SaveData>(saveText).saveName}'");
                 saveOverwritePaths.Add(savePath);
             }
         }
@@ -75,10 +83,10 @@ public partial class ActionPanel : Panel
     public void OnSimSave()
     {
 
-        string saveName = GetNode<LineEdit>("/root/Game/UI/SaveNamePanel/VBoxContainer/TextEdit").Text;
+        string saveName = saveNameEdit.Text;
         if (saveName == "")
         {
-            saveName = "New Save";
+            saveName = saveOverwritePaths[overwriteButton.Selected];
         }
         int saveNum = DirAccess.GetDirectoriesAt("user://saves").Length + 1;
         string saveFileName = "Save" + saveNum;

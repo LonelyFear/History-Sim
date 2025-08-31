@@ -42,13 +42,13 @@ public partial class ObjectInfo : Control
                     uint monthAge = timeManager.GetMonth(state.age);
                     specialLabel.Text = $"Founded in Month {timeManager.GetMonth(state.tickFounded)} of Year {timeManager.GetYear(state.tickFounded)}";
                     specialLabel.Text +=  "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
-                    specialLabel.Text += "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0");
+                    specialLabel.Text += "\n" + "Wealth: " + state.totalWealth.ToString("#,###0");
                     specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower()).ToString("#,###0") + "\n";
                     
-                    specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("#,###0");
+                    specialLabel.Text += "\n" + "Stability: " + (state.stability).ToString("##0%");
                     if (state.liege != null)
                     {
-                        specialLabel.Text += "\n" + "Loyalty: " + state.loyalty.ToString("#,###0");
+                        specialLabel.Text += "\n" + "Loyalty: " + (state.loyalty).ToString("##0%");
                     }
                     
                     
@@ -100,17 +100,9 @@ public partial class ObjectInfo : Control
                 case PopObject.ObjectType.REGION:
                     Region region = (Region)metaObject;
                     populationLabel.Text += "\nRequired Farmers: " + Pop.FromNativePopulation(region.maxFarmers - region.professions[SocialClass.FARMER]);
+                    populationLabel.Text += "\n" + "Wealth: " + region.wealth.ToString("#,###0");
                     populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0");
-                    populationLabel.Text += "\n" + "    Pop Trade Weight: " + (Pop.FromNativePopulation(region.workforce) * 0.0004f).ToString("#,###0");
-                    if (region.isCoT)
-                    {
-                        populationLabel.Text += "\n" + "    Zone Weight: " + region.tradeZone.GetZoneSize().ToString("#,###0");
-                    }
-                    else
-                    {
-                        populationLabel.Text += "\n" + "    Zone Weight: 0";
-                    }
-                    populationLabel.Text += "\n" + "    Nav Weight: " + (region.navigability * 10f).ToString("#,###0");
+                    
                     nameLabel.Text = "Disorganized Tribes";
                     specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand/region.landCount).ToString("0.0%") + "\n";
                     specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");
