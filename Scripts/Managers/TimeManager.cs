@@ -136,15 +136,7 @@ public partial class TimeManager : Node
 
         ticks += daysPerTick;
         monthCounter += daysPerTick;
-        yearCounter += daysPerTick;
-        if (!debuggerMode)
-        {
-            tickTask = Task.Run(simManager.SimTick);
-        }
-        else
-        {
-            simManager.SimTick();
-        }    
+        yearCounter += daysPerTick; 
         if (monthCounter >= ticksPerMonth)
         {
             monthCounter = 0;

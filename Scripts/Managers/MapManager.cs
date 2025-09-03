@@ -23,7 +23,7 @@ public partial class MapManager : Area2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    int regionResolution = 4;
+    int regionResolution = 1;
 
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
@@ -347,7 +347,15 @@ public partial class MapManager : Area2D
                 else if (region.habitable)
                 {
                     color = new Color(0, 0, 0, 1);
-                }                
+                }
+                if (simManager.paintedRegions.Contains(region))
+                {
+                    color = new Color(0, 1, 0, 0.5f);
+                }
+                else
+                {
+                    color = new Color(1, 0, 0, 0.5f);
+                }       
                 break;
             case MapModes.POPS:
                 if (region.habitable && region.pops.Count > 0)

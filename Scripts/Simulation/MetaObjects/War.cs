@@ -50,25 +50,28 @@ public class War
         id = simManager.getID();
         attackers = atk;
         defenders = def;
-        this.warType = warType;
+        this.warType = warType;        
         primaryAgressor = agressorLeader;
         primaryDefender = defenderLeader;
+
+        primaryAgressor.EstablishRelations(primaryDefender, -5);
+        primaryDefender.EstablishRelations(primaryAgressor, -5);
+
         foreach (State state in attackers)
         {
             state.enemies.AddRange(defenders);
-            state.wars.Add(this, true);
+            state.wars[this] = true;
             participants.Add(state);
-            state.EstablishRelations(defenderLeader, -5);
+            state.EstablishRelations(primaryDefender, -5);
         }
         foreach (State state in defenders)
         {
             state.enemies.AddRange(attackers);
             state.wars.Add(this, false);
             participants.Add(state);
-            state.EstablishRelations(agressorLeader, -5);
+            state.EstablishRelations(primaryAgressor, -5);
         }
         simManager.wars.Add(this);
-
         switch (warType)
         {
             case WarType.CONQUEST:
@@ -135,7 +138,7 @@ public class War
     public void EndWar()
     {
         simManager.wars.Remove(this);
-        foreach (State state in attackers.Concat(defenders))
+        foreach (State state in participants)
         {
             state.wars.Remove(this);
         }
