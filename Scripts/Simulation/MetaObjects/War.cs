@@ -59,17 +59,23 @@ public class War
 
         foreach (State state in attackers)
         {
-            state.enemies.AddRange(defenders);
-            state.wars[this] = true;
-            participants.Add(state);
-            state.EstablishRelations(primaryDefender, -5);
+            if (!participants.Contains(state))
+            {
+                state.enemies.AddRange(defenders);
+                state.wars[this] = true;
+                participants.Add(state);
+                state.EstablishRelations(primaryDefender, -5);                
+            }
         }
         foreach (State state in defenders)
         {
-            state.enemies.AddRange(attackers);
-            state.wars.Add(this, false);
-            participants.Add(state);
-            state.EstablishRelations(primaryAgressor, -5);
+            if (!participants.Contains(state))
+            {
+                state.enemies.AddRange(attackers);
+                state.wars[this] = false;
+                participants.Add(state);
+                state.EstablishRelations(primaryAgressor, -5);                
+            }
         }
         simManager.wars.Add(this);
         switch (warType)

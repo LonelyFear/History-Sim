@@ -138,7 +138,7 @@ public class State : PopObject
     {
         foreach (var pair in relations)
         {
-            if (!borderingStates.Contains(pair.Key) && !enemies.Contains(pair.Key))
+            if (!borderingStates.Concat(enemies).Contains(pair.Key))
             {
                 relations.Remove(pair.Key);
                 continue;
@@ -152,7 +152,7 @@ public class State : PopObject
                 pair.Value.truce -= (int)TimeManager.ticksPerMonth;
             }
         }
-        foreach (State state in borderingStates)
+        foreach (State state in borderingStates.Concat(enemies))
         {
             if (!relations.ContainsKey(state))
             {
@@ -263,28 +263,25 @@ public class State : PopObject
             {
                 State state = pair.Key;
                 Relation relation = pair.Value;
-                bool canStartWar = !enemies.Contains(state) && relation.truce <= 0;
-                if (!canStartWar)
+                bool cantStartWar = enemies.Contains(state) || relation.truce >= 0 || state.GetHighestLiege() == this;
+                if (cantStartWar)
                 {
                     continue;
                 }
                 // Sovereign Wars
-                if (state.sovereignty == Sovereignty.INDEPENDENT && relation.opinion < 0)
+                if (state.sovereignty == Sovereignty.INDEPENDENT && relation.opinion < 0 && liege != state)
                 {
                     float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, relation.opinion / (float)Relation.minOpinionValue);
-                    if (liege == state || vassals.Contains(state))
-                    {
-                        warDeclarationChance = 0f;
-                    }
                     if (rng.NextSingle() < warDeclarationChance)
                     {
+                        //GD.Print("war");
                         _ = new War(GetRealmStates(), state.GetRealmStates(), WarType.CONQUEST, this, state);
                         relation.opinion = Relation.minOpinionValue;
                         return;
                     }
                 }
                 // Rebellions
-                if (loyalty < minRebellionLoyalty && liege != null)
+                if (loyalty < minRebellionLoyalty && state == liege)
                 {
                     if (rng.NextSingle() < Mathf.Lerp(loyalty, 0, 0.001))
                     {
@@ -294,7 +291,8 @@ public class State : PopObject
                         {
                             formerLiege.RemoveVassal(rebel);
                         }
-                        //_ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
+                        _ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
+                        return;
                     }
                 }
             }
@@ -307,26 +305,26 @@ public class State : PopObject
     }    
     public void EndWars()
     {
-        try
+        if (sovereignty != Sovereignty.INDEPENDENT)
         {
-            if (sovereignty != Sovereignty.INDEPENDENT)
-            {
-                return;
-            }
-            foreach (var warPair in wars)
-            {
-                War war = warPair.Key;
-                bool isAttacker = warPair.Value;
+            return;
+        }
+        foreach (var warPair in wars)
+        {
+            War war = warPair.Key;
+            bool isAttacker = warPair.Value;
 
-                if (war.primaryAgressor != this && war.primaryDefender != this)
-                {
-                    continue;
-                }
-                // Below is if state has authority to end wars
-                double warEndChance = 0;
-                switch (war.warType)
-                {
-                    case WarType.CONQUEST:
+            if (war.primaryAgressor != this && war.primaryDefender != this)
+            {
+                continue;
+            }
+            // Below is if state has authority to end wars
+            double warEndChance = 0;
+            switch (war.warType)
+            {
+                case WarType.CONQUEST:
+                    try
+                    {
                         if (isAttacker)
                         {
                             warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
@@ -340,9 +338,10 @@ public class State : PopObject
                                     {
                                         return;
                                     }
-                                    if (defender.capital.occupier == null) {
+                                    if (defender.capital.occupier == null)
+                                    {
                                         GD.Print(defender.capitualated);
-                                        GD.Print(defender.capital.occupier);                                        
+                                        GD.Print(defender.capital.occupier);
                                     }
                                     defender.capital.occupier.AddVassal(defender);
                                 }
@@ -365,8 +364,16 @@ public class State : PopObject
                                 }
                             }
                         }
-                        break;
-                    case WarType.REVOLT:
+                    }
+                    catch (Exception e)
+                    {
+                        GD.PushError(e);
+                    }
+
+                    break;
+                case WarType.REVOLT:
+                    try
+                    {
                         if (isAttacker)
                         {
                             warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
@@ -374,10 +381,6 @@ public class State : PopObject
                             if (rng.NextDouble() < warEndChance || war.primaryDefender.capitualated)
                             {
                                 EndWar(war);
-                                foreach (State ally in war.attackers)
-                                {
-                                    AddVassal(ally);
-                                }
                             }
                         }
                         else
@@ -387,21 +390,21 @@ public class State : PopObject
                             if (rng.NextDouble() < warEndChance || war.primaryAgressor.capitualated)
                             {
                                 EndWar(war);
-                                foreach (State rebel in war.defenders)
+                                foreach (State rebel in war.attackers)
                                 {
                                     AddVassal(rebel);
                                 }
                             }
                         }
-                        break;
-                }
+                    }
+                    catch (Exception e)
+                    {
+                        GD.PushError(e);
+                    }
+
+                    break;
             }
         }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-
     }    
     public void EndWar(War war)
     {
@@ -877,6 +880,10 @@ public class State : PopObject
             {
                 foreach (State vassalVassal in vassal.vassals)
                 {
+                    if (collectedVassals.Contains(vassal))
+                    {
+                        continue;
+                    }
                     collectedVassals.Add(vassalVassal);
                 }
             }
