@@ -47,6 +47,10 @@ public class War
     public War(){}
     public War(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
     {
+        if (agressorLeader == defenderLeader)
+        {
+            return;
+        }
         id = simManager.getID();
         attackers = atk;
         defenders = def;
@@ -98,45 +102,34 @@ public class War
                 break;
         }        
     }
-    public void AddParticipants(List<State> states, bool attacker)
+    public void AddParticipant(State state, bool attacker)
     {
-        foreach (State state in states)
+        bool isInWar = false;
+        RemoveParticipant(state);
+        if (attacker && !attackers.Contains(state))
         {
-            bool isInWar = false;
-
-            if (attacker && !attackers.Contains(state))
-            {
-                state.enemies.AddRange(attackers);
-                isInWar = true;
-            }
-            else if (!defenders.Contains(state))
-            {
-                state.enemies.AddRange(attackers);
-                isInWar = true;
-            }
-            if (isInWar)
-            {
-                state.wars.Add(this, attacker);
-                participants.Add(state);
-            }
+            state.enemies.AddRange(attackers);
+            isInWar = true;
+        }
+        else if (!defenders.Contains(state))
+        {
+            state.enemies.AddRange(attackers);
+            isInWar = true;
+        }
+        if (isInWar)
+        {
+            state.wars.Add(this, attacker);
+            participants.Add(state);
         }
     }
-    public void RemoveParticipants(List<State> states)
+    public void RemoveParticipant(State state)
     {
-        foreach (State state in states)
+        if (participants.Contains(state))
         {
-            bool isInWar = false;
-            if (participants.Contains(state))
-            {
-                isInWar = true;
-            }
-            if (isInWar)
-            {
-                state.wars.Remove(this);
-                participants.Remove(state);
-            }
+            state.wars.Remove(this);
+            participants.Remove(state);
         }
-        if (attackers.Count < 1 || defenders.Count < 1)
+        if (attackers.Count < 1 || defenders.Count < 1 || primaryAgressor == state || primaryDefender == state)
         {
             EndWar();
         }

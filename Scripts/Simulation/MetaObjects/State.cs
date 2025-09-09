@@ -58,6 +58,8 @@ public class State : PopObject
     public Tech tech = new Tech();
 
     public int maxSize = 1;
+    public bool bugged;
+    public bool buggedTarget;
 
     // Government
     public long wealth;
@@ -263,7 +265,7 @@ public class State : PopObject
             {
                 State state = pair.Key;
                 Relation relation = pair.Value;
-                bool cantStartWar = enemies.Contains(state) || relation.truce >= 0 || state.GetHighestLiege() == this;
+                bool cantStartWar = state == this && enemies.Contains(state) || relation.truce >= 0 || state.GetHighestLiege() == this || state.sovereignty != Sovereignty.INDEPENDENT;
                 if (cantStartWar)
                 {
                     continue;
@@ -327,6 +329,20 @@ public class State : PopObject
                     {
                         if (isAttacker)
                         {
+                            bugged = !relations.ContainsKey(war.primaryDefender);
+                            if (bugged)
+                            {
+                                GD.Print(war.primaryAgressor == war.primaryDefender);
+                                GD.Print(displayName);
+                                GD.Print(war.primaryDefender.displayName);
+                                GD.Print(enemies.Contains(war.primaryDefender));
+                                GD.Print(war.primaryDefender.wars.ContainsKey(war));
+                                war.primaryDefender.buggedTarget = true;
+                            }
+                            else
+                            {
+                                war.primaryDefender.buggedTarget = false;
+                            }
                             warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
                             // Attacker
                             if (rng.NextDouble() < warEndChance || war.primaryDefender.capitualated)
@@ -349,6 +365,19 @@ public class State : PopObject
                         }
                         else
                         {
+                            bugged = !relations.ContainsKey(war.primaryAgressor);
+                            if (bugged)
+                            {
+                                GD.Print(displayName);
+                                GD.Print(war.primaryAgressor.displayName);
+                                GD.Print(enemies.Contains(war.primaryAgressor));
+                                GD.Print(war.primaryAgressor.wars.ContainsKey(war));
+                                war.primaryAgressor.buggedTarget = true;
+                            }
+                            else
+                            {
+                                war.primaryAgressor.buggedTarget = false;
+                            }
                             warEndChance = Mathf.Max(relations[war.primaryAgressor].opinion, 0) * 0.01;
                             // Defender
                             if (rng.NextDouble() < warEndChance || war.primaryAgressor.capitualated)
@@ -410,28 +439,6 @@ public class State : PopObject
     {
         war.EndWar();
     }
-    public void EndWarsWithState(State state)
-    {
-        foreach (War war in wars.Keys.ToArray())
-        {
-            if (war.participants.Contains(state))
-            {
-                EndWar(war);
-            }
-        }
-    }
-    public List<War> GetWarsWithState(State state)
-    {
-        List<War> warsWith = new List<War>();
-        foreach (War war in wars.Keys.ToArray())
-        {
-            if (war.participants.Contains(state))
-            {
-                warsWith.Add(war);
-            }
-        }
-        return warsWith;
-    }     
     #endregion 
     #endregion
     #region Government
@@ -601,6 +608,10 @@ public class State : PopObject
                         {
                             borders.Add(border.owner);
                         }
+                        if (!borders.Contains(border.owner.GetHighestLiege()))
+                        {
+                            borders.Add(border.owner.GetHighestLiege());
+                        }
                         bordersOtherState = !IsStateInRealm(border.owner);
                     }
                 }
@@ -765,33 +776,26 @@ public class State : PopObject
                     state.sovereignty = sovereignty;
                     
                 }
-                else
-                {
-                    AddVassal(state, sovereignty);
-                }
             }
         }
     }
 
     public void AddVassal(State state, Sovereignty sovereignty = Sovereignty.PUPPET)
     {
-        if (sovereignty != Sovereignty.INDEPENDENT)
+        foreach (State vassal in state.vassals.ToArray())
         {
-            foreach (State vassal in state.vassals.ToArray())
-            {
-                state.RemoveVassal(vassal);
-            }
-            if (state.liege != null)
-            {
-                state.liege.RemoveVassal(state);
-            }
-
-            state.liege = this;
-            state.sovereignty = sovereignty;
-            vassals.Add(state);
-            state.timeAsVassal = 0;
-            state.loyalty = 100;
+            state.RemoveVassal(vassal);
         }
+        if (state.liege != null)
+        {
+            state.liege.RemoveVassal(state);
+        }
+
+        state.liege = this;
+        state.sovereignty = sovereignty;
+        vassals.Add(state);
+        state.timeAsVassal = 0;
+        state.loyalty = 100;
     }
 
     public void RemoveVassal(State state)
@@ -816,7 +820,6 @@ public class State : PopObject
         }
         return (long)interiorArmyPower;
     }
-
     public long GetRealmManpower()
     {
         long mp = manpower;
@@ -829,19 +832,14 @@ public class State : PopObject
     public List<Region> GetRealmRegions()
     {
         List<Region> realmRegions = [.. regions];
-        foreach (State state in vassals)
+        if (vassals.Count > 0)
         {
-            realmRegions.AddRange(state.regions);
+            foreach (State state in vassals)
+            {
+                realmRegions.AddRange(state.GetRealmRegions());
+            }            
         }
         return realmRegions;
-    }
-    public int GetRealmBorderLength() {
-        int size = externalBorderingRegions;
-        foreach (State state in vassals)
-        {
-            size += state.externalBorderingRegions;
-        }
-        return size;
     }
     #endregion
     #region Utility

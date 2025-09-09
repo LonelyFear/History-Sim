@@ -224,6 +224,14 @@ public partial class MapManager : Area2D
                         {
                             color = region.owner.capitalColor;
                         }
+                        if (region.owner.bugged)
+                        {
+                            color = new Color(1, 0, 0);
+                        }
+                        if (region.owner.buggedTarget)
+                        {
+                            color = new Color(1, 1, 0);
+                        }
                     }
                     /*
                     if (simManager.tradeCenters.Contains(region))

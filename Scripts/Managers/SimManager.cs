@@ -806,6 +806,10 @@ public class SimManager
 
     public void DeleteState(State state)
     {
+        foreach (War war in state.wars.Keys)
+        {
+            war.RemoveParticipant(state);
+        }
         states.Remove(state);
         foreach (Region region in state.regions.ToArray())
         {
