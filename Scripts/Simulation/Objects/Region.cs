@@ -152,7 +152,7 @@ public class Region : PopObject
 
     public void UpdateOccupation()
     {
-        if (occupier != null && !owner.GetHighestLiege().enemies.Contains(occupier))
+        if (owner == null || (occupier != null && !owner.GetHighestLiege().enemies.Contains(occupier)))
         {
             occupier = null;
         }

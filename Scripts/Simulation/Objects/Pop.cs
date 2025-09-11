@@ -148,8 +148,8 @@ public class Pop
 
     public void TechnologyUpdate()
     {
-        double militaryTechChance = 0.0001;
-        double societyTechChance = 0.0001;
+        double militaryTechChance = 0.0015;
+        double societyTechChance = 0.0015;
 
         if (rng.NextDouble() < militaryTechChance)
         {
@@ -459,8 +459,8 @@ public class Pop
     }
     public long GetMaxPopulation()
     {
-        float techFactor = 1 + (tech.societyLevel * 0.1f);
-        float wealthFactor = wealth * 1;
+        double techFactor = 1 + (tech.societyLevel * 0.2);
+        double wealthFactor = wealth * 1;
         return ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand / region.landCount)));
     }    
     #endregion

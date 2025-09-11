@@ -606,6 +606,11 @@ public class SimManager
                 DeleteState(state);
                 continue;
             }
+            if (state.StateCollapse())
+            {
+                continue;
+            }
+
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
@@ -809,6 +814,10 @@ public class SimManager
         foreach (War war in state.wars.Keys)
         {
             war.RemoveParticipant(state);
+        }
+        foreach (State vassal in state.vassals)
+        {
+            state.RemoveVassal(vassal);
         }
         states.Remove(state);
         foreach (Region region in state.regions.ToArray())

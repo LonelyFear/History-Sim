@@ -277,6 +277,7 @@ public class State : PopObject
                     if (rng.NextSingle() < warDeclarationChance)
                     {
                         //GD.Print("war");
+                        //GD.Print("State in realm: " + GetRealmStates().Contains(this));
                         _ = new War(GetRealmStates(), state.GetRealmStates(), WarType.CONQUEST, this, state);
                         relation.opinion = Relation.minOpinionValue;
                         return;
@@ -293,7 +294,7 @@ public class State : PopObject
                         {
                             formerLiege.RemoveVassal(rebel);
                         }
-                        _ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
+                        //_ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
                         return;
                     }
                 }
@@ -327,16 +328,15 @@ public class State : PopObject
                 case WarType.CONQUEST:
                     try
                     {
-                        if (isAttacker)
+                        if (war.primaryAgressor == this)
                         {
                             bugged = !relations.ContainsKey(war.primaryDefender);
                             if (bugged)
                             {
-                                GD.Print(war.primaryAgressor == war.primaryDefender);
-                                GD.Print(displayName);
-                                GD.Print(war.primaryDefender.displayName);
-                                GD.Print(enemies.Contains(war.primaryDefender));
-                                GD.Print(war.primaryDefender.wars.ContainsKey(war));
+                                //GD.Print(displayName);
+                                //GD.Print(war.primaryDefender.displayName);
+                                //GD.Print(enemies.Contains(war.primaryDefender));
+                                //GD.Print(war.primaryDefender.wars.ContainsKey(war));
                                 war.primaryDefender.buggedTarget = true;
                             }
                             else
@@ -368,10 +368,10 @@ public class State : PopObject
                             bugged = !relations.ContainsKey(war.primaryAgressor);
                             if (bugged)
                             {
-                                GD.Print(displayName);
-                                GD.Print(war.primaryAgressor.displayName);
-                                GD.Print(enemies.Contains(war.primaryAgressor));
-                                GD.Print(war.primaryAgressor.wars.ContainsKey(war));
+                                //GD.Print(displayName);
+                                //GD.Print(war.primaryAgressor.displayName);
+                                //GD.Print(enemies.Contains(war.primaryAgressor));
+                                //GD.Print(war.primaryAgressor.wars.ContainsKey(war));
                                 war.primaryAgressor.buggedTarget = true;
                             }
                             else
@@ -439,7 +439,21 @@ public class State : PopObject
     {
         war.EndWar();
     }
-    #endregion 
+    public bool StateCollapse()
+    {
+        if (stability > minCollapseStability)
+        {
+            return false;
+        }
+        double stabilityFactor = 1d - (stability / minCollapseStability);
+        if (rng.NextDouble() < stabilityFactor * 0.01)
+        {
+            simManager.DeleteState(this);
+            return true;
+        }
+        return false;
+    }
+    #endregion
     #endregion
     #region Government
     public void UpdateDisplayName()
@@ -674,7 +688,7 @@ public class State : PopObject
     }
     public int GetMaxRegionsCount()
     {
-        return 10 + (tech.societyLevel * 2);
+        return 10 + (tech.societyLevel * 10);
     }
     public void UpdateStability()
     {
@@ -790,12 +804,15 @@ public class State : PopObject
         {
             state.liege.RemoveVassal(state);
         }
-
+        foreach (War war in state.wars.Keys)
+        {
+            war.RemoveParticipant(state);
+        }
         state.liege = this;
         state.sovereignty = sovereignty;
         vassals.Add(state);
         state.timeAsVassal = 0;
-        state.loyalty = 100;
+        state.loyalty = 1;
     }
 
     public void RemoveVassal(State state)
@@ -806,7 +823,7 @@ public class State : PopObject
             state.sovereignty = Sovereignty.INDEPENDENT;
             vassals.Remove(state);
             state.timeAsVassal = 0;
-            state.loyalty = 100;
+            state.loyalty = 1;
         }
     }
     #endregion

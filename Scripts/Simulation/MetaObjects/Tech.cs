@@ -19,6 +19,12 @@ public class Tech
 
     public Tech Clone()
     {
-        return (Tech)MemberwiseClone();
+        return new Tech()
+        {
+            militaryLevel = militaryLevel,
+            scienceLevel = scienceLevel,
+            societyLevel = societyLevel,
+            industryLevel = industryLevel
+        };
     }
 }

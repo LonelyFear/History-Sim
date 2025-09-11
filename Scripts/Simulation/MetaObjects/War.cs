@@ -58,12 +58,22 @@ public class War
         primaryAgressor = agressorLeader;
         primaryDefender = defenderLeader;
 
+        primaryAgressor.wars[this] = true;
+        primaryAgressor.enemies.AddRange(attackers);
+        participants.Add(primaryAgressor);
+        attackers.Add(primaryAgressor);
+
+        primaryDefender.wars[this] = false;
+        primaryDefender.enemies.AddRange(attackers);
+        participants.Add(primaryDefender);
+        defenders.Add(primaryDefender);
+
         primaryAgressor.EstablishRelations(primaryDefender, -5);
         primaryDefender.EstablishRelations(primaryAgressor, -5);
 
         foreach (State state in attackers)
         {
-            if (!participants.Contains(state))
+            if (!participants.Contains(state) && !attackers.Contains(state))
             {
                 state.enemies.AddRange(defenders);
                 state.wars[this] = true;
@@ -73,7 +83,7 @@ public class War
         }
         foreach (State state in defenders)
         {
-            if (!participants.Contains(state))
+            if (!participants.Contains(state)&& !defenders.Contains(state))
             {
                 state.enemies.AddRange(attackers);
                 state.wars[this] = false;
