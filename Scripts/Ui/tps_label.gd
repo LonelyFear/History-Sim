@@ -5,7 +5,7 @@ extends Label
 var currentTimer : float = 0
 func _process(delta: float) -> void:
 	if (timeManager):
-		currentTimer -= delta
+		currentTimer -= delta                  
 		if (currentTimer <= 0):
 			text = "TPS: " + str(roundf(1/timeManager.tickDelta * 10) / 10) + "\n"
 			text += "MTPS: " + str(roundf(1/timeManager.monthDelta * 10) / 10) + "\n"

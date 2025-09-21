@@ -459,8 +459,8 @@ public class Pop
     }
     public long GetMaxPopulation()
     {
-        double techFactor = 1 + (tech.societyLevel * 0.2);
-        double wealthFactor = wealth * 1;
+        double techFactor = 1 + (tech.societyLevel * 0.5);
+        double wealthFactor = wealth * 10;
         return ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand / region.landCount)));
     }    
     #endregion

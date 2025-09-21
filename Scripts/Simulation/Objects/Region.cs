@@ -184,7 +184,7 @@ public class Region : PopObject
     }
     public void RandomStateFormation()
     {
-        if (rng.NextSingle() < 0.0001f * navigability && population > Pop.ToNativePopulation(1000))
+        if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
         {
             SimManager.m.WaitOne();
             simManager.CreateState(this);
@@ -242,34 +242,6 @@ public class Region : PopObject
         }
         return false;
     }
-    public void NeutralConquest()
-    {
-        SimManager.m.WaitOne();
-        Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
-        SimManager.m.ReleaseMutex();
-        if (region == null )
-        {
-            return;
-        }
-        bool checks = GetController() == owner && region != null && region.pops.Count != 0 && region.owner == null;
-        //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
-
-        if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())
-        {
-            //long defendingCivilians = region.workforce - region.professions[SocialClass.ARISTOCRAT];
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(200000));
-
-            SimManager.m.WaitOne();
-            if (result.attackSuccessful)
-            {
-                owner.AddRegion(region);
-            }
-
-            //owner.TakeLosses(result.attackerLosses, owner);
-            //region.TakeLosses(result.defenderLosses, null, true);
-            SimManager.m.ReleaseMutex();
-        }
-    }
     public State GetController()
     {
         if (occupier != null)
@@ -281,18 +253,39 @@ public class Region : PopObject
             return owner.GetHighestLiege();
         }
         return null;
+    }    
+    #region Conquest
+    public void NeutralConquest()
+    {
+        Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
+        if (region == null)
+        {
+            return;
+        }
+        bool checks = GetController() == owner && region != null && region.pops.Count != 0 && region.owner == null;
+        //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
+
+        if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())
+        {
+            //long defendingCivilians = region.workforce - region.professions[SocialClass.ARISTOCRAT];
+            //double distanceFactor = 1 - Mathf.Min(pos.DistanceTo(owner.capital.pos)/10f, 0.9);
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(200000));
+
+            if (result.attackSuccessful)
+            {
+                owner.AddRegion(region);
+            }
+        }
     }
+
     public void MilitaryConquest()
     {
-        SimManager.m.WaitOne();
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
-        SimManager.m.ReleaseMutex();
 
         if (region != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
         {
             Battle result = Battle.CalcBattle(region, GetController(), null, GetController().GetArmyPower(), region.owner.GetArmyPower());
 
-            SimManager.m.WaitOne();
             if (result.attackSuccessful)
             {
                 region.occupier = GetController();
@@ -301,10 +294,9 @@ public class Region : PopObject
             {
                 region.occupier = null;
             }
-            SimManager.m.ReleaseMutex();
         }
     }
-
+    #endregion
     public void AddArmy(Army army)
     {
         if (!armies.Contains(army))
@@ -370,13 +362,12 @@ public class Region : PopObject
     {
         lastBaseWealth = baseWealth;
         lastWealth = wealth;
-        float techFactor = 1 + (pops[0].tech.scienceLevel * 0.1f);
 
         long farmers = Pop.FromNativePopulation(professions[SocialClass.FARMER]);
         long nonFarmers = Pop.FromNativePopulation(workforce - professions[SocialClass.FARMER]);
 
         float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (Pop.FromNativePopulation(dependents) * 0.01f);
-        baseWealth = baseProduction * (arableLand / landCount) * techFactor;
+        baseWealth = baseProduction * (arableLand / landCount);
     }
     public void LinkTrade()
     {
@@ -411,9 +402,11 @@ public class Region : PopObject
             tradeZone.DestroyZone();
         }
 
-        tradeLink = selectedLink;      
+        tradeLink = selectedLink;
         if (tradeLink != null)
-            tradeLink.tradeIncome += (baseWealth * 0.1f) + (tradeIncome * 0.1f);      
+        {
+            tradeLink.tradeIncome += (baseWealth * 0.2f) + tradeIncome;
+        }
     }
     public void CalcTradeRoutes()
     {

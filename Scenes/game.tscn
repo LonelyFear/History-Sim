@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=20 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="Texture2D" uid="uid://dkcv4h7u8elck" path="res://Sprites/Sea.png" id="2_7nbq1"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/PopulationLabel.cs" id="11_nnt18"]
+[ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scenes/FrameBreakdown.cs" id="12_ewbju"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/ObjectInfo.cs" id="15_ewbju"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/ActionPanel.cs" id="17_7nbq1"]
@@ -77,11 +78,12 @@ centered = false
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Population Label" type="Label" parent="UI"]
-offset_left = 3.0
-offset_top = 3.0
-offset_right = 169.0
-offset_bottom = 26.0
+[node name="WorldStats" type="VBoxContainer" parent="UI"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Population Label" type="Label" parent="UI/WorldStats"]
+layout_mode = 2
 mouse_filter = 0
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -116,12 +118,29 @@ theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 30
-text = "TPS: 30
+text = "MTPS: 5
+TPS: 30
 Fps: 300"
 horizontal_alignment = 2
 script = ExtResource("11_exi56")
 timeManager = NodePath("../../../Time Manager")
 updateDelay = 0.25
+
+[node name="Debug Info" type="VBoxContainer" parent="UI/VBoxContainer"]
+layout_mode = 2
+
+[node name="FrameBreakdown" type="Label" parent="UI/VBoxContainer/Debug Info"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 24
+text = "Frame Breakdown:
+Pops Time: 
+Regions Time:
+States Time: "
+horizontal_alignment = 2
+script = ExtResource("12_ewbju")
 
 [node name="InfoHolder" type="Control" parent="UI"]
 layout_mode = 3

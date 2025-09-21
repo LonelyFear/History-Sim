@@ -276,7 +276,8 @@ public partial class MapManager : Area2D
             case MapModes.POPULATION:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    color = new Color(0, (float)region.population / Pop.ToNativePopulation(1000 * (int)Mathf.Pow(simManager.tilesPerRegion, 2)), 0, 1);
+                    long regionPopulation = Pop.ToNativePopulation(1000 * (int)Mathf.Pow(simManager.tilesPerRegion, 2));
+                    color = new Color(0, region.population / Mathf.Max(simManager.highestPopulation, regionPopulation), 0, 1);
                 }
                 else if (region.habitable)
                 {

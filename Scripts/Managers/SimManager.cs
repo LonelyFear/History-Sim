@@ -54,6 +54,7 @@ public class SimManager
     // Population
     
     public long worldPopulation { get; set; } = 0;
+    public long highestPopulation { get; set; } = 0;
     public long worldWorkforce { get; set; } = 0;
     public long worldDependents { get; set; } = 0;
     public uint populatedRegions;
@@ -81,6 +82,14 @@ public class SimManager
 
     // Events
     public delegate void SimulationInitializedEventHandler();
+
+    // Debug info
+    public ulong totalStepTime;
+    public ulong totalPopsTime;
+    public ulong totalStateTime;
+    public ulong totalRegionTime;
+    public ulong totalCharacterTime;
+    public ulong totalMiscTime;
     #region Utility
 
     public Vector2I GlobalToRegionPos(Vector2 pos)
@@ -411,13 +420,7 @@ public class SimManager
             {
                 long startingPopulation = Pop.ToNativePopulation(10000);
                 Culture culture = CreateCulture();
-                foreach (Region testRegion in habitableRegions)
-                {
-                    if (testRegion.pops.Count > 0 && testRegion.pos.DistanceTo(region.pos) <= 14)
-                    {
-                        culture = testRegion.pops[0].culture;
-                    }
-                }
+
                 CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
             }
         }
@@ -519,6 +522,7 @@ public class SimManager
                     //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.CheckPopulation();
                     //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+                    highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
                     region.CalcSocialClassRequirements();
                     totalPopTime += Time.GetTicksMsec() - startTime;
                     startTime = Time.GetTicksMsec();
@@ -684,16 +688,21 @@ public class SimManager
     #region SimTick
     public void SimMonth()
     {
+        ulong stepTime = Time.GetTicksMsec();
         ulong startTime = Time.GetTicksMsec();
         UpdatePops();
-        //GD.Print("Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        totalPopsTime = Time.GetTicksMsec() - startTime;
         startTime = Time.GetTicksMsec();
         UpdateRegions();
+        totalRegionTime = Time.GetTicksMsec() - startTime;
         startTime = Time.GetTicksMsec();
         UpdateStates();
-        //GD.Print("States Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+        totalStateTime = Time.GetTicksMsec() - startTime;
+        startTime = Time.GetTicksMsec();
         UpdateCultures();
         UpdateWars();
+        totalMiscTime = Time.GetTicksMsec() - startTime;
+        totalStepTime = Time.GetTicksMsec() - stepTime;
     }
     public void SimYear()
     {
