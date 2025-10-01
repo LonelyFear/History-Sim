@@ -38,6 +38,7 @@ public partial class MapManager : Area2D
 	}
     public void InitMapManager() {
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        simManager.mapManager = this;
         Scale = simManager.terrainMap.Scale * (simManager.tilesPerRegion/(float)regionResolution);
         worldSize = SimManager.worldSize;
         //GD.Print(worldSize.X * regionResolution);

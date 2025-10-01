@@ -239,7 +239,8 @@ public class State : PopObject
     #region Wars
     public void Capitualate()
     {
-        if (capital.GetController() != GetHighestLiege())
+        
+        if (capital.occupier != null)
         {
             if (!capitualated)
             {
@@ -279,7 +280,7 @@ public class State : PopObject
                     {
                         //GD.Print("war");
                         //GD.Print("State in realm: " + GetRealmStates().Contains(this));
-                        _ = new War(GetRealmStates(), state.GetRealmStates(), WarType.CONQUEST, this, state);
+                        _ = new War([this], [state], WarType.CONQUEST, this, state);
                         relation.opinion = Relation.minOpinionValue;
                         return;
                     }
@@ -296,7 +297,7 @@ public class State : PopObject
                         {
                             formerLiege.RemoveVassal(rebel);
                         }
-                        //_ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
+                        _ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, this, formerLiege);
                         return;
                     }
                 }
@@ -352,14 +353,9 @@ public class State : PopObject
                                 EndWar(war);
                                 foreach (State defender in war.defenders)
                                 {
-                                    if (!defender.capitualated)
+                                    if (!defender.capitualated || defender.capital.occupier == null)
                                     {
-                                        return;
-                                    }
-                                    if (defender.capital.occupier == null)
-                                    {
-                                        GD.Print(defender.capitualated);
-                                        GD.Print(defender.capital.occupier);
+                                        continue;
                                     }
                                     defender.capital.occupier.AddVassal(defender);
                                 }
@@ -413,7 +409,7 @@ public class State : PopObject
                             {
                                 // War Ends
                                 EndWar(war);
-                                foreach (State vassal in war.primaryDefender.vassals)
+                                foreach (State vassal in war.primaryDefender.vassals.ToArray())
                                 {
                                     war.primaryDefender.RemoveVassal(vassal);
                                 }
@@ -512,7 +508,7 @@ public class State : PopObject
                 {
                     RemoveVassal(rebel);
                 }
-                _ = new War(fellowRebels, GetRealmStates(), WarType.CIVIL_WAR, mainRebel, this);
+                _ = new War(fellowRebels, [this], WarType.CIVIL_WAR, mainRebel, this);
             }
             else
             {
@@ -755,10 +751,6 @@ public class State : PopObject
             regions.Remove(region);
         }
     }
-    public int GetMaxRegionsCount()
-    {
-        return 10 + (tech.societyLevel * 10);
-    }
     public void UpdateStability()
     {
         double stabilityTarget = 1;
@@ -777,7 +769,7 @@ public class State : PopObject
         }
         if (vassals.Count > GetMaxVassals())
         {
-            stabilityTarget -= (vassals.Count/GetMaxVassals()) - 1;
+            stabilityTarget -= (vassals.Count / GetMaxVassals()) - 1;
         }
         //stabilityTarget -= (poorTaxRate + middleTaxRate + richTaxRate)/3d * 0.3;
 
@@ -808,9 +800,6 @@ public class State : PopObject
         loyaltyTarget = Mathf.Clamp(loyaltyTarget, 0, 1);
         loyalty = Mathf.Lerp(loyalty, loyaltyTarget, 0.05);
     }
-    public int GetMaxVassals() {
-        return 5;
-    } 
     public List<State> GatherRebels()
     {
         List<State> rebels = [this];
@@ -916,6 +905,15 @@ public class State : PopObject
         }
         return realmRegions;
     }
+    #endregion
+    #region Misc
+    public int GetMaxRegionsCount()
+    {
+        return 10 + (tech.societyLevel * 2);
+    }
+    public int GetMaxVassals() {
+        return 5;
+    } 
     #endregion
     #region Utility
     public Culture GetRulingCulture()

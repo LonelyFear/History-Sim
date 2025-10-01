@@ -269,7 +269,7 @@ public class Region : PopObject
         {
             //long defendingCivilians = region.workforce - region.professions[SocialClass.ARISTOCRAT];
             //double distanceFactor = 1 - Mathf.Min(pos.DistanceTo(owner.capital.pos)/10f, 0.9);
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(), Pop.ToNativePopulation(200000));
+            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(false), Pop.ToNativePopulation(200000));
 
             if (result.attackSuccessful)
             {
@@ -282,7 +282,7 @@ public class Region : PopObject
     {
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
 
-        if (region != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
+        if (region != null && region.GetController() != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
         {
             Battle result = Battle.CalcBattle(region, GetController(), null, GetController().GetArmyPower(), region.owner.GetArmyPower());
 

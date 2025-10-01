@@ -49,6 +49,8 @@ public class SimManager
     [IgnoreMember]
     public WorldGenerator worldGenerator;
     [IgnoreMember]
+    public MapManager mapManager;
+    [IgnoreMember]
     bool instanceDeleted = false;
 
     // Population
@@ -610,11 +612,12 @@ public class SimManager
                 DeleteState(state);
                 continue;
             }
+            /*
             if (state.StateCollapse())
             {
                 continue;
             }
-
+            */
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
@@ -820,6 +823,12 @@ public class SimManager
 
     public void DeleteState(State state)
     {
+        if (mapManager.selectedMetaObj == state)
+        {
+            mapManager.selectedMetaObj = null;
+            mapManager.UpdateRegionColors(regions);
+        }
+        
         foreach (War war in state.wars.Keys)
         {
             war.RemoveParticipant(state);
