@@ -8,6 +8,7 @@ using MessagePack;
 public class Character
 {
     public ulong id;
+    public string name;
 }
 
 public enum TraitLevel

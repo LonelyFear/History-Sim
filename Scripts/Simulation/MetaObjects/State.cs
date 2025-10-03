@@ -442,9 +442,8 @@ public class State : PopObject
                     {
                         if (isAttacker)
                         {
-                            warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
                             // War Leader
-                            if (rng.NextDouble() < warEndChance || war.primaryDefender.capitualated)
+                            if (war.primaryDefender.capitualated)
                             {
                                 // War ends
                                 EndWar(war);
@@ -457,9 +456,7 @@ public class State : PopObject
                         }
                         else
                         {
-                            warEndChance = Mathf.Max(relations[war.primaryAgressor].opinion, 0) * 0.01;
-                            // State
-                            if (rng.NextDouble() < warEndChance || war.primaryAgressor.capitualated)
+                            if (war.primaryAgressor.capitualated)
                             {
                                 EndWar(war);
                                 foreach (State rebel in war.attackers)
@@ -484,6 +481,13 @@ public class State : PopObject
     }
     public bool StateCollapse()
     {
+        // TODO: Make states aware of when they are in civil war
+        foreach (var warPair in wars)
+        {
+            if (warPair.Key.warType == WarType.CIVIL_WAR) {
+                return false;
+            }
+        }
         if (stability > minCollapseStability)
         {
             return false;

@@ -42,7 +42,7 @@ public class War
         attackers = attackerIds.Select(a => simManager.statesIds[a]).ToList();
         primaryAgressor = simManager.statesIds[primaryAgressorID];
         primaryDefender = simManager.statesIds[primaryDefenderID];
-        participants = (List<State>)defenders.Concat(attackers);
+        participants = participants = [.. defenders, .. attackers];
     }
     public War(){}
     public War(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)

@@ -612,12 +612,10 @@ public class SimManager
                 DeleteState(state);
                 continue;
             }
-            /*
             if (state.StateCollapse())
             {
                 continue;
             }
-            */
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
@@ -790,7 +788,7 @@ public class SimManager
         Culture culture = new Culture()
         {
             id = getID(),
-            name = "Culturism",
+            name = "Culture",
             color = new Color(r, g, b),
             tickFounded = timeManager.ticks
         };
