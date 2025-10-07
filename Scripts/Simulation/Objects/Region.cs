@@ -284,7 +284,7 @@ public class Region : PopObject
 
         if (region != null && region.GetController() != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
         {
-            Battle result = Battle.CalcBattle(region, GetController(), null, GetController().GetArmyPower(), region.owner.GetArmyPower());
+            Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(), region.owner.GetArmyPower());
 
             if (result.attackSuccessful)
             {

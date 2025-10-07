@@ -816,6 +816,7 @@ public class SimManager
             };
             state.AddRegion(region);
             states.Add(state);
+            statesIds.Add(state.id, state);
         }
     }
 
@@ -836,6 +837,7 @@ public class SimManager
             state.RemoveVassal(vassal);
         }
         states.Remove(state);
+        statesIds.Remove(state.id);
         foreach (Region region in state.regions.ToArray())
         {
             state.RemoveRegion(region);
@@ -843,6 +845,41 @@ public class SimManager
     }
     #endregion
     #region Characters Creation
+    public Character CreateCharacter(string firstName, string lastName, ulong age, State state, CharacterRole role)
+    {
+        Character character = new Character()
+        {
+            id = getID(),
+            firstName = firstName,
+            lastName = lastName,
+            age = age,
+        };
+        character.JoinState(state, role);
+        character.SetHomeState(state);
+        characters.Add(character);
+        charactersIds.Add(character.id, character);
+        return character;
+    }
+    public void DeleteCharacter(Character character)
+    {
+        foreach (ulong stateId in character.statesIds.Keys)
+        {
+            State state = statesIds[stateId];
+            character.LeaveState(state);
+        }
+        foreach (ulong charId in character.childIds)
+        {
+            Character child = charactersIds[charId];
+            child.parentId = null;
+        }
+        if (character.parentId != null)
+        {
+            Character parent = charactersIds[(ulong)character.parentId];
+            parent.childIds.Remove(character.id);
+        }
+        characters.Remove(character);
+        charactersIds.Remove(character.id);
+    }
     #endregion
     #region Diplomacy Creation
     #endregion

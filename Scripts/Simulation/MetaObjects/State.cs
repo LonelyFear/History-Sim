@@ -21,7 +21,6 @@ public class State : PopObject
     [IgnoreMember]
     public Region capital { get; set; }
     public ulong capitalID;
-
     public long manpower { get; set; } = 0;
     public int occupiedLand { get; set; } = 0;
     public float totalWealth { get; set; } = 0;
@@ -64,9 +63,9 @@ public class State : PopObject
 
     // Government
     public long wealth;
-    public Character leader;
     public Pop rulingPop;
-    public Character heir;
+    public ulong leaderId;
+    public List<ulong> characterIds;
     public double stability = 1;
     public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
