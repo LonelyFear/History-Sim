@@ -7,8 +7,6 @@ public class Culture : PopObject
 {
     public Color color { get; set; }
 
-    // Increases the chance states of this culture declare wars
-    public TraitLevel agression { get; set; } = TraitLevel.MEDIUM;
     //public List<Culture> hatedCultures { get; set; } = new List<Culture>();
 
     // public void AddPop(Pop pop){

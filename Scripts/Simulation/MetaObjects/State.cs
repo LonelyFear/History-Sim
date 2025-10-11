@@ -7,6 +7,7 @@ using MessagePack;
 public class State : PopObject
 {
     public string displayName { get; set; } = "Nation";
+    public string leaderTitle { get; set; } = "King";
     public Color color { get; set; }
     public Color displayColor;
     public Color capitalColor;
@@ -51,8 +52,6 @@ public class State : PopObject
     public int externalBorderingRegions { get; set; }= 0;
     public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
 
-
-    public List<Character> characters = new List<Character>();
     int monthsSinceElection = 0;
     public Tech tech = new Tech();
 
@@ -64,8 +63,8 @@ public class State : PopObject
     // Government
     public long wealth;
     public Pop rulingPop;
-    public ulong leaderId;
-    public List<ulong> characterIds;
+    public ulong? leaderId = null;
+    public List<ulong?> characterIds = new List<ulong?>();
     public double stability = 1;
     public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
@@ -483,7 +482,8 @@ public class State : PopObject
         // TODO: Make states aware of when they are in civil war
         foreach (var warPair in wars)
         {
-            if (warPair.Key.warType == WarType.CIVIL_WAR) {
+            if (warPair.Key.warType == WarType.CIVIL_WAR)
+            {
                 return false;
             }
         }
@@ -523,8 +523,8 @@ public class State : PopObject
     }
     #endregion
     #endregion
-    #region Government
-    public void UpdateDisplayName()
+    #region Naming
+        public void UpdateDisplayName()
     {
         bool useDemonym = true;
         string govtName;
@@ -535,24 +535,30 @@ public class State : PopObject
                 {
                     case Sovereignty.COLONY:
                         govtName = "Colony";
+                        leaderTitle = "Administrator";
                         useDemonym = false;
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Mandate";
+                        leaderTitle = "Governor";
                         useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Department";
+                        leaderTitle = "Governor";
                         break;
                     default:
                         govtName = "Free State";
+                        leaderTitle = "Prime Minister";
                         if (vassals.Count > 0)
                         {
                             govtName = "Republic";
+                            leaderTitle = "President";
                         }
                         else if (vassals.Count > 3)
                         {
                             govtName = "Commonwealth";
+                            leaderTitle = "Chancellor";
                         }
                         break;
                 }
@@ -562,26 +568,31 @@ public class State : PopObject
                 {
                     case Sovereignty.COLONY:
                         govtName = "Crown Colony";
+                        leaderTitle = "Viceroy";
                         useDemonym = false;
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Protectorate";
+                        leaderTitle = "Regent";
                         useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Duchy";
+                        leaderTitle = "Duke";
                         useDemonym = false;
                         break;
                     default:
                         govtName = "Principality";
-
+                        leaderTitle = "Prince";
                         if (vassals.Count > 0)
                         {
                             govtName = "Kingdom";
+                            leaderTitle = "King";
                         }
                         else if (vassals.Count > 3)
                         {
                             govtName = "Empire";
+                            leaderTitle = "Emperor";
                         }
                         else
                         {
@@ -595,24 +606,30 @@ public class State : PopObject
                 {
                     case Sovereignty.COLONY:
                         govtName = "Territory";
+                        leaderTitle = "Governor-General";
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Client State";
+                        leaderTitle = "Administrator";
                         useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Province";
+                        leaderTitle = "Governor";
                         useDemonym = false;
                         break;
                     default:
                         govtName = "State";
+                        leaderTitle = "Despot";
                         if (vassals.Count > 0)
                         {
                             govtName = "Autocracy";
+                            leaderTitle = "Archon";
                         }
                         else if (vassals.Count > 3)
                         {
                             govtName = "Imperium";
+                            leaderTitle = "Emperor";
                         }
                         break;
                 }
@@ -632,6 +649,11 @@ public class State : PopObject
         }
 
     }
+    #region Government & Leaders
+    public void LeadersUpdate()
+    {
+
+    }
     public void UpdateDisplayColor()
     {
         displayColor = color;
@@ -648,6 +670,7 @@ public class State : PopObject
                 break;
         }
     }
+    #endregion
     #region Count Stats
     public void CountStatePopulation()
     {

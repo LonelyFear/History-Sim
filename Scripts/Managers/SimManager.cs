@@ -686,6 +686,19 @@ public class SimManager
         }
     }
     #endregion
+    #region Character Update
+    public void UpdateCharacters()
+    {
+        foreach (Character character in characters)
+        {
+            character.age += TimeManager.ticksPerMonth;
+            if (!character.dead)
+            {
+                // Character Aliveness
+            }
+        }
+    }
+    #endregion
     #region SimTick
     public void SimMonth()
     {
@@ -700,6 +713,7 @@ public class SimManager
         UpdateStates();
         totalStateTime = Time.GetTicksMsec() - startTime;
         startTime = Time.GetTicksMsec();
+        UpdateCharacters();
         UpdateCultures();
         UpdateWars();
         totalMiscTime = Time.GetTicksMsec() - startTime;
@@ -845,7 +859,7 @@ public class SimManager
     }
     #endregion
     #region Characters Creation
-    public Character CreateCharacter(string firstName, string lastName, ulong age, State state, CharacterRole role)
+    public Character CreateCharacter(string firstName, string lastName, uint age, State state, CharacterRole role)
     {
         Character character = new Character()
         {
@@ -853,6 +867,7 @@ public class SimManager
             firstName = firstName,
             lastName = lastName,
             age = age,
+            birthTick = timeManager.ticks - age
         };
         character.JoinState(state, role);
         character.SetHomeState(state);
@@ -862,6 +877,7 @@ public class SimManager
     }
     public void DeleteCharacter(Character character)
     {
+
         foreach (ulong stateId in character.statesIds.Keys)
         {
             State state = statesIds[stateId];
@@ -876,9 +892,9 @@ public class SimManager
         {
             Character parent = charactersIds[(ulong)character.parentId];
             parent.childIds.Remove(character.id);
-        }
+        }           
         characters.Remove(character);
-        charactersIds.Remove(character.id);
+        charactersIds.Remove(character.id);             
     }
     #endregion
     #region Diplomacy Creation

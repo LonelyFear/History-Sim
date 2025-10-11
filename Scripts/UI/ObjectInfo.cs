@@ -10,10 +10,12 @@ public partial class ObjectInfo : Control
     public Label populationLabel;
     public Label specialLabel;
     public MapManager mapManager;
+    public SimManager simManager;
     TimeManager timeManager;
 
     public override void _Ready()
     {
+        GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += GetSimManager;
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         timeManager = GetNode<TimeManager>("/root/Game/Time Manager");
         panel = GetNode<Panel>("ObjectInfo");
@@ -21,6 +23,10 @@ public partial class ObjectInfo : Control
         typeLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Type");
         populationLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Population");
         specialLabel = GetNode<Label>("ObjectInfo/ScrollContainer/VBoxContainer/Manpower");
+    }
+    public void GetSimManager()
+    {
+        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
     }
 
     public override void _Process(double delta)
@@ -44,11 +50,20 @@ public partial class ObjectInfo : Control
                     specialLabel.Text +=  "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
                     specialLabel.Text += "\n" + "Wealth: " + state.totalWealth.ToString("#,###0");
                     specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower()).ToString("#,###0") + "\n";
-                    
-                    specialLabel.Text += "\n" + "Stability: " + (state.stability).ToString("##0%");
+                    if (state.leaderId != null)
+                    {
+                        Character leader = simManager.charactersIds[(ulong)state.leaderId];
+                        specialLabel.Text += "\n" + $"Leader: {state.leaderTitle} {leader.firstName + " " + leader.lastName}";    
+                        specialLabel.Text += "\n" + $"Leader Age: {timeManager.GetYear(leader.age)} year(s)" + "\n";                    
+                    } else
+                    {
+                        specialLabel.Text += "\n" + "Leader: None";
+                    }
+
+                    specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("##0%");
                     if (state.liege != null)
                     {
-                        specialLabel.Text += "\n" + "Loyalty: " + (state.loyalty).ToString("##0%");
+                        specialLabel.Text += "\n" + "Loyalty: " + state.loyalty.ToString("##0%");
                     }
                     
                     
