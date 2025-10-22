@@ -479,7 +479,6 @@ public class State : PopObject
     }
     public bool StateCollapse()
     {
-        // TODO: Make states aware of when they are in civil war
         foreach (var warPair in wars)
         {
             if (warPair.Key.warType == WarType.CIVIL_WAR)
@@ -515,8 +514,11 @@ public class State : PopObject
             }
             else
             {
-                simManager.DeleteState(this);
-                return true;
+                if (rng.NextDouble() < 0.01)
+                {
+                    simManager.DeleteState(this);
+                    return true;
+                }
             }
         }
         return false;
@@ -654,6 +656,22 @@ public class State : PopObject
     {
 
     }
+    public void SetLeader(ulong characterId)
+    {
+        if (leaderId != null)
+        {
+            RemoveLeader();
+        }
+        leaderId = characterId;
+    }
+    public void RemoveLeader()
+    {
+        if (leaderId != null)
+        {
+            simManager.charactersIds[(ulong)leaderId].role = CharacterRole.FORMER_LEADER;
+        }
+        leaderId = null;
+    }
     public void UpdateDisplayColor()
     {
         displayColor = color;
@@ -675,6 +693,7 @@ public class State : PopObject
     public void CountStatePopulation()
     {
         realmRegions = GetRealmRegions();
+        int aliveCharacters = 0;
         long countedP = 0;
         long countedW = 0;
 
@@ -690,6 +709,13 @@ public class State : PopObject
         borderingRegions = 0;
         float countedWealth = 0;
         int occRegions = 0;
+        foreach (ulong charId in characterIds)
+        {
+            if (simManager.charactersIds[charId].role != CharacterRole.DEAD)
+            {
+                aliveCharacters++;
+            }
+        }
         foreach (Region region in realmRegions)
         {
             countedP += region.population;
@@ -749,7 +775,7 @@ public class State : PopObject
         totalWealth = countedWealth;
         professions = countedSocialClasss;
         cultures = cCultures;
-        population = countedP;
+        population = countedP + aliveCharacters;
         workforce = countedW;
         pops = countedPops;
     }

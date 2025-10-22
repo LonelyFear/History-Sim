@@ -158,6 +158,20 @@ public partial class MapManager : Area2D
         {
             switch (mapMode)
             {
+                case MapModes.REALM:
+                    if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
+                    {
+                        selectedMetaObj = hoveredRegion;
+                        if (hoveredState != null)
+                        {
+                            selectedMetaObj = hoveredState.GetHighestLiege();
+                        }
+                    }
+                    else
+                    {
+                        selectedMetaObj = null;
+                    }
+                    break;
                 case MapModes.POLITIY:
                     if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
                     {
@@ -210,6 +224,45 @@ public partial class MapManager : Area2D
         Color color = new Color(0, 0, 0, 0);
         switch (mapMode)
         {
+            case MapModes.REALM:
+                if (region.pops.Count > 0)
+                {
+                    color = new Color(0.2f, 0.2f, 0.2f);
+                    if (region.owner != null)
+                    {
+                        color = region.owner.GetHighestLiege().displayColor;
+                        if (region.occupier != null)
+                        {
+                            color = region.occupier.displayColor;
+                        }
+                        if (region.owner.GetHighestLiege().capital == region)
+                        {
+                            color = region.owner.capitalColor;
+                        }
+                    }                 
+                }
+               
+                if (selectedMetaObj != null)
+                {
+                    switch (selectedMetaObj.GetObjectType())
+                    {
+                        case PopObject.ObjectType.REGION:
+                            if (region != selectedMetaObj)
+                            {
+                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.4f);
+                            }
+                            break;
+                        case PopObject.ObjectType.STATE:
+                            Color cBefore = color;
+                            // Darkens Unrelated Regions
+                            if (region.owner == null || region.owner.GetHighestLiege() != ((State)selectedMetaObj).GetHighestLiege())
+                            {
+                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.7f);
+                            }                           
+                            break;
+                    }
+                }
+                break;
             case MapModes.POLITIY:
                 if (region.pops.Count > 0)
                 {
@@ -225,21 +278,7 @@ public partial class MapManager : Area2D
                         {
                             color = region.owner.capitalColor;
                         }
-                        if (region.owner.bugged)
-                        {
-                            color = new Color(1, 0, 0);
-                        }
-                        if (region.owner.buggedTarget)
-                        {
-                            color = new Color(1, 1, 0);
-                        }
-                    }
-                    /*
-                    if (simManager.tradeCenters.Contains(region))
-                    {
-                        color = Utility.MultiColourLerp([color, new Color(0f, 0f, 0f)], 0.9f);
-                    } 
-                    */                    
+                    }                 
                 }
                
                 if (selectedMetaObj != null)
@@ -472,6 +511,7 @@ public partial class MapManager : Area2D
 }
 
 public enum MapModes {
+    REALM,
     POLITIY,
     CULTURE,
     POPULATION,

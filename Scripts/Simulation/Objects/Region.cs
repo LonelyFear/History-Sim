@@ -202,7 +202,7 @@ public class Region : PopObject
             owner.rulingPop = rulingPop;
             owner.tech = rulingPop.tech;
             // Sets Leader
-            simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), "Doe", (uint)(rng.Next(10, 50) * TimeManager.ticksPerYear), owner, CharacterRole.LEADER);
+            simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), (uint)(rng.Next(10, 50) * TimeManager.ticksPerYear), owner, CharacterRole.LEADER);
 
             owner.UpdateDisplayName();            
         }
@@ -285,9 +285,9 @@ public class Region : PopObject
     {
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
 
-        if (region != null && region.GetController() != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
+        if (region != null && GetController() != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
         {
-            Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(), region.owner.GetArmyPower());
+            Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(), region.GetController().GetArmyPower());
 
             if (result.attackSuccessful)
             {

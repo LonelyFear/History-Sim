@@ -332,7 +332,8 @@ public class SimManager
         PopObject.timeManager = timeManager;
         Army.simManager = this;
         Pop.simManager = this;
-        War.simManager = this;   
+        War.simManager = this;
+        Character.sim = this;
         terrainSize = worldGenerator.WorldSize;
         worldSize = terrainSize / tilesPerRegion;
 
@@ -689,14 +690,30 @@ public class SimManager
     #region Character Update
     public void UpdateCharacters()
     {
-        foreach (Character character in characters)
+        try
         {
-            character.age += TimeManager.ticksPerMonth;
-            if (!character.dead)
+            foreach (Character character in characters.ToArray())
             {
-                // Character Aliveness
-            }
+                character.age += TimeManager.ticksPerMonth;
+                if (!character.dead)
+                {
+                    // Character Aliveness
+                    bool canCheckDeath = timeManager.GetMonth(timeManager.ticks) == 2;
+
+                    if (canCheckDeath && rng.NextSingle() < character.GetDeathChance())
+                    {
+                        character.Die();
+                    }
+                } else
+                {
+                    DeleteCharacter(character);
+                }
+            }            
+        } catch (Exception e)
+        {
+            GD.PushError(e);
         }
+
     }
     #endregion
     #region SimTick
@@ -850,12 +867,16 @@ public class SimManager
         {
             state.RemoveVassal(vassal);
         }
-        states.Remove(state);
-        statesIds.Remove(state.id);
         foreach (Region region in state.regions.ToArray())
         {
             state.RemoveRegion(region);
         }
+        foreach (ulong characterId in state.characterIds.ToArray())
+        {
+            charactersIds[characterId].LeaveState();
+        }
+        states.Remove(state);
+        statesIds.Remove(state.id);        
     }
     #endregion
     #region Characters Creation
@@ -869,8 +890,8 @@ public class SimManager
             age = age,
             birthTick = timeManager.ticks - age
         };
-        character.JoinState(state, role);
-        character.SetHomeState(state);
+        character.JoinState(state.id);
+        character.SetRole(role);
         characters.Add(character);
         charactersIds.Add(character.id, character);
         return character;
@@ -878,11 +899,7 @@ public class SimManager
     public void DeleteCharacter(Character character)
     {
 
-        foreach (ulong stateId in character.statesIds.Keys)
-        {
-            State state = statesIds[stateId];
-            character.LeaveState(state);
-        }
+        character.LeaveState();
         foreach (ulong charId in character.childIds)
         {
             Character child = charactersIds[charId];
