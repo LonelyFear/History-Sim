@@ -70,9 +70,12 @@ public partial class ObjectInfo : Control
                     specialLabel.Text += "\n" + "Wars: ";
                     if (state.wars.Count > 0)
                     {
-                        foreach (War war in state.wars.Keys)
+                        foreach (War war in state.wars.Keys.ToArray())
                         {
+                            yearAge = timeManager.GetYear(war.age);
+                            monthAge = timeManager.GetMonth(war.age);
                             specialLabel.Text += "\n" + $"{war.warName}";
+                            specialLabel.Text += "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";;
                         }
                     }
                     else

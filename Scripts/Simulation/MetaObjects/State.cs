@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
+using System.Reflection.Metadata.Ecma335;
 [MessagePackObject(keyAsPropertyName: true)]
 public class State : PopObject
 {
@@ -323,6 +324,11 @@ public class State : PopObject
             {
                 continue;
             }
+            if (war.primaryAgressor.sovereignty != Sovereignty.INDEPENDENT || war.primaryDefender.sovereignty != Sovereignty.INDEPENDENT)
+            {
+                EndWar(war);
+                continue;
+            }
             // Below is if state has authority to end wars
             double warEndChance = 0;
             switch (war.warType)
@@ -332,19 +338,6 @@ public class State : PopObject
                     {
                         if (war.primaryAgressor == this)
                         {
-                            bugged = !relations.ContainsKey(war.primaryDefender);
-                            if (bugged)
-                            {
-                                //GD.Print(displayName);
-                                //GD.Print(war.primaryDefender.displayName);
-                                //GD.Print(enemies.Contains(war.primaryDefender));
-                                //GD.Print(war.primaryDefender.wars.ContainsKey(war));
-                                war.primaryDefender.buggedTarget = true;
-                            }
-                            else
-                            {
-                                war.primaryDefender.buggedTarget = false;
-                            }
                             warEndChance = Mathf.Max(relations[war.primaryDefender].opinion, 0) * 0.01;
                             // Attacker
                             if (rng.NextDouble() < warEndChance || war.primaryDefender.capitualated)
@@ -362,19 +355,6 @@ public class State : PopObject
                         }
                         else
                         {
-                            bugged = !relations.ContainsKey(war.primaryAgressor);
-                            if (bugged)
-                            {
-                                //GD.Print(displayName);
-                                //GD.Print(war.primaryAgressor.displayName);
-                                //GD.Print(enemies.Contains(war.primaryAgressor));
-                                //GD.Print(war.primaryAgressor.wars.ContainsKey(war));
-                                war.primaryAgressor.buggedTarget = true;
-                            }
-                            else
-                            {
-                                war.primaryAgressor.buggedTarget = false;
-                            }
                             warEndChance = Mathf.Max(relations[war.primaryAgressor].opinion, 0) * 0.01;
                             // Defender
                             if (rng.NextDouble() < warEndChance || war.primaryAgressor.capitualated)
