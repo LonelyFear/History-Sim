@@ -20,20 +20,21 @@ public class Character
     public List<ulong?> childIds = new List<ulong?>();
     public int mood = 100;
     public int health = 100;
-    // Character Personality
-
-    public int greed;
-    // Makes characters strive for more wealth. Decreases loyalty
+    // Character Skills
     public int charisma;
     // Makes characters more likeable and sociable. Increases stability and raises morale at war.
     public int intellect;
-    // Makes characters more tactical. Increases stability, income, and military ability. Lets characters have some forethought.
+    // Makes characters more tactical. Increases stability, income, and military ability. Lets characters have some forethought.  
+
+    // Character Personality
+    public int greed;
+    // Makes characters strive for more wealth. Decreases loyalty
     public int ambition;
     // Makes characters more ambitious. Increases chance of war and makes characters strive for higher positions. Greedy characters will let others take the fall for their success
     public int empathy;
     // Makes characters empathetetic. Makes characters more likeable and benevolent. Raises morale but lowers combat ability at war.
     public int boldness;
-    // Makes characters more risky. Increases the chance of taking risky matchups in diplomacy or governance and risky strategies at war
+    // Makes characters braver. Increases the chance of taking risky matchups in diplomacy or governance and risky strategies at war (Increases effects of crits)
     public int temperment;
     // Makes characters more cool-headed. Decreases chance of negative diplomatic outcomes and is complementary with empathy. Raises morale at war
     public bool dead;
@@ -49,6 +50,7 @@ public class Character
     }
     public void LeaveState()
     {
+        if (stateId == null) return;
         State state = sim.statesIds[(ulong)stateId];
         if (state.leaderId == id)
         {

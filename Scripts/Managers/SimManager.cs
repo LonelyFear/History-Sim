@@ -632,6 +632,10 @@ public class SimManager
             }
 
             state.age += TimeManager.ticksPerMonth;
+            if (state.leaderId == null)
+            {
+                state.SuccessionUpdate();
+            }
             state.UpdateStability();
             if (state.sovereignty != Sovereignty.INDEPENDENT)
             {
@@ -858,7 +862,7 @@ public class SimManager
             mapManager.selectedMetaObj = null;
             mapManager.UpdateRegionColors(regions);
         }
-        
+
         foreach (War war in state.wars.Keys)
         {
             war.RemoveParticipant(state);
@@ -876,10 +880,33 @@ public class SimManager
             charactersIds[characterId].LeaveState();
         }
         states.Remove(state);
-        statesIds.Remove(state.id);        
+        statesIds.Remove(state.id);
     }
     #endregion
     #region Characters Creation
+    public Character GetCharacter(ulong? id)
+    {
+        if (id == null)
+        {
+            return null;
+        }
+        else
+        {
+            if (charactersIds.ContainsKey((ulong)id))
+            {
+                return charactersIds[(ulong)id];
+            }
+            return null;
+        }
+    }
+    public Character GetCharacter(ulong id)
+    {
+        if (charactersIds.ContainsKey(id))
+        {
+            return charactersIds[id];
+        }
+        return null;
+    }
     public Character CreateCharacter(string firstName, string lastName, uint age, State state, CharacterRole role)
     {
         Character character = new Character()
@@ -888,7 +915,14 @@ public class SimManager
             firstName = firstName,
             lastName = lastName,
             age = age,
-            birthTick = timeManager.ticks - age
+            birthTick = timeManager.ticks - age,
+            charisma = rng.Next(0, 101),
+            intellect = rng.Next(0, 101),
+            greed = rng.Next(0, 101),
+            ambition = rng.Next(0, 101),
+            empathy = rng.Next(0, 101),
+            boldness = rng.Next(0, 101),
+            temperment = rng.Next(0, 101),
         };
         character.JoinState(state.id);
         character.SetRole(role);

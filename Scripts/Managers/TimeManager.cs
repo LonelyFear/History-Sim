@@ -188,11 +188,17 @@ public partial class TimeManager : Node
         }
         return (uint)Mathf.PosMod(tick/(float)ticksPerMonth, 12) + 1;
     }
-    public uint GetYear(uint tick = 0){
-        if (tick == 0){
+    public uint GetYear(uint tick = 0)
+    {
+        if (tick == 0)
+        {
             tick = ticks;
         }
-        return tick/ticksPerYear;
+        return tick / ticksPerYear;
+    }
+    public static uint YearsToTicks(int years)
+    {
+        return (uint)(years * ticksPerYear);
     }
     public string GetStringDate(uint tick = 0){
         if (tick == 0){

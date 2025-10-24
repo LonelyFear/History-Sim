@@ -63,6 +63,7 @@ public class State : PopObject
     // Government
     public long wealth;
     public Pop rulingPop;
+    public ulong? lastLeaderId = null;
     public ulong? leaderId = null;
     public List<ulong?> characterIds = new List<ulong?>();
     public double stability = 1;
@@ -652,11 +653,32 @@ public class State : PopObject
 
     }
     #region Government & Leaders
-    public void LeadersUpdate()
+    public void SuccessionUpdate()
     {
-
+        Character lastLeader = simManager.GetCharacter(lastLeaderId);
+        Character leader = simManager.GetCharacter(leaderId);
+        Character newLeader = null;
+        switch (government)
+        {
+            case GovernmentType.REPUBLIC:
+                // Republic TODO
+                break;
+            case GovernmentType.MONARCHY:
+                // Monarchy
+                // TODO: Make it relate to families
+                // Right now just has a character with the same last name of the last guy
+                if (lastLeader != null && lastLeader.dead)
+                {
+                    newLeader = simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastLeader.lastName, TimeManager.YearsToTicks(rng.Next(10, 30)), this, CharacterRole.LEADER);
+                    SetLeader(newLeader.id);
+                }
+                break;
+            case GovernmentType.AUTOCRACY:
+                // Autocracy TODO
+                break;
+        }
     }
-    public void SetLeader(ulong characterId)
+    public void SetLeader(ulong? characterId)
     {
         if (leaderId != null)
         {
@@ -668,7 +690,8 @@ public class State : PopObject
     {
         if (leaderId != null)
         {
-            simManager.charactersIds[(ulong)leaderId].role = CharacterRole.FORMER_LEADER;
+            lastLeaderId = leaderId;
+            simManager.charactersIds[(ulong)lastLeaderId].role = CharacterRole.FORMER_LEADER;
         }
         leaderId = null;
     }
