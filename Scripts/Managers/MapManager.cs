@@ -150,12 +150,20 @@ public partial class MapManager : Area2D
             }
         }        
     }
-
-    public override void _UnhandledInput(InputEvent evnt)
+    public void SelectMetaObject(PopObject newObject)
     {
         PopObject smo = selectedMetaObj;
+        selectedMetaObj = newObject;
+        if (smo != selectedMetaObj)
+        {
+            UpdateRegionColors(simManager.regions);
+        }   
+    }
+    public override void _UnhandledInput(InputEvent evnt)
+    {
         if (evnt.IsAction("Select") && hoveredRegion != null)
         {
+            PopObject smo = selectedMetaObj;
             switch (mapMode)
             {
                 case MapModes.REALM:
@@ -206,7 +214,7 @@ public partial class MapManager : Area2D
             if (smo != selectedMetaObj)
             {
                 UpdateRegionColors(simManager.regions);
-            }
+            }   
         }
     }
 

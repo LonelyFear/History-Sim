@@ -5,7 +5,7 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class Character
 {
-    public static Curve deathChanceCurve = GD.Load<Curve>("res://Curves/Simulation/DeathChanceCurve.tres");
+    public Random rng = new Random();
     public static SimManager sim;
     public ulong id;
     public int significance;
@@ -19,14 +19,26 @@ public class Character
     public ulong? parentId = null;
     public List<ulong?> childIds = new List<ulong?>();
     public int mood = 100;
+    // Health
     public int health = 100;
+    float healthDecreaseChance = 0.075f;
+    const float hdChanceAnnualGrowth = 0.02f;
+    const int agingHealthDecrease = 3;
     // Character Skills
     public int charisma;
-    // Makes characters more likeable and sociable. Increases stability and raises morale at war.
+    // Makes characters better speakers. Increases positive outcomes in diplomacy, meetings, and provides bonuses at war.
     public int intellect;
-    // Makes characters more tactical. Increases stability, income, and military ability. Lets characters have some forethought.  
+    // Makes characters smarter. Boosts learning rate and increases chance to discover a new technology or write books.
+    public int military;
+    // Makes characters more strategic. Improves combat ability at war
+    public int stewardship;
+    // Makes characters better rulers. Increases tax income
+    public int combat;
+    // Makes characters better at fighting. Lowers chance of dying if leading from the front and increases chance of winning duels.
 
     // Character Personality
+    public int sociability;
+    // Makes characters more social. Increases chance of meeting and social interactions
     public int greed;
     // Makes characters strive for more wealth. Decreases loyalty
     public int ambition;
@@ -37,7 +49,10 @@ public class Character
     // Makes characters braver. Increases the chance of taking risky matchups in diplomacy or governance and risky strategies at war (Increases effects of crits)
     public int temperment;
     // Makes characters more cool-headed. Decreases chance of negative diplomatic outcomes and is complementary with empathy. Raises morale at war
+
+    // Character Modifiers
     public bool dead;
+    public const int dieHealthThreshold = 40;
     public void JoinState(ulong stateJoinId)
     {
         State state = sim.statesIds[stateJoinId];
@@ -98,11 +113,13 @@ public class Character
         SetRole(CharacterRole.DEAD);
         //sim.DeleteCharacter(this);
     }
-    public float GetDeathChance()
+    public void CharacterAging()
     {
-        float chance = 0.01f;
-        chance = deathChanceCurve.Sample(sim.timeManager.GetYear(age));
-        return chance;
+        healthDecreaseChance += hdChanceAnnualGrowth;
+        if (rng.NextSingle() < healthDecreaseChance)
+        {
+            health -= agingHealthDecrease;
+        }
     }
 }
 public enum CharacterRole

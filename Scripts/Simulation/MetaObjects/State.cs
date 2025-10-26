@@ -649,7 +649,7 @@ public class State : PopObject
                 // Right now just has a character with the same last name of the last guy
                 if (lastLeader != null && lastLeader.dead)
                 {
-                    newLeader = simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastLeader.lastName, TimeManager.YearsToTicks(rng.Next(10, 30)), this, CharacterRole.LEADER);
+                    newLeader = simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastLeader.lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
                     SetLeader(newLeader.id);
                 }
                 break;
@@ -898,34 +898,56 @@ public class State : PopObject
 
     public void AddVassal(State state, Sovereignty sovereignty = Sovereignty.PUPPET)
     {
+        // Removes vassals of state
         foreach (State vassal in state.vassals.ToArray())
         {
             state.RemoveVassal(vassal);
         }
+        // Remove state from its liege
         if (state.liege != null)
         {
             state.liege.RemoveVassal(state);
         }
+        // Makes state leave its wars
         foreach (War war in state.wars.Keys)
         {
             war.RemoveParticipant(state);
         }
+
+        // Adds state to our vassals
         state.liege = this;
         state.sovereignty = sovereignty;
         vassals.Add(state);
         state.timeAsVassal = 0;
+        // Resets loyalty
         state.loyalty = 1;
+
+        // Adds vassal to our wars
+        foreach (War war in wars.Keys)
+        {
+            war.AddParticipant(state, wars[war]);
+        }        
     }
 
     public void RemoveVassal(State state)
     {
-        if (vassals.Contains(state))
+        // Checks if we actually have the vassal
+        if (!vassals.Contains(state))
         {
-            state.liege = null;
-            state.sovereignty = Sovereignty.INDEPENDENT;
-            vassals.Remove(state);
-            state.timeAsVassal = 0;
-            state.loyalty = 1;
+            return;
+        }
+        
+        // Removes the states liege and makes it independent
+        state.liege = null;
+        state.sovereignty = Sovereignty.INDEPENDENT;
+        vassals.Remove(state);
+        state.timeAsVassal = 0;
+        state.loyalty = 1;
+
+        // Removes the state from its wars
+        foreach (War war in wars.Keys)
+        {
+            war.RemoveParticipant(state);
         }
     }
     #endregion
@@ -942,7 +964,7 @@ public class State : PopObject
     public long GetRealmManpower()
     {
         long mp = manpower;
-        foreach (State state in vassals)
+        foreach (State state in vassals.ToArray())
         {
             mp += state.manpower;
         }

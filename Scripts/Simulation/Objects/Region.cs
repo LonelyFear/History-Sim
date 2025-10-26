@@ -202,7 +202,7 @@ public class Region : PopObject
             owner.rulingPop = rulingPop;
             owner.tech = rulingPop.tech;
             // Sets Leader
-            simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(20, 50)), owner, CharacterRole.LEADER);
+            simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
 
             owner.UpdateDisplayName();            
         }

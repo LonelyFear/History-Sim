@@ -142,13 +142,17 @@ States Time: "
 horizontal_alignment = 2
 script = ExtResource("12_ewbju")
 
-[node name="InfoHolder" type="Control" parent="UI"]
+[node name="InfoHolder" type="Control" parent="UI" node_paths=PackedStringArray("nameLabel", "typeLabel", "populationLabel", "specialLabel")]
 layout_mode = 3
 anchors_preset = 0
 offset_top = 494.0
 offset_right = 264.0
 offset_bottom = 640.0
 script = ExtResource("15_ewbju")
+nameLabel = NodePath("ObjectInfo/ScrollContainer/VBoxContainer/Name")
+typeLabel = NodePath("ObjectInfo/ScrollContainer/VBoxContainer/Type")
+populationLabel = NodePath("ObjectInfo/ScrollContainer/VBoxContainer/Population")
+specialLabel = NodePath("ObjectInfo/ScrollContainer/VBoxContainer/Special")
 
 [node name="ObjectInfo" type="Panel" parent="UI/InfoHolder"]
 layout_mode = 1
@@ -204,13 +208,15 @@ Merchants:
 Aristocrats:
 Artisans:"
 
-[node name="Manpower" type="Label" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
+[node name="Special" type="RichTextLabel" parent="UI/InfoHolder/ObjectInfo/ScrollContainer/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-theme_override_constants/line_spacing = -4
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
 text = "Arable Land:
 Wealth:"
+fit_content = true
+scroll_active = false
 
 [node name="Action Panel" type="Panel" parent="UI" node_paths=PackedStringArray("menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit")]
 anchors_preset = 2
@@ -219,6 +225,7 @@ anchor_bottom = 1.0
 offset_top = -81.0
 offset_right = 1280.0
 grow_vertical = 0
+mouse_force_pass_scroll_events = false
 script = ExtResource("17_7nbq1")
 menuButton = NodePath("HBoxContainer/MenuButton")
 mainMenuButton = NodePath("../Options Panel/VBoxContainer/MainMenuButton")
@@ -328,7 +335,7 @@ theme_override_font_sizes/font_size = 40
 text = "Main
 Menu"
 
-[node name="Debug Label" type="Label" parent="UI"]
+[node name="Debug Label" type="Label" parent="UI" node_paths=PackedStringArray("map")]
 visible = false
 offset_left = 109.0
 offset_top = 66.0
@@ -341,6 +348,7 @@ theme_override_font_sizes/font_size = 13
 text = "Region Data:
 Population: 100"
 script = ExtResource("9_iivbl")
+map = NodePath("../../Map Manager")
 
 [node name="SaveNamePanel" type="Panel" parent="UI"]
 visible = false
@@ -355,6 +363,7 @@ offset_right = 216.5
 offset_bottom = 95.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_force_pass_scroll_events = false
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/SaveNamePanel"]
 layout_mode = 1
@@ -425,6 +434,7 @@ offset_right = 640.0
 offset_bottom = 279.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_force_pass_scroll_events = false
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/Options Panel"]
 layout_mode = 1

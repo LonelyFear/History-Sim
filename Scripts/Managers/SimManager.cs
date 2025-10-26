@@ -698,19 +698,28 @@ public class SimManager
         {
             foreach (Character character in characters.ToArray())
             {
-                character.age += TimeManager.ticksPerMonth;
-                if (!character.dead)
-                {
-                    // Character Aliveness
-                    bool canCheckDeath = timeManager.GetMonth(timeManager.ticks) == 2;
-
-                    if (canCheckDeath && rng.NextSingle() < character.GetDeathChance())
-                    {
-                        character.Die();
-                    }
-                } else
+                // Dead character stuff
+                if (character.dead)
                 {
                     DeleteCharacter(character);
+                    continue;
+                }
+
+                character.age += TimeManager.ticksPerMonth;
+                // Character Aliveness
+
+                // Character Aging
+                // Calculated yearly, decreases character health as they age
+                if (timeManager.GetMonth(character.birthTick) == timeManager.GetMonth())
+                {
+                    character.CharacterAging();
+                }
+                // Character Death
+                // Calculated monthly, characters have a chance to die every month if their health is below a certain threshold
+                float deathChance = Mathf.Lerp(0.01f, 0.25f, (float)character.health / Character.dieHealthThreshold);
+                if (character.health <= Character.dieHealthThreshold && rng.NextSingle() < deathChance)
+                {
+                    character.Die();
                 }
             }            
         } catch (Exception e)
