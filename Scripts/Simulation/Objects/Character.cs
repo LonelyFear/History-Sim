@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Godot;
 using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
-public class Character
+public class Character : NamedObject
 {
     public Random rng = new Random();
     public static SimManager sim;
@@ -51,6 +51,10 @@ public class Character
     // Makes characters more cool-headed. Decreases chance of negative diplomatic outcomes and is complementary with empathy. Raises morale at war
 
     // Character Modifiers
+
+    // Education
+    const int educationMinAge = 5;
+    const int educationMaxAge = 18;
     public bool dead;
     public const int dieHealthThreshold = 40;
     public void JoinState(ulong stateJoinId)

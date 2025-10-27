@@ -4,23 +4,24 @@ using System.Linq;
 
 public partial class ObjectInfo : Control
 {
-    Panel panel;
+    [Export] Panel panel;
     [Export] Label nameLabel;
     [Export] Label typeLabel;
     [Export] Label populationLabel;
     [Export] RichTextLabel specialLabel;
+    [Export] Button encyclopediaButton;
     MapManager mapManager;
     SimManager simManager;
     TimeManager timeManager;
+    NamedObject selectedObject;
 
     public override void _Ready()
     {
         GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += GetSimManager;
         mapManager = GetNode<MapManager>("/root/Game/Map Manager"); 
         timeManager = GetNode<TimeManager>("/root/Game/Time Manager");
-        panel = GetNode<Panel>("ObjectInfo");
-        specialLabel = GetNode<RichTextLabel>("ObjectInfo/ScrollContainer/VBoxContainer/Special");
         specialLabel.MetaClicked += OnMetaClicked;
+        encyclopediaButton.Pressed += OnEncyclopediaClicked;
     }
     public void GetSimManager()
     {
@@ -33,14 +34,14 @@ public partial class ObjectInfo : Control
         if (!mapManager.initialized || mapManager == null || mapManager.selectedMetaObj == null) {
             panel.Visible = false;
         } else {
-            PopObject metaObject = mapManager.selectedMetaObj;
+            selectedObject = mapManager.selectedMetaObj;
 
             panel.Visible = true;
-            typeLabel.Text = metaObject.GetType().ToString();
-            populationLabel.Text = "Population: " + Pop.FromNativePopulation(metaObject.population).ToString("#,###0");
-            switch (metaObject.GetObjectType()) {
-                case PopObject.ObjectType.STATE:
-                    State state = (State)metaObject;
+            typeLabel.Text = selectedObject.GetType().ToString();
+            switch (selectedObject.GetObjectType()) {
+                case ObjectType.STATE:
+                    populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
+                    State state = (State)selectedObject;
 
                     nameLabel.Text = state.displayName;
                     switch (state.sovereignty)
@@ -90,8 +91,8 @@ public partial class ObjectInfo : Control
                             yearAge = timeManager.GetYear(war.age);
                             monthAge = timeManager.GetMonth(war.age);
                             specialLabel.Text += "\n" + $"{war.warName}";
-                            specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.primaryAgressor.id}]{war.primaryAgressor.name}[/url][/color]";
-                            specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.primaryDefender.id}]{war.primaryDefender.name}[/url][/color]";
+                            specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.primaryAgressorId}]{simManager.GetState(war.primaryAgressorId).name}[/url][/color]";
+                            specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.primaryDefenderId}]{simManager.GetState(war.primaryDefenderId).name}[/url][/color]";
                             specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
                         }
                     }
@@ -100,8 +101,9 @@ public partial class ObjectInfo : Control
                         specialLabel.Text += "\n" + "At Peace";
                     }
                     break;
-                case PopObject.ObjectType.REGION:
-                    Region region = (Region)metaObject;
+                case ObjectType.REGION:
+                    populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
+                    Region region = (Region)selectedObject;
                     populationLabel.Text += "\nRequired Farmers: " + Pop.FromNativePopulation(region.maxFarmers - region.professions[SocialClass.FARMER]);
                     populationLabel.Text += "\n" + "Wealth: " + region.wealth.ToString("#,###0");
                     populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0");
@@ -115,8 +117,9 @@ public partial class ObjectInfo : Control
                     specialLabel.Text += "Elevation: " + region.avgElevation.ToString("#,###0 meters");
                     */
                     break;
-                case PopObject.ObjectType.CULTURE:
-                    Culture culture = (Culture)metaObject;
+                case ObjectType.CULTURE:
+                    populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
+                    Culture culture = (Culture)selectedObject;
                     nameLabel.Text = culture.name;
                     specialLabel.Text = "Pops: " + culture.pops.Count.ToString("#,###0");
                     break;
@@ -124,7 +127,8 @@ public partial class ObjectInfo : Control
         }
     }
 
-    public void OnMetaClicked(Variant meta){
+    public void OnMetaClicked(Variant meta)
+    {
         string metaData = meta.ToString();
         switch (metaData[0])
         {
@@ -134,5 +138,10 @@ public partial class ObjectInfo : Control
                 mapManager.SelectMetaObject(simManager.statesIds[id]);
                 break;
         }
+    }
+    
+    public void OnEncyclopediaClicked()
+    {
+        
     }
 }

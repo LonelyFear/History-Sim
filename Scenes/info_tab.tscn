@@ -1,0 +1,94 @@
+[gd_scene load_steps=4 format=3 uid="uid://8kvblrpf5g8"]
+
+[ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/InfoTab.cs" id="1_5rqtu"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="2_0jkeo"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+color = Color(0.5, 0.5, 0.5, 1)
+thickness = 4
+
+[node name="InfoTab" type="VBoxContainer" node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
+theme_override_constants/separation = 4
+script = ExtResource("1_5rqtu")
+objName = NodePath("ObjName")
+objType = NodePath("ObjType")
+objDesc = NodePath("Description")
+objStats = NodePath("Stats")
+objHist = NodePath("History")
+metadata/_tab_index = 1
+
+[node name="ObjName" type="Label" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 70
+text = "Object Name"
+
+[node name="ObjType" type="Label" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "Object Type"
+
+[node name="HSeparator" type="HSeparator" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="DescTitle" type="Label" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "Description:"
+
+[node name="Description" type="RichTextLabel" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Description Goes here"
+fit_content = true
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="StatsTitle" type="Label" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "Stats:"
+
+[node name="Stats" type="RichTextLabel" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Statistics Goes Here"
+fit_content = true
+autowrap_mode = 2
+
+[node name="HSeparator3" type="HSeparator" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="HistoryTitle" type="Label" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "History:"
+
+[node name="History" type="RichTextLabel" parent="."]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "History Goes Here"
+fit_content = true
+autowrap_mode = 2

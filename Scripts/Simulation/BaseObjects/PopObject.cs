@@ -5,10 +5,9 @@ using Godot;
 using MessagePack;
 
 [MessagePackObject(keyAsPropertyName: true)]
-public class PopObject
+public class PopObject : NamedObject
 {
     public ulong id;
-    public string name { get; set; }
     public uint tickFounded { get; set; }
     public uint age { get; set; }
     public long population { get; set; } = 0;
@@ -201,14 +200,5 @@ public class PopObject
         {
             state.manpower -= amount - lossesTaken;
         }
-    }
-
-
-    public enum ObjectType
-    {
-        STATE,
-        REGION,
-        CULTURE,
-        IDK
     }
 }

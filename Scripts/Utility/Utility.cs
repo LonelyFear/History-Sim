@@ -44,21 +44,25 @@ public static class Utility
         int length = array.Count();
         return array[r.Next(0, length)];
     }
-    public static PopObject.ObjectType GetObjectType(this PopObject popObject)
+    public static ObjectType GetObjectType(this NamedObject popObject)
     {
         if (popObject.GetType() == typeof(Culture))
         {
-            return PopObject.ObjectType.CULTURE;
+            return ObjectType.CULTURE;
         }
         else if (popObject.GetType() == typeof(Region))
         {
-            return PopObject.ObjectType.REGION;
+            return ObjectType.REGION;
         }
         else if (popObject.GetType() == typeof(State))
         {
-            return PopObject.ObjectType.STATE;
+            return ObjectType.STATE;
         }
-        return PopObject.ObjectType.IDK;
+        else if (popObject.GetType() == typeof(Character))
+        {
+            return ObjectType.CHARACTER;
+        }
+        return ObjectType.UNKNOWN;
     }
 
     public static bool IsSaveValid(string path)

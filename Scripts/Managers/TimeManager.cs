@@ -39,6 +39,7 @@ public partial class TimeManager : Node
     [Export] public GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
     OptionButton gameSpeedUI;
     public WorldGenerator worldGenerator = LoadingScreen.generator;
+    public bool forcePauce = false;
     public override void _Ready()
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");

@@ -1,17 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Godot;
 using MessagePack;
-using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using FileAccess = Godot.FileAccess;
 
@@ -83,8 +75,9 @@ public class SimManager
     Random rng = new Random();
 
     // Events
-    public delegate void SimulationInitializedEventHandler();
-
+    //public delegate void SimulationInitializedEventHandler();
+    public delegate void ObjectDeletedEvent(ulong id);
+    public ObjectDeletedEvent objectDeleted;
     // Debug info
     public ulong totalStepTime;
     public ulong totalPopsTime;
@@ -571,7 +564,7 @@ public class SimManager
             {
                 if (region.owner != null)
                 {
-                    if (region.occupier != null && !region.owner.enemies.Contains(region.occupier))
+                    if (region.occupier != null && !region.owner.enemyIds.Contains(region.occupier.id))
                     {
                         region.occupier = null;
                     }
@@ -632,35 +625,41 @@ public class SimManager
             }
 
             state.age += TimeManager.ticksPerMonth;
-            if (state.leaderId == null)
+            try
             {
-                state.SuccessionUpdate();
-            }
-            state.UpdateStability();
-            if (state.sovereignty != Sovereignty.INDEPENDENT)
-            {
-                state.timeAsVassal += TimeManager.ticksPerMonth;
-                state.UpdateLoyalty();
-            }
-
-
-            state.UpdateCapital();
-
-            
-            state.RelationsUpdate();
-            state.UpdateDiplomacy();
-            state.EndWars();
-            state.StartWars();
-            state.UpdateEnemies();
-
-            if (state.rulingPop == null)
-            {
-                // State Collapse or Smth
-                if (rng.NextSingle() < 0.5f)
+                if (state.leaderId == null)
                 {
-                    Region r = state.regions[rng.Next(0, state.regions.Count)];
-                    state.RemoveRegion(r);
+                    state.SuccessionUpdate();
                 }
+                state.UpdateStability();
+                if (state.sovereignty != Sovereignty.INDEPENDENT)
+                {
+                    state.timeAsVassal += TimeManager.ticksPerMonth;
+                    state.UpdateLoyalty();
+                }
+
+
+                state.UpdateCapital();
+
+                
+                state.RelationsUpdate();
+                state.UpdateDiplomacy();
+                state.EndWars();
+                state.StartWars();
+                state.UpdateEnemies();
+
+                if (state.rulingPop == null)
+                {
+                    // State Collapse or Smth
+                    if (rng.NextSingle() < 0.5f)
+                    {
+                        Region r = state.regions[rng.Next(0, state.regions.Count)];
+                        state.RemoveRegion(r);
+                    }
+                }                
+            } catch (Exception e)
+            {
+                GD.PushError(e);
             }
         }
         var partitioner = Partitioner.Create(states);
@@ -838,7 +837,7 @@ public class SimManager
         };
 
         cultures.Add(culture);
-
+        culturesIds.Add(culture.id, culture);
         return culture;
     }
     #endregion
@@ -863,7 +862,6 @@ public class SimManager
             statesIds.Add(state.id, state);
         }
     }
-
     public void DeleteState(State state)
     {
         if (mapManager.selectedMetaObj == state)
@@ -874,7 +872,7 @@ public class SimManager
 
         foreach (War war in state.wars.Keys)
         {
-            war.RemoveParticipant(state);
+            war.RemoveParticipant(state.id);
         }
         foreach (State vassal in state.vassals)
         {
@@ -888,8 +886,18 @@ public class SimManager
         {
             charactersIds[characterId].LeaveState();
         }
+        objectDeleted.Invoke(state.id);
         states.Remove(state);
         statesIds.Remove(state.id);
+    }
+    public State GetState(ulong? id)
+    {
+        try {
+            return statesIds[(ulong)id];
+        } catch {
+            //GD.PushWarning(e);
+            return null;
+        }
     }
     #endregion
     #region Characters Creation
@@ -920,11 +928,17 @@ public class SimManager
     {
         Character character = new Character()
         {
+            // Gives character id
             id = getID(),
+
+            // Names character
             firstName = firstName,
             lastName = lastName,
+
             age = age,
             birthTick = timeManager.ticks - age,
+
+            // Randomizes Character Personality
             charisma = rng.Next(0, 101),
             intellect = rng.Next(0, 101),
             greed = rng.Next(0, 101),
@@ -932,9 +946,13 @@ public class SimManager
             empathy = rng.Next(0, 101),
             boldness = rng.Next(0, 101),
             temperment = rng.Next(0, 101),
+            sociability = rng.Next(0, 101),
         };
+        // Adds character to state and gives it role
         character.JoinState(state.id);
         character.SetRole(role);
+
+        // Documents character
         characters.Add(character);
         charactersIds.Add(character.id, character);
         return character;
@@ -952,7 +970,8 @@ public class SimManager
         {
             Character parent = charactersIds[(ulong)character.parentId];
             parent.childIds.Remove(character.id);
-        }           
+        }
+        objectDeleted.Invoke(character.id);
         characters.Remove(character);
         charactersIds.Remove(character.id);             
     }

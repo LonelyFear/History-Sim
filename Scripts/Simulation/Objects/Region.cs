@@ -152,7 +152,7 @@ public class Region : PopObject
 
     public void UpdateOccupation()
     {
-        if (owner == null || (occupier != null && !owner.GetHighestLiege().enemies.Contains(occupier)))
+        if (owner == null || (occupier != null && !owner.GetHighestLiege().enemyIds.Contains(occupier.id)))
         {
             occupier = null;
         }
@@ -285,7 +285,7 @@ public class Region : PopObject
     {
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
 
-        if (region != null && GetController() != null && region.GetController() != null && GetController().enemies.Contains(region.GetController()))
+        if (region != null && GetController() != null && region.GetController() != null && GetController().enemyIds.Contains(region.GetController().id))
         {
             Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(), region.GetController().GetArmyPower());
 

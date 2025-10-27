@@ -6,7 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
-public partial class MapManager : Area2D
+public partial class MapManager : Node2D
 {
     Task mapmodeTask = null;
     SimManager simManager;
@@ -254,13 +254,13 @@ public partial class MapManager : Area2D
                 {
                     switch (selectedMetaObj.GetObjectType())
                     {
-                        case PopObject.ObjectType.REGION:
+                        case ObjectType.REGION:
                             if (region != selectedMetaObj)
                             {
                                 color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.4f);
                             }
                             break;
-                        case PopObject.ObjectType.STATE:
+                        case ObjectType.STATE:
                             Color cBefore = color;
                             // Darkens Unrelated Regions
                             if (region.owner == null || region.owner.GetHighestLiege() != ((State)selectedMetaObj).GetHighestLiege())
@@ -293,13 +293,13 @@ public partial class MapManager : Area2D
                 {
                     switch (selectedMetaObj.GetObjectType())
                     {
-                        case PopObject.ObjectType.REGION:
+                        case ObjectType.REGION:
                             if (region != selectedMetaObj)
                             {
                                 color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.4f);
                             }
                             break;
-                        case PopObject.ObjectType.STATE:
+                        case ObjectType.STATE:
                             Color cBefore = color;
                             // Darkens unrelated states
                             if (region.owner != selectedMetaObj)
@@ -342,7 +342,7 @@ public partial class MapManager : Area2D
                     color = new Color(0, 0, 0, 1);
                 }
 
-                if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == PopObject.ObjectType.CULTURE)
+                if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == ObjectType.CULTURE)
                 {
                     Culture culture = (Culture)selectedMetaObj;
                     if (region.cultures.ContainsKey(culture) && region.largestCulture != culture)
