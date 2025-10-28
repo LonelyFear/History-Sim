@@ -89,9 +89,10 @@ public class Region : PopObject
         tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
     }
     #endregion
+    #region Init
     public void CalcAverages()
     {
-        name = NameGenerator.GenerateCharacterName();
+        name = NameGenerator.GenerateRegionName();
         landCount = 0;
         for (int x = 0; x < simManager.tilesPerRegion; x++)
         {
@@ -144,6 +145,7 @@ public class Region : PopObject
             maxSoldiers = (long)(workforce * owner.mobilizationRate);
         }
     }
+    #endregion
     #region Nations
     /// <summary>
     /// Function to be used with professions
@@ -632,22 +634,34 @@ public class Region : PopObject
         string desc = $"This region located at {pos.X}, {pos.Y}. The region ";
         desc += (Pop.FromNativePopulation(population) > 0) ?
         // If the region is populated
-        $"has a population of {Pop.FromNativePopulation(population):#,###0} "
+        $"has a population of {Pop.FromNativePopulation(population):#,###0}. "
         // Otherwise
-        : "is uninhabited, ";
-        // Region controller
-        desc += "and it is under the control of ";
+        : "is uninhabited. ";
         // The rest is irrelevant if the region is unpopulated
         if (Pop.FromNativePopulation(population) == 0)
         {
             return desc;
         }
+        // Region controller
+        desc += "It is under the control of ";
         // Pretty straightforward
-        desc += (GetController() == null) ? "no established factions." : $"{GetController().displayName}. ";
-        // If it is the capital add to description
-        if (GetController() != null && GetController().capital == this)
+        if (GetController() == null)
         {
-            desc += $"It is the capital of {GetController().displayName}";
+            desc += "no established factions.";
+        } else
+        {
+            if (GetController() != owner)
+            {
+                desc += $"[url=s{GetController().id}]{GetController().displayName}[/url] as occupied territory.";
+            } else
+            {
+                desc += $"[url=s{owner.id}]{owner.displayName}[/url].";
+            }
+        }
+        // If it is the capital add to description
+        if (owner != null && owner.capital == this)
+        {
+            desc += $"It is the capital of [url=s{owner.id}]{owner.displayName}[/url]";
         }
         return desc;        
     }

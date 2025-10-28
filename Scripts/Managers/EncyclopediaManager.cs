@@ -1,21 +1,26 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class EncyclopediaManager : CanvasLayer
 {
 	[Export] PackedScene infoTabScene;
 	[Export] TimeManager timeManager;
-	[Export] TabContainer encyclopediaMenu;
+	[Export] TabManager encyclopediaMenu;
+	[Export] Control encyclopediaHolder;
 	[Export] GameUI gameUi;
 	[Export] PlayerCamera playerCamera;
+	[Export] Button closeEncyclopediaButton;
 	public SimManager simManager;
 	Dictionary<ulong, InfoTab> infoTabs = new Dictionary<ulong, InfoTab>();
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
-    {
-        GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+	{
+		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+		encyclopediaMenu.TabClosePressed += CloseTab;
+		closeEncyclopediaButton.Pressed += CloseEncyclopedia;
     }
 	public void OnSimStart()
 	{
@@ -24,24 +29,25 @@ public partial class EncyclopediaManager : CanvasLayer
 	}
 	public void OpenEncyclopedia()
 	{
-		encyclopediaMenu.Visible = true;
+		encyclopediaHolder.Visible = true;
 		playerCamera.controlEnabled = false;
 		gameUi.forceHide = true;
 		timeManager.forcePause = true;
 	}
 	public void CloseEncyclopedia()
     {
-		encyclopediaMenu.Visible = false;
+		encyclopediaHolder.Visible = false;
 		playerCamera.controlEnabled = true;
 		gameUi.forceHide = false;
 		timeManager.forcePause = false;
     }
 	public void OpenTab(ObjectType objectType, ulong id)
 	{
+		int indexOffset = 2;
 		// If we already have a tab open for this object switch to it
 		if (infoTabs.ContainsKey(id))
 		{
-			encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex();
+			encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;
 			return;
 		}
 		InfoTab newTab = infoTabScene.Instantiate<InfoTab>();
@@ -68,18 +74,26 @@ public partial class EncyclopediaManager : CanvasLayer
 		newTab.objectId = id;
 		newTab.objectType = objectType;
 		newTab.InitTab();
-		encyclopediaMenu.AddChild(newTab);
+		encyclopediaMenu.OpenTab(newTab);
 		infoTabs.Add(id, newTab);
-		encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex();
+		encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;
 	}
-	public void CloseTab(ulong id)
-    {
+	public void CloseTab(long index)
+	{
+		if (index == 0)
+		{
+			return;
+		}
+
+		ulong id = infoTabs.Keys.ToArray()[index - 1];
+
 		if (!infoTabs.ContainsKey(id))
 		{
 			return;
 		}
-		InfoTab tab = infoTabs[id];
-		tab.QueueFree();
+		InfoTab infoTab = infoTabs[id];
+		encyclopediaMenu.CurrentTab = 0;
+		encyclopediaMenu.CloseTab(infoTab);
     }
 	public void OnObjectDeleted(ulong id)
 	{

@@ -124,6 +124,40 @@ public class Character : NamedObject
             health -= agingHealthDecrease;
         }
     }
+    public TraitLevel IntToTraitLevel(int trait)
+    {
+        TraitLevel level;
+
+        if (trait > 90)
+        {
+            level = TraitLevel.EXTREMELY_HIGH;
+        }
+        else if (trait > 75)
+        {
+            level = TraitLevel.VERY_HIGH;
+        }
+        else if (trait > 60)
+        {
+            level = TraitLevel.HIGH;
+        }
+        else if (trait > 39)
+        {
+            level = TraitLevel.MEDIUM;
+        }
+        else if (trait > 24)
+        {
+            level = TraitLevel.LOW;
+        }
+        else if (trait > 9)
+        {
+            level = TraitLevel.VERY_LOW;
+        }
+        else
+        {
+            level = TraitLevel.EXTREMELY_LOW;
+        }
+        return level;
+    } 
 }
 public enum CharacterRole
 {
@@ -137,4 +171,13 @@ public enum CharacterRole
     DEAD,
 }
 
-
+public enum TraitLevel
+{
+    EXTREMELY_HIGH,
+    VERY_HIGH,
+    HIGH,
+    MEDIUM,
+    LOW,
+    VERY_LOW,
+    EXTREMELY_LOW
+}

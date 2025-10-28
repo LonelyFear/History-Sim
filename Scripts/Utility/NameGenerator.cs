@@ -3,11 +3,13 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using FileAccess = Godot.FileAccess;
 
-public class NameGenerator
+public static class NameGenerator
 {
     public static string vowels = "aeiou";
+    static Random rng = new Random();
     public static string GenerateNationName(){
         Random rng = new Random();
 
@@ -62,7 +64,31 @@ public class NameGenerator
         }
         return demonym.Capitalize();
     }
+    public static string GenerateRegionName()
+    {
+        Random rng = new Random();
 
+        //string[] syllables = File.ReadAllLines("Data/Names/NameSyllables.txt");
+        string[] patterns = ["CV", "CVC", "VC"];
+        string[] suffixes = ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or"];
+        string consonants = "bcdfghjklmnpqrstvwxyz";
+
+        string name = "";
+        for (int i = 0; i < rng.Next(2, 4); i++)
+        {
+            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
+        }
+        name += suffixes[rng.Next(0, suffixes.Length - 1)];
+
+        for (int c = 0; c < name.Length; c++)
+        {
+            if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
+            name = name.Remove(c, 1);
+        }
+        name = name.Capitalize();
+
+        return name;        
+    }
     public static string GenerateCharacterName(bool feminine = false)
     {
         Random rng = new Random();
@@ -75,28 +101,10 @@ public class NameGenerator
         {
             consonants = "bdfghjklmnprstvwyz";
         }
-        string GenerateSyllable(string pattern)
-        {
-            string syllable = "";
-            foreach (char c in pattern)
-            {
-                switch (c)
-                {
-                    case 'C':
-                        syllable += consonants.ToCharArray()[rng.Next(0, consonants.Length - 1)];
-                        break;
-                    case 'V':
-                        syllable += vowels.ToCharArray()[rng.Next(0, vowels.Length - 1)];
-                        break;
-                }
-            }
-            return syllable;
-        }
-
         string name = "";
         for (int i = 0; i < rng.Next(2, 3); i++)
         {
-            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)]);
+            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
         }
         if (feminine)
         {
@@ -105,5 +113,22 @@ public class NameGenerator
         name = name.Capitalize();
 
         return name;
+    }
+    static string GenerateSyllable(string pattern, string consonants = "bcdfghjklmnpqrstvwxyz")
+    {
+        string syllable = "";
+        foreach (char c in pattern)
+        {
+            switch (c)
+            {
+                case 'C':
+                    syllable += consonants.ToCharArray()[rng.Next(0, consonants.Length - 1)];
+                    break;
+                case 'V':
+                    syllable += vowels.ToCharArray()[rng.Next(0, vowels.Length - 1)];
+                    break;
+            }
+        }
+        return syllable;
     }
 }

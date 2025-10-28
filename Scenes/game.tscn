@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=25 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/info_tab.tscn" id="9_7nbq1"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
+[ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="10_exi56"]
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/GameUI.cs" id="11_7nbq1"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/PopulationLabel.cs" id="11_nnt18"]
@@ -77,13 +78,70 @@ switchMap = true
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "gameUi", "playerCamera")]
+[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton")]
 script = ExtResource("8_iivbl")
 infoTabScene = ExtResource("9_7nbq1")
 timeManager = NodePath("../Time Manager")
-encyclopediaMenu = NodePath("EncyclopediaMenu")
+encyclopediaMenu = NodePath("Encyclopedia/TabManager")
+encyclopediaHolder = NodePath("Encyclopedia")
 gameUi = NodePath("../UI")
 playerCamera = NodePath("../PlayerCamera")
+closeEncyclopediaButton = NodePath("Encyclopedia/TabManager/Main Menu/ExitEncyclopediaButton")
+
+[node name="Encyclopedia" type="Control" parent="Encyclopedia"]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TabManager" parent="Encyclopedia/Encyclopedia" instance=ExtResource("10_exi56")]
+layout_mode = 0
+
+[node name="Main Menu" type="VBoxContainer" parent="Encyclopedia/Encyclopedia/TabManager"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 32.0
+offset_right = -10.0
+offset_bottom = 684.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 100
+text = "Encyclopedia"
+
+[node name="HSeparator" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="EncyclopediaDesc" type="RichTextLabel" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/normal_font_size = 30
+text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it"
+fit_content = true
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="ExitEncyclopediaButton" type="Button" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+text = "Exit Encyclopedia"
 
 [node name="EncyclopediaMenu" type="TabContainer" parent="Encyclopedia"]
 visible = false
@@ -92,38 +150,10 @@ offset_bottom = 720.0
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 theme_override_styles/panel = ExtResource("8_85qyi")
-current_tab = 0
-
-[node name="Main Menu" type="VBoxContainer" parent="Encyclopedia/EncyclopediaMenu"]
-layout_mode = 2
-theme_override_constants/separation = 4
-metadata/_tab_index = 0
-
-[node name="Label" type="Label" parent="Encyclopedia/EncyclopediaMenu/Main Menu"]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 100
-text = "Encyclopedia"
-
-[node name="HSeparator" type="HSeparator" parent="Encyclopedia/EncyclopediaMenu/Main Menu"]
-layout_mode = 2
-theme_override_constants/separation = 16
-theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
-
-[node name="EncyclopediaDesc" type="RichTextLabel" parent="Encyclopedia/EncyclopediaMenu/Main Menu"]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/normal_font_size = 30
-text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it"
-fit_content = true
-autowrap_mode = 2
-
-[node name="HSeparator2" type="HSeparator" parent="Encyclopedia/EncyclopediaMenu/Main Menu"]
-layout_mode = 2
-theme_override_constants/separation = 16
-theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+tab_focus_mode = 0
 
 [node name="UI" type="CanvasLayer" parent="."]
+visible = false
 script = ExtResource("11_7nbq1")
 
 [node name="WorldStats" type="VBoxContainer" parent="UI"]

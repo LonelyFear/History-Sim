@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3 uid="uid://bslwmll3j6xsk"]
+
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="1_5s1ie"]
+[ext_resource type="Script" uid="uid://d3qjfmyuhe32e" path="res://Scripts/UI/TabManager.cs" id="1_egybu"]
+[ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="2_5s1ie"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mg4q0"]
+bg_color = Color(0.29803923, 0.29803923, 0.29803923, 1)
+
+[node name="TabManager" type="TabBar"]
+offset_right = 1280.0
+offset_bottom = 32.0
+focus_mode = 0
+theme = ExtResource("1_5s1ie")
+theme_override_font_sizes/font_size = 30
+current_tab = 0
+tab_close_display_policy = 2
+tab_count = 1
+tab_0/title = "Main Menu"
+script = ExtResource("1_egybu")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+offset_top = 32.0
+offset_right = 1280.0
+offset_bottom = 720.0
+theme_override_styles/panel = ExtResource("2_5s1ie")
+
+[node name="TabBarBackground" type="Panel" parent="."]
+z_index = -1
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 32.0
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_mg4q0")

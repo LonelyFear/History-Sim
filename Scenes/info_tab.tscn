@@ -12,6 +12,10 @@ color = Color(0.5, 0.5, 0.5, 1)
 thickness = 4
 
 [node name="InfoTab" type="VBoxContainer" node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
+offset_left = 10.0
+offset_top = 32.0
+offset_right = 1270.0
+offset_bottom = 716.0
 theme_override_constants/separation = 4
 script = ExtResource("1_5rqtu")
 objName = NodePath("ObjName")
@@ -69,7 +73,7 @@ layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
-text = "Statistics Goes Here"
+text = "Statistics Go Here"
 fit_content = true
 autowrap_mode = 2
 
@@ -92,3 +96,6 @@ bbcode_enabled = true
 text = "History Goes Here"
 fit_content = true
 autowrap_mode = 2
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 2
