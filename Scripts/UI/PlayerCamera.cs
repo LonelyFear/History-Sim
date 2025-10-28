@@ -3,8 +3,8 @@ using System;
 
 public partial class PlayerCamera : Camera2D
 {
+    [Export] public bool controlEnabled = false;
     [Export] float cameraSpeed = 500f;
-    [Export] bool controlEnabled = false;
     [Export] float zoomSpeed = 10;
     Vector2 zoomTarget;
     [Export] float maxZoom = 1;

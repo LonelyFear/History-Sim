@@ -82,16 +82,16 @@ public class Region : PopObject
     {
         LoadPopObjectFromSave();
         tradeZone = tradeZoneID == 0 ? null : simManager.tradeZonesIds[tradeZoneID];
-        habitableBorderingRegions = habitableBorderingRegionsIDs.Select(r => simManager.regionsIds[r]).ToArray();
-        borderingRegions = borderingRegionsIDs.Select(r => simManager.regionsIds[r]).ToArray();
+        habitableBorderingRegions = habitableBorderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
+        borderingRegions = borderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
         owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
         occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
-        tradeLink = tradeLinkID == 0 ? null : simManager.regionsIds[tradeLinkID];
+        tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
     }
     #endregion
     public void CalcAverages()
     {
-        name = "Region";
+        name = NameGenerator.GenerateCharacterName();
         landCount = 0;
         for (int x = 0; x < simManager.tilesPerRegion; x++)
         {
@@ -555,6 +555,7 @@ public class Region : PopObject
     }
 
     #endregion
+    #region Utility
     public static List<Region> GetPathToRegion(Region start, Region goal, int maxDist)
     {
         List<Region> path = null;
@@ -623,4 +624,32 @@ public class Region : PopObject
         border = borderingRegions[rng.Next(0, habitableBorderingRegions.Length)];
         return border;
     }
-}
+    #endregion
+    #region Named Object
+    public override string GenerateDescription()
+    {
+        // Region position
+        string desc = $"This region located at {pos.X}, {pos.Y}. The region ";
+        desc += (Pop.FromNativePopulation(population) > 0) ?
+        // If the region is populated
+        $"has a population of {Pop.FromNativePopulation(population):#,###0} "
+        // Otherwise
+        : "is uninhabited, ";
+        // Region controller
+        desc += "and it is under the control of ";
+        // The rest is irrelevant if the region is unpopulated
+        if (Pop.FromNativePopulation(population) == 0)
+        {
+            return desc;
+        }
+        // Pretty straightforward
+        desc += (GetController() == null) ? "no established factions." : $"{GetController().displayName}. ";
+        // If it is the capital add to description
+        if (GetController() != null && GetController().capital == this)
+        {
+            desc += $"It is the capital of {GetController().displayName}";
+        }
+        return desc;        
+    }
+    #endregion
+}   

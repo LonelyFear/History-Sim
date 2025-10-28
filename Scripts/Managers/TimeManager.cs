@@ -39,7 +39,7 @@ public partial class TimeManager : Node
     [Export] public GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
     OptionButton gameSpeedUI;
     public WorldGenerator worldGenerator = LoadingScreen.generator;
-    public bool forcePauce = false;
+    public bool forcePause = false;
     public override void _Ready()
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
@@ -59,6 +59,10 @@ public partial class TimeManager : Node
     public override void _Process(double delta)
     {
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
+        if (forcePause)
+        {
+            return;
+        }
         GetWaitTime();
         currentTime += delta;
         if (currentTime >= waitTime)

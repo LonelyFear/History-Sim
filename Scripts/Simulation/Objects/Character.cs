@@ -7,7 +7,6 @@ public class Character : NamedObject
 {
     public Random rng = new Random();
     public static SimManager sim;
-    public ulong id;
     public int significance;
     public string firstName;
     public string lastName;

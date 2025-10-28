@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scripts/UI/LoadingScreen.cs" id="1_1opfs"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="2_1opfs"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="3_iom8t"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="3_iom8t"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_1opfs"]
 [ext_resource type="Texture2D" uid="uid://bxcobj3k4w7ug" path="res://Sprites/Under.png" id="4_nw6gx"]
 [ext_resource type="Texture2D" uid="uid://gcfy0su0hgup" path="res://Sprites/Over.png" id="5_x8yqx"]

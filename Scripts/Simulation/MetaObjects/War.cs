@@ -5,9 +5,8 @@ using Godot;
 using MessagePack;
 using MessagePack.Formatters;
 [MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
-public class War
+public class War : NamedObject
 {
-    public string warName { get; set; } = "War";
     public List<ulong> attackerIds { get; set; } = new List<ulong>();
     public List<ulong> defenderIds { get; set; } = new List<ulong>();
     public List<ulong> participantIds = new List<ulong>();
@@ -19,22 +18,6 @@ public class War
     public uint tickStarted;
     public uint age;
     public uint tickEnded;
-    public ulong id;
-    public void PrepareForSave()
-    {
-        //defendersIds = defenders.Select(s => s.id).ToList();
-        //attackerIds = attackers.Select(s => s.id).ToList();
-        //primaryAgressorId = primaryAgressor.id;
-        //primaryDefenderID = primaryDefender.id;
-    }
-    public void LoadFromSave()
-    {
-        //defenders = defendersIds.Select(d => simManager.statesIds[d]).ToList();
-        //attackers = attackerIds.Select(a => simManager.statesIds[a]).ToList();
-        //primaryAgressor = simManager.statesIds[primaryAgressorId];
-        //primaryDefender = simManager.statesIds[primaryDefenderId];
-        //participants = participants = [.. defenders, .. attackers];
-    }
     public War(){}
     public War(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
     {
@@ -97,23 +80,24 @@ public class War
             }
         }
         simManager.wars.Add(this);
+        simManager.warIds.Add(id, this);
         switch (warType)
         {
             case WarType.CONQUEST:
                 string[] warNames = { "War", "Conflict" };
-                warName = $"{simManager.GetState(agressorLeader).name}-{simManager.GetState(defenderLeader).name} {warNames.PickRandom()}";
+                name = $"{simManager.GetState(agressorLeader).name}-{simManager.GetState(defenderLeader).name} {warNames.PickRandom()}";
                 if (rng.NextSingle() < 0.25f)
                 {
                     warNames = ["Invasion of"];
-                    warName = $"{NameGenerator.GetDemonym(simManager.GetState(agressorLeader).name)} {warNames.PickRandom()} {simManager.GetState(defenderLeader).name}";
+                    name = $"{NameGenerator.GetDemonym(simManager.GetState(agressorLeader).name)} {warNames.PickRandom()} {simManager.GetState(defenderLeader).name}";
                 }
                 break;
             case WarType.CIVIL_WAR:
-                warName = $"{NameGenerator.GetDemonym(simManager.GetState(defenderLeader).name)} Civil War";
+                name = $"{NameGenerator.GetDemonym(simManager.GetState(defenderLeader).name)} Civil War";
                 break;
             case WarType.REVOLT:
                 warNames = ["Revolution", "Uprising", "Rebellion", "Revolt"];
-                warName = $"{NameGenerator.GetDemonym(simManager.GetState(agressorLeader).name)} {warNames.PickRandom()}";
+                name = $"{NameGenerator.GetDemonym(simManager.GetState(agressorLeader).name)} {warNames.PickRandom()}";
                 break;
         }        
     }

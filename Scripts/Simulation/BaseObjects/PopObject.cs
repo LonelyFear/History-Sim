@@ -7,7 +7,6 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class PopObject : NamedObject
 {
-    public ulong id;
     public uint tickFounded { get; set; }
     public uint age { get; set; }
     public long population { get; set; } = 0;
@@ -47,8 +46,8 @@ public class PopObject : NamedObject
     public void LoadPopObjectFromSave()
     {
         pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => simManager.popsIds[p]).ToList();
-        largestCulture = largestCultureId == 0 ? null : simManager.culturesIds[largestCultureId];
-        cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => simManager.culturesIds[kv.Key], kv => kv.Value);
+        largestCulture = largestCultureId == 0 ? null : simManager.GetCulture(largestCultureId);
+        cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => simManager.GetCulture(kv.Key), kv => kv.Value);
     }
     public void CountPopulation()
     {

@@ -1,18 +1,19 @@
-[gd_scene load_steps=23 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=24 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://main_menu.theme" id="4_exi56"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
 [ext_resource type="Script" uid="uid://duwsoblnfw77g" path="res://Scripts/Managers/SimNodeManager.cs" id="6_nnt18"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/TerrainMap.cs" id="7_nnt18"]
-[ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://panel.stylebox" id="8_85qyi"]
+[ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="8_85qyi"]
 [ext_resource type="Script" uid="uid://ca4hg87crqxlm" path="res://Scripts/Managers/EncyclopediaManager.cs" id="8_iivbl"]
 [ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/info_tab.tscn" id="9_7nbq1"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
+[ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/GameUI.cs" id="11_7nbq1"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scripts/UI/FrameBreakdown.cs" id="12_ewbju"]
@@ -76,13 +77,16 @@ switchMap = true
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu")]
+[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "gameUi", "playerCamera")]
 script = ExtResource("8_iivbl")
 infoTabScene = ExtResource("9_7nbq1")
 timeManager = NodePath("../Time Manager")
 encyclopediaMenu = NodePath("EncyclopediaMenu")
+gameUi = NodePath("../UI")
+playerCamera = NodePath("../PlayerCamera")
 
 [node name="EncyclopediaMenu" type="TabContainer" parent="Encyclopedia"]
+visible = false
 offset_right = 1280.0
 offset_bottom = 720.0
 theme = ExtResource("4_exi56")
@@ -120,7 +124,7 @@ theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
 [node name="UI" type="CanvasLayer" parent="."]
-visible = false
+script = ExtResource("11_7nbq1")
 
 [node name="WorldStats" type="VBoxContainer" parent="UI"]
 offset_right = 40.0
@@ -191,7 +195,7 @@ States Time: "
 horizontal_alignment = 2
 script = ExtResource("12_ewbju")
 
-[node name="InfoHolder" type="Control" parent="UI" node_paths=PackedStringArray("panel", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton")]
+[node name="InfoHolder" type="Control" parent="UI" node_paths=PackedStringArray("panel", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
 layout_mode = 3
 anchors_preset = 0
 offset_top = 494.0
@@ -204,6 +208,7 @@ typeLabel = NodePath("Panel/VBoxContainer/ScrollContainer/VBoxContainer/Type")
 populationLabel = NodePath("Panel/VBoxContainer/ScrollContainer/VBoxContainer/Population")
 specialLabel = NodePath("Panel/VBoxContainer/ScrollContainer/VBoxContainer/Special")
 encyclopediaButton = NodePath("Panel/VBoxContainer/EncyclopediaButton")
+encyclopediaManager = NodePath("../../Encyclopedia")
 
 [node name="Panel" type="Panel" parent="UI/InfoHolder"]
 layout_mode = 0

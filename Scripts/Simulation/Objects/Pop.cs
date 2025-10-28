@@ -45,8 +45,8 @@ public class Pop
     }
     public void LoadFromSave()
     {
-        region = simManager.regionsIds[regionID];
-        culture = simManager.culturesIds[cultureId];
+        region = simManager.GetRegion(regionID);
+        culture = simManager.GetCulture(cultureId);
     }
     public void ChangeWorkforce(long amount)
     {

@@ -87,12 +87,12 @@ public class State : PopObject
     public void LoadFromSave()
     {
         LoadPopObjectFromSave();
-        capital = simManager.regionsIds[capitalID];
-        regions = regionsIDs.Select(r => simManager.regionsIds[r]).ToList();
+        capital = simManager.regionIds[capitalID];
+        regions = regionsIDs.Select(r => simManager.regionIds[r]).ToList();
         vassals = vassalsIDs == null ? new List<State>() : vassalsIDs.Select(r => simManager.statesIds[r]).ToList();
         liege = liegeID == 0 ? null : simManager.statesIds[liegeID];
         relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);
-        wars = warsIDs == null ? new Dictionary<War, bool>() : warsIDs.ToDictionary(kv => simManager.warsIds[kv.Key], kv => kv.Value);
+        wars = warsIDs == null ? new Dictionary<War, bool>() : warsIDs.ToDictionary(kv => simManager.warIds[kv.Key], kv => kv.Value);
         //enemies = enemyIds == null ? new List<State>() : enemyIds.Select(r => simManager.statesIds[r]).ToList();
         borderingStates = borderingStatesIDs == null ? new List<State>() : borderingStatesIDs.Select(r => simManager.statesIds[r]).ToList();
     }

@@ -29,10 +29,11 @@ public partial class ActionPanel : Panel
 
     public override void _Process(double delta)
     {
-        GetParent<CanvasLayer>().Visible = uiVisible;
+        
         if (Input.IsActionJustPressed("Toggle_UI"))
         {
             uiVisible = !uiVisible;
+            GetParent<GameUI>().show = uiVisible;
         }
         saveNameEdit.Visible = overwriteButton.Selected == 0;
     }

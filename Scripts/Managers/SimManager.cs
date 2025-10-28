@@ -30,7 +30,7 @@ public class SimManager
     public List<Region> tradeCenters { get; set; } = new List<Region>();
     [IgnoreMember] public List<Region> paintedRegions = new List<Region>();
     public List<Region> regions { get; set; } = new List<Region>();
-    [IgnoreMember] public Dictionary<ulong, Region> regionsIds { get; set; } = new Dictionary<ulong, Region>();
+    [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
 
     [IgnoreMember]
     public Vector2I terrainSize;
@@ -57,7 +57,7 @@ public class SimManager
     public List<Pop> pops { get; set; } = new List<Pop>();
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
     public List<Culture> cultures { get; set; } = new List<Culture>();
-    [IgnoreMember] public Dictionary<ulong, Culture> culturesIds { get; set; } = new Dictionary<ulong, Culture>();
+    [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
     public List<State> states { get; set; } = new List<State>();
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
     public List<Army> armies { get; set; } = new List<Army>();
@@ -66,7 +66,7 @@ public class SimManager
     public List<Character> characters { get; set; } = new List<Character>();
     [IgnoreMember] public Dictionary<ulong, Character> charactersIds { get; set; } = new Dictionary<ulong, Character>();
     public List<War> wars { get; set; } = new List<War>();
-    [IgnoreMember] public Dictionary<ulong, War> warsIds { get; set; } = new Dictionary<ulong, War>();
+    [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
     public List<War> endedWars = new List<War>();
     public uint currentBatch = 2;
     [IgnoreMember] public bool simLoadedFromSave = false;
@@ -117,11 +117,11 @@ public class SimManager
     public void SaveSimToFile(string path)
     {
         regions.ForEach(r => r.PrepareForSave());
-        pops.ForEach(r => r.PrepareForSave());
-        wars.ForEach(r => r.PrepareForSave());
-        states.ForEach(r => r.PrepareForSave());
+        //pops.ForEach(r => r.PrepareForSave());
+        //wars.ForEach(r => r.PrepareForSave());
+        //states.ForEach(r => r.PrepareForSave());
         tradeZones.ForEach(r => r.PrepareForSave());
-        cultures.ForEach(r => r.PreparePopObjectForSave());
+        //cultures.ForEach(r => r.PreparePopObjectForSave());
         tick = timeManager.ticks;
 
         var resolver = CompositeResolver.Create(
@@ -158,7 +158,7 @@ public class SimManager
         timeManager.ticks = tick;
         foreach (Region region in regions)
         {
-            regionsIds.Add(region.id, region);
+            regionIds.Add(region.id, region);
         }
         foreach (Pop pop in pops)
         {
@@ -170,11 +170,11 @@ public class SimManager
         }
         foreach (Culture culture in cultures)
         {
-            culturesIds.Add(culture.id, culture);
+            cultureIds.Add(culture.id, culture);
         }
         foreach (War war in wars)
         {
-            warsIds.Add(war.id, war);
+            warIds.Add(war.id, war);
         }
         foreach (TradeZone tradeZone in tradeZones)
         {
@@ -198,7 +198,7 @@ public class SimManager
         BorderingRegions();
 
         pops.ForEach(r => r.LoadFromSave());
-        wars.ForEach(r => r.LoadFromSave());
+        //wars.ForEach(r => r.LoadFromSave());
         states.ForEach(r => r.LoadFromSave());
         //GD.Print(tradeZones.Values);
         tradeZones.ForEach(r => r.LoadFromSave());
@@ -293,6 +293,7 @@ public class SimManager
 
                 newRegion.pos = new Vector2I(x, y);
                 regions.Add(newRegion);
+                regionIds.Add(newRegion.id, newRegion);
                 for (int tx = 0; tx < tilesPerRegion; tx++)
                 {
                     for (int ty = 0; ty < tilesPerRegion; ty++)
@@ -755,6 +756,30 @@ public class SimManager
     #endregion
 
     #region Creation
+    public Region GetRegion(ulong? id)
+    {
+        try
+        {
+            return regionIds[(ulong)id];
+        }
+        catch
+        {
+            //GD.PushWarning(e);
+            return null;
+        }
+    }
+    public War GetWar(ulong? id)
+    {
+        try
+        {
+            return warIds[(ulong)id];
+        }
+        catch
+        {
+            //GD.PushWarning(e);
+            return null;
+        }        
+    }
     #region Pops Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
     {
@@ -837,8 +862,17 @@ public class SimManager
         };
 
         cultures.Add(culture);
-        culturesIds.Add(culture.id, culture);
+        cultureIds.Add(culture.id, culture);
         return culture;
+    }
+    public Culture GetCulture(ulong? id)
+    {
+        try {
+            return cultureIds[(ulong)id];
+        } catch {
+            //GD.PushWarning(e);
+            return null;
+        }        
     }
     #endregion
     #region States Creation

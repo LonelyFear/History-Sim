@@ -8,9 +8,9 @@ public partial class LoadingScreen : Control
     SimNodeManager simNodeManager;
     SimManager sim = new SimManager();
     TimeManager time;
-    CanvasLayer ui;
+    GameUI ui;
     Label splash;
-    Camera2D camera;
+    PlayerCamera camera;
 
     public int seed;
     public int worldMult;
@@ -26,10 +26,10 @@ public partial class LoadingScreen : Control
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
         time = GetNode<TimeManager>("/root/Game/Time Manager");
         simNodeManager = GetNode<SimNodeManager>("/root/Game/Simulation");
-        ui = GetNode<CanvasLayer>("/root/Game/UI");
+        ui = GetNode<GameUI>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
-        camera = GetNode<Camera2D>("/root/Game/PlayerCamera");
-        ui.Visible = false;
+        camera = GetNode<PlayerCamera>("/root/Game/PlayerCamera");
+        ui.forceHide = true;
         Visible = true;
         GetNode<TextureProgressBar>("ProgressBar").Value = 0;
         AssetManager.LoadMods();
@@ -109,9 +109,10 @@ public partial class LoadingScreen : Control
         else if (task == null || task.IsCompleted)
         {
             generator.FinishWorldgen();
-            camera.Set("controlEnabled", true);
-            ui.Visible = true;
+            camera.controlEnabled = true;
+            ui.forceHide = false;
             QueueFree();
+            //GD.Print("I shouldnt show up");
         }
     }
 }

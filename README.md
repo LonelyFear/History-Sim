@@ -28,5 +28,3 @@ The links to NFB's youtube and discord are below.
 NFB's Youtube: https://youtube.com/@fwhsimulator?si=RWmFLxBN6GLTJcOi
 
 NFB's Discord: https://discord.gg/qPSPeZUufS
-
-

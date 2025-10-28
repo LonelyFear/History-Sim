@@ -10,6 +10,7 @@ public partial class ObjectInfo : Control
     [Export] Label populationLabel;
     [Export] RichTextLabel specialLabel;
     [Export] Button encyclopediaButton;
+    [Export] EncyclopediaManager encyclopediaManager;
     MapManager mapManager;
     SimManager simManager;
     TimeManager timeManager;
@@ -90,7 +91,7 @@ public partial class ObjectInfo : Control
                         {
                             yearAge = timeManager.GetYear(war.age);
                             monthAge = timeManager.GetMonth(war.age);
-                            specialLabel.Text += "\n" + $"{war.warName}";
+                            specialLabel.Text += "\n" + $"{war.name}";
                             specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.primaryAgressorId}]{simManager.GetState(war.primaryAgressorId).name}[/url][/color]";
                             specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.primaryDefenderId}]{simManager.GetState(war.primaryDefenderId).name}[/url][/color]";
                             specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
@@ -142,6 +143,7 @@ public partial class ObjectInfo : Control
     
     public void OnEncyclopediaClicked()
     {
-        
+        encyclopediaManager.OpenEncyclopedia();
+        encyclopediaManager.OpenTab(selectedObject.GetObjectType(), selectedObject.id);
     }
 }
