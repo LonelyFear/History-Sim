@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using MessagePack;
@@ -10,40 +11,26 @@ using FileAccess = Godot.FileAccess;
 [MessagePackObject(keyAsPropertyName: true)]
 public class SimManager
 {
+    // Exported
+    [IgnoreMember] [Export(PropertyHint.Range, "4,16,4")] public int tilesPerRegion = 4; 
+    
+    [Export] [IgnoreMember] public TileMapLayer reliefs;
+
+    [Export][IgnoreMember] public TimeManager timeManager;
+    
+    // Not Exported
     [IgnoreMember] public SimNodeManager node;
-    [IgnoreMember] public ulong currentID = 0;
-    [IgnoreMember]
-    public Node2D terrainMap;
-    [IgnoreMember]
-    [Export(PropertyHint.Range, "4,16,4")]
-    public int tilesPerRegion = 4;
-    [Export]
-    [IgnoreMember]
-    public TileMapLayer reliefs;
-    [Export]
-    [IgnoreMember]
-    public TimeManager timeManager;
+    [IgnoreMember] public Node2D terrainMap;    
+    public ulong currentID = 0;
     public uint tick;
 
     public Tile[,] tiles;
     [IgnoreMember] public List<Region> habitableRegions = new List<Region>();
-    public List<Region> tradeCenters { get; set; } = new List<Region>();
     [IgnoreMember] public List<Region> paintedRegions = new List<Region>();
-    public List<Region> regions { get; set; } = new List<Region>();
-    [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
-
-    [IgnoreMember]
-    public Vector2I terrainSize;
-    [IgnoreMember]
-    public static Vector2I worldSize;
-    [IgnoreMember]
-    public static System.Threading.Mutex m = new System.Threading.Mutex();
-    [IgnoreMember]
-    public WorldGenerator worldGenerator;
-    [IgnoreMember]
-    public MapManager mapManager;
-    [IgnoreMember]
-    bool instanceDeleted = false;
+    [IgnoreMember] public Vector2I terrainSize;
+    [IgnoreMember] public static Vector2I worldSize;
+    [IgnoreMember] public WorldGenerator worldGenerator;
+    [IgnoreMember] public MapManager mapManager;
 
     // Population
     
@@ -54,37 +41,43 @@ public class SimManager
     public uint populatedRegions;
     public float maxWealth = 0;
     public float maxTradeWeight = 0;
-    public List<Pop> pops { get; set; } = new List<Pop>();
+
+    // Lists
+    // Saved Data
+    [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
+    [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
+    [IgnoreMember] public List<Pop> pops { get; set; } = new List<Pop>();
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
-    public List<Culture> cultures { get; set; } = new List<Culture>();
+    [IgnoreMember] public List<Culture> cultures { get; set; } = new List<Culture>();
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
-    public List<State> states { get; set; } = new List<State>();
+    [IgnoreMember] public List<State> states { get; set; } = new List<State>();
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
-    public List<Army> armies { get; set; } = new List<Army>();
-    public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
+    [IgnoreMember] public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
     [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZonesIds { get; set; } = new Dictionary<ulong, TradeZone>();
-    public List<Character> characters { get; set; } = new List<Character>();
+    [IgnoreMember] public List<Character> characters { get; set; } = new List<Character>();
     [IgnoreMember] public Dictionary<ulong, Character> charactersIds { get; set; } = new Dictionary<ulong, Character>();
-    public List<War> wars { get; set; } = new List<War>();
+    [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
-    public List<War> endedWars = new List<War>();
+    [IgnoreMember] public List<War> endedWars = new List<War>();
+    [IgnoreMember] public Dictionary<ulong, BaseEvent> historicalEventIds = new Dictionary<ulong, BaseEvent>();
+
+    // Misc
     public uint currentBatch = 2;
     [IgnoreMember] public bool simLoadedFromSave = false;
 
-    [IgnoreMember]
-    Random rng = new Random();
+    [IgnoreMember] Random rng = new Random();
 
     // Events
-    //public delegate void SimulationInitializedEventHandler();
     public delegate void ObjectDeletedEvent(ulong id);
-    public ObjectDeletedEvent objectDeleted;
+    [IgnoreMember] public ObjectDeletedEvent objectDeleted;
+    
     // Debug info
-    public ulong totalStepTime;
-    public ulong totalPopsTime;
-    public ulong totalStateTime;
-    public ulong totalRegionTime;
-    public ulong totalCharacterTime;
-    public ulong totalMiscTime;
+    [IgnoreMember] public ulong totalStepTime;
+    [IgnoreMember] public ulong totalPopsTime;
+    [IgnoreMember] public ulong totalStateTime;
+    [IgnoreMember] public ulong totalRegionTime;
+    [IgnoreMember] public ulong totalCharacterTime;
+    [IgnoreMember] public ulong totalMiscTime;
     #region Utility
 
     public Vector2I GlobalToRegionPos(Vector2 pos)
@@ -117,11 +110,11 @@ public class SimManager
     public void SaveSimToFile(string path)
     {
         regions.ForEach(r => r.PrepareForSave());
-        //pops.ForEach(r => r.PrepareForSave());
+        pops.ForEach(r => r.PrepareForSave());
         //wars.ForEach(r => r.PrepareForSave());
-        //states.ForEach(r => r.PrepareForSave());
+        states.ForEach(r => r.PrepareForSave());
         tradeZones.ForEach(r => r.PrepareForSave());
-        //cultures.ForEach(r => r.PreparePopObjectForSave());
+        cultures.ForEach(r => r.PreparePopObjectForSave());
         tick = timeManager.ticks;
 
         var resolver = CompositeResolver.Create(
@@ -131,8 +124,22 @@ public class SimManager
 
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
 
-        FileAccess save = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Write);
-        save.StoreBuffer(MessagePackSerializer.Serialize(this, options));
+        FileAccess simSave = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Write);
+        simSave.StoreBuffer(MessagePackSerializer.Serialize(this, options));
+        FileAccess regionsSave = FileAccess.Open($"{path}/region_data.pxsave", FileAccess.ModeFlags.Write);
+        regionsSave.StoreBuffer(MessagePackSerializer.Serialize(regionIds, options));
+        FileAccess popsSave = FileAccess.Open($"{path}/pop_data.pxsave", FileAccess.ModeFlags.Write);
+        popsSave.StoreBuffer(MessagePackSerializer.Serialize(popsIds, options));
+        FileAccess statesSave = FileAccess.Open($"{path}/state_data.pxsave", FileAccess.ModeFlags.Write);
+        statesSave.StoreBuffer(MessagePackSerializer.Serialize(statesIds, options));
+        FileAccess cultureSave = FileAccess.Open($"{path}/culture_data.pxsave", FileAccess.ModeFlags.Write);
+        cultureSave.StoreBuffer(MessagePackSerializer.Serialize(cultureIds, options));
+        FileAccess tradeSave = FileAccess.Open($"{path}/tradeZone_data.pxsave", FileAccess.ModeFlags.Write);
+        tradeSave.StoreBuffer(MessagePackSerializer.Serialize(tradeZonesIds, options));
+        FileAccess charactersSave = FileAccess.Open($"{path}/character_data.pxsave", FileAccess.ModeFlags.Write);
+        charactersSave.StoreBuffer(MessagePackSerializer.Serialize(charactersIds, options));
+        FileAccess warsSave = FileAccess.Open($"{path}/wars_data.pxsave", FileAccess.ModeFlags.Write);
+        warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
     }
     public static SimManager LoadSimFromFile(string path)
     {
@@ -148,6 +155,16 @@ public class SimManager
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
         //FileAccess save = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Read);
         SimManager sim = MessagePackSerializer.Deserialize<SimManager>(FileAccess.GetFileAsBytes($"{path}/sim_data.pxsave"), options);
+
+        // Loads Sim Stuffs
+        sim.regionIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Region>>(FileAccess.GetFileAsBytes($"{path}/region_data.pxsave"), options);
+        sim.popsIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Pop>>(FileAccess.GetFileAsBytes($"{path}/pop_data.pxsave"), options);
+        sim.statesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, State>>(FileAccess.GetFileAsBytes($"{path}/state_data.pxsave"), options);
+        sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/culture_data.pxsave"), options);
+        sim.tradeZonesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/tradeZone_data.pxsave"), options);
+        sim.charactersIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/character_data.pxsave"), options);
+        sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars_data.pxsave"), options);
+
         sim.simLoadedFromSave = true;
         return sim;
     }
@@ -155,32 +172,15 @@ public class SimManager
     #region Initialization
     public void RebuildAfterSave()
     {
+        AssignSimManager();
         timeManager.ticks = tick;
-        foreach (Region region in regions)
-        {
-            regionIds.Add(region.id, region);
-        }
-        foreach (Pop pop in pops)
-        {
-            popsIds.Add(pop.id, pop);
-        }
-        foreach (State state in states)
-        {
-            statesIds.Add(state.id, state);
-        }
-        foreach (Culture culture in cultures)
-        {
-            cultureIds.Add(culture.id, culture);
-        }
-        foreach (War war in wars)
-        {
-            warIds.Add(war.id, war);
-        }
-        foreach (TradeZone tradeZone in tradeZones)
-        {
-            tradeZonesIds.Add(tradeZone.id, tradeZone);
-        }
-
+        regions = [.. regionIds.Values];
+        pops = [.. popsIds.Values];
+        states = [.. statesIds.Values];
+        cultures = [.. cultureIds.Values];
+        wars = [.. warIds.Values];
+        tradeZones = [.. tradeZonesIds.Values];
+        
         foreach (Region region in regions)
         {
             region.LoadFromSave();
@@ -200,7 +200,6 @@ public class SimManager
         pops.ForEach(r => r.LoadFromSave());
         //wars.ForEach(r => r.LoadFromSave());
         states.ForEach(r => r.LoadFromSave());
-        //GD.Print(tradeZones.Values);
         tradeZones.ForEach(r => r.LoadFromSave());
         cultures.ForEach(r => r.LoadPopObjectFromSave());   
     }
@@ -318,16 +317,18 @@ public class SimManager
             }
         }
     }
-    
-    public void OnWorldgenFinished()
+    void AssignSimManager()
     {
         TradeZone.simManager = this;
         PopObject.simManager = this;
         PopObject.timeManager = timeManager;
-        Army.simManager = this;
         Pop.simManager = this;
         War.simManager = this;
         Character.sim = this;
+    }
+    public void OnWorldgenFinished()
+    {
+        AssignSimManager();
         terrainSize = worldGenerator.WorldSize;
         worldSize = terrainSize / tilesPerRegion;
 
@@ -442,11 +443,9 @@ public class SimManager
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
-            if (pop.population <= Pop.ToNativePopulation(1))
+            if (pop.region == null || pop.population <= Pop.ToNativePopulation(1))
             {
-                //m.WaitOne();
                 DestroyPop(pop);
-                //m.ReleaseMutex();
             }
             else
             {
@@ -560,7 +559,6 @@ public class SimManager
                     region.linkUpdateCountdown = 0;
                 }
             }
-            tradeCenters = new List<Region>();
             foreach (Region region in habitableRegions)
             {
                 if (region.owner != null)
@@ -618,7 +616,7 @@ public class SimManager
             state.GetRealmBorders();
             state.Capitualate();
         }
-        foreach (State state in states)
+        foreach (State state in states.ToArray())
         {
             if (state.rulingPop != null)
             {
@@ -732,22 +730,28 @@ public class SimManager
     #region SimTick
     public void SimMonth()
     {
-        ulong stepTime = Time.GetTicksMsec();
-        ulong startTime = Time.GetTicksMsec();
-        UpdatePops();
-        totalPopsTime = Time.GetTicksMsec() - startTime;
-        startTime = Time.GetTicksMsec();
-        UpdateRegions();
-        totalRegionTime = Time.GetTicksMsec() - startTime;
-        startTime = Time.GetTicksMsec();
-        UpdateStates();
-        totalStateTime = Time.GetTicksMsec() - startTime;
-        startTime = Time.GetTicksMsec();
-        UpdateCharacters();
-        UpdateCultures();
-        UpdateWars();
-        totalMiscTime = Time.GetTicksMsec() - startTime;
-        totalStepTime = Time.GetTicksMsec() - stepTime;
+        try
+        {
+            ulong stepTime = Time.GetTicksMsec();
+            ulong startTime = Time.GetTicksMsec();
+            UpdatePops();
+            totalPopsTime = Time.GetTicksMsec() - startTime;
+            startTime = Time.GetTicksMsec();
+            UpdateRegions();
+            totalRegionTime = Time.GetTicksMsec() - startTime;
+            startTime = Time.GetTicksMsec();
+            UpdateStates();
+            totalStateTime = Time.GetTicksMsec() - startTime;
+            startTime = Time.GetTicksMsec();
+            UpdateCharacters();
+            UpdateCultures();
+            UpdateWars();
+            totalMiscTime = Time.GetTicksMsec() - startTime;
+            totalStepTime = Time.GetTicksMsec() - stepTime;            
+        } catch  (Exception e)
+        {
+            GD.PushError(e);
+        }
     }
     public void SimYear()
     {
@@ -768,6 +772,19 @@ public class SimManager
             return null;
         }
     }
+
+    public TradeZone GetTradeZone(ulong? id)
+    {
+        try
+        {
+            return tradeZonesIds[(ulong)id];
+        }
+        catch
+        {
+            //GD.PushWarning(e);
+            return null;
+        }
+    }
     public War GetWar(ulong? id)
     {
         try
@@ -778,7 +795,7 @@ public class SimManager
         {
             //GD.PushWarning(e);
             return null;
-        }        
+        }
     }
     #region Pops Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
@@ -803,6 +820,10 @@ public class SimManager
         {
             pops.Add(pop);
         }
+        lock (popsIds)
+        {
+            popsIds.Add(pop.id, pop);
+        }
         lock (culture)
         {
             culture.AddPop(pop, culture);
@@ -819,7 +840,7 @@ public class SimManager
     {
         try
         {
-            if (pop.region.owner != null && pop.region.owner.rulingPop == pop)
+            if (pop.region != null && pop.region.owner != null && pop.region.owner.rulingPop == pop)
             {
                 lock (pop.region.owner)
                 {
@@ -829,7 +850,7 @@ public class SimManager
         }
         catch (Exception e)
         {
-            GD.Print(e);
+            GD.PushError(e);
         }
 
         pop.ClaimLand(-pop.ownedLand);
@@ -844,6 +865,22 @@ public class SimManager
         lock (pops)
         {
             pops.Remove(pop);
+        }
+        lock (popsIds)
+        {
+            popsIds.Remove(pop.id);
+        }
+    }
+    public Pop GetPop(ulong? id)
+    {
+        try
+        {
+            return popsIds[(ulong)id];
+        }
+        catch
+        {
+            //GD.PushWarning(e);
+            return null;
         }
     }
     #endregion

@@ -22,15 +22,13 @@ public class Region : PopObject
     public int linkUpdateCountdown { get; set; } = 4;
 
     // trade
-    [IgnoreMember]
-    public TradeZone tradeZone { get; set; }
+    [IgnoreMember] public TradeZone tradeZone { get; set; }
     public ulong tradeZoneID { get; set; }
     public bool isCoT { get; set; } = false;    
     public float tradeIncome = 0;
     public float taxIncome = 0;
     public int zoneSize = 1;
-    [IgnoreMember]
-    public Region tradeLink { get; set; } = null;
+    [IgnoreMember] public Region tradeLink { get; set; } = null;
     public ulong tradeLinkID { get; set; }
 
     public Vector2I pos { get; set; }
@@ -40,14 +38,10 @@ public class Region : PopObject
     public float avgElevation { get; set; }
     public int landCount { get; set; }
     public int freeLand { get; set; } = 16;
-    [IgnoreMember]
-    public State occupier { get; set; } = null;
+    [IgnoreMember] public State occupier { get; set; } = null;
     public ulong occupierID { get; set; }
-    [IgnoreMember]
-    public State owner { get; set; } = null;
+    [IgnoreMember] public State owner { get; set; } = null;
     public ulong ownerID { get; set; }
-    [IgnoreMember]
-    public List<Army> armies;
 
     // Demographics
     public long maxFarmers { get; set; } = 0;
@@ -58,8 +52,6 @@ public class Region : PopObject
     [IgnoreMember]
     public Region[] habitableBorderingRegions { get; set; } = new Region[4];
     public ulong[] habitableBorderingRegionsIDs { get; set; }
-    [IgnoreMember]
-    public Dictionary<Region, List<Region>> regionPaths = new Dictionary<Region, List<Region>>();
 
     public bool border { get; set; }
     public bool frontier { get; set; }
@@ -80,6 +72,7 @@ public class Region : PopObject
     }
     public void LoadFromSave()
     {
+        //GD.Print(id);
         LoadPopObjectFromSave();
         tradeZone = tradeZoneID == 0 ? null : simManager.tradeZonesIds[tradeZoneID];
         habitableBorderingRegions = habitableBorderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
@@ -163,9 +156,7 @@ public class Region : PopObject
     {
         if (professions[SocialClass.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
         {
-            SimManager.m.WaitOne();
             simManager.CreateState(this);
-            SimManager.m.ReleaseMutex();
 
             owner.population = population;
             owner.workforce = workforce;
@@ -188,9 +179,7 @@ public class Region : PopObject
     {
         if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
         {
-            SimManager.m.WaitOne();
             simManager.CreateState(this);
-            SimManager.m.ReleaseMutex();
 
             owner.population = population;
             owner.workforce = workforce;
@@ -302,26 +291,6 @@ public class Region : PopObject
         }
     }
     #endregion
-    public void AddArmy(Army army)
-    {
-        if (!armies.Contains(army))
-        {
-            if (army.location != null)
-            {
-                army.location.RemoveArmy(army);
-            }
-            armies.Add(army);
-            army.location = this;
-        }
-    }
-    public void RemoveArmy(Army army)
-    {
-        if (armies.Contains(army))
-        {
-            army.location = null;
-            armies.Remove(army);
-        }
-    }
     public double GetStability()
     {
         double totalPoliticalPower = 0;
@@ -411,29 +380,6 @@ public class Region : PopObject
         if (tradeLink != null)
         {
             tradeLink.tradeIncome += (baseWealth * 0.2f) + tradeIncome;
-        }
-    }
-    public void CalcTradeRoutes()
-    {
-        if (!simManager.tradeCenters.Contains(this))
-        {
-            return;
-        }
-        foreach (Region tradeCenter in simManager.tradeCenters.ToArray())
-        {
-            List<Region> path = GetPathToRegion(this, tradeCenter, 8);
-            if (path == null)
-            {
-                continue;
-            }
-            foreach (Region tradeNode in path)
-            {
-                if (tradeNode.pops.Count < 1)
-                {
-                    continue;
-                }
-                tradeNode.tradeIncome = Mathf.Max(tradeNode.tradeIncome, Mathf.Min(tradeCenter.tradeIncome, tradeIncome) * 200);
-            }          
         }
     }
     public int GetTradeWeight()

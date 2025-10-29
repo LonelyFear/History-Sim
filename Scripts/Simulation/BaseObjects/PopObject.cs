@@ -45,7 +45,7 @@ public class PopObject : NamedObject
     }
     public void LoadPopObjectFromSave()
     {
-        pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => simManager.popsIds[p]).ToList();
+        pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => simManager.GetPop(p)).ToList();
         largestCulture = largestCultureId == 0 ? null : simManager.GetCulture(largestCultureId);
         cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => simManager.GetCulture(kv.Key), kv => kv.Value);
     }

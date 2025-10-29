@@ -6,6 +6,7 @@ public partial class SimNodeManager : Node
     public event SimStartEvent simStartEvent;
     public void InvokeEvent()
     {
+        //GD.Print("Yop");
         simStartEvent.Invoke();
     }
 }

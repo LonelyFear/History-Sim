@@ -35,7 +35,8 @@ public class TradeZone
         color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
         CoT = region;
         regions = [CoT];
-        simManager.tradeZones.Add(this);        
+        simManager.tradeZones.Add(this);
+        simManager.tradeZonesIds.Add(id, this);      
     }
     public void AddRegion(Region region)
     {
@@ -68,6 +69,7 @@ public class TradeZone
             RemoveRegion(region);
         }
         simManager.tradeZones.Remove(this);
+        simManager.tradeZonesIds.Remove(id);     
     }
 
     public int GetZoneSize()

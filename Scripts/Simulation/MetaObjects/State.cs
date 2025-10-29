@@ -15,13 +15,11 @@ public class State : PopObject
     public bool capitualated = false;
 
     public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
-    [IgnoreMember]
-    public List<Region> realmRegions = new List<Region>(); 
-    [IgnoreMember]
-    public List<Region> regions { get; set; } = new List<Region>();
-    public List<ulong> regionsIDs { get; set; }
-    [IgnoreMember]
-    public Region capital { get; set; }
+    [IgnoreMember] public List<Region> realmRegions = new List<Region>(); 
+    
+    [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
+    public List<ulong> regionsIDs { get; set; } = new List<ulong>();
+    [IgnoreMember] public Region capital { get; set; }
     public ulong capitalID;
     public long manpower { get; set; } = 0;
     public int occupiedLand { get; set; } = 0;
@@ -31,17 +29,13 @@ public class State : PopObject
     public float middleTaxRate { get; set; } = 0.1f;
     public float richTaxRate { get; set; } = 0.05f;
     public float tributeRate { get; set; } = 0.1f;
-    [IgnoreMember]
-    public List<State> vassals { get; set; } = new List<State>();
+    [IgnoreMember] public List<State> vassals { get; set; } = new List<State>();
     public List<ulong> vassalsIDs { get; set; }
-    [IgnoreMember]
-    public State liege { get; set; } = null;
+    [IgnoreMember] public State liege { get; set; } = null;
     public ulong liegeID;
-    [IgnoreMember]
-    public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
+    [IgnoreMember] public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
     public Dictionary<ulong, Relation> relationsIDs { get; set; }
-    [IgnoreMember]
-    public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
+    [IgnoreMember] public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
     public Dictionary<ulong, bool> warsIDs { get; set; }
 
     //[IgnoreMember] public List<State> enemies { get; set; } = new List<State>();
@@ -87,8 +81,8 @@ public class State : PopObject
     public void LoadFromSave()
     {
         LoadPopObjectFromSave();
-        capital = simManager.regionIds[capitalID];
-        regions = regionsIDs.Select(r => simManager.regionIds[r]).ToList();
+        capital = simManager.GetRegion(capitalID);
+        regions = regionsIDs.Select(r => simManager.GetRegion(r)).ToList();
         vassals = vassalsIDs == null ? new List<State>() : vassalsIDs.Select(r => simManager.statesIds[r]).ToList();
         liege = liegeID == 0 ? null : simManager.statesIds[liegeID];
         relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);

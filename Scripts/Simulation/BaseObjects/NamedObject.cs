@@ -1,4 +1,7 @@
-public abstract class NamedObject
+using MessagePack;
+
+[MessagePackObject(keyAsPropertyName: true)]
+public class NamedObject
 {
     public ulong id { get; set; }
     public string name { get; set; }

@@ -5,8 +5,17 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class Character : NamedObject
 {
-    public Random rng = new Random();
-    public static SimManager sim;
+    // Constants
+    [IgnoreMember] const float hdChanceAnnualGrowth = 0.02f;
+    [IgnoreMember] const int agingHealthDecrease = 3; 
+    [IgnoreMember] const int educationMinAge = 5;
+    [IgnoreMember] const int educationMaxAge = 18;
+    [IgnoreMember] public const int dieHealthThreshold = 40; 
+    
+    // Ignored Members   
+    [IgnoreMember] public Random rng = new Random();
+    [IgnoreMember] public static SimManager sim;
+    // Character Stats
     public int significance;
     public string firstName;
     public string lastName;
@@ -21,8 +30,7 @@ public class Character : NamedObject
     // Health
     public int health = 100;
     float healthDecreaseChance = 0.075f;
-    const float hdChanceAnnualGrowth = 0.02f;
-    const int agingHealthDecrease = 3;
+
     // Character Skills
     public int charisma;
     // Makes characters better speakers. Increases positive outcomes in diplomacy, meetings, and provides bonuses at war.
@@ -52,10 +60,9 @@ public class Character : NamedObject
     // Character Modifiers
 
     // Education
-    const int educationMinAge = 5;
-    const int educationMaxAge = 18;
+
     public bool dead;
-    public const int dieHealthThreshold = 40;
+    
     public void JoinState(ulong stateJoinId)
     {
         State state = sim.statesIds[stateJoinId];

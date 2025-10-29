@@ -20,9 +20,9 @@ public class Pop
     public double happiness { get; set; } = 1;
     public double loyalty { get; set; } = 1;
     public double politicalPower { get; set; } = 1;
-    [IgnoreMember]
-    public Region region;
-    public ulong regionID { get; set; }
+    
+    [IgnoreMember] public Region region;
+    public ulong regionId { get; set; }
     [IgnoreMember] public Culture culture { get; set; }
     public ulong cultureId { get; set; }
     public SocialClass profession { get; set; } = SocialClass.FARMER;
@@ -40,12 +40,14 @@ public class Pop
 
     public void PrepareForSave()
     {
-        regionID = region.id;
+        regionId = region.id;
         cultureId = culture.id;
     }
     public void LoadFromSave()
     {
-        region = simManager.GetRegion(regionID);
+        //GD.Print(regionId);
+        //GD.Print(simManager.GetRegion(regionId));
+        region = simManager.GetRegion(regionId);
         culture = simManager.GetCulture(cultureId);
     }
     public void ChangeWorkforce(long amount)
@@ -56,12 +58,10 @@ public class Pop
         }
         workforce += amount;
         population += amount;
-        SimManager.m.WaitOne();
         if (culture != null)
         {
             culture.ChangePopulation(amount, 0);
         }
-        SimManager.m.ReleaseMutex();
     }
     public void ChangeDependents(long amount)
     {
@@ -71,12 +71,10 @@ public class Pop
         }
         dependents += amount;
         population += amount;
-        SimManager.m.WaitOne();
         if (culture != null)
         {
             culture.ChangePopulation(0, amount);
         }
-        SimManager.m.ReleaseMutex();
     }
     public void ChangePopulation(long workforceChange, long dependentChange)
     {
@@ -120,7 +118,6 @@ public class Pop
             return this;
         }
         // Makes a new pop with the new profession
-        SimManager.m.WaitOne();
         Pop newWorkers = simManager.CreatePop(workforceDelta, dependentDelta, region, tech, culture, newSocialClass);
         // And removes the people who switched to the new profession
         ChangePopulation(-workforceDelta, -dependentDelta);
@@ -128,7 +125,6 @@ public class Pop
 
         ClaimLand(-landMoved);
         newWorkers.ClaimLand(landMoved);
-        SimManager.m.ReleaseMutex();
         return newWorkers;
     }
 
