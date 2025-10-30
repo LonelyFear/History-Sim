@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class Character : NamedObject
 {
     // Constants
@@ -15,53 +15,43 @@ public class Character : NamedObject
     // Ignored Members   
     [IgnoreMember] public Random rng = new Random();
     [IgnoreMember] public static SimManager sim;
+
     // Character Stats
-    public int significance;
-    public string firstName;
-    public string lastName;
-    public uint birthTick;
-    public uint age;
-    public uint deathTick;
-    public ulong? stateId = null;
-    public CharacterRole role = CharacterRole.DEAD;
-    public ulong? parentId = null;
-    public List<ulong?> childIds = new List<ulong?>();
-    public int mood = 100;
+    [Key(-1)] public int significance;
+    [Key(-2)] public string firstName;
+    [Key(-3)] public string lastName;
+    [Key(3)] public uint birthTick;
+    [Key(4)] public uint age;
+    [Key(5)] public uint deathTick;
+    [Key(6)] public ulong? stateId = null;
+    [Key(7)] public CharacterRole role = CharacterRole.DEAD;
+    [Key(8)] public ulong? parentId = null;
+    [Key(9)] public List<ulong?> childIds = new List<ulong?>();
+    [Key(10)] public int mood = 100;
     // Health
-    public int health = 100;
-    float healthDecreaseChance = 0.075f;
+    [Key(11)] public int health = 100;
+    [Key(12)] public float healthDecreaseChance = 0.075f;
 
     // Character Skills
-    public int charisma;
-    // Makes characters better speakers. Increases positive outcomes in diplomacy, meetings, and provides bonuses at war.
-    public int intellect;
-    // Makes characters smarter. Boosts learning rate and increases chance to discover a new technology or write books.
-    public int military;
-    // Makes characters more strategic. Improves combat ability at war
-    public int stewardship;
-    // Makes characters better rulers. Increases tax income
-    public int combat;
-    // Makes characters better at fighting. Lowers chance of dying if leading from the front and increases chance of winning duels.
+    [Key(13)] public int charisma;
+    [Key(14)] public int intellect;
+    [Key(15)] public int military;
+    [Key(16)] public int stewardship;
+    [Key(17)] public int combat;
 
     // Character Personality
-    public int sociability;
-    // Makes characters more social. Increases chance of meeting and social interactions
-    public int greed;
-    // Makes characters strive for more wealth. Decreases loyalty
-    public int ambition;
-    // Makes characters more ambitious. Increases chance of war and makes characters strive for higher positions. Greedy characters will let others take the fall for their success
-    public int empathy;
-    // Makes characters empathetetic. Makes characters more likeable and benevolent. Raises morale but lowers combat ability at war.
-    public int boldness;
-    // Makes characters braver. Increases the chance of taking risky matchups in diplomacy or governance and risky strategies at war (Increases effects of crits)
-    public int temperment;
-    // Makes characters more cool-headed. Decreases chance of negative diplomatic outcomes and is complementary with empathy. Raises morale at war
+    [Key(18)] public int sociability;
+    [Key(19)] public int greed;
+    [Key(20)] public int ambition;
+    [Key(21)] public int empathy;
+    [Key(22)] public int boldness;
+    [Key(23)] public int temperment;
 
     // Character Modifiers
 
     // Education
 
-    public bool dead;
+    [Key(24)] public bool dead;
     
     public void JoinState(ulong stateJoinId)
     {

@@ -102,7 +102,7 @@ public partial class EncyclopediaManager : CanvasLayer
 			return;
 		}
 		InfoTab tab = infoTabs[id];
-		tab.QueueFree();
+		encyclopediaMenu.CloseTab(tab);
     }
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)

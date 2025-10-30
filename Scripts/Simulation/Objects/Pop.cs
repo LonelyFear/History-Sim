@@ -3,40 +3,39 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Godot;
 using MessagePack;
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class Pop
 {
-    public ulong id;
-    public long maxPopulation { get; set; } = 0;
-    public long population { get; set; } = 0;
-    public long workforce { get; set; } = 0;
-    public long dependents { get; set; } = 0;
+    [Key(0)] public ulong id;
+    [Key(1)] public long maxPopulation { get; set; } = 0;
+    [Key(2)] public long population { get; set; } = 0;
+    [Key(3)] public long workforce { get; set; } = 0;
+    [Key(4)] public long dependents { get; set; } = 0;
 
-    public float baseBirthRate { get; set; } = 0.3f;
-    public float baseDeathRate { get; set; } = 0.29f;
+    [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
+    [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
-    public float targetDependencyRatio { get; set; } = 0.75f;
-    public float netIncome { get; set; } = 0f;
-    public double happiness { get; set; } = 1;
-    public double loyalty { get; set; } = 1;
-    public double politicalPower { get; set; } = 1;
+    [Key(7)] public float targetDependencyRatio { get; set; } = 0.75f;
+    [Key(8)] public float netIncome { get; set; } = 0f;
+    [Key(9)] public double happiness { get; set; } = 1;
+    [Key(10)] public double loyalty { get; set; } = 1;
+    [Key(11)] public double politicalPower { get; set; } = 1;
     
     [IgnoreMember] public Region region;
-    public ulong regionId { get; set; }
+    [Key(12)] public ulong regionId { get; set; }
     [IgnoreMember] public Culture culture { get; set; }
-    public ulong cultureId { get; set; }
-    public SocialClass profession { get; set; } = SocialClass.FARMER;
+    [Key(13)] public ulong cultureId { get; set; }
+    [Key(14)] public SocialClass profession { get; set; } = SocialClass.FARMER;
 
-    public Tech tech { get; set; } = new Tech();
-    public uint batchId { get; set; } = 1;
+    [Key(15)] public Tech tech { get; set; } = new Tech();
+    [Key(16)] public uint batchId { get; set; } = 1;
 
-    public List<Character> characters { get; set; } = new List<Character>();
+    [Key(17)] public List<Character> characters { get; set; } = new List<Character>();
     [IgnoreMember]
     public static SimManager simManager;
-    [IgnoreMember]
-    public static Random rng = new Random();
-    public float wealth { get; set; } = 0f;
-    public int ownedLand { get; set; } = 0;
+    [IgnoreMember] public static Random rng = new Random();
+    [Key(18)] public float wealth { get; set; } = 0f;
+    [Key(19)] public int ownedLand { get; set; } = 0;
 
     public void PrepareForSave()
     {

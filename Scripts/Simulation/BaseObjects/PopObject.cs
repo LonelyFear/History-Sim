@@ -4,21 +4,20 @@ using System.Linq;
 using Godot;
 using MessagePack;
 
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class PopObject : NamedObject
 {
-    public uint tickFounded { get; set; }
-    public uint age { get; set; }
-    public long population { get; set; } = 0;
-    public long highestPossiblePopulation { get; set; } = 0;
-    public long dependents { get; set; } = 0;
-    public long workforce { get; set; } = 0;
-    [IgnoreMember]
-    public List<Pop> pops = new List<Pop>();
-    public List<ulong> popsIds;
-    [IgnoreMember]
-    public static TimeManager timeManager;
-    public Dictionary<SocialClass, long> professions = new Dictionary<SocialClass, long>()
+    [Key(100)] public uint tickFounded { get; set; }
+    [Key(101)]public uint age { get; set; }
+    [Key(102)] public long population { get; set; } = 0;
+    [Key(103)] public long highestPossiblePopulation { get; set; } = 0;
+    [Key(104)] public long dependents { get; set; } = 0;
+    [Key(105)] public long workforce { get; set; } = 0;
+    
+    [IgnoreMember] public List<Pop> pops = new List<Pop>();
+    [Key(106)] public List<ulong> popsIds;
+    [IgnoreMember] public static TimeManager timeManager;
+    [Key(107)] public Dictionary<SocialClass, long> professions = new Dictionary<SocialClass, long>()
     {
         {SocialClass.FARMER, 0},
         {SocialClass.MERCHANT, 0},
@@ -26,16 +25,15 @@ public class PopObject : NamedObject
         {SocialClass.LABOURER, 0},
         {SocialClass.SOLDIER, 0},
     };
-    [IgnoreMember]
-    public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
-    public Dictionary<ulong, long> culturesIds;
-    [IgnoreMember]
-    public static Random rng = new Random();
-    [IgnoreMember]
-    public static SimManager simManager;
-    [IgnoreMember]
-    public Culture largestCulture = null;
-    public ulong largestCultureId;
+    
+    [IgnoreMember] public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
+    [Key(108)] public Dictionary<ulong, long> culturesIds;
+    [IgnoreMember] public static Random rng = new Random();
+    
+    [IgnoreMember] public static SimManager simManager;
+    
+    [IgnoreMember] public Culture largestCulture = null;
+    [Key(109)] public ulong largestCultureId;
 
     public void PreparePopObjectForSave()
     {

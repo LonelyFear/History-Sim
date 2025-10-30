@@ -3,59 +3,59 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class Region : PopObject
 {
-    public Tile[,] tiles { get; set; }
-    public Biome[,] biomes { get; set; }
-    public bool habitable { get; set; }
-    public bool coastal { get; set; }
-    private int tradeWeight { get; set; } = 0;
-    private int baseTradeWeight { get; set; } = 0;
-    public bool hasTradeWeight;
-    public bool hasBaseTradeWeight;
-    public float lastWealth { get; set; } = 0;
-    public float lastBaseWealth { get; set; } = 0;
-    public float control { get; set; } = 1f;
-    public float baseWealth { get; set; }
-    public float wealth { get; set; }
-    public int linkUpdateCountdown { get; set; } = 4;
+    [Key(200)] public Tile[,] tiles { get; set; }
+    [Key(201)] public Biome[,] biomes { get; set; }
+    [Key(202)] public bool habitable { get; set; }
+    [Key(3)] public bool coastal { get; set; }
+    [Key(4)] public int tradeWeight { get; set; } = 0;
+    [Key(5)] public int baseTradeWeight { get; set; } = 0;
+    [Key(6)] public bool hasTradeWeight;
+    [Key(7)] public bool hasBaseTradeWeight;
+    [Key(8)] public float lastWealth { get; set; } = 0;
+    [Key(9)] public float lastBaseWealth { get; set; } = 0;
+    [Key(10)] public float control { get; set; } = 1f;
+    [Key(11)] public float baseWealth { get; set; }
+    [Key(12)] public float wealth { get; set; }
+    [Key(13)] public int linkUpdateCountdown { get; set; } = 4;
 
     // trade
     [IgnoreMember] public TradeZone tradeZone { get; set; }
-    public ulong tradeZoneID { get; set; }
-    public bool isCoT { get; set; } = false;    
-    public float tradeIncome = 0;
-    public float taxIncome = 0;
-    public int zoneSize = 1;
+    [Key(14)] public ulong tradeZoneID { get; set; }
+    [Key(15)] public bool isCoT { get; set; } = false;    
+    [Key(16)] public float tradeIncome = 0;
+    [Key(17)] public float taxIncome = 0;
+    [Key(18)] public int zoneSize = 1;
     [IgnoreMember] public Region tradeLink { get; set; } = null;
-    public ulong tradeLinkID { get; set; }
+    [Key(19)] public ulong tradeLinkID { get; set; }
 
-    public Vector2I pos { get; set; }
-    public float navigability { get; set; }
-    public float avgTemperature { get; set; }
-    public float avgRainfall { get; set; }
-    public float avgElevation { get; set; }
-    public int landCount { get; set; }
-    public int freeLand { get; set; } = 16;
+    [Key(20)] public Vector2I pos { get; set; }
+    [Key(21)] public float navigability { get; set; }
+    [Key(22)] public float avgTemperature { get; set; }
+    [Key(23)] public float avgRainfall { get; set; }
+    [Key(24)] public float avgElevation { get; set; }
+    [Key(25)] public int landCount { get; set; }
+    [Key(26)] public int freeLand { get; set; } = 16;
     [IgnoreMember] public State occupier { get; set; } = null;
-    public ulong occupierID { get; set; }
+    [Key(27)] public ulong occupierID { get; set; }
     [IgnoreMember] public State owner { get; set; } = null;
-    public ulong ownerID { get; set; }
+    [Key(28)] public ulong ownerID { get; set; }
 
     // Demographics
-    public long maxFarmers { get; set; } = 0;
-    public long maxSoldiers { get; set; } = 0;
+    [Key(29)] public long maxFarmers { get; set; } = 0;
+    [Key(30)] public long maxSoldiers { get; set; } = 0;
     [IgnoreMember]
-    public Region[] borderingRegions { get; set; } = new Region[4];
-    public ulong[] borderingRegionsIDs { get; set; }
+    [Key(31)] public Region[] borderingRegions { get; set; } = new Region[4];
+    [Key(32)] public ulong[] borderingRegionsIDs { get; set; }
     [IgnoreMember]
-    public Region[] habitableBorderingRegions { get; set; } = new Region[4];
-    public ulong[] habitableBorderingRegionsIDs { get; set; }
+    [Key(33)] public Region[] habitableBorderingRegions { get; set; } = new Region[4];
+    [Key(34)] public ulong[] habitableBorderingRegionsIDs { get; set; }
 
-    public bool border { get; set; }
-    public bool frontier { get; set; }
-    public float arableLand { get; set; }
+    [Key(35)] public bool border { get; set; }
+    [Key(36)] public bool frontier { get; set; }
+    [Key(37)] public float arableLand { get; set; }
 
     public static int populationPerLand = 500;
     public static int farmersPerLand = 115;

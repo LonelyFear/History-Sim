@@ -1,11 +1,11 @@
 using MessagePack;
 
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class NamedObject
 {
-    public ulong id { get; set; }
-    public string name { get; set; }
-    public string description { get; set; }
+    [Key(400)] public ulong id { get; set; }
+    [Key(401)] public string name { get; set; }
+    [Key(402)]public string description { get; set; }
     public virtual string GenerateDescription()
     {
         string desc = $"{name} is a named object. This is placeholder text";

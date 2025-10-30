@@ -2,10 +2,10 @@ using System;
 using Godot;
 using System.Collections.Generic;
 using MessagePack;
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class Culture : PopObject
 {
-    public Color color { get; set; }
+    [Key(1)]public Color color { get; set; }
 
     //public List<Culture> hatedCultures { get; set; } = new List<Culture>();
 

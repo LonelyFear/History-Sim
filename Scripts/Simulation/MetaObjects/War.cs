@@ -4,20 +4,20 @@ using System.Linq;
 using Godot;
 using MessagePack;
 using MessagePack.Formatters;
-[MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
+[MessagePackObject]
 public class War : NamedObject
 {
-    public List<ulong> attackerIds { get; set; } = new List<ulong>();
-    public List<ulong> defenderIds { get; set; } = new List<ulong>();
-    public List<ulong> participantIds = new List<ulong>();
-    public ulong primaryAgressorId;
-    public ulong primaryDefenderId;
-    public WarType warType { get; set; } = WarType.CONQUEST;
+    [Key(0)] public List<ulong> attackerIds { get; set; } = new List<ulong>();
+    [Key(1)] public List<ulong> defenderIds { get; set; } = new List<ulong>();
+    [Key(2)] public List<ulong> participantIds = new List<ulong>();
+    [Key(3)] public ulong primaryAgressorId;
+    [Key(4)] public ulong primaryDefenderId;
+    [Key(5)] public WarType warType { get; set; } = WarType.CONQUEST;
     [IgnoreMember] static Random rng = new Random();
     [IgnoreMember] public static SimManager simManager;
-    public uint tickStarted;
-    public uint age;
-    public uint tickEnded;
+    [Key(6)] public uint tickStarted;
+    [Key(7)] public uint age;
+    [Key(8)] public uint tickEnded;
     public War(){}
     public War(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
     {
@@ -79,8 +79,6 @@ public class War : NamedObject
                 state.EstablishRelations(simManager.GetState(primaryAgressorId), -5);                
             }
         }
-        simManager.wars.Add(this);
-        simManager.warIds.Add(id, this);
         switch (warType)
         {
             case WarType.CONQUEST:
@@ -99,7 +97,9 @@ public class War : NamedObject
                 warNames = ["Revolution", "Uprising", "Rebellion", "Revolt"];
                 name = $"{NameGenerator.GetDemonym(simManager.GetState(agressorLeader).name)} {warNames.PickRandom()}";
                 break;
-        }        
+        }     
+        simManager.wars.Add(this);
+        simManager.warIds.Add(id, this);   
     }
     public void AddParticipant(ulong stateId, bool attacker)
     {
@@ -146,6 +146,7 @@ public class War : NamedObject
     public void EndWar()
     {
         simManager.wars.Remove(this);
+        simManager.warIds.Remove(id);
         foreach (ulong stateId in participantIds)
         {
             State state = simManager.GetState(stateId);

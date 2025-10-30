@@ -3,69 +3,64 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-using System.Reflection.Metadata.Ecma335;
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class State : PopObject
 {
-    public string displayName { get; set; } = "Nation";
-    public string leaderTitle { get; set; } = "King";
-    public Color color { get; set; }
-    public Color displayColor;
-    public Color capitalColor;
-    public bool capitualated = false;
+    [Key(0)] public string displayName { get; set; } = "Nation";
+    [Key(1)] public string leaderTitle { get; set; } = "King";
+    [Key(2)] public Color color { get; set; }
+    [Key(3)] public Color displayColor;
+    [Key(4)] public Color capitalColor;
+    [Key(5)] public bool capitualated = false;
 
-    public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
+    [Key(6)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     [IgnoreMember] public List<Region> realmRegions = new List<Region>(); 
     
     [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
-    public List<ulong> regionsIDs { get; set; } = new List<ulong>();
+    [Key(7)] public List<ulong> regionsIDs { get; set; } = new List<ulong>();
     [IgnoreMember] public Region capital { get; set; }
-    public ulong capitalID;
-    public long manpower { get; set; } = 0;
-    public int occupiedLand { get; set; } = 0;
-    public float totalWealth { get; set; } = 0;
-    public float mobilizationRate { get; set; } = 0.3f;
-    public float poorTaxRate { get; set; } = 0.3f;
-    public float middleTaxRate { get; set; } = 0.1f;
-    public float richTaxRate { get; set; } = 0.05f;
-    public float tributeRate { get; set; } = 0.1f;
+    [Key(8)] public ulong capitalID;
+    [Key(9)] public long manpower { get; set; } = 0;
+    [Key(10)] public int occupiedLand { get; set; } = 0;
+    [Key(11)] public float totalWealth { get; set; } = 0;
+    [Key(12)] public float mobilizationRate { get; set; } = 0.3f;
+    [Key(13)] public float poorTaxRate { get; set; } = 0.3f;
+    [Key(14)] public float middleTaxRate { get; set; } = 0.1f;
+    [Key(15)] public float richTaxRate { get; set; } = 0.05f;
+    [Key(16)] public float tributeRate { get; set; } = 0.1f;
     [IgnoreMember] public List<State> vassals { get; set; } = new List<State>();
-    public List<ulong> vassalsIDs { get; set; }
+    [Key(17)] public List<ulong> vassalsIDs { get; set; }
     [IgnoreMember] public State liege { get; set; } = null;
-    public ulong liegeID;
+    [Key(18)] public ulong liegeID;
     [IgnoreMember] public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
-    public Dictionary<ulong, Relation> relationsIDs { get; set; }
+    [Key(19)] public Dictionary<ulong, Relation> relationsIDs { get; set; }
     [IgnoreMember] public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
-    public Dictionary<ulong, bool> warsIDs { get; set; }
+    [Key(20)] public Dictionary<ulong, bool> warsIDs { get; set; }
 
     //[IgnoreMember] public List<State> enemies { get; set; } = new List<State>();
-    public List<ulong> enemyIds { get; set; } = new List<ulong>();
-    [IgnoreMember]
-    public List<State> borderingStates { get; set; } = new List<State>();
-    public List<ulong> borderingStatesIDs { get; set; }
-    public int borderingRegions { get; set; } = 0;
-    public int externalBorderingRegions { get; set; }= 0;
-    public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
+    [Key(21)] public List<ulong> enemyIds { get; set; } = new List<ulong>();
+    
+    [IgnoreMember] public List<State> borderingStates { get; set; } = new List<State>();
+    [Key(22)] public List<ulong> borderingStatesIDs { get; set; }
+    [Key(23)] public int borderingRegions { get; set; } = 0;
+    [Key(24)] public int externalBorderingRegions { get; set; }= 0;
+    [Key(25)] public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
 
-    int monthsSinceElection = 0;
-    public Tech tech = new Tech();
+    [Key(26)] public int monthsSinceElection = 0;
+    [Key(27)] public Tech tech = new Tech();
 
-    public int maxSize = 1;
-    public bool bugged;
-    public bool collapsing;
-    public bool buggedTarget;
-
+    [Key(28)] public int maxSize = 1;
     // Government
-    public long wealth;
-    public Pop rulingPop;
-    public ulong? lastLeaderId = null;
-    public ulong? leaderId = null;
-    public List<ulong?> characterIds = new List<ulong?>();
-    public double stability = 1;
-    public double loyalty = 1;
+    [Key(29)] public long wealth;
+    [Key(30)] public Pop rulingPop;
+    [Key(31)] public ulong? lastLeaderId = null;
+    [Key(32)] public ulong? leaderId = null;
+    [Key(33)] public List<ulong?> characterIds = new List<ulong?>();
+    [Key(34)] public double stability = 1;
+    [Key(35)] public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
-    public uint timeAsVassal = 0;
+    [Key(36)] public uint timeAsVassal = 0;
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
@@ -506,11 +501,9 @@ public class State : PopObject
         return false;
     }
     #endregion
-    #endregion
     #region Naming
-        public void UpdateDisplayName()
+    public void UpdateDisplayName()
     {
-        bool useDemonym = true;
         string govtName;
         switch (government)
         {
@@ -520,12 +513,10 @@ public class State : PopObject
                     case Sovereignty.COLONY:
                         govtName = "Colony";
                         leaderTitle = "Administrator";
-                        useDemonym = false;
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Mandate";
                         leaderTitle = "Governor";
-                        useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Department";
@@ -553,17 +544,14 @@ public class State : PopObject
                     case Sovereignty.COLONY:
                         govtName = "Crown Colony";
                         leaderTitle = "Viceroy";
-                        useDemonym = false;
                         break;
                     case Sovereignty.PUPPET:
                         govtName = "Protectorate";
                         leaderTitle = "Regent";
-                        useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Duchy";
                         leaderTitle = "Duke";
-                        useDemonym = false;
                         break;
                     default:
                         govtName = "Principality";
@@ -578,10 +566,6 @@ public class State : PopObject
                             govtName = "Empire";
                             leaderTitle = "Emperor";
                         }
-                        else
-                        {
-                            useDemonym = false;
-                        }
                         break;
                 }
                 break;
@@ -595,12 +579,10 @@ public class State : PopObject
                     case Sovereignty.PUPPET:
                         govtName = "Client State";
                         leaderTitle = "Administrator";
-                        useDemonym = false;
                         break;
                     case Sovereignty.PROVINCE:
                         govtName = "Province";
                         leaderTitle = "Governor";
-                        useDemonym = false;
                         break;
                     default:
                         govtName = "State";
@@ -622,16 +604,7 @@ public class State : PopObject
                 govtName = "State";
                 break;
         }
-        string demonym = NameGenerator.GetDemonym(name);
-        if (useDemonym)
-        {
-            displayName = $"{demonym} {govtName}";
-        }
-        else
-        {
-            displayName = $"{govtName} of {name}";
-        }
-
+        displayName = $"{govtName} of {name}";
     }
     #region Government & Leaders
     public void SuccessionUpdate()
@@ -1049,7 +1022,7 @@ public class State : PopObject
         }
         return collectedVassals;
     }
- 
+
     public void RemoveOccupationFromState(State state)
     {
         foreach (Region region in regions)
@@ -1060,6 +1033,14 @@ public class State : PopObject
             }
         }
     }
+    #endregion
+    #region Encyclopedia
+    public override string GenerateDescription()
+    {
+        return base.GenerateDescription();
+    }
+
+    #endregion
     #endregion
 }   
 

@@ -1,10 +1,28 @@
-[gd_scene load_steps=6 format=3 uid="uid://bsxkj4ns68l28"]
+[gd_scene load_steps=8 format=3 uid="uid://bsxkj4ns68l28"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_ts4s4"]
 [ext_resource type="Script" uid="uid://bgunjnlv3hg16" path="res://Scripts/UI/SavesPanel.cs" id="2_fw0v8"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_qasot"]
 [ext_resource type="PackedScene" uid="uid://dpy6hp4i3relw" path="res://Scenes/save_button.tscn" id="3_morf0"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="5_qb7vq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qb7vq"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+bg_color = Color(0.1, 0.1, 0.1, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+expand_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qb7vq"]
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 0.0
 
 [node name="Save Selection" type="Control"]
 layout_mode = 3
@@ -30,6 +48,7 @@ offset_right = 460.0
 offset_bottom = 341.5
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_qb7vq")
 script = ExtResource("2_fw0v8")
 saveButtonScene = ExtResource("3_morf0")
 
@@ -56,16 +75,20 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -426.0
+offset_left = -460.0
 offset_top = -250.5
-offset_right = 429.0
+offset_right = 460.0
 offset_bottom = 283.5
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_qb7vq")
+horizontal_scroll_mode = 0
 
 [node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/ScrollContainer"]
 custom_minimum_size = Vector2(855, 100)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 
 [node name="Buttons" type="HBoxContainer" parent="SavesPanel"]
@@ -75,9 +98,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -318.5
+offset_left = -247.75
 offset_top = -47.0
-offset_right = 318.5
+offset_right = 247.75
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 18
@@ -85,6 +108,7 @@ alignment = 1
 
 [node name="Back" type="Button" parent="SavesPanel/Buttons"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
 theme_override_font_sizes/font_size = 30
 action_mode = 0
@@ -92,6 +116,7 @@ text = "Back"
 
 [node name="Load" type="Button" parent="SavesPanel/Buttons"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
 theme_override_font_sizes/font_size = 30
 action_mode = 0
@@ -99,6 +124,7 @@ text = "Load Save"
 
 [node name="Delete" type="Button" parent="SavesPanel/Buttons"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
 theme_override_font_sizes/font_size = 30
 action_mode = 0

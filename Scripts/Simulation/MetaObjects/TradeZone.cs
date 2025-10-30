@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using MessagePack;
-[MessagePackObject(keyAsPropertyName: true, AllowPrivate = true)]
+[MessagePackObject]
 public class TradeZone
 {
-    public ulong id;
+    [Key(0)] public ulong id;
     [IgnoreMember]
     public Region CoT { get; set; }
-    public ulong CoTID { get; set; }
+    [Key(1)] public ulong CoTID { get; set; }
     [IgnoreMember]
     public List<Region> regions { get; set; } = new List<Region>();
-    public List<ulong> regionsIDs { get; set; }
-    public Color color { get; set; }
+    [Key(2)] public List<ulong> regionsIDs { get; set; }
+    [Key(3)] public Color color { get; set; }
     [IgnoreMember]
     static Random rng = new Random();
     [IgnoreMember]
