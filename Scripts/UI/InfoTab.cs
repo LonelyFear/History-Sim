@@ -3,6 +3,7 @@ using System;
 
 public partial class InfoTab : VBoxContainer
 {
+	public static EncyclopediaManager manager;
 	[Export] Label objName;
 	[Export] Label objType;
 	[Export] RichTextLabel objDesc;
@@ -33,6 +34,9 @@ public partial class InfoTab : VBoxContainer
 		GetDescription();
 		GetStats();
 		GetHistory();
+		objDesc.MetaClicked += manager.OpenTab;
+		objHist.MetaClicked += manager.OpenTab;
+		objStats.MetaClicked += manager.OpenTab;
 	}
 	public void GetDescription()
     {

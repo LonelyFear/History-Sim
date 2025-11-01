@@ -205,18 +205,26 @@ public partial class TimeManager : Node
     {
         return (uint)(years * ticksPerYear);
     }
-    public string GetStringDate(uint tick = 0){
-        if (tick == 0){
+    public string GetStringDate(uint tick = 0, bool useMonth = false){
+        if (tick == 0)
+        {
             tick = ticks;
         }
-        string day = GetDay(tick).ToString("00");
-        string month = GetMonth(tick).ToString("00");
-        string year = GetYear(tick).ToString("0000");
-        string date = $"{month}/{day}/{year}";
-        if (daysPerTick >= ticksPerMonth)
+        string date = "";
+        if (useMonth)
         {
-            //date = $"{month}/{year}";
+            string month = months[GetMonth(tick) - 1];
+            string year = GetYear(tick).ToString();
+            date = $"{month} of Year {year}";   
+        } else
+        {
+            string day = GetDay(tick).ToString("00");
+            string month = GetMonth(tick).ToString("00");
+            string year = GetYear(tick).ToString("0000");
+            date = $"{month}/{day}/{year}";            
         }
+
+        
         return date;
     }
 }

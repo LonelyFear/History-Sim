@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using MessagePack;
 
 [MessagePackObject]
@@ -16,6 +17,29 @@ public class NamedObject
         string text = $"Name: {name}";
         text += $"\nID: {id}";
         return text;
+    }
+    public string GenerateUrlText(NamedObject obj, string text, string color = "orange")
+    {
+        string typeId = "sta";
+        switch (obj)
+        {
+            case State:
+                typeId = "sta";
+                break;
+            case War:
+                typeId = "war";
+                break;
+            case Character:
+                typeId = "cha";
+                break;
+            case Culture:
+                typeId = "cul";
+                break;
+            case Region:
+                typeId = "reg";
+                break;
+        }
+        return $"[color={color}][url={typeId}{obj.id}]{text}[/url][/color]";
     }
 }
 public enum ObjectType

@@ -36,8 +36,6 @@ public class SimManager
     
     public long worldPopulation { get; set; } = 0;
     public long highestPopulation { get; set; } = 0;
-    public long worldWorkforce { get; set; } = 0;
-    public long worldDependents { get; set; } = 0;
     public uint populatedRegions;
     public float maxWealth = 0;
     public float maxTradeWeight = 0;
@@ -661,7 +659,7 @@ public class SimManager
                 GD.PushError(e);
             }
         }
-        var partitioner = Partitioner.Create(states);
+        var partitioner = Partitioner.Create(states.ToArray());
         Parallel.ForEach(partitioner, (state) =>
         {
             state.CountStatePopulation();
@@ -696,6 +694,7 @@ public class SimManager
         {
             foreach (Character character in characters.ToArray())
             {
+                character.name = $"{character.firstName} {character.lastName}";
                 // Dead character stuff
                 if (character.dead)
                 {

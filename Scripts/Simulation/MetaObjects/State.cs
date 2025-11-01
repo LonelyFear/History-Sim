@@ -6,7 +6,8 @@ using MessagePack;
 [MessagePackObject]
 public class State : PopObject
 {
-    [Key(0)] public string displayName { get; set; } = "Nation";
+    [IgnoreMember] public string displayName= "Nation";
+    [IgnoreMember] public string govtName;
     [Key(1)] public string leaderTitle { get; set; } = "King";
     [Key(2)] public Color color { get; set; }
     [Key(3)] public Color displayColor;
@@ -504,7 +505,6 @@ public class State : PopObject
     #region Naming
     public void UpdateDisplayName()
     {
-        string govtName;
         switch (government)
         {
             case GovernmentType.REPUBLIC:
@@ -1037,7 +1037,23 @@ public class State : PopObject
     #region Encyclopedia
     public override string GenerateDescription()
     {
-        return base.GenerateDescription();
+        string desc = $"The {displayName} is a {govtName.ToLower()} in the simulation. It is ";
+        if ("aeiou".Contains(govtName[0]))
+        {
+            desc = $"The {displayName} is an {govtName.ToLower()} in the simulation. It is ";
+        }
+        switch (sovereignty)
+        {
+            case Sovereignty.INDEPENDENT:
+                desc += "an independent state. ";
+                break;
+            default:
+                desc += $"a vassal of the {GenerateUrlText(liege, liege.displayName)}. ";
+                break;
+        }
+        desc += $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
+        desc += $"The state is lead by {GenerateUrlText(simManager.GetCharacter(leaderId), simManager.GetCharacter(leaderId).name)}";
+        return desc;
     }
 
     #endregion

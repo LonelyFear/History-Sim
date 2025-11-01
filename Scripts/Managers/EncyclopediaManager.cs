@@ -18,9 +18,11 @@ public partial class EncyclopediaManager : CanvasLayer
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		InfoTab.manager = this;
 		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
 		encyclopediaMenu.TabClosePressed += CloseTab;
 		closeEncyclopediaButton.Pressed += CloseEncyclopedia;
+		
     }
 	public void OnSimStart()
 	{
@@ -35,11 +37,35 @@ public partial class EncyclopediaManager : CanvasLayer
 		timeManager.forcePause = true;
 	}
 	public void CloseEncyclopedia()
-    {
+	{
 		encyclopediaHolder.Visible = false;
 		playerCamera.controlEnabled = true;
 		gameUi.forceHide = false;
 		timeManager.forcePause = false;
+	}
+	public void OpenTab(Variant metaData)
+	{
+		string meta = metaData.ToString();
+		string type = meta[..3];
+		ulong id = ulong.Parse(meta[3..]);
+        switch (type)
+        {
+			case "sta":
+				OpenTab(ObjectType.STATE, id);
+				break;
+			case "reg":
+				OpenTab(ObjectType.REGION, id);
+				break;
+			case "cul":
+				OpenTab(ObjectType.CULTURE, id);
+				break;
+			case "cha":
+				OpenTab(ObjectType.CHARACTER, id);
+				break;
+			case "war":
+				OpenTab(ObjectType.WAR, id);
+				break;
+        }
     }
 	public void OpenTab(ObjectType objectType, ulong id)
 	{
@@ -94,6 +120,7 @@ public partial class EncyclopediaManager : CanvasLayer
 		InfoTab infoTab = infoTabs[id];
 		encyclopediaMenu.CurrentTab = 0;
 		encyclopediaMenu.CloseTab(infoTab);
+		infoTabs.Remove(id);
     }
 	public void OnObjectDeleted(ulong id)
 	{
@@ -103,6 +130,7 @@ public partial class EncyclopediaManager : CanvasLayer
 		}
 		InfoTab tab = infoTabs[id];
 		encyclopediaMenu.CloseTab(tab);
+		infoTabs.Remove(id);
     }
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)

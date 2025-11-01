@@ -55,7 +55,8 @@ theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
 text = "Description Goes here"
 fit_content = true
-autowrap_mode = 2
+meta_underlined = false
+hint_underlined = false
 
 [node name="HSeparator2" type="HSeparator" parent="."]
 layout_mode = 2

@@ -154,7 +154,40 @@ public class Character : NamedObject
             level = TraitLevel.EXTREMELY_LOW;
         }
         return level;
-    } 
+    }
+    #region Encyclopedia
+    public override string GenerateDescription()
+    {
+        string desc = $"{name} is a character living in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}. They ";
+        if (dead)
+        {
+            desc = $"{name} is a character who died in {sim.timeManager.GetStringDate(deathTick, true)}";
+        }
+        switch (role)
+        {
+            case CharacterRole.LEADER:
+                desc += $"are the {sim.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                break;
+            case CharacterRole.HEIR:
+                desc += $"are the heir to the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                break;
+            case CharacterRole.COMMANDER:
+                desc += $"serve as a commander in the army of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                break;
+            case CharacterRole.POLITICIAN:
+                desc += $"are a politician in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                break;
+            case CharacterRole.NOBLE:
+                desc += $"are a noble in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                break;
+            default:
+                desc += $"have no roles in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                break;
+        }
+        desc += $" They were born in {sim.timeManager.GetStringDate(birthTick, true)}, and they are {sim.timeManager.GetYear(sim.timeManager.ticks - birthTick)} years old. ";
+        return desc;
+    }
+    #endregion
 }
 public enum CharacterRole
 {

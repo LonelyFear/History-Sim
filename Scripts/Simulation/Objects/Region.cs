@@ -37,7 +37,7 @@ public class Region : PopObject
     [Key(23)] public float avgRainfall { get; set; }
     [Key(24)] public float avgElevation { get; set; }
     [Key(25)] public int landCount { get; set; }
-    [Key(26)] public int freeLand { get; set; } = 16;
+    [Key(26)] public int freeLand { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
     [Key(27)] public ulong occupierID { get; set; }
     [IgnoreMember] public State owner { get; set; } = null;
@@ -57,8 +57,8 @@ public class Region : PopObject
     [Key(36)] public bool frontier { get; set; }
     [Key(37)] public float arableLand { get; set; }
 
-    public static int populationPerLand = 500;
-    public static int farmersPerLand = 115;
+    [IgnoreMember] public static int populationPerLand = 500;
+    [IgnoreMember] public static int farmersPerLand = 115;
     #region Data
     public void PrepareForSave()
     {
@@ -577,7 +577,7 @@ public class Region : PopObject
     public override string GenerateDescription()
     {
         // Region position
-        string desc = $"This region located at {pos.X}, {pos.Y}. The region ";
+        string desc = $"{name} is a region located at {pos.X}, {pos.Y}. The region ";
         desc += (Pop.FromNativePopulation(population) > 0) ?
         // If the region is populated
         $"has a population of {Pop.FromNativePopulation(population):#,###0}. "
@@ -598,16 +598,16 @@ public class Region : PopObject
         {
             if (GetController() != owner)
             {
-                desc += $"[url=s{GetController().id}]{GetController().displayName}[/url] as occupied territory.";
+                desc += $"{GenerateUrlText(GetController(), GetController().displayName)} as occupied territory. ";
             } else
             {
-                desc += $"[url=s{owner.id}]{owner.displayName}[/url].";
+                desc += $"{GenerateUrlText(owner, owner.displayName)}. ";
             }
         }
         // If it is the capital add to description
         if (owner != null && owner.capital == this)
         {
-            desc += $"It is the capital of [url=s{owner.id}]{owner.displayName}[/url]";
+            desc += $"It is the capital of the {GenerateUrlText(owner, owner.displayName)}";
         }
         return desc;        
     }
