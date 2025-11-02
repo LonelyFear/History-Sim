@@ -43,10 +43,10 @@ public partial class SavesPanel : Panel
 
 			if (Utility.IsSaveValid(savePath))
 			{
-				// TODO: Fix save button throwing errors
 				FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
 				string saveText = saveDataFile.GetAsText(true);
-				GD.Print(saveText);
+				saveDataFile.Dispose();
+
 				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveText);
 				SaveButton save = saveButtonScene.Instantiate<SaveButton>();
 				save.saveData = saveData;
@@ -83,6 +83,7 @@ public partial class SavesPanel : Panel
 	{
 		if (selectedSave != null)
 		{
+			//OS.MoveToTrash
 			OS.MoveToTrash(saves[selectedSave].displayPath);
 			selectedSave = null;
 		}

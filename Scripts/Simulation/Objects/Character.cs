@@ -46,6 +46,7 @@ public class Character : NamedObject
     [Key(21)] public int empathy;
     [Key(22)] public int boldness;
     [Key(23)] public int temperment;
+    [Key(40)] public Gender gender = Gender.MALE;
 
     // Character Modifiers
 
@@ -158,33 +159,38 @@ public class Character : NamedObject
     #region Encyclopedia
     public override string GenerateDescription()
     {
-        string desc = $"{name} is a character living in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}. They ";
+        string[] pronouns = ["he", "she", "they"];
+        int intGender = (int)gender;
+
+        string[] toBe = ["is", "are"];
         if (dead)
         {
-            desc = $"{name} is a character who died in {sim.timeManager.GetStringDate(deathTick, true)}";
+            toBe = ["was", "were"];
         }
+        string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(birthTick, true)}. {pronouns[intGender].Capitalize()} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} ";
         switch (role)
         {
             case CharacterRole.LEADER:
-                desc += $"are the {sim.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                desc += $"the {sim.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.HEIR:
-                desc += $"are the heir to the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                desc += $"the heir to the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.COMMANDER:
-                desc += $"serve as a commander in the army of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                desc += $"a commander in the army of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.POLITICIAN:
-                desc += $"are a politician in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                desc += $"are a politician in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.NOBLE:
-                desc += $"are a noble in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                desc += $"a noble in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
                 break;
             default:
-                desc += $"have no roles in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}.";
+                desc += $"living in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
                 break;
         }
-        desc += $" They were born in {sim.timeManager.GetStringDate(birthTick, true)}, and they are {sim.timeManager.GetYear(sim.timeManager.ticks - birthTick)} years old. ";
+        desc += $", and {pronouns[intGender]} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(sim.timeManager.ticks - birthTick)} years old. ";
+        // Personality
         return desc;
     }
     #endregion
@@ -199,6 +205,13 @@ public enum CharacterRole
     CIVILIAN,
     FORMER_LEADER,
     DEAD,
+}
+
+public enum Gender
+{
+    MALE,
+    FEMALE,
+    ANY
 }
 
 public enum TraitLevel

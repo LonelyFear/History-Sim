@@ -27,7 +27,7 @@ public class Pop
     [Key(13)] public ulong cultureId { get; set; }
     [Key(14)] public SocialClass profession { get; set; } = SocialClass.FARMER;
 
-    [Key(15)] public Tech tech { get; set; } = new Tech();
+    [Key(15)] public Tech Tech { get; set; }
     [Key(16)] public uint batchId { get; set; } = 1;
 
     [Key(17)] public List<Character> characters { get; set; } = new List<Character>();
@@ -117,7 +117,7 @@ public class Pop
             return this;
         }
         // Makes a new pop with the new profession
-        Pop newWorkers = simManager.CreatePop(workforceDelta, dependentDelta, region, tech, culture, newSocialClass);
+        Pop newWorkers = simManager.CreatePop(workforceDelta, dependentDelta, region, Tech, culture, newSocialClass);
         // And removes the people who switched to the new profession
         ChangePopulation(-workforceDelta, -dependentDelta);
         // Land Stuff
@@ -145,15 +145,21 @@ public class Pop
     {
         double militaryTechChance = 0.0015;
         double societyTechChance = 0.0015;
-
+        double industryTechChance = 0.01;
+        Tech t = Tech;
         if (rng.NextDouble() < militaryTechChance)
         {
-            tech.militaryLevel++;
+            t.militaryLevel++;
         }
         if (rng.NextDouble() < societyTechChance)
         {
-            tech.societyLevel++;
-        }       
+            t.societyLevel++;
+        }
+        if (Tech.societyLevel >= 20 && Tech.militaryLevel >= 20 && rng.NextDouble() < industryTechChance)
+        {
+            t.industryLevel++;
+        }
+        Tech = t;
     }
     public void SocialClassTransitions()
     {
@@ -408,7 +414,7 @@ public class Pop
             }
             lock (simManager)
             {
-                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
+                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, Tech, culture, profession);
                 ChangePopulation(-movedWorkforce, -movedDependents);     
             }
         }
@@ -454,7 +460,7 @@ public class Pop
     }
     public long GetMaxPopulation()
     {
-        double techFactor = 1 + (tech.societyLevel * 0.5);
+        double techFactor = 1 + (Tech.societyLevel * 0.5);
         double wealthFactor = wealth * 10;
         return ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand / region.landCount)));
     }    

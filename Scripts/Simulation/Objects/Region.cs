@@ -6,8 +6,8 @@ using MessagePack;
 [MessagePackObject]
 public class Region : PopObject
 {
-    [Key(200)] public Tile[,] tiles { get; set; }
-    [Key(201)] public Biome[,] biomes { get; set; }
+    [IgnoreMember] public Tile[,] tiles { get; set; }
+    [IgnoreMember] public Biome[,] biomes { get; set; }
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
     [Key(4)] public int tradeWeight { get; set; } = 0;
@@ -32,10 +32,10 @@ public class Region : PopObject
     [Key(19)] public ulong tradeLinkID { get; set; }
 
     [Key(20)] public Vector2I pos { get; set; }
-    [Key(21)] public float navigability { get; set; }
-    [Key(22)] public float avgTemperature { get; set; }
-    [Key(23)] public float avgRainfall { get; set; }
-    [Key(24)] public float avgElevation { get; set; }
+    [IgnoreMember] public float navigability { get; set; }
+    [IgnoreMember] public float avgTemperature { get; set; }
+    [IgnoreMember] public float avgRainfall { get; set; }
+    [IgnoreMember] public float avgElevation { get; set; }
     [Key(25)] public int landCount { get; set; }
     [Key(26)] public int freeLand { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
@@ -46,16 +46,14 @@ public class Region : PopObject
     // Demographics
     [Key(29)] public long maxFarmers { get; set; } = 0;
     [Key(30)] public long maxSoldiers { get; set; } = 0;
-    [IgnoreMember]
-    [Key(31)] public Region[] borderingRegions { get; set; } = new Region[4];
+    [IgnoreMember] public Region[] borderingRegions { get; set; } = new Region[4];
     [Key(32)] public ulong[] borderingRegionsIDs { get; set; }
-    [IgnoreMember]
-    [Key(33)] public Region[] habitableBorderingRegions { get; set; } = new Region[4];
+    [IgnoreMember] public Region[] habitableBorderingRegions { get; set; } = new Region[4];
     [Key(34)] public ulong[] habitableBorderingRegionsIDs { get; set; }
 
     [Key(35)] public bool border { get; set; }
     [Key(36)] public bool frontier { get; set; }
-    [Key(37)] public float arableLand { get; set; }
+    [IgnoreMember] public float arableLand { get; set; }
 
     [IgnoreMember] public static int populationPerLand = 500;
     [IgnoreMember] public static int farmersPerLand = 115;
@@ -171,7 +169,7 @@ public class Region : PopObject
             }
 
             owner.rulingPop = rulingPop;
-            owner.tech = rulingPop.tech;
+            owner.tech = rulingPop.Tech;
             owner.UpdateDisplayName();
         }
     }
@@ -191,7 +189,7 @@ public class Region : PopObject
             }
 
             owner.rulingPop = rulingPop;
-            owner.tech = rulingPop.tech;
+            owner.tech = rulingPop.Tech;
             // Sets Leader
             simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
 

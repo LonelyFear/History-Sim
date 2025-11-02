@@ -98,7 +98,13 @@ public partial class TimeManager : Node
                             monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
                         }
                         TickGame();
-                        mapManager.UpdateRegionColors(simManager.paintedRegions);
+                        try
+                        {
+                            mapManager.UpdateRegionColors(simManager.paintedRegions);
+                        } catch (Exception e)
+                        {
+                            GD.PushError(e);
+                        }
                     }
 
                 }
@@ -215,7 +221,7 @@ public partial class TimeManager : Node
         {
             string month = months[GetMonth(tick) - 1];
             string year = GetYear(tick).ToString();
-            date = $"{month} of Year {year}";   
+            date = $"{month} of {year}";   
         } else
         {
             string day = GetDay(tick).ToString("00");

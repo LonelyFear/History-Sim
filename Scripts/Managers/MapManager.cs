@@ -50,7 +50,6 @@ public partial class MapManager : Node2D
 
     public void UpdateRegionColors(IEnumerable<Region> regions)
     {
-        // TODO: Fix null region bug
         var partitioner = Partitioner.Create(regions);
         Parallel.ForEach(partitioner, (region) =>
         {
@@ -365,10 +364,10 @@ public partial class MapManager : Node2D
                     float socAverage = 0;
                     foreach (Pop pop in region.pops.ToArray())
                     {
-                        socAverage += pop.tech.societyLevel;
-                        milAverage += pop.tech.militaryLevel;
-                        sciAverage += pop.tech.scienceLevel;
-                        indAverage += pop.tech.industryLevel;
+                        socAverage += pop.Tech.societyLevel;
+                        milAverage += pop.Tech.militaryLevel;
+                        sciAverage += pop.Tech.scienceLevel;
+                        indAverage += pop.Tech.industryLevel;
                     }
                     indAverage /= region.pops.Count;
                     milAverage /= region.pops.Count;

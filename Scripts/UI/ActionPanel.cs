@@ -76,6 +76,7 @@ public partial class ActionPanel : Panel
             {
                 FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
                 string saveText = saveDataFile.GetAsText(true);
+                saveDataFile.Dispose();
                 overwriteButton.AddItem($"Overwrite '{JsonSerializer.Deserialize<SaveData>(saveText).saveName}'");
                 saveOverwritePaths.Add(savePath);
             }
@@ -118,8 +119,9 @@ public partial class ActionPanel : Panel
         world.SaveTerrainToFile(saveDir);
         FileAccess save = FileAccess.Open($"{saveDir}/save_data.json", FileAccess.ModeFlags.Write);
         GD.Print(JsonSerializer.Serialize(data));
-        save.StoreString(JsonSerializer.Serialize(data));        
-        sim.SaveSimToFile(saveDir);        
+        save.StoreString(JsonSerializer.Serialize(data));
+        sim.SaveSimToFile(saveDir);
+        save.Dispose();    
     }
 
     public void OnUiToggle(bool toggle)

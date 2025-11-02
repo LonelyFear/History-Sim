@@ -382,7 +382,7 @@ public class State : PopObject
                                 EndWar(war);
                                 foreach (State vassal in simManager.GetState(war.primaryDefenderId).vassals.ToArray())
                                 {
-                                    simManager.GetState(war.primaryDefenderId).RemoveVassal(vassal);
+                                    //simManager.GetState(war.primaryDefenderId).RemoveVassal(vassal);
                                 }
                             }
 
@@ -419,10 +419,7 @@ public class State : PopObject
                             {
                                 // War ends
                                 EndWar(war);
-                                foreach (State vassal in simManager.GetState(war.primaryDefenderId).vassals.ToArray())
-                                {
-                                    simManager.GetState(war.primaryDefenderId).RemoveVassal(vassal);
-                                }
+
                                 simManager.DeleteState(simManager.GetState(war.primaryDefenderId));                                
                             }
                         }
@@ -450,11 +447,12 @@ public class State : PopObject
                     break;
             }
         }
-    }    
+    }
     public void EndWar(War war)
     {
         war.EndWar();
     }
+    #region State Collapse
     public bool StateCollapse()
     {
         foreach (var warPair in wars)
@@ -473,7 +471,6 @@ public class State : PopObject
         {
             if (vassals.Count > 0)
             {
-                GD.Print("Civil War");
                 State mainRebel = null;
                 foreach (State vassal in vassals)
                 {
@@ -492,7 +489,7 @@ public class State : PopObject
             }
             else
             {
-                if (rng.NextDouble() < 0.01)
+                if (rng.NextDouble() < 0.001)
                 {
                     simManager.DeleteState(this);
                     return true;
@@ -501,6 +498,7 @@ public class State : PopObject
         }
         return false;
     }
+    #endregion
     #endregion
     #region Naming
     public void UpdateDisplayName()
@@ -778,6 +776,7 @@ public class State : PopObject
         {
             region.owner = null;
             regions.Remove(region);
+            pops.RemoveAll(p => p.region == region);
         }
     }
     public void UpdateStability()
@@ -831,6 +830,11 @@ public class State : PopObject
         }
         if (regions.Count > liege.regions.Count)
         {
+            if (liege.regions.Count <= 0)
+            {
+                timeManager.forcePause = true;
+                GD.Print(liege.displayName);
+            }
             loyaltyTarget -= (regions.Count - liege.regions.Count)/liege.regions.Count * 0.5;
         }
         loyaltyTarget -= liege.tributeRate;

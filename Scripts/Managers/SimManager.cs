@@ -50,6 +50,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
     [IgnoreMember] public List<State> states { get; set; } = new List<State>();
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
+    [IgnoreMember] public List<ulong> deletedStateIds = new List<ulong>();
     [IgnoreMember] public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
     [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZonesIds { get; set; } = new Dictionary<ulong, TradeZone>();
     [IgnoreMember] public List<Character> characters { get; set; } = new List<Character>();
@@ -116,7 +117,7 @@ public class SimManager
         tick = timeManager.ticks;
 
         var resolver = CompositeResolver.Create(
-            [new Vector2IFormatter(), new ColorFormatter(), new NodePathFormatter(), new GDStringNameFormatter()],
+            [new Vector2IFormatter(), new ColorFormatter()],
             [StandardResolver.Instance]
         );
 
@@ -124,19 +125,19 @@ public class SimManager
 
         FileAccess simSave = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         simSave.StoreBuffer(MessagePackSerializer.Serialize(this, options));
-        FileAccess regionsSave = FileAccess.Open($"{path}/region_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess regionsSave = FileAccess.Open($"{path}/regions.pxsave", FileAccess.ModeFlags.Write);
         regionsSave.StoreBuffer(MessagePackSerializer.Serialize(regionIds, options));
-        FileAccess popsSave = FileAccess.Open($"{path}/pop_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess popsSave = FileAccess.Open($"{path}/pops.pxsave", FileAccess.ModeFlags.Write);
         popsSave.StoreBuffer(MessagePackSerializer.Serialize(popsIds, options));
-        FileAccess statesSave = FileAccess.Open($"{path}/state_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess statesSave = FileAccess.Open($"{path}/states.pxsave", FileAccess.ModeFlags.Write);
         statesSave.StoreBuffer(MessagePackSerializer.Serialize(statesIds, options));
-        FileAccess cultureSave = FileAccess.Open($"{path}/culture_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess cultureSave = FileAccess.Open($"{path}/cultures.pxsave", FileAccess.ModeFlags.Write);
         cultureSave.StoreBuffer(MessagePackSerializer.Serialize(cultureIds, options));
-        FileAccess tradeSave = FileAccess.Open($"{path}/tradeZone_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess tradeSave = FileAccess.Open($"{path}/trade_zones.pxsave", FileAccess.ModeFlags.Write);
         tradeSave.StoreBuffer(MessagePackSerializer.Serialize(tradeZonesIds, options));
-        FileAccess charactersSave = FileAccess.Open($"{path}/character_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess charactersSave = FileAccess.Open($"{path}/characters.pxsave", FileAccess.ModeFlags.Write);
         charactersSave.StoreBuffer(MessagePackSerializer.Serialize(charactersIds, options));
-        FileAccess warsSave = FileAccess.Open($"{path}/wars_data.pxsave", FileAccess.ModeFlags.Write);
+        FileAccess warsSave = FileAccess.Open($"{path}/wars.pxsave", FileAccess.ModeFlags.Write);
         warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
     }
     public static SimManager LoadSimFromFile(string path)
@@ -155,13 +156,13 @@ public class SimManager
         SimManager sim = MessagePackSerializer.Deserialize<SimManager>(FileAccess.GetFileAsBytes($"{path}/sim_data.pxsave"), options);
 
         // Loads Sim Stuffs
-        sim.regionIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Region>>(FileAccess.GetFileAsBytes($"{path}/region_data.pxsave"), options);
-        sim.popsIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Pop>>(FileAccess.GetFileAsBytes($"{path}/pop_data.pxsave"), options);
-        sim.statesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, State>>(FileAccess.GetFileAsBytes($"{path}/state_data.pxsave"), options);
-        sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/culture_data.pxsave"), options);
-        sim.tradeZonesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/tradeZone_data.pxsave"), options);
-        sim.charactersIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/character_data.pxsave"), options);
-        sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars_data.pxsave"), options);
+        sim.regionIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Region>>(FileAccess.GetFileAsBytes($"{path}/regions.pxsave"), options);
+        sim.popsIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Pop>>(FileAccess.GetFileAsBytes($"{path}/pops.pxsave"), options);
+        sim.statesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, State>>(FileAccess.GetFileAsBytes($"{path}/states.pxsave"), options);
+        sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/cultures.pxsave"), options);
+        sim.tradeZonesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/trade_zones.pxsave"), options);
+        sim.charactersIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
+        sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
 
         sim.simLoadedFromSave = true;
         return sim;
@@ -178,10 +179,25 @@ public class SimManager
         cultures = [.. cultureIds.Values];
         wars = [.. warIds.Values];
         tradeZones = [.. tradeZonesIds.Values];
+        characters = [.. charactersIds.Values];
         
         foreach (Region region in regions)
         {
             region.LoadFromSave();
+            // Adds tiles and biomes
+            region.tiles = new Tile[tilesPerRegion, tilesPerRegion];
+            region.biomes = new Biome[tilesPerRegion, tilesPerRegion];
+            for (int tx = 0; tx < tilesPerRegion; tx++)
+            {
+                for (int ty = 0; ty < tilesPerRegion; ty++)
+                {
+                    // Adds subregion to tile
+                    Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
+                    region.tiles[tx, ty] = tile;
+                    // Adds biomes to tile
+                    region.biomes[tx, ty] = tile.biome;
+                }
+            }
             // Calc average fertility
             region.CalcAverages();
             // Checks habitability
@@ -609,16 +625,17 @@ public class SimManager
             }
             if (state.rulingPop != null)
             {
-                state.tech = state.rulingPop.tech;
+                state.tech = state.rulingPop.Tech;
             }
             state.GetRealmBorders();
             state.Capitualate();
         }
         foreach (State state in states.ToArray())
         {
+
             if (state.rulingPop != null)
             {
-                state.maxSize = 6 + state.rulingPop.tech.societyLevel;
+                state.maxSize = 6 + state.rulingPop.Tech.societyLevel;
             }
 
             state.age += TimeManager.ticksPerMonth;
@@ -638,7 +655,6 @@ public class SimManager
 
                 state.UpdateCapital();
 
-                
                 state.RelationsUpdate();
                 state.UpdateDiplomacy();
                 state.EndWars();
@@ -808,8 +824,8 @@ public class SimManager
         {
             id = getID(),
             batchId = currentBatch,
-            tech = tech.Clone(),
             profession = profession,
+            Tech = tech,
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
@@ -939,12 +955,15 @@ public class SimManager
             mapManager.selectedMetaObj = null;
             mapManager.UpdateRegionColors(regions);
         }
-
+        if (state.liege != null)
+        {
+            state.liege.RemoveVassal(state);
+        }
         foreach (War war in state.wars.Keys)
         {
             war.RemoveParticipant(state.id);
         }
-        foreach (State vassal in state.vassals)
+        foreach (State vassal in state.vassals.ToArray())
         {
             state.RemoveVassal(vassal);
         }
@@ -954,9 +973,11 @@ public class SimManager
         }
         foreach (ulong characterId in state.characterIds.ToArray())
         {
-            charactersIds[characterId].LeaveState();
+            GetCharacter(characterId).LeaveState();
         }
+
         objectDeleted.Invoke(state.id);
+        deletedStateIds.Add(state.id);
         states.Remove(state);
         statesIds.Remove(state.id);
     }
