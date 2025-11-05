@@ -29,9 +29,6 @@ public class PopObject : NamedObject
     [IgnoreMember] public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     [Key(108)] public Dictionary<ulong, long> culturesIds;
     [IgnoreMember] public static Random rng = new Random();
-    
-    [IgnoreMember] public static SimManager simManager;
-    
     [IgnoreMember] public Culture largestCulture = null;
     [Key(109)] public ulong largestCultureId;
 
@@ -43,9 +40,9 @@ public class PopObject : NamedObject
     }
     public void LoadPopObjectFromSave()
     {
-        pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => simManager.GetPop(p)).ToList();
-        largestCulture = largestCultureId == 0 ? null : simManager.GetCulture(largestCultureId);
-        cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => simManager.GetCulture(kv.Key), kv => kv.Value);
+        pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => objectManager.GetPop(p)).ToList();
+        largestCulture = largestCultureId == 0 ? null : objectManager.GetCulture(largestCultureId);
+        cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => objectManager.GetCulture(kv.Key), kv => kv.Value);
     }
     public void CountPopulation()
     {

@@ -31,8 +31,8 @@ public class Pop
     [Key(16)] public uint batchId { get; set; } = 1;
 
     [Key(17)] public List<Character> characters { get; set; } = new List<Character>();
-    [IgnoreMember]
-    public static SimManager simManager;
+    //[IgnoreMember] public static SimManager simManager;
+    [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] public static Random rng = new Random();
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
@@ -46,8 +46,8 @@ public class Pop
     {
         //GD.Print(regionId);
         //GD.Print(simManager.GetRegion(regionId));
-        region = simManager.GetRegion(regionId);
-        culture = simManager.GetCulture(cultureId);
+        region = objectManager.GetRegion(regionId);
+        culture = objectManager.GetCulture(cultureId);
     }
     public void ChangeWorkforce(long amount)
     {
@@ -117,7 +117,7 @@ public class Pop
             return this;
         }
         // Makes a new pop with the new profession
-        Pop newWorkers = simManager.CreatePop(workforceDelta, dependentDelta, region, Tech, culture, newSocialClass);
+        Pop newWorkers = objectManager.CreatePop(workforceDelta, dependentDelta, region, Tech, culture, newSocialClass);
         // And removes the people who switched to the new profession
         ChangePopulation(-workforceDelta, -dependentDelta);
         // Land Stuff
@@ -143,8 +143,8 @@ public class Pop
 
     public void TechnologyUpdate()
     {
-        double militaryTechChance = 0.0015;
-        double societyTechChance = 0.0015;
+        double militaryTechChance = 0.002;
+        double societyTechChance = 0.002;
         double industryTechChance = 0.01;
         Tech t = Tech;
         if (rng.NextDouble() < militaryTechChance)
@@ -412,11 +412,8 @@ public class Pop
             {
                 movedDependents = dependents;
             }
-            lock (simManager)
-            {
-                Pop npop = simManager.CreatePop(movedWorkforce, movedDependents, destination, Tech, culture, profession);
-                ChangePopulation(-movedWorkforce, -movedDependents);     
-            }
+            Pop npop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, Tech, culture, profession);
+            ChangePopulation(-movedWorkforce, -movedDependents);     
         }
     }
     public float GetDeathRate()

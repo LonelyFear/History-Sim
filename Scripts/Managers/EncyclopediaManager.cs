@@ -13,6 +13,7 @@ public partial class EncyclopediaManager : CanvasLayer
 	[Export] PlayerCamera playerCamera;
 	[Export] Button closeEncyclopediaButton;
 	public SimManager simManager;
+	public ObjectManager objectManager;
 	Dictionary<ulong, InfoTab> infoTabs = new Dictionary<ulong, InfoTab>();
 
 	// Called when the node enters the scene tree for the first time.
@@ -27,6 +28,7 @@ public partial class EncyclopediaManager : CanvasLayer
 	public void OnSimStart()
 	{
 		simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+		objectManager = simManager.objectManager;
 		simManager.objectDeleted += OnObjectDeleted;
 	}
 	public void OpenEncyclopedia()
@@ -81,19 +83,19 @@ public partial class EncyclopediaManager : CanvasLayer
 		switch (objectType)
         {
 			case ObjectType.STATE:
-				obj = simManager.GetState(id);
+				obj = objectManager.GetState(id);
 				break;
 			case ObjectType.REGION:
-				obj = simManager.GetRegion(id);
+				obj = objectManager.GetRegion(id);
 				break;
 			case ObjectType.CULTURE:
-				obj = simManager.GetCulture(id);
+				obj = objectManager.GetCulture(id);
 				break;
 			case ObjectType.CHARACTER:
-				obj = simManager.GetCharacter(id);
+				obj = objectManager.GetCharacter(id);
 				break;
 			case ObjectType.WAR:
-				obj = simManager.GetWar(id);
+				obj = objectManager.GetWar(id);
 				break;
         }
 		newTab.loadedObj = obj;

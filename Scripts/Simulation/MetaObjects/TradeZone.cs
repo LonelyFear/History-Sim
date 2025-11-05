@@ -16,8 +16,8 @@ public class TradeZone
     [Key(3)] public Color color { get; set; }
     [IgnoreMember]
     static Random rng = new Random();
-    [IgnoreMember]
-    public static SimManager simManager;
+    [IgnoreMember] public static SimManager simManager;
+    [IgnoreMember] public static ObjectManager objectManager;
     public void PrepareForSave()
     {
         CoTID = CoT != null ? CoT.id : 0;
@@ -25,13 +25,13 @@ public class TradeZone
     }
     public void LoadFromSave()
     {
-        CoT = CoTID == 0 ? null : simManager.GetRegion(CoTID);
-        regions = regionsIDs.Select(r => simManager.GetRegion(r)).ToList();
+        CoT = CoTID == 0 ? null : objectManager.GetRegion(CoTID);
+        regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToList();
     }
     public TradeZone(){}
     public TradeZone(Region region)
     {
-        id = simManager.getID();
+        id = objectManager.getID();
         color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
         CoT = region;
         regions = [CoT];

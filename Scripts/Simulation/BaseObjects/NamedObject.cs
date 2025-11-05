@@ -4,6 +4,8 @@ using MessagePack;
 [MessagePackObject]
 public class NamedObject
 {
+    [IgnoreMember] public static SimManager simManager;
+    [IgnoreMember] public static ObjectManager objectManager;
     [Key(400)] public ulong id { get; set; }
     [Key(401)] public string name { get; set; }
     [Key(402)]public string description { get; set; }

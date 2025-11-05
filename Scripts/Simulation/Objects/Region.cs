@@ -154,7 +154,7 @@ public class Region : PopObject
     {
         if (professions[SocialClass.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
         {
-            simManager.CreateState(this);
+            objectManager.CreateState(this);
 
             owner.population = population;
             owner.workforce = workforce;
@@ -177,7 +177,7 @@ public class Region : PopObject
     {
         if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
         {
-            simManager.CreateState(this);
+            objectManager.CreateState(this);
 
             owner.population = population;
             owner.workforce = workforce;
@@ -191,7 +191,7 @@ public class Region : PopObject
             owner.rulingPop = rulingPop;
             owner.tech = rulingPop.Tech;
             // Sets Leader
-            simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
+            objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
 
             owner.UpdateDisplayName();            
         }
@@ -377,7 +377,7 @@ public class Region : PopObject
         tradeLink = selectedLink;
         if (tradeLink != null)
         {
-            tradeLink.tradeIncome += (baseWealth * 0.2f) + tradeIncome;
+            tradeLink.tradeIncome += (baseWealth * 1) + tradeIncome;
         }
     }
     public int GetTradeWeight()
@@ -541,8 +541,8 @@ public class Region : PopObject
                         continue;
                     }
                     Vector2I next = new Vector2I(Mathf.PosMod(current.X + dx, SimManager.worldSize.X), Mathf.PosMod(current.Y + dy, SimManager.worldSize.Y));
-                    float newCost = 1 - simManager.GetRegion(next).navigability;
-                    if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && simManager.GetRegion(next).habitable)
+                    float newCost = 1 - objectManager.GetRegion(next).navigability;
+                    if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && objectManager.GetRegion(next).habitable)
                     {
                         frontier.Enqueue(next, newCost);
                         distFrontier.Enqueue(currentDist + 1, newCost);
@@ -558,7 +558,7 @@ public class Region : PopObject
             Vector2I pos = goal.pos;
             while (pos != start.pos)
             {
-                path.Add(simManager.GetRegion(pos));
+                path.Add(objectManager.GetRegion(pos));
                 pos = flow[pos];
             }
         }

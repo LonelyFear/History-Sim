@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using MessagePack;
@@ -20,8 +19,8 @@ public class SimManager
     
     // Not Exported
     [IgnoreMember] public SimNodeManager node;
-    [IgnoreMember] public Node2D terrainMap;    
-    public ulong currentID = 0;
+    [IgnoreMember] public Node2D terrainMap;
+    public ObjectManager objectManager = new ObjectManager();
     public uint tick;
 
     public Tile[,] tiles;
@@ -62,9 +61,10 @@ public class SimManager
 
     // Misc
     public uint currentBatch = 2;
+    public ulong currentId = 0;
     [IgnoreMember] public bool simLoadedFromSave = false;
 
-    [IgnoreMember] Random rng = new Random();
+    [IgnoreMember] public Random rng = new Random();
 
     // Events
     public delegate void ObjectDeletedEvent(ulong id);
@@ -88,22 +88,6 @@ public class SimManager
     {
         return tilesPerRegion * (regionPos * (terrainMap.Scale * 16));
     }
-    public Region GetRegion(int x, int y)
-    {
-        int lx = Mathf.PosMod(x, worldSize.X);
-        int ly = Mathf.PosMod(y, worldSize.Y);
-
-        int index = (lx * worldSize.Y) + ly;
-        return regions[index];
-    }
-    public Region GetRegion(Vector2I pos)
-    {
-        int lx = Mathf.PosMod(pos.X, worldSize.X);
-        int ly = Mathf.PosMod(pos.Y, worldSize.Y);
-
-        int index = (lx * worldSize.Y) + ly;
-        return regions[index];
-    }
     #endregion
     #region Saving & Loading
     public void SaveSimToFile(string path)
@@ -122,7 +106,6 @@ public class SimManager
         );
 
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
-
         FileAccess simSave = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         simSave.StoreBuffer(MessagePackSerializer.Serialize(this, options));
         FileAccess regionsSave = FileAccess.Open($"{path}/regions.pxsave", FileAccess.ModeFlags.Write);
@@ -298,7 +281,7 @@ public class SimManager
                 // Creates a region
                 Region newRegion = new Region()
                 {
-                    id = getID()
+                    id = objectManager.getID()
                 };
 
                 newRegion.tiles = new Tile[tilesPerRegion, tilesPerRegion];
@@ -333,11 +316,17 @@ public class SimManager
     }
     void AssignSimManager()
     {
-        TradeZone.simManager = this;
-        PopObject.simManager = this;
+        ObjectManager.simManager = this;
+        ObjectManager.timeManager = timeManager;
+
+        NamedObject.simManager = this;
+        NamedObject.objectManager = objectManager;
         PopObject.timeManager = timeManager;
-        Pop.simManager = this;
-        War.simManager = this;
+
+        TradeZone.simManager = this;
+        TradeZone.objectManager = objectManager;
+
+        Pop.objectManager = objectManager;
         Character.sim = this;
     }
     public void OnWorldgenFinished()
@@ -380,7 +369,7 @@ public class SimManager
                     {
                         continue;
                     }
-                    Region r = GetRegion(region.pos.X + dx, region.pos.Y + dy);
+                    Region r = objectManager.GetRegion(region.pos.X + dx, region.pos.Y + dy);
                     region.borderingRegions[i] = r;
                     i++;
                     if (r.habitable)
@@ -411,7 +400,7 @@ public class SimManager
                     {
                         continue;
                     }
-                    Region r = GetRegion(region.pos.X + dx, region.pos.Y + dy);
+                    Region r = objectManager.GetRegion(region.pos.X + dx, region.pos.Y + dy);
                     if (r.habitable)
                     {
                         region.habitableBorderingRegions[i] = r;
@@ -431,9 +420,9 @@ public class SimManager
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
                 long startingPopulation = Pop.ToNativePopulation(10000);
-                Culture culture = CreateCulture();
+                Culture culture = objectManager.CreateCulture();
 
-                CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
+                objectManager.CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
             }
         }
     }
@@ -459,7 +448,7 @@ public class SimManager
             ulong startTime = Time.GetTicksMsec();
             if (pop.region == null || pop.population <= Pop.ToNativePopulation(1))
             {
-                DestroyPop(pop);
+                objectManager.DestroyPop(pop);
             }
             else
             {
@@ -616,7 +605,7 @@ public class SimManager
         {
             if (state.regions.Count < 1)
             {
-                DeleteState(state);
+                objectManager.DeleteState(state);
                 continue;
             }
             if (state.StateCollapse())
@@ -714,7 +703,7 @@ public class SimManager
                 // Dead character stuff
                 if (character.dead)
                 {
-                    DeleteCharacter(character);
+                    objectManager.DeleteCharacter(character);
                     continue;
                 }
 
@@ -773,311 +762,4 @@ public class SimManager
 
     }
     #endregion
-
-    #region Creation
-    public Region GetRegion(ulong? id)
-    {
-        try
-        {
-            return regionIds[(ulong)id];
-        }
-        catch
-        {
-            //GD.PushWarning(e);
-            return null;
-        }
-    }
-
-    public TradeZone GetTradeZone(ulong? id)
-    {
-        try
-        {
-            return tradeZonesIds[(ulong)id];
-        }
-        catch
-        {
-            //GD.PushWarning(e);
-            return null;
-        }
-    }
-    public War GetWar(ulong? id)
-    {
-        try
-        {
-            return warIds[(ulong)id];
-        }
-        catch
-        {
-            //GD.PushWarning(e);
-            return null;
-        }
-    }
-    #region Pops Creation
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
-    {
-        currentBatch++;
-        if (currentBatch > 12)
-        {
-            currentBatch = 2;
-        }
-        Pop pop = new Pop()
-        {
-            id = getID(),
-            batchId = currentBatch,
-            profession = profession,
-            Tech = tech,
-            workforce = workforce,
-            dependents = dependents,
-            population = workforce + dependents,
-        };
-        //pop.ChangePopulation(workforce, dependents);
-        lock (pops)
-        {
-            pops.Add(pop);
-        }
-        lock (popsIds)
-        {
-            popsIds.Add(pop.id, pop);
-        }
-        lock (culture)
-        {
-            culture.AddPop(pop, culture);
-        }
-        lock (region)
-        {
-            region.AddPop(pop, region);
-        }
-
-        return pop;
-    }
-
-    public void DestroyPop(Pop pop)
-    {
-        try
-        {
-            if (pop.region != null && pop.region.owner != null && pop.region.owner.rulingPop == pop)
-            {
-                lock (pop.region.owner)
-                {
-                    pop.region.owner.rulingPop = null;
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-
-        pop.ClaimLand(-pop.ownedLand);
-        lock (pop.region)
-        {
-            pop.region.RemovePop(pop, pop.region);
-        }
-        lock (pop.culture)
-        {
-            pop.culture.RemovePop(pop, pop.culture);
-        }
-        lock (pops)
-        {
-            pops.Remove(pop);
-        }
-        lock (popsIds)
-        {
-            popsIds.Remove(pop.id);
-        }
-    }
-    public Pop GetPop(ulong? id)
-    {
-        try
-        {
-            return popsIds[(ulong)id];
-        }
-        catch
-        {
-            //GD.PushWarning(e);
-            return null;
-        }
-    }
-    #endregion
-    #region Cultures Creation
-    public Culture CreateCulture()
-    {
-        float r = rng.NextSingle();
-        float g = rng.NextSingle();
-        float b = rng.NextSingle();
-        Culture culture = new Culture()
-        {
-            id = getID(),
-            name = "Culture",
-            color = new Color(r, g, b),
-            tickFounded = timeManager.ticks
-        };
-
-        cultures.Add(culture);
-        cultureIds.Add(culture.id, culture);
-        return culture;
-    }
-    public Culture GetCulture(ulong? id)
-    {
-        try {
-            return cultureIds[(ulong)id];
-        } catch {
-            //GD.PushWarning(e);
-            return null;
-        }        
-    }
-    #endregion
-    #region States Creation
-    public void CreateState(Region region)
-    {
-        if (region.owner == null)
-        {
-            float r = Mathf.Lerp(0.2f, 1f, rng.NextSingle());
-            float g = Mathf.Lerp(0.2f, 1f, rng.NextSingle());
-            float b = Mathf.Lerp(0.2f, 1f, rng.NextSingle());
-            State state = new State()
-            {
-                id = getID(),
-                name = NameGenerator.GenerateNationName(),
-                color = new Color(r, g, b),
-                capital = region,
-                tickFounded = timeManager.ticks
-            };
-            state.AddRegion(region);
-            states.Add(state);
-            statesIds.Add(state.id, state);
-        }
-    }
-    public void DeleteState(State state)
-    {
-        if (mapManager.selectedMetaObj == state)
-        {
-            mapManager.selectedMetaObj = null;
-            mapManager.UpdateRegionColors(regions);
-        }
-        if (state.liege != null)
-        {
-            state.liege.RemoveVassal(state);
-        }
-        foreach (War war in state.wars.Keys)
-        {
-            war.RemoveParticipant(state.id);
-        }
-        foreach (State vassal in state.vassals.ToArray())
-        {
-            state.RemoveVassal(vassal);
-        }
-        foreach (Region region in state.regions.ToArray())
-        {
-            state.RemoveRegion(region);
-        }
-        foreach (ulong characterId in state.characterIds.ToArray())
-        {
-            GetCharacter(characterId).LeaveState();
-        }
-
-        objectDeleted.Invoke(state.id);
-        deletedStateIds.Add(state.id);
-        states.Remove(state);
-        statesIds.Remove(state.id);
-    }
-    public State GetState(ulong? id)
-    {
-        try {
-            return statesIds[(ulong)id];
-        } catch {
-            //GD.PushWarning(e);
-            return null;
-        }
-    }
-    #endregion
-    #region Characters Creation
-    public Character GetCharacter(ulong? id)
-    {
-        if (id == null)
-        {
-            return null;
-        }
-        else
-        {
-            if (charactersIds.ContainsKey((ulong)id))
-            {
-                return charactersIds[(ulong)id];
-            }
-            return null;
-        }
-    }
-    public Character GetCharacter(ulong id)
-    {
-        if (charactersIds.ContainsKey(id))
-        {
-            return charactersIds[id];
-        }
-        return null;
-    }
-    public Character CreateCharacter(string firstName, string lastName, uint age, State state, CharacterRole role)
-    {
-        Character character = new Character()
-        {
-            // Gives character id
-            id = getID(),
-
-            // Names character
-            firstName = firstName,
-            lastName = lastName,
-
-            age = age,
-            birthTick = timeManager.ticks - age,
-
-            // Randomizes Character Personality
-            charisma = rng.Next(0, 101),
-            intellect = rng.Next(0, 101),
-            greed = rng.Next(0, 101),
-            ambition = rng.Next(0, 101),
-            empathy = rng.Next(0, 101),
-            boldness = rng.Next(0, 101),
-            temperment = rng.Next(0, 101),
-            sociability = rng.Next(0, 101),
-        };
-        // Adds character to state and gives it role
-        character.JoinState(state.id);
-        character.SetRole(role);
-
-        // Documents character
-        characters.Add(character);
-        charactersIds.Add(character.id, character);
-        return character;
-    }
-    public void DeleteCharacter(Character character)
-    {
-
-        character.LeaveState();
-        foreach (ulong charId in character.childIds)
-        {
-            Character child = charactersIds[charId];
-            child.parentId = null;
-        }
-        if (character.parentId != null)
-        {
-            Character parent = charactersIds[(ulong)character.parentId];
-            parent.childIds.Remove(character.id);
-        }
-        objectDeleted.Invoke(character.id);
-        characters.Remove(character);
-        charactersIds.Remove(character.id);             
-    }
-    #endregion
-    #region Diplomacy Creation
-    #endregion
-    #endregion
-
-    public ulong getID()
-    {
-        currentID++;
-        if (currentID == ulong.MaxValue)
-        {
-            currentID = 1;
-        }
-        return currentID;
-    }
 }

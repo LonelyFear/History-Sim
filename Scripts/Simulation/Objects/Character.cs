@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Quic;
 using Godot;
 using MessagePack;
 [MessagePackObject]
@@ -25,27 +26,35 @@ public class Character : NamedObject
     [Key(5)] public uint deathTick;
     [Key(6)] public ulong? stateId = null;
     [Key(7)] public CharacterRole role = CharacterRole.DEAD;
-    [Key(8)] public ulong? parentId = null;
+    [Key(8)] public List<ulong> parentIds = new List<ulong>();
     [Key(9)] public List<ulong?> childIds = new List<ulong?>();
-    [Key(10)] public int mood = 100;
+    [Key(10)] public Dictionary<ulong, int> relationsIds = new Dictionary<ulong, int>();
     // Health
     [Key(11)] public int health = 100;
     [Key(12)] public float healthDecreaseChance = 0.075f;
 
     // Character Skills
-    [Key(13)] public int charisma;
-    [Key(14)] public int intellect;
-    [Key(15)] public int military;
-    [Key(16)] public int stewardship;
-    [Key(17)] public int combat;
-
+    [Key(31)] public Dictionary<string, int> skills = new Dictionary<string, int>
+    {
+        {"charisma", 50 },
+        {"intellect", 50 },
+        {"military", 50 },
+        {"empathy", 50 },
+        {"stewardship", 50 },
+        {"combat", 50 }
+    };
     // Character Personality
-    [Key(18)] public int sociability;
-    [Key(19)] public int greed;
-    [Key(20)] public int ambition;
-    [Key(21)] public int empathy;
-    [Key(22)] public int boldness;
-    [Key(23)] public int temperment;
+    [Key(30)]
+    public Dictionary<string, int> personality = new Dictionary<string, int>
+    {
+        {"sociability", 50 },
+        {"greed", 50 },
+        {"ambition", 50 },
+        {"empathy", 50 },
+        {"boldness", 50 },
+        {"temperment", 50 },
+        {"attractiveness", 50}
+    };
     [Key(40)] public Gender gender = Gender.MALE;
 
     // Character Modifiers
@@ -167,26 +176,54 @@ public class Character : NamedObject
         {
             toBe = ["was", "were"];
         }
-        string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(birthTick, true)}. {pronouns[intGender].Capitalize()} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} ";
+        string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(birthTick, true)} to ";
+
+        if (parentIds.Count <= 0)
+        {
+            desc += "unknown parents";
+        } else
+        {
+            for (int i = 0; i < parentIds.Count; i++)
+            {
+                Character parent = objectManager.GetCharacter(parentIds[i]);
+                if (parent != null)
+                {
+                    desc += GenerateUrlText(parent, parent.name);
+                } else
+                {
+                    desc += "an unknown parent";
+                }
+                
+                if (i + 2 < parentIds.Count)
+                {
+                    desc += ", ";
+                } else if (i + 1 < parentIds.Count)
+                {
+                    desc += " and ";
+                }
+            }         
+        }
+
+        desc += $". {pronouns[intGender].Capitalize()} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} ";
         switch (role)
         {
             case CharacterRole.LEADER:
-                desc += $"the {sim.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
+                desc += $"the {objectManager.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.HEIR:
-                desc += $"the heir to the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
+                desc += $"the heir to the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.COMMANDER:
-                desc += $"a commander in the army of the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
+                desc += $"a commander in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.POLITICIAN:
-                desc += $"are a politician in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
+                desc += $"are a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
             case CharacterRole.NOBLE:
-                desc += $"a noble in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
+                desc += $"a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
             default:
-                desc += $"living in the {GenerateUrlText(sim.GetState(stateId), sim.GetState(stateId).displayName)}";
+                desc += $"living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
         }
         desc += $", and {pronouns[intGender]} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(sim.timeManager.ticks - birthTick)} years old. ";

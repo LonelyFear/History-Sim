@@ -77,8 +77,8 @@ public class State : PopObject
     public void LoadFromSave()
     {
         LoadPopObjectFromSave();
-        capital = simManager.GetRegion(capitalID);
-        regions = regionsIDs.Select(r => simManager.GetRegion(r)).ToList();
+        capital = objectManager.GetRegion(capitalID);
+        regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToList();
         vassals = vassalsIDs == null ? new List<State>() : vassalsIDs.Select(r => simManager.statesIds[r]).ToList();
         liege = liegeID == 0 ? null : simManager.statesIds[liegeID];
         relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);
@@ -131,7 +131,7 @@ public class State : PopObject
     {
         foreach (var pair in relations)
         {
-            if (!borderingStates.Concat(enemyIds.Select(id => simManager.GetState(id)).ToList()).Contains(pair.Key))
+            if (!borderingStates.Concat(enemyIds.Select(id => objectManager.GetState(id)).ToList()).Contains(pair.Key))
             {
                 relations.Remove(pair.Key);
                 continue;
@@ -145,7 +145,7 @@ public class State : PopObject
                 pair.Value.truce -= (int)TimeManager.ticksPerMonth;
             }
         }
-        foreach (State state in borderingStates.Concat(enemyIds.Select(id => simManager.GetState(id)).ToList()))
+        foreach (State state in borderingStates.Concat(enemyIds.Select(id => objectManager.GetState(id)).ToList()))
         {
             if (state != null && !relations.ContainsKey(state))
             {
@@ -310,11 +310,11 @@ public class State : PopObject
             War war = warPair.Key;
             bool isAttacker = warPair.Value;
 
-            if (war.primaryAgressorId != id && simManager.GetState(war.primaryDefenderId) != this)
+            if (war.primaryAgressorId != id && objectManager.GetState(war.primaryDefenderId) != this)
             {
                 continue;
             }
-            if (simManager.GetState(war.primaryAgressorId).sovereignty != Sovereignty.INDEPENDENT || simManager.GetState(war.primaryDefenderId).sovereignty != Sovereignty.INDEPENDENT)
+            if (objectManager.GetState(war.primaryAgressorId).sovereignty != Sovereignty.INDEPENDENT || objectManager.GetState(war.primaryDefenderId).sovereignty != Sovereignty.INDEPENDENT)
             {
                 EndWar(war);
                 continue;
@@ -328,14 +328,14 @@ public class State : PopObject
                     {
                         if (war.primaryAgressorId == id)
                         {
-                            warEndChance = Mathf.Max(relations[simManager.GetState(war.primaryDefenderId)].opinion, 0) * 0.01;
+                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryDefenderId)].opinion, 0) * 0.01;
                             // Attacker
-                            if (rng.NextDouble() < warEndChance || simManager.GetState(war.primaryDefenderId).capitualated)
+                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryDefenderId).capitualated)
                             {
                                 EndWar(war);
                                 foreach (ulong defenderId in war.defenderIds)
                                 {
-                                    State defender = simManager.GetState(defenderId);
+                                    State defender = objectManager.GetState(defenderId);
                                     if (!defender.capitualated || defender.capital.occupier == null)
                                     {
                                         continue;
@@ -346,14 +346,14 @@ public class State : PopObject
                         }
                         else
                         {
-                            warEndChance = Mathf.Max(relations[simManager.GetState(war.primaryAgressorId)].opinion, 0) * 0.01;
+                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryAgressorId)].opinion, 0) * 0.01;
                             // Defender
-                            if (rng.NextDouble() < warEndChance || simManager.GetState(war.primaryAgressorId).capitualated)
+                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryAgressorId).capitualated)
                             {
                                 EndWar(war);
                                 foreach (ulong attackerId in war.attackerIds)
                                 {
-                                    State attacker = simManager.GetState(attackerId);
+                                    State attacker = objectManager.GetState(attackerId);
                                     if (!attacker.capitualated)
                                     {
                                         return;
@@ -374,13 +374,13 @@ public class State : PopObject
                     {
                         if (isAttacker)
                         {
-                            warEndChance = Mathf.Max(relations[simManager.GetState(war.primaryDefenderId)].opinion, 0) * 0.01;
+                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryDefenderId)].opinion, 0) * 0.01;
                             // Rebel Leader
-                            if (rng.NextDouble() < warEndChance || simManager.GetState(war.primaryDefenderId).capitualated)
+                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryDefenderId).capitualated)
                             {
                                 // War Ends
                                 EndWar(war);
-                                foreach (State vassal in simManager.GetState(war.primaryDefenderId).vassals.ToArray())
+                                foreach (State vassal in objectManager.GetState(war.primaryDefenderId).vassals.ToArray())
                                 {
                                     //simManager.GetState(war.primaryDefenderId).RemoveVassal(vassal);
                                 }
@@ -389,15 +389,15 @@ public class State : PopObject
                         }
                         else
                         {
-                            warEndChance = Mathf.Max(relations[simManager.GetState(war.primaryAgressorId)].opinion, 0) * 0.01;
+                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryAgressorId)].opinion, 0) * 0.01;
                             // State
-                            if (rng.NextDouble() < warEndChance || simManager.GetState(war.primaryAgressorId).capitualated)
+                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryAgressorId).capitualated)
                             {
                                 // War ends
                                 EndWar(war);
                                 foreach (ulong rebelId in war.attackerIds)
                                 {
-                                    State rebel = simManager.GetState(rebelId);
+                                    State rebel = objectManager.GetState(rebelId);
                                     AddVassal(rebel);
                                 }
                             }
@@ -415,22 +415,22 @@ public class State : PopObject
                         if (isAttacker)
                         {
                             // War Leader
-                            if (simManager.GetState(war.primaryDefenderId).capitualated)
+                            if (objectManager.GetState(war.primaryDefenderId).capitualated)
                             {
                                 // War ends
                                 EndWar(war);
 
-                                simManager.DeleteState(simManager.GetState(war.primaryDefenderId));                                
+                                objectManager.DeleteState(objectManager.GetState(war.primaryDefenderId));                                
                             }
                         }
                         else
                         {
-                            if (simManager.GetState(war.primaryAgressorId).capitualated)
+                            if (objectManager.GetState(war.primaryAgressorId).capitualated)
                             {
                                 EndWar(war);
                                 foreach (ulong rebelId in war.attackerIds)
                                 {
-                                    State rebel = simManager.GetState(rebelId);
+                                    State rebel = objectManager.GetState(rebelId);
                                     if (rebel != null)
                                     {
                                         AddVassal(rebel);
@@ -491,7 +491,7 @@ public class State : PopObject
             {
                 if (rng.NextDouble() < 0.001)
                 {
-                    simManager.DeleteState(this);
+                    objectManager.DeleteState(this);
                     return true;
                 }
             }
@@ -607,8 +607,8 @@ public class State : PopObject
     #region Government & Leaders
     public void SuccessionUpdate()
     {
-        Character lastLeader = simManager.GetCharacter(lastLeaderId);
-        Character leader = simManager.GetCharacter(leaderId);
+        Character lastLeader = objectManager.GetCharacter(lastLeaderId);
+        Character leader = objectManager.GetCharacter(leaderId);
         Character newLeader = null;
         switch (government)
         {
@@ -621,8 +621,7 @@ public class State : PopObject
                 // Right now just has a character with the same last name of the last guy
                 if (lastLeader != null && lastLeader.dead)
                 {
-                    newLeader = simManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastLeader.lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
-                    SetLeader(newLeader.id);
+                    newLeader = objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastLeader.lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
                 }
                 break;
             case GovernmentType.AUTOCRACY:
@@ -789,14 +788,14 @@ public class State : PopObject
             stabilityTarget -= 0.25;
         }
 
-        Character leader = simManager.GetCharacter(leaderId);
+        Character leader = objectManager.GetCharacter(leaderId);
         if (leader == null)
         {
             stabilityTarget -= 0.25;
         } else
         {
-            stabilityTarget += (leader.stewardship - 50f) / 200;
-            stabilityTarget += (leader.empathy - 50f) / 400;
+            stabilityTarget += (leader.skills["stewardship"] - 50f) / 200;
+            stabilityTarget += (leader.personality["empathy"] - 50f) / 400;
         }
 
         //stabilityTarget += totalWealth * 0.0001;
@@ -833,6 +832,7 @@ public class State : PopObject
             if (liege.regions.Count <= 0)
             {
                 timeManager.forcePause = true;
+                simManager.mapManager.selectedMetaObj = liege;
                 GD.Print(liege.displayName);
             }
             loyaltyTarget -= (regions.Count - liege.regions.Count)/liege.regions.Count * 0.5;
@@ -1056,7 +1056,7 @@ public class State : PopObject
                 break;
         }
         desc += $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
-        desc += $"The state is lead by {GenerateUrlText(simManager.GetCharacter(leaderId), simManager.GetCharacter(leaderId).name)}";
+        desc += $"The state is lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}";
         return desc;
     }
 
