@@ -28,16 +28,6 @@ public class TradeZone
         CoT = CoTID == 0 ? null : objectManager.GetRegion(CoTID);
         regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToList();
     }
-    public TradeZone(){}
-    public TradeZone(Region region)
-    {
-        id = objectManager.getID();
-        color = new Color(rng.NextSingle(), rng.NextSingle(), rng.NextSingle());
-        CoT = region;
-        regions = [CoT];
-        simManager.tradeZones.Add(this);
-        simManager.tradeZonesIds.Add(id, this);      
-    }
     public void AddRegion(Region region)
     {
         if (region.tradeZone != null && region.tradeZone != this)
@@ -58,20 +48,10 @@ public class TradeZone
             regions.Remove(region);
             if (region == CoT)
             {
-                DestroyZone();
+                objectManager.DeleteTradeZone(this);
             }
         }
     }
-    public void DestroyZone()
-    {
-        foreach (Region region in regions.ToArray())
-        {
-            RemoveRegion(region);
-        }
-        simManager.tradeZones.Remove(this);
-        simManager.tradeZonesIds.Remove(id);     
-    }
-
     public int GetZoneSize()
     {
         return regions.Count;

@@ -33,7 +33,8 @@ public partial class TabManager : TabBar
 	}
 	public void CloseTab(Control tab)
 	{
-		RemoveTab(openTabs.IndexOf(tab));
+		CallDeferred("removeTab", [openTabs.IndexOf(tab)]);
+		//RemoveTab(openTabs.IndexOf(tab));
 		openTabs.Remove(tab);
 		tab.QueueFree();
 	}

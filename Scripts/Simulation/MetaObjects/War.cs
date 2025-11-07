@@ -17,88 +17,62 @@ public class War : NamedObject
     [Key(6)] public uint tickStarted;
     [Key(7)] public uint age;
     [Key(8)] public uint tickEnded;
-    public War(){}
-    public War(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
+    public void InitializeWar()
     {
-        if (agressorLeader == defenderLeader || objectManager.GetState(agressorLeader) == null || objectManager.GetState(defenderLeader) == null)
-        {
-            return;
-        }
-        id = objectManager.getID();
-        foreach (State state in atk)
-        {
-            if (objectManager.GetState(state.id) != null)
-            {
-                attackerIds.Add(state.id);
-            }
-        }
-        foreach (State state in def)
-        {
-            if (objectManager.GetState(state.id) != null)
-            {
-                defenderIds.Add(state.id);
-            }
-        }
-        this.warType = warType;        
-        primaryAgressorId = agressorLeader;
-        primaryDefenderId = defenderLeader;
 
-        objectManager.GetState(primaryAgressorId).wars[this] = true;
-        objectManager.GetState(primaryAgressorId).enemyIds.AddRange(attackerIds);
-        participantIds.Add(primaryAgressorId);
-        attackerIds.Add(primaryAgressorId);
+    }
+    public void InitWarLead(bool isAttacker)
+    {
+        ulong warLead = isAttacker ? primaryAgressorId : primaryDefenderId;
+        ulong enemyWarLead = isAttacker ? primaryDefenderId : primaryAgressorId;
 
-        objectManager.GetState(primaryDefenderId).wars[this] = false;
-        objectManager.GetState(primaryDefenderId).enemyIds.AddRange(attackerIds);
-        participantIds.Add(primaryDefenderId);
-        defenderIds.Add(primaryDefenderId);
+        List<ulong> allies = isAttacker ? attackerIds : defenderIds;
+        List<ulong> enemies = isAttacker ? defenderIds : attackerIds;
+        objectManager.GetState(warLead).diplomacy.warIds[id] = isAttacker;
+        objectManager.GetState(warLead).diplomacy.enemyIds.AddRange(enemies);
+        participantIds.Add(warLead);
+        allies.Add(warLead);  
 
-        objectManager.GetState(primaryAgressorId).EstablishRelations(objectManager.GetState(primaryDefenderId), -5);
-        objectManager.GetState(primaryDefenderId).EstablishRelations(objectManager.GetState(primaryAgressorId), -5);
-
-        foreach (ulong stateId in attackerIds)
+        objectManager.GetState(warLead).diplomacy.EstablishRelations(enemyWarLead, -5);      
+    }
+    public void InitEnemies(bool isAttacker)
+    {
+        ulong enemyWarLead = isAttacker ? primaryDefenderId : primaryAgressorId;
+        List<ulong> targets = isAttacker ? attackerIds : defenderIds;
+        List<ulong> enemies = isAttacker ? defenderIds : attackerIds;
+        foreach (ulong stateId in targets)
         {
             State state = objectManager.GetState(stateId);
-            if (!participantIds.Contains(stateId) && !attackerIds.Contains(stateId))
+            if (!participantIds.Contains(stateId)&& !targets.Contains(stateId))
             {
-                state.enemyIds.AddRange(defenderIds);
-                state.wars[this] = true;
+                state.diplomacy.enemyIds.AddRange(enemies);
+                state.diplomacy.warIds[id] = false;
                 participantIds.Add(stateId);
-                state.EstablishRelations(objectManager.GetState(primaryDefenderId), -5);                
+                state.diplomacy.EstablishRelations(enemyWarLead, -5);                
             }
         }
-        foreach (ulong stateId in defenderIds)
-        {
-            State state = objectManager.GetState(stateId);
-            if (!participantIds.Contains(stateId)&& !defenderIds.Contains(stateId))
-            {
-                state.enemyIds.AddRange(attackerIds);
-                state.wars[this] = false;
-                participantIds.Add(stateId);
-                state.EstablishRelations(objectManager.GetState(primaryAgressorId), -5);                
-            }
-        }
+    }
+    public void NameWar()
+    {
         switch (warType)
         {
             case WarType.CONQUEST:
                 string[] warNames = { "War", "Conflict" };
-                name = $"{objectManager.GetState(agressorLeader).name}-{objectManager.GetState(defenderLeader).name} {warNames.PickRandom()}";
+                name = $"{objectManager.GetState(primaryAgressorId).name}-{objectManager.GetState(primaryDefenderId).name} {warNames.PickRandom()}";
                 if (rng.NextSingle() < 0.25f)
                 {
                     warNames = ["Invasion of"];
-                    name = $"{NameGenerator.GetDemonym(objectManager.GetState(agressorLeader).name)} {warNames.PickRandom()} {objectManager.GetState(defenderLeader).name}";
+                    name = $"{NameGenerator.GetDemonym(objectManager.GetState(primaryAgressorId).name)} {warNames.PickRandom()} {objectManager.GetState(primaryDefenderId).name}";
                 }
                 break;
             case WarType.CIVIL_WAR:
-                name = $"{NameGenerator.GetDemonym(objectManager.GetState(defenderLeader).name)} Civil War";
+                name = $"{NameGenerator.GetDemonym(objectManager.GetState(primaryDefenderId).name)} Civil War";
                 break;
             case WarType.REVOLT:
                 warNames = ["Revolution", "Uprising", "Rebellion", "Revolt"];
-                name = $"{NameGenerator.GetDemonym(objectManager.GetState(agressorLeader).name)} {warNames.PickRandom()}";
+                name = $"{NameGenerator.GetDemonym(objectManager.GetState(primaryAgressorId).name)} {warNames.PickRandom()}";
                 break;
-        }     
-        simManager.wars.Add(this);
-        simManager.warIds.Add(id, this);   
+        }
     }
     public void AddParticipant(ulong stateId, bool attacker)
     {
@@ -107,49 +81,55 @@ public class War : NamedObject
         State state = objectManager.GetState(stateId);
         if (attacker && !attackerIds.Contains(stateId))
         {
-            state.enemyIds.AddRange(attackerIds);
+            state.diplomacy.enemyIds.AddRange(attackerIds);
             isInWar = true;
         }
         else if (!defenderIds.Contains(stateId))
         {
-            state.enemyIds.AddRange(attackerIds);
+            state.diplomacy.enemyIds.AddRange(attackerIds);
             isInWar = true;
         }
         if (isInWar)
         {
-            state.wars.Add(this, attacker);
+            state.diplomacy.warIds.Add(id, attacker);
             participantIds.Add(stateId);
         }
     }
     public void RemoveParticipant(ulong stateId)
     {
         State state = objectManager.GetState(stateId);
+
+        // Removes from participants list
         if (participantIds.Contains(stateId))
         {
-            state.wars.Remove(this);
+            state.diplomacy.warIds.Remove(id);
             participantIds.Remove(stateId);
         }
+
+        // Removes enemies and sided participation
         if (attackerIds.Contains(stateId))
         {
             attackerIds.Remove(stateId);
+            foreach (ulong defenderId in defenderIds)
+            {
+                State defender = objectManager.GetState(defenderId);
+                defender.diplomacy.enemyIds.Remove(stateId);
+            }
         }
-        if (defenderIds.Contains(stateId))
+        else if (defenderIds.Contains(stateId))
         {
             defenderIds.Remove(stateId);
+            foreach (ulong attackerId in attackerIds)
+            {
+                State attacker = objectManager.GetState(attackerId);
+                attacker.diplomacy.enemyIds.Remove(stateId);
+            }
         }
+
         if (attackerIds.Count < 1 || defenderIds.Count < 1 || primaryAgressorId == stateId || primaryDefenderId == stateId)
         {
-            EndWar();
+            objectManager.EndWar(this);
         }
     }
-    public void EndWar()
-    {
-        simManager.wars.Remove(this);
-        simManager.warIds.Remove(id);
-        foreach (ulong stateId in participantIds)
-        {
-            State state = objectManager.GetState(stateId);
-            state.wars.Remove(this);
-        }
-    }
+
 }

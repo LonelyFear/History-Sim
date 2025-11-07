@@ -272,7 +272,7 @@ public class Pop
         {
             State state = region.owner;
             happinessTarget = 1;
-            happinessTarget -= state.wars.Count * 0.05;
+            happinessTarget -= state.diplomacy.warIds.Count * 0.05;
 
             if (culture != state.GetRulingCulture())
             {
@@ -323,7 +323,7 @@ public class Pop
             {
                 loyaltyTarget -= 0.25;
             }
-            loyaltyTarget -= liege.wars.Count * 0.05;
+            loyaltyTarget -= liege.diplomacy.warIds.Count * 0.05;
             loyaltyTarget -= (1 - happiness) * 0.2f;
             loyaltyTarget *= liege.stability;
             loyaltyTarget -= liege.tributeRate;

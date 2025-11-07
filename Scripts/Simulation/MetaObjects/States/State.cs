@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
+using System.Data.Common;
 [MessagePackObject]
 public class State : PopObject
 {
@@ -23,31 +24,29 @@ public class State : PopObject
     [Key(8)] public ulong capitalID;
     [Key(9)] public long manpower { get; set; } = 0;
     [Key(10)] public int occupiedLand { get; set; } = 0;
+    // Taxes & Wealth
     [Key(11)] public float totalWealth { get; set; } = 0;
     [Key(12)] public float mobilizationRate { get; set; } = 0.3f;
     [Key(13)] public float poorTaxRate { get; set; } = 0.3f;
     [Key(14)] public float middleTaxRate { get; set; } = 0.1f;
     [Key(15)] public float richTaxRate { get; set; } = 0.05f;
     [Key(16)] public float tributeRate { get; set; } = 0.1f;
+    // Lieges & Vassals
     [IgnoreMember] public List<State> vassals { get; set; } = new List<State>();
     [Key(17)] public List<ulong> vassalsIDs { get; set; }
     [IgnoreMember] public State liege { get; set; } = null;
     [Key(18)] public ulong liegeID;
-    [IgnoreMember] public Dictionary<State, Relation> relations { get; set; } = new Dictionary<State, Relation>();
-    [Key(19)] public Dictionary<ulong, Relation> relationsIDs { get; set; }
-    [IgnoreMember] public Dictionary<War, bool> wars { get; set; } = new Dictionary<War, bool>();
-    [Key(20)] public Dictionary<ulong, bool> warsIDs { get; set; }
-
-    //[IgnoreMember] public List<State> enemies { get; set; } = new List<State>();
-    [Key(21)] public List<ulong> enemyIds { get; set; } = new List<ulong>();
-    
+    // Alliances
+    [Key(37)] public List<ulong> allianceIds = new List<ulong>();
+    // Diplomacy
+    [Key(40)] public DiplomacyManager diplomacy = new DiplomacyManager();
+    // Borders & Sovereignty
     [IgnoreMember] public List<State> borderingStates { get; set; } = new List<State>();
     [Key(22)] public List<ulong> borderingStatesIDs { get; set; }
     [Key(23)] public int borderingRegions { get; set; } = 0;
     [Key(24)] public int externalBorderingRegions { get; set; }= 0;
     [Key(25)] public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
 
-    [Key(26)] public int monthsSinceElection = 0;
     [Key(27)] public Tech tech = new Tech();
 
     [Key(28)] public int maxSize = 1;
@@ -69,8 +68,8 @@ public class State : PopObject
         regionsIDs = regions.Select(r => r.id).ToList();
         vassalsIDs = vassals.Count > 0 ?vassals.Select(r => r.id).ToList() : null;
         liegeID = liege != null ? liege.id : 0;
-        relationsIDs = relations.Count > 0 ? relations.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
-        warsIDs = wars.Count > 0 ? wars.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
+        //relationsIDs = relations.Count > 0 ? relations.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
+        //warsIDs = wars.Count > 0 ? wars.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
         //enemyIds = enemies.Count > 0 ? enemies.Select(r => r.id).ToList() : null;
         borderingStatesIDs = borderingStates.Count > 0 ? borderingStates.Select(r => r.id).ToList() : null;
     }
@@ -81,8 +80,9 @@ public class State : PopObject
         regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToList();
         vassals = vassalsIDs == null ? new List<State>() : vassalsIDs.Select(r => simManager.statesIds[r]).ToList();
         liege = liegeID == 0 ? null : simManager.statesIds[liegeID];
-        relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);
-        wars = warsIDs == null ? new Dictionary<War, bool>() : warsIDs.ToDictionary(kv => simManager.warIds[kv.Key], kv => kv.Value);
+        diplomacy.LoadFromSave();
+        //relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);
+        //wars = warsIDs == null ? new Dictionary<War, bool>() : warsIDs.ToDictionary(kv => simManager.warIds[kv.Key], kv => kv.Value);
         //enemies = enemyIds == null ? new List<State>() : enemyIds.Select(r => simManager.statesIds[r]).ToList();
         borderingStates = borderingStatesIDs == null ? new List<State>() : borderingStatesIDs.Select(r => simManager.statesIds[r]).ToList();
     }
@@ -109,69 +109,6 @@ public class State : PopObject
         }
     }
     #region Diplomacy
-    public void UpdateEnemies()
-    {
-        List<ulong> atWarWith = new List<ulong>();
-        foreach (var pair in wars)
-        {
-            War war = pair.Key;
-            bool attacker = pair.Value;
-            if (attacker)
-            {
-                atWarWith.AddRange(war.defenderIds);
-            }
-            else
-            {
-                atWarWith.AddRange(war.attackerIds);
-            }
-        }
-        enemyIds = atWarWith;
-    }
-    public void RelationsUpdate()
-    {
-        foreach (var pair in relations)
-        {
-            if (!borderingStates.Concat(enemyIds.Select(id => objectManager.GetState(id)).ToList()).Contains(pair.Key))
-            {
-                relations.Remove(pair.Key);
-                continue;
-            }
-            if (enemyIds.Contains(pair.Key.id))
-            {
-                pair.Value.truce += (int)(TimeManager.ticksPerMonth / 2f);
-            }
-            else
-            {
-                pair.Value.truce -= (int)TimeManager.ticksPerMonth;
-            }
-        }
-        foreach (State state in borderingStates.Concat(enemyIds.Select(id => objectManager.GetState(id)).ToList()))
-        {
-            if (state != null && !relations.ContainsKey(state))
-            {
-                EstablishRelations(state);
-            }
-        }
-    }
-    public void EstablishRelations(State state, int opinion = 0)
-    {
-        if (state == this)
-        {
-            return;
-        }
-
-        if (state != null && !relations.Keys.Contains(state))
-        {
-            relations.Add(state, new Relation()
-            {
-                opinion = opinion
-            });
-        }
-        else
-        {
-            relations[state].opinion = opinion;
-        }
-    }
 
     public void GetRealmBorders()
     {
@@ -196,40 +133,9 @@ public class State : PopObject
             }
         }
     }
-
-    public void UpdateDiplomacy()
-    {
-        foreach (var pair in relations)
-        {
-            State state = pair.Key;
-            Relation relations = pair.Value;
-            if (liege != state && !vassals.Contains(state))
-            {
-                float relationChangeChance = 0.5f;
-                float relationDamageChance = 0.5f;
-                if (enemyIds.Contains(state.id))
-                {
-                    relationChangeChance *= 0.75f;
-                }
-                if (rng.NextSingle() < relationChangeChance)
-                {
-                    if (rng.NextSingle() < relationDamageChance)
-                    {
-                        relations.ChangeOpinion(-1);
-                    }
-                    else
-                    {
-                        relations.ChangeOpinion(1);
-                    }
-                }
-            }
-        }
-    }
-    
-    #region Wars
+    #region State Collapse
     public void Capitualate()
     {
-        
         if (capital.occupier != null)
         {
             if (!capitualated)
@@ -248,216 +154,12 @@ public class State : PopObject
         {
             capitualated = false;
         }
-    }    
-    public void StartWars()
-    {
-        try
-        {
-            foreach (var pair in relations.ToArray())
-            {
-                State state = pair.Key;
-                Relation relation = pair.Value;
-                bool cantStartWar = state == this && enemyIds.Contains(state.id) || relation.truce >= 0 || state.GetHighestLiege() == this || state.sovereignty != Sovereignty.INDEPENDENT;
-                if (cantStartWar)
-                {
-                    continue;
-                }
-                // Sovereign Wars
-                if (state.sovereignty == Sovereignty.INDEPENDENT && relation.opinion < 0 && liege != state)
-                {
-                    float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, relation.opinion / (float)Relation.minOpinionValue);
-                    if (rng.NextSingle() < warDeclarationChance)
-                    {
-                        //GD.Print("war");
-                        //GD.Print("State in realm: " + GetRealmStates().Contains(this));
-                        _ = new War([this], [state], WarType.CONQUEST, id, state.id);
-                        relation.opinion = Relation.minOpinionValue;
-                        return;
-                    }
-                }
-                // Rebellions
-                
-                if (loyalty < minRebellionLoyalty && state == liege)
-                {
-                    if (rng.NextSingle() < Mathf.Lerp(1 - (loyalty/minRebellionLoyalty), 0, 0.005))
-                    {
-                        List<State> fellowRebels = GatherRebels();
-                        State formerLiege = liege;
-                        foreach (State rebel in fellowRebels)
-                        {
-                            formerLiege.RemoveVassal(rebel);
-                        }
-                        _ = new War(fellowRebels, formerLiege.GetRealmStates(), WarType.REVOLT, id, formerLiege.id);
-                        return;
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-
-    }    
-    public void EndWars()
-    {
-        if (sovereignty != Sovereignty.INDEPENDENT)
-        {
-            return;
-        }
-        foreach (var warPair in wars)
-        {
-            War war = warPair.Key;
-            bool isAttacker = warPair.Value;
-
-            if (war.primaryAgressorId != id && objectManager.GetState(war.primaryDefenderId) != this)
-            {
-                continue;
-            }
-            if (objectManager.GetState(war.primaryAgressorId).sovereignty != Sovereignty.INDEPENDENT || objectManager.GetState(war.primaryDefenderId).sovereignty != Sovereignty.INDEPENDENT)
-            {
-                EndWar(war);
-                continue;
-            }
-            // Below is if state has authority to end wars
-            double warEndChance = 0;
-            switch (war.warType)
-            {
-                case WarType.CONQUEST:
-                    try
-                    {
-                        if (war.primaryAgressorId == id)
-                        {
-                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryDefenderId)].opinion, 0) * 0.01;
-                            // Attacker
-                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryDefenderId).capitualated)
-                            {
-                                EndWar(war);
-                                foreach (ulong defenderId in war.defenderIds)
-                                {
-                                    State defender = objectManager.GetState(defenderId);
-                                    if (!defender.capitualated || defender.capital.occupier == null)
-                                    {
-                                        continue;
-                                    }
-                                    defender.capital.occupier.AddVassal(defender);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryAgressorId)].opinion, 0) * 0.01;
-                            // Defender
-                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryAgressorId).capitualated)
-                            {
-                                EndWar(war);
-                                foreach (ulong attackerId in war.attackerIds)
-                                {
-                                    State attacker = objectManager.GetState(attackerId);
-                                    if (!attacker.capitualated)
-                                    {
-                                        return;
-                                    }
-                                    attacker.capital.occupier.AddVassal(attacker);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-
-                    break;
-                case WarType.REVOLT:
-                    try
-                    {
-                        if (isAttacker)
-                        {
-                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryDefenderId)].opinion, 0) * 0.01;
-                            // Rebel Leader
-                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryDefenderId).capitualated)
-                            {
-                                // War Ends
-                                EndWar(war);
-                                foreach (State vassal in objectManager.GetState(war.primaryDefenderId).vassals.ToArray())
-                                {
-                                    //simManager.GetState(war.primaryDefenderId).RemoveVassal(vassal);
-                                }
-                            }
-
-                        }
-                        else
-                        {
-                            warEndChance = Mathf.Max(relations[objectManager.GetState(war.primaryAgressorId)].opinion, 0) * 0.01;
-                            // State
-                            if (rng.NextDouble() < warEndChance || objectManager.GetState(war.primaryAgressorId).capitualated)
-                            {
-                                // War ends
-                                EndWar(war);
-                                foreach (ulong rebelId in war.attackerIds)
-                                {
-                                    State rebel = objectManager.GetState(rebelId);
-                                    AddVassal(rebel);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-
-                    break;
-                case WarType.CIVIL_WAR:
-                    try
-                    {
-                        if (isAttacker)
-                        {
-                            // War Leader
-                            if (objectManager.GetState(war.primaryDefenderId).capitualated)
-                            {
-                                // War ends
-                                EndWar(war);
-
-                                objectManager.DeleteState(objectManager.GetState(war.primaryDefenderId));                                
-                            }
-                        }
-                        else
-                        {
-                            if (objectManager.GetState(war.primaryAgressorId).capitualated)
-                            {
-                                EndWar(war);
-                                foreach (ulong rebelId in war.attackerIds)
-                                {
-                                    State rebel = objectManager.GetState(rebelId);
-                                    if (rebel != null)
-                                    {
-                                        AddVassal(rebel);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-
-                    break;
-            }
-        }
-    }
-    public void EndWar(War war)
-    {
-        war.EndWar();
-    }
-    #region State Collapse
+    }        
     public bool StateCollapse()
     {
-        foreach (var warPair in wars)
+        foreach (var warPair in diplomacy.warIds)
         {
-            if (warPair.Key.warType == WarType.CIVIL_WAR)
+            if (objectManager.GetWar(warPair.Key).warType == WarType.CIVIL_WAR)
             {
                 return false;
             }
@@ -485,7 +187,7 @@ public class State : PopObject
                 {
                     RemoveVassal(rebel);
                 }
-                _ = new War(fellowRebels, [this], WarType.CIVIL_WAR, mainRebel.id, id);
+                objectManager.StartWar(fellowRebels, [this], WarType.CIVIL_WAR, mainRebel.id, id);
             }
             else
             {
@@ -500,110 +202,6 @@ public class State : PopObject
     }
     #endregion
     #endregion
-    #region Naming
-    public void UpdateDisplayName()
-    {
-        switch (government)
-        {
-            case GovernmentType.REPUBLIC:
-                switch (sovereignty)
-                {
-                    case Sovereignty.COLONY:
-                        govtName = "Colony";
-                        leaderTitle = "Administrator";
-                        break;
-                    case Sovereignty.PUPPET:
-                        govtName = "Mandate";
-                        leaderTitle = "Governor";
-                        break;
-                    case Sovereignty.PROVINCE:
-                        govtName = "Department";
-                        leaderTitle = "Governor";
-                        break;
-                    default:
-                        govtName = "Free State";
-                        leaderTitle = "Prime Minister";
-                        if (vassals.Count > 0)
-                        {
-                            govtName = "Republic";
-                            leaderTitle = "President";
-                        }
-                        else if (vassals.Count > 3)
-                        {
-                            govtName = "Commonwealth";
-                            leaderTitle = "Chancellor";
-                        }
-                        break;
-                }
-                break;
-            case GovernmentType.MONARCHY:
-                switch (sovereignty)
-                {
-                    case Sovereignty.COLONY:
-                        govtName = "Crown Colony";
-                        leaderTitle = "Viceroy";
-                        break;
-                    case Sovereignty.PUPPET:
-                        govtName = "Protectorate";
-                        leaderTitle = "Regent";
-                        break;
-                    case Sovereignty.PROVINCE:
-                        govtName = "Duchy";
-                        leaderTitle = "Duke";
-                        break;
-                    default:
-                        govtName = "Principality";
-                        leaderTitle = "Prince";
-                        if (vassals.Count > 0)
-                        {
-                            govtName = "Kingdom";
-                            leaderTitle = "King";
-                        }
-                        else if (vassals.Count > 3)
-                        {
-                            govtName = "Empire";
-                            leaderTitle = "Emperor";
-                        }
-                        break;
-                }
-                break;
-            case GovernmentType.AUTOCRACY:
-                switch (sovereignty)
-                {
-                    case Sovereignty.COLONY:
-                        govtName = "Territory";
-                        leaderTitle = "Governor-General";
-                        break;
-                    case Sovereignty.PUPPET:
-                        govtName = "Client State";
-                        leaderTitle = "Administrator";
-                        break;
-                    case Sovereignty.PROVINCE:
-                        govtName = "Province";
-                        leaderTitle = "Governor";
-                        break;
-                    default:
-                        govtName = "State";
-                        leaderTitle = "Despot";
-                        if (vassals.Count > 0)
-                        {
-                            govtName = "Autocracy";
-                            leaderTitle = "Archon";
-                        }
-                        else if (vassals.Count > 3)
-                        {
-                            govtName = "Imperium";
-                            leaderTitle = "Emperor";
-                        }
-                        break;
-                }
-                break;
-            default:
-                govtName = "State";
-                break;
-        }
-        displayName = $"{govtName} of {name}";
-    }
     #region Government & Leaders
     public void SuccessionUpdate()
     {
@@ -754,7 +352,6 @@ public class State : PopObject
         pops = countedPops;
     }
     #endregion
-    #endregion
     #region Regions
     public void AddRegion(Region region)
     {
@@ -781,7 +378,7 @@ public class State : PopObject
     public void UpdateStability()
     {
         double stabilityTarget = 1;
-        stabilityTarget -= wars.Count * 0.05;
+        //stabilityTarget -= diplomacy.warIds.Count * 0.05;
 
         if (largestCulture != GetRulingCulture())
         {
@@ -897,7 +494,7 @@ public class State : PopObject
             state.liege.RemoveVassal(state);
         }
         // Makes state leave its wars
-        foreach (War war in state.wars.Keys)
+        foreach (War war in state.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
         {
             war.RemoveParticipant(state.id);
         }
@@ -911,9 +508,9 @@ public class State : PopObject
         state.loyalty = 1;
 
         // Adds vassal to our wars
-        foreach (War war in wars.Keys)
+        foreach (War war in diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
         {
-            war.AddParticipant(state.id, wars[war]);
+            war.AddParticipant(state.id, diplomacy.warIds[war.id]);
         }        
     }
 
@@ -933,7 +530,7 @@ public class State : PopObject
         state.loyalty = 1;
 
         // Removes the state from its wars
-        foreach (War war in wars.Keys)
+        foreach (War war in diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
         {
             war.RemoveParticipant(state.id);
         }
@@ -1049,18 +646,17 @@ public class State : PopObject
         switch (sovereignty)
         {
             case Sovereignty.INDEPENDENT:
-                desc += "an independent state. ";
+                desc += "an independent state";
                 break;
             default:
-                desc += $"a vassal of the {GenerateUrlText(liege, liege.displayName)}. ";
+                desc += $"a vassal of the {GenerateUrlText(liege, liege.displayName)}";
                 break;
         }
-        desc += $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
-        desc += $"The state is lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}";
+        desc += $" lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}. "
+        + $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
         return desc;
     }
 
-    #endregion
     #endregion
 }   
 

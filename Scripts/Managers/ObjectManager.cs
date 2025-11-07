@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Godot;
 using MessagePack;
 [MessagePackObject]
@@ -190,8 +192,9 @@ public class ObjectManager
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
-                tickFounded = timeManager.ticks
+                tickFounded = timeManager.ticks,
             };
+            state.diplomacy = new DiplomacyManager(state);
             state.AddRegion(region);
             simManager.states.Add(state);
             simManager.statesIds.Add(state.id, state);
@@ -208,8 +211,9 @@ public class ObjectManager
         {
             state.liege.RemoveVassal(state);
         }
-        foreach (War war in state.wars.Keys)
+        foreach (ulong warId in state.diplomacy.warIds.Keys)
         {
+            War war = GetWar(warId);
             war.RemoveParticipant(state.id);
         }
         foreach (State vassal in state.vassals.ToArray())
@@ -223,6 +227,11 @@ public class ObjectManager
         foreach (ulong characterId in state.characterIds.ToArray())
         {
             GetCharacter(characterId).LeaveState();
+        }
+        foreach (ulong relationId in state.diplomacy.relationIds.Keys)
+        {
+            State relation = GetState(relationId);
+            relation.diplomacy.relationIds.Remove(state.id);
         }
 
         simManager.objectDeleted.Invoke(state.id);
@@ -305,6 +314,77 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(character.id);
         simManager.characters.Remove(character);
         simManager.charactersIds.Remove(character.id);
+    }
+    #endregion
+    #region Alliances
+    public Alliance CreateAlliance(State founder, AllianceType type)
+    {
+        Alliance alliance = new Alliance();
+        return alliance;
+    }
+    #endregion
+    #region Trade Zones
+    public TradeZone CreateTradeZone(Region region)
+    {
+        TradeZone zone = new TradeZone()
+        {
+            id = getID(),
+            color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
+            CoT = region,
+            regions = [region],
+        };
+
+        simManager.tradeZones.Add(zone);
+        simManager.tradeZonesIds.Add(zone.id, zone);
+        return zone;
+    }
+    public void DeleteTradeZone(TradeZone tradeZone )
+    {
+        if (tradeZone == null) return;
+        foreach (Region region in tradeZone.regions.ToArray())
+        {
+            tradeZone.RemoveRegion(region);
+        }
+        simManager.tradeZones.Remove(tradeZone);
+        simManager.tradeZonesIds.Remove(tradeZone.id);     
+    }
+    #endregion
+    #region Wars
+    public War StartWar(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
+    {
+        if (agressorLeader == defenderLeader || GetState(agressorLeader) == null || GetState(defenderLeader) == null)
+        {
+            return null;
+        }
+        War war = new War()
+        {
+            id = getID(),
+            warType = warType,
+            primaryAgressorId = agressorLeader,
+            primaryDefenderId = defenderLeader,
+            attackerIds = atk.Select(attacker => attacker.id).ToList(),
+            defenderIds = def.Select(defender => defender.id).ToList(),
+        };
+
+        war.InitWarLead(true);
+        war.InitWarLead(false);
+        war.InitEnemies(true);
+        war.InitEnemies(false);
+        war.NameWar();
+
+        simManager.wars.Add(war);
+        simManager.warIds.Add(war.id, war);
+        return war;
+    }
+    public void EndWar(War war)
+    {
+        simManager.wars.Remove(war);
+        simManager.warIds.Remove(war.id);
+        foreach (ulong stateId in war.participantIds)
+        {
+            State state = GetState(stateId);
+            state.diplomacy.warIds.Remove(war.id);
+        }
     }
     #endregion
     #endregion

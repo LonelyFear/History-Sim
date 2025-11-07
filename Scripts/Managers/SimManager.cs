@@ -54,6 +54,8 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZonesIds { get; set; } = new Dictionary<ulong, TradeZone>();
     [IgnoreMember] public List<Character> characters { get; set; } = new List<Character>();
     [IgnoreMember] public Dictionary<ulong, Character> charactersIds { get; set; } = new Dictionary<ulong, Character>();
+    [IgnoreMember] public List<Alliance> alliances { get; set; } = new List<Alliance>();
+    [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
     [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
     [IgnoreMember] public List<War> endedWars = new List<War>();
@@ -316,6 +318,7 @@ public class SimManager
     }
     void AssignSimManager()
     {
+        DiplomacyManager.objectManager = objectManager;
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
 
@@ -566,7 +569,7 @@ public class SimManager
             {
                 if (region.owner != null)
                 {
-                    if (region.occupier != null && !region.owner.enemyIds.Contains(region.occupier.id))
+                    if (region.occupier != null && !region.owner.diplomacy.enemyIds.Contains(region.occupier.id))
                     {
                         region.occupier = null;
                     }
@@ -644,11 +647,11 @@ public class SimManager
 
                 state.UpdateCapital();
 
-                state.RelationsUpdate();
-                state.UpdateDiplomacy();
-                state.EndWars();
-                state.StartWars();
-                state.UpdateEnemies();
+                state.diplomacy.RelationsUpdate();
+                state.diplomacy.UpdateDiplomacy();
+                state.diplomacy.EndWars();
+                state.diplomacy.StartWars();
+                state.diplomacy.UpdateEnemies();
 
                 if (state.rulingPop == null)
                 {
@@ -670,7 +673,7 @@ public class SimManager
             state.CountStatePopulation();
             state.Recruitment();
             state.UpdateDisplayColor();
-            state.UpdateDisplayName();
+            StateNamer.UpdateStateNames(state);
         });
     }
     #endregion

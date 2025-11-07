@@ -145,7 +145,7 @@ public class Region : PopObject
 
     public void UpdateOccupation()
     {
-        if (owner == null || (occupier != null && !owner.GetHighestLiege().enemyIds.Contains(occupier.id)))
+        if (owner == null || (occupier != null && !owner.GetHighestLiege().diplomacy.enemyIds.Contains(occupier.id)))
         {
             occupier = null;
         }
@@ -170,7 +170,7 @@ public class Region : PopObject
 
             owner.rulingPop = rulingPop;
             owner.tech = rulingPop.Tech;
-            owner.UpdateDisplayName();
+            StateNamer.UpdateStateNames(owner);
         }
     }
     public void RandomStateFormation()
@@ -192,8 +192,7 @@ public class Region : PopObject
             owner.tech = rulingPop.Tech;
             // Sets Leader
             objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
-
-            owner.UpdateDisplayName();            
+            StateNamer.UpdateStateNames(owner);           
         }
     }
     public void StateBordering()
@@ -274,7 +273,7 @@ public class Region : PopObject
     {
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
 
-        if (region != null && GetController() != null && region.GetController() != null && GetController().enemyIds.Contains(region.GetController().id))
+        if (region != null && GetController() != null && region.GetController() != null && GetController().diplomacy.enemyIds.Contains(region.GetController().id))
         {
             Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(), region.GetController().GetArmyPower());
 
@@ -367,11 +366,11 @@ public class Region : PopObject
         isCoT = lowerLinks && selectedLink == null;
         if (isCoT && (tradeZone == null || tradeZone.CoT != this))
         {
-            tradeZone = new TradeZone(this);
+            tradeZone = objectManager.CreateTradeZone(this);
         }
         if (!isCoT && tradeZone != null && tradeZone.CoT == this)
         {
-            tradeZone.DestroyZone();
+            objectManager.DeleteTradeZone(tradeZone);
         }
 
         tradeLink = selectedLink;

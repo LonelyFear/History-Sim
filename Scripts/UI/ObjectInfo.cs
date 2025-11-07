@@ -88,9 +88,9 @@ public partial class ObjectInfo : Control
 
                         // Wars text
                         specialLabel.Text += "\n" + "Wars: ";
-                        if (state.wars.Count > 0)
+                        if (state.diplomacy.warIds.Count > 0)
                         {
-                            foreach (War war in state.wars.Keys.ToArray())
+                            foreach (War war in state.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
                             {
                                 yearAge = timeManager.GetYear(war.age);
                                 monthAge = timeManager.GetMonth(war.age);
