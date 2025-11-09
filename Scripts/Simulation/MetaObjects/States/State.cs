@@ -7,9 +7,9 @@ using System.Data.Common;
 [MessagePackObject]
 public class State : PopObject
 {
-    [IgnoreMember] public string displayName= "Nation";
+    [IgnoreMember] public string displayName = "Nation";
     [IgnoreMember] public string govtName;
-    [Key(1)] public string leaderTitle { get; set; } = "King";
+    [IgnoreMember] public string leaderTitle { get; set; } = "King";
     [Key(2)] public Color color { get; set; }
     [Key(3)] public Color displayColor;
     [Key(4)] public Color capitalColor;
@@ -193,7 +193,6 @@ public class State : PopObject
             {
                 if (rng.NextDouble() < 0.001)
                 {
-                    objectManager.DeleteState(this);
                     return true;
                 }
             }
@@ -430,6 +429,7 @@ public class State : PopObject
             {
                 timeManager.forcePause = true;
                 simManager.mapManager.selectedMetaObj = liege;
+                simManager.mapManager.UpdateRegionColors(simManager.regions);
                 GD.Print(liege.displayName);
             }
             loyaltyTarget -= (regions.Count - liege.regions.Count)/liege.regions.Count * 0.5;
@@ -453,34 +453,6 @@ public class State : PopObject
         }
         return rebels;
     }
-
-    public void SetStateSovereignty(State state, Sovereignty sovereignty)
-    {
-        if (state != this)
-        {
-            if (sovereignty == Sovereignty.INDEPENDENT)
-            {
-                RemoveVassal(state);
-            }
-            else
-            {
-                if (vassals.Contains(state))
-                {
-                    if (sovereignty < state.sovereignty)
-                    {
-                        state.loyalty -= 15;
-                    }
-                    else
-                    {
-                        state.loyalty += 10;
-                    }
-                    state.sovereignty = sovereignty;
-                    
-                }
-            }
-        }
-    }
-
     public void AddVassal(State state, Sovereignty sovereignty = Sovereignty.PUPPET)
     {
         // Removes vassals of state

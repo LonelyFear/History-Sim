@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Dynamic;
 using System.Linq;
 using Godot;
 using MessagePack;
@@ -62,6 +63,19 @@ public class ObjectManager
             //GD.PushWarning(e);
             return null;
         }
+    }
+    public Region CreateRegion(int x, int y)
+    {
+        Region region = new Region()
+        {
+            id = getID(),
+            pos = new Vector2I(x, y),
+            tiles = new Tile[simManager.tilesPerRegion, simManager.tilesPerRegion],
+            biomes = new Biome[simManager.tilesPerRegion, simManager.tilesPerRegion]
+        };
+        simManager.regions.Add(region);
+        simManager.regionIds.Add(region.id, region);
+        return region;
     }
     #region Pops Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
@@ -228,10 +242,10 @@ public class ObjectManager
         {
             GetCharacter(characterId).LeaveState();
         }
-        foreach (ulong relationId in state.diplomacy.relationIds.Keys)
+        foreach (ulong relationId in simManager.statesIds.Keys)
         {
             State relation = GetState(relationId);
-            relation.diplomacy.relationIds.Remove(state.id);
+            relation.diplomacy.RemoveRelations(state.id);
         }
 
         simManager.objectDeleted.Invoke(state.id);
@@ -244,6 +258,10 @@ public class ObjectManager
         try {
             return simManager.statesIds[(ulong)id];
         } catch {
+            if (simManager.deletedStateIds.Contains((ulong)id))
+            {
+                GD.PushError("Deleted state still referenced!");
+            }
             //GD.PushWarning(e);
             return null;
         }
@@ -388,7 +406,7 @@ public class ObjectManager
     }
     #endregion
     #endregion
-    public ulong getID()
+    ulong getID()
     {
         currentId++;
         if (currentId == ulong.MaxValue)

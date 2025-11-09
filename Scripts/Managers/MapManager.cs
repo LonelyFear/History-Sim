@@ -36,7 +36,7 @@ public partial class MapManager : Node2D
         showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");
 		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += InitMapManager;
 	}
-    public void InitMapManager() {
+    void InitMapManager() {
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         simManager.mapManager = this;
         Scale = simManager.terrainMap.Scale * (simManager.tilesPerRegion/(float)regionResolution);
@@ -84,7 +84,7 @@ public partial class MapManager : Node2D
         Region lastHovered = hoveredRegion;
         if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible)
         {
-            hoveredRegion = GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
+            hoveredRegion = simManager.objectManager.GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
             SetRegionColor(hoveredRegion.pos.X, hoveredRegion.pos.Y, GetRegionColor(hoveredRegion));
             hoveredState = hoveredRegion.owner;
         }
@@ -422,13 +422,6 @@ public partial class MapManager : Node2D
         }
         return color;
     }
-    public Region GetRegion(int x, int y){
-        int lx = Mathf.PosMod(x, worldSize.X);
-        int ly = Mathf.PosMod(y, worldSize.Y);
-
-        int index = (lx * worldSize.Y) + ly;
-        return simManager.regions[index];
-    }
     public void SetRegionColor(int x, int y, Color color)
     {
         /*
@@ -438,7 +431,7 @@ public partial class MapManager : Node2D
             mapUpdate = true;
         }
         */
-        Region r = GetRegion(x, y);
+        Region r = simManager.objectManager.GetRegion(x, y);
         for (int rx = 0; rx < regionResolution; rx++)
         {
             for (int ry = 0; ry < regionResolution; ry++)
@@ -507,7 +500,7 @@ public partial class MapManager : Node2D
             }
         }
     }
-    public void UpdateMap(){
+    void UpdateMap(){
         if (mapUpdate)
         {
             mapUpdate = false;

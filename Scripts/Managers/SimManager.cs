@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using MessagePack;
@@ -58,7 +59,6 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
     [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
-    [IgnoreMember] public List<War> endedWars = new List<War>();
     [IgnoreMember] public Dictionary<ulong, BaseEvent> historicalEventIds = new Dictionary<ulong, BaseEvent>();
 
     // Misc
@@ -281,17 +281,7 @@ public class SimManager
             for (int y = 0; y < worldSize.Y; y++)
             {
                 // Creates a region
-                Region newRegion = new Region()
-                {
-                    id = objectManager.getID()
-                };
-
-                newRegion.tiles = new Tile[tilesPerRegion, tilesPerRegion];
-                newRegion.biomes = new Biome[tilesPerRegion, tilesPerRegion];
-
-                newRegion.pos = new Vector2I(x, y);
-                regions.Add(newRegion);
-                regionIds.Add(newRegion.id, newRegion);
+                Region newRegion = objectManager.CreateRegion(x, y);
                 for (int tx = 0; tx < tilesPerRegion; tx++)
                 {
                     for (int ty = 0; ty < tilesPerRegion; ty++)
@@ -432,20 +422,6 @@ public class SimManager
     #region Pop Update
     public void UpdatePops()
     {
-        /*
-        try
-        {
-            var partitioner = Partitioner.Create(pops.ToArray());
-            Parallel.ForEach(partitioner, (pop) =>
-            {
-
-            });
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }  
-        */
         foreach (Pop pop in pops.ToArray())
         {
             ulong startTime = Time.GetTicksMsec();
@@ -606,13 +582,18 @@ public class SimManager
     {
         foreach (State state in states.ToArray())
         {
-            if (state.regions.Count < 1)
+            if (state.rulingPop == null)
+            {
+                // State Collapse or Smth
+                if (rng.NextSingle() < 0.5f)
+                {
+                    Region r = state.regions[rng.Next(0, state.regions.Count)];
+                    state.RemoveRegion(r);
+                }
+            }   
+            if (state.regions.Count < 1 || state.StateCollapse())
             {
                 objectManager.DeleteState(state);
-                continue;
-            }
-            if (state.StateCollapse())
-            {
                 continue;
             }
             if (state.rulingPop != null)
@@ -642,6 +623,10 @@ public class SimManager
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
                     state.UpdateLoyalty();
+                    foreach (War war in state.liege.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
+                    {
+                        war.AddParticipant(state.id, state.liege.diplomacy.warIds[war.id]);
+                    }  
                 }
 
 
@@ -649,19 +634,10 @@ public class SimManager
 
                 state.diplomacy.RelationsUpdate();
                 state.diplomacy.UpdateDiplomacy();
-                state.diplomacy.EndWars();
-                state.diplomacy.StartWars();
                 state.diplomacy.UpdateEnemies();
 
-                if (state.rulingPop == null)
-                {
-                    // State Collapse or Smth
-                    if (rng.NextSingle() < 0.5f)
-                    {
-                        Region r = state.regions[rng.Next(0, state.regions.Count)];
-                        state.RemoveRegion(r);
-                    }
-                }                
+                state.diplomacy.EndWars();
+                state.diplomacy.StartWars();     
             } catch (Exception e)
             {
                 GD.PushError(e);

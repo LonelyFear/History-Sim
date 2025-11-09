@@ -5,12 +5,12 @@ using Godot;
 using MessagePack;
 
 [MessagePackObject]
-public class DiplomacyManager
+public partial class DiplomacyManager
 {
     [IgnoreMember] public static ObjectManager objectManager;
     [Key(37)] public List<ulong> allianceIds = new List<ulong>();    
     // Diplomacy
-    [Key(19)] public Dictionary<ulong?, int> relationIds { get; set; } = new Dictionary<ulong?, int>();
+    [Key(19)] public Dictionary<ulong?, int> relationIds { get;  private set; } = new Dictionary<ulong?, int>();
     [Key(20)] public Dictionary<ulong, bool> warIds { get; set; } = new Dictionary<ulong, bool>();
     [Key(21)] public List<ulong> enemyIds { get; set; } = new List<ulong>();
     [Key(0)] public ulong stateId;
@@ -50,11 +50,18 @@ public class DiplomacyManager
     {
         // All bordering or enemy states
         List<State> relationStates = [.. state.borderingStates, .. enemyIds.Select(id => objectManager.GetState(id))];
+        foreach (State target in state.borderingStates)
+        {
+            if (objectManager.GetState(target.id) == null)
+            {
+                GD.Print("AHA");
+            }
+        }
         // Removes unneeded relations
         foreach (var pair in relationIds)
         {
-            bool isBorderingOrEnemy = relationStates.Contains(objectManager.GetState(pair.Key));
-            if (objectManager.GetState(pair.Key) == null || !isBorderingOrEnemy)
+            State target = objectManager.GetState(pair.Key);
+            if (target == null || !relationStates.Contains(target))
             {
                 relationIds.Remove(pair.Key);
                 continue;
@@ -69,9 +76,38 @@ public class DiplomacyManager
             }
         }
     }
+    public void UpdateDiplomacy()
+    {
+        foreach (var pair in relationIds)
+        {
+            State target = objectManager.GetState(pair.Key);
+            if (target == null) continue;
+            if (state.liege != target && !state.vassals.Contains(target))
+            {
+                float relationChangeChance = 0.5f;
+                //float relationDamageChance = 0.5f;
+                if (enemyIds.Contains(target.id))
+                {
+                    relationChangeChance *= 0.75f;
+                }
+                if (PopObject.rng.NextSingle() < relationChangeChance)
+                {
+                    relationIds[pair.Key] = -100;
+                }
+            }
+            relationIds[pair.Key] = Mathf.Clamp(relationIds[pair.Key], -100, 100);
+        }
+    }    
+    public void RemoveRelations(ulong? targetId)
+    {
+        if (targetId != null && !relationIds.Keys.Contains(targetId))
+        {
+            relationIds.Remove(targetId);
+        }
+    }
     public void EstablishRelations(ulong? targetId, int opinion = 0)
     {
-        if (targetId == stateId)
+        if (targetId == stateId || objectManager.GetState(targetId) == null)
         {
             return;
         }
@@ -85,27 +121,7 @@ public class DiplomacyManager
             relationIds[targetId] = opinion;
         }
     }
-    public void UpdateDiplomacy()
-    {
-        foreach (var pair in relationIds)
-        {
-            State target = objectManager.GetState(pair.Key);
-            if (state.liege != target && !state.vassals.Contains(target))
-            {
-                float relationChangeChance = 0.5f;
-                float relationDamageChance = 0.5f;
-                if (enemyIds.Contains(target.id))
-                {
-                    relationChangeChance *= 0.75f;
-                }
-                if (PopObject.rng.NextSingle() < relationChangeChance)
-                {
-                    relationIds[pair.Key] = -100;
-                }
-            }
-            relationIds[pair.Key] = Mathf.Clamp(relationIds[pair.Key], -100, 100);
-        }
-    }
+
     #endregion
     #region Wars
     public void StartWars()
@@ -271,7 +287,7 @@ public class DiplomacyManager
                     {
                         if (isAttacker)
                         {
-                            objectManager.DeleteState(objectManager.GetState(war.primaryDefenderId));                                
+                            //objectManager.DeleteState(objectManager.GetState(war.primaryDefenderId));                                
                         }
                         else
                         {
