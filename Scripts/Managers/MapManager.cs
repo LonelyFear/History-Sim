@@ -171,7 +171,7 @@ public partial class MapManager : Node2D
                         selectedMetaObj = hoveredRegion;
                         if (hoveredState != null)
                         {
-                            selectedMetaObj = hoveredState.GetHighestLiege();
+                            selectedMetaObj = hoveredState.vassalManager.GetOverlord(true);
                         }
                     }
                     else
@@ -229,20 +229,21 @@ public partial class MapManager : Node2D
     public Color GetRegionColor(Region region)
     {
         Color color = new Color(0, 0, 0, 0);
+        State regionOwner = region.owner;
         switch (mapMode)
         {
             case MapModes.REALM:
                 if (region.pops.Count > 0)
                 {
                     color = new Color(0.2f, 0.2f, 0.2f);
-                    if (region.owner != null)
+                    if (regionOwner != null)
                     {
-                        color = region.owner.GetHighestLiege().displayColor;
+                        color = regionOwner.vassalManager.GetOverlord(true).displayColor;
                         if (region.occupier != null)
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (region.owner.GetHighestLiege().capital == region)
+                        if (regionOwner.vassalManager.GetOverlord(true).capital == region)
                         {
                             color = region.owner.capitalColor;
                         }
@@ -262,7 +263,7 @@ public partial class MapManager : Node2D
                         case ObjectType.STATE:
                             Color cBefore = color;
                             // Darkens Unrelated Regions
-                            if (region.owner == null || region.owner.GetHighestLiege() != ((State)selectedMetaObj).GetHighestLiege())
+                            if (region.owner == null || region.owner.vassalManager.GetOverlord(true) != ((State)selectedMetaObj).vassalManager.GetOverlord(true))
                             {
                                 color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.7f);
                             }                           
@@ -311,7 +312,7 @@ public partial class MapManager : Node2D
                             }
 
                             // Highlights Realms
-                            if (region.owner.GetHighestLiege() == selectedMetaObj)
+                            if (region.owner.vassalManager.GetOverlord(true) == selectedMetaObj)
                             {
                                 color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.4f);;
                             }
@@ -424,81 +425,12 @@ public partial class MapManager : Node2D
     }
     public void SetRegionColor(int x, int y, Color color)
     {
-        /*
         if (regionImage.GetPixel(x, y) != color)
         {
             regionImage.SetPixel(x, y, color);
             mapUpdate = true;
         }
-        */
-        Region r = simManager.objectManager.GetRegion(x, y);
-        for (int rx = 0; rx < regionResolution; rx++)
-        {
-            for (int ry = 0; ry < regionResolution; ry++)
-            {
-                int posX = (x * regionResolution) + rx;
-                int posY = (y * regionResolution) + ry;
-                Color finalColor = color;
-                int resMinus = regionResolution - 1;
-                // Lines
-
-                // Top
-                if (mapMode == MapModes.POLITIY && regionResolution > 3)
-                {
-                    Color borderColor = color;
-                    if (ry == 0 && r.DrawBorder(r.borderingRegions[1], ref borderColor))
-                    {
-                        finalColor = borderColor;
-                    }
-                    // Left
-                    if (rx == 0 && r.DrawBorder(r.borderingRegions[0], ref borderColor))
-                    {
-                        finalColor = borderColor;
-                    }
-                    // Bottom
-                    if (ry == resMinus && r.DrawBorder(r.borderingRegions[2], ref borderColor))
-                    {
-                        finalColor = borderColor;
-                    }
-                    // Right
-                    if (rx == resMinus && r.DrawBorder(r.borderingRegions[3], ref borderColor))
-                    {
-                        finalColor = borderColor;
-                    }                    
-                }
-
-                /*
-                // Corners
-
-                // Top Left
-                if (rx == 0 && ry == 0 && r.DrawBorder(r.diagonalRegions[0]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
-                // Bottom Left
-                if (rx == 0 && ry == resMinus && r.DrawBorder(r.diagonalRegions[1]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
-                // Top Right
-                if (rx == resMinus && ry == 0 && r.DrawBorder(r.diagonalRegions[2]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
-                // Bottom Right
-                if (rx == resMinus && ry == resMinus && r.DrawBorder(r.diagonalRegions[3]))
-                {
-                    finalColor = new Color(0, 0, 0);
-                }
-                */
-
-                if (regionImage.GetPixel(posX, posY) != finalColor)
-                {
-                    regionImage.SetPixel(posX, posY, finalColor);
-                    mapUpdate = true;
-                }
-            }
-        }
+        //Region r = simManager.objectManager.GetRegion(x, y);
     }
     void UpdateMap(){
         if (mapUpdate)

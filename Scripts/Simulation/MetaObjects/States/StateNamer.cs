@@ -22,12 +22,12 @@ public class StateNamer
                     default:
                         state.govtName = "Free State";
                         state.leaderTitle = "Prime Minister";
-                        if (state.vassals.Count > 0)
+                        if (state.vassalManager.vassalIds.Count > 0)
                         {
                             state.govtName = "Republic";
                             state.leaderTitle = "President";
                         }
-                        else if (state.vassals.Count > 3)
+                        else if (state.vassalManager.vassalIds.Count > 3)
                         {
                             state.govtName = "Commonwealth";
                             state.leaderTitle = "Chancellor";
@@ -53,12 +53,12 @@ public class StateNamer
                     default:
                         state.govtName = "Principality";
                         state.leaderTitle = "Prince";
-                        if (state.vassals.Count > 0)
+                        if (state.vassalManager.vassalIds.Count > 0)
                         {
                             state.govtName = "Kingdom";
                             state.leaderTitle = "King";
                         }
-                        else if (state.vassals.Count > 3)
+                        else if (state.vassalManager.vassalIds.Count > 3)
                         {
                             state.govtName = "Empire";
                             state.leaderTitle = "Emperor";
@@ -84,12 +84,12 @@ public class StateNamer
                     default:
                         state.govtName = "State";
                         state.leaderTitle = "Despot";
-                        if (state.vassals.Count > 0)
+                        if (state.vassalManager.vassalIds.Count > 0)
                         {
                             state.govtName = "Autocracy";
                             state.leaderTitle = "Archon";
                         }
-                        else if (state.vassals.Count > 3)
+                        else if (state.vassalManager.vassalIds.Count > 3)
                         {
                             state.govtName = "Imperium";
                             state.leaderTitle = "Emperor";

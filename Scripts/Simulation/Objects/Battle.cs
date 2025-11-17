@@ -17,7 +17,7 @@ public class Battle{
         State locationState = loc.owner;
         foreach (Region r in loc.borderingRegions)
         {
-            if (r.GetController() == atk.GetHighestLiege())
+            if (r.GetController() == atk.vassalManager.GetOverlord(true))
             {
                 borderingEnemyRegions++;
             }

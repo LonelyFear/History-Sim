@@ -126,8 +126,6 @@ public class Pop
         newWorkers.ClaimLand(landMoved);
         return newWorkers;
     }
-
-    #region Economy
     public void EconomyUpdate()
     {
         if (population > maxPopulation && region.freeLand > 0)
@@ -239,8 +237,6 @@ public class Pop
                 break;
         }
     }
-    #endregion
-    #region Nations
     public double CalculatePoliticalPower()
     {
         double popSizePoliticalPower = FromNativePopulation(workforce) * 0.0005;
@@ -265,87 +261,6 @@ public class Pop
         }
         return basePoliticalPower * popSizePoliticalPower;
     }
-    public void UpdateHappiness()
-    {
-        double happinessTarget = 0.5f;
-        if (region.owner != null)
-        {
-            State state = region.owner;
-            happinessTarget = 1;
-            happinessTarget -= state.diplomacy.warIds.Count * 0.05;
-
-            if (culture != state.GetRulingCulture())
-            {
-                happinessTarget -= 0.25;
-            }
-            if (culture != state.largestCulture)
-            {
-                happinessTarget -= 0.25;
-            }
-            happinessTarget += wealth * 0.01;
-            if (state.rulingPop != null)
-            {
-                happinessTarget *= 0.1;
-            }
-            switch (profession)
-            {
-                case SocialClass.FARMER:
-                    happinessTarget -= state.poorTaxRate;
-                    break;
-                case SocialClass.SOLDIER:
-                    happinessTarget -= state.poorTaxRate;
-                    break;
-                case SocialClass.LABOURER:
-                    happinessTarget -= state.middleTaxRate;
-                    break;
-                case SocialClass.MERCHANT:
-                    happinessTarget -= state.middleTaxRate;
-                    break;
-                case SocialClass.ARISTOCRAT:
-                    happinessTarget -= state.richTaxRate;
-                    break;
-            }
-            
-        }
-        happinessTarget = Mathf.Clamp(happinessTarget, 0, 1);
-        happiness = Mathf.Lerp(happiness, happinessTarget, 0.01f);
-    }
-    public void UpdateLoyalty()
-    {
-        double loyaltyTarget = 0.5f;
-        if (region.owner != null && region.owner.liege != null)
-        {
-            State state = region.owner;
-            State liege = state.liege;
-
-            loyaltyTarget = 1;
-            if (liege.GetRulingCulture() != state.largestCulture)
-            {
-                loyaltyTarget -= 0.25;
-            }
-            loyaltyTarget -= liege.diplomacy.warIds.Count * 0.05;
-            loyaltyTarget -= (1 - happiness) * 0.2f;
-            loyaltyTarget *= liege.stability;
-            loyaltyTarget -= liege.tributeRate;
-            loyaltyTarget += liege.totalWealth/liege.realmRegions.Count * 0.01;
-            if (liege.regions.Count < state.regions.Count)
-            {
-                loyaltyTarget -= (state.regions.Count - liege.regions.Count) * 0.01;
-            }
-            if (!state.borderingStates.Contains(liege))
-            {
-                loyaltyTarget *= 0.7;
-            }
-            if (liege.rulingPop == null)
-            {
-                loyaltyTarget *= 0;
-            }
-        }
-        loyaltyTarget = Mathf.Clamp(loyaltyTarget, 0, 1);
-        loyalty = Mathf.Lerp(loyalty, loyaltyTarget, 0.01f);
-    }
-    #endregion
-    #region Demographics
     public void Migrate()
     {
         // Chance of pop to migrate
@@ -461,7 +376,7 @@ public class Pop
         double wealthFactor = wealth * 10;
         return ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand / region.landCount)));
     }    
-    #endregion
+    
     public void ClaimLand(int amount)
     {
         lock (region) {

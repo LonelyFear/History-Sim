@@ -4,11 +4,8 @@ using System.Linq;
 using Godot;
 using MessagePack;
 
-[MessagePackObject]
-public class PopObject : NamedObject
+public abstract class PopObject : NamedObject
 {
-    [Key(100)] public uint tickFounded { get; set; }
-    [Key(101)]public uint age { get; set; }
     [Key(102)] public long population { get; set; } = 0;
     [Key(103)] public long highestPossiblePopulation { get; set; } = 0;
     [Key(104)] public long dependents { get; set; } = 0;
@@ -44,7 +41,7 @@ public class PopObject : NamedObject
         largestCulture = largestCultureId == 0 ? null : objectManager.GetCulture(largestCultureId);
         cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => objectManager.GetCulture(kv.Key), kv => kv.Value);
     }
-    public void CountPopulation()
+    public virtual void CountPopulation()
     {
         long maxPopulation = 0;
         long countedPopulation = 0;

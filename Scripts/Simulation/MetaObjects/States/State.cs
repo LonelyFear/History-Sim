@@ -5,7 +5,8 @@ using Godot;
 using MessagePack;
 using System.Data.Common;
 [MessagePackObject]
-public class State : PopObject
+
+public class State : PopObject, ISaveable
 {
     [IgnoreMember] public string displayName = "Nation";
     [IgnoreMember] public string govtName;
@@ -16,7 +17,6 @@ public class State : PopObject
     [Key(5)] public bool capitualated = false;
 
     [Key(6)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
-    [IgnoreMember] public List<Region> realmRegions = new List<Region>(); 
     
     [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
     [Key(7)] public List<ulong> regionsIDs { get; set; } = new List<ulong>();
@@ -32,14 +32,18 @@ public class State : PopObject
     [Key(15)] public float richTaxRate { get; set; } = 0.05f;
     [Key(16)] public float tributeRate { get; set; } = 0.1f;
     // Lieges & Vassals
+    /*
     [IgnoreMember] public List<State> vassals { get; set; } = new List<State>();
     [Key(17)] public List<ulong> vassalsIDs { get; set; }
     [IgnoreMember] public State liege { get; set; } = null;
     [Key(18)] public ulong liegeID;
+    */
     // Alliances
+    [Key(36)] public ulong? realmId;
     [Key(37)] public List<ulong> allianceIds = new List<ulong>();
-    // Diplomacy
-    [Key(40)] public DiplomacyManager diplomacy = new DiplomacyManager();
+    // Diplomacy Managers
+    [Key(40)] public StateDiplomacyManager diplomacy = new StateDiplomacyManager();
+    [Key(41)] public StateVassalManager vassalManager = new StateVassalManager();
     // Borders & Sovereignty
     [IgnoreMember] public List<State> borderingStates { get; set; } = new List<State>();
     [Key(22)] public List<ulong> borderingStatesIDs { get; set; }
@@ -60,17 +64,12 @@ public class State : PopObject
     [Key(35)] public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
-    [Key(36)] public uint timeAsVassal = 0;
+    [Key(367)] public uint timeAsVassal = 0;
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
         capitalID = capital.id;
         regionsIDs = regions.Select(r => r.id).ToList();
-        vassalsIDs = vassals.Count > 0 ?vassals.Select(r => r.id).ToList() : null;
-        liegeID = liege != null ? liege.id : 0;
-        //relationsIDs = relations.Count > 0 ? relations.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
-        //warsIDs = wars.Count > 0 ? wars.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
-        //enemyIds = enemies.Count > 0 ? enemies.Select(r => r.id).ToList() : null;
         borderingStatesIDs = borderingStates.Count > 0 ? borderingStates.Select(r => r.id).ToList() : null;
     }
     public void LoadFromSave()
@@ -78,12 +77,8 @@ public class State : PopObject
         LoadPopObjectFromSave();
         capital = objectManager.GetRegion(capitalID);
         regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToList();
-        vassals = vassalsIDs == null ? new List<State>() : vassalsIDs.Select(r => simManager.statesIds[r]).ToList();
-        liege = liegeID == 0 ? null : simManager.statesIds[liegeID];
-        diplomacy.LoadFromSave();
-        //relations = relationsIDs == null ? new Dictionary<State, Relation>() : relationsIDs.ToDictionary(kv => simManager.statesIds[kv.Key], kv => kv.Value);
-        //wars = warsIDs == null ? new Dictionary<War, bool>() : warsIDs.ToDictionary(kv => simManager.warIds[kv.Key], kv => kv.Value);
-        //enemies = enemyIds == null ? new List<State>() : enemyIds.Select(r => simManager.statesIds[r]).ToList();
+        diplomacy.Init(this);
+        vassalManager.Init(this);
         borderingStates = borderingStatesIDs == null ? new List<State>() : borderingStatesIDs.Select(r => simManager.statesIds[r]).ToList();
     }
     public void UpdateCapital()
@@ -108,32 +103,6 @@ public class State : PopObject
                 break;
         }
     }
-    #region Diplomacy
-
-    public void GetRealmBorders()
-    {
-        if (vassals.Count > 0)
-        {
-            foreach (State vassal in vassals)
-            {
-                foreach (State state in vassal.borderingStates)
-                {
-                    if (!borderingStates.Contains(state))
-                    {
-                        borderingStates.Add(state);
-                    }
-                }
-            }
-        }
-        foreach (State state in borderingStates.ToArray())
-        {
-            if (state.liege != null && !borderingStates.Contains(state.liege))
-            {
-                borderingStates.Add(state.liege);
-            }
-        }
-    }
-    #region State Collapse
     public void Capitualate()
     {
         if (capital.occupier != null)
@@ -171,10 +140,10 @@ public class State : PopObject
         double stabilityFactor = 1d - (stability / minCollapseStability);
         if (rng.NextDouble() < stabilityFactor * 0.1)
         {
-            if (vassals.Count > 0)
+            if (vassalManager.vassalIds.Count > 0)
             {
                 State mainRebel = null;
-                foreach (State vassal in vassals)
+                foreach (State vassal in vassalManager.GetVassals())
                 {
                     if (mainRebel == null || vassal.loyalty < mainRebel.loyalty)
                     {
@@ -185,7 +154,7 @@ public class State : PopObject
                 List<State> fellowRebels = mainRebel.GatherRebels();
                 foreach (State rebel in fellowRebels)
                 {
-                    RemoveVassal(rebel);
+                    vassalManager.RemoveVassal(rebel.id);
                 }
                 objectManager.StartWar(fellowRebels, [this], WarType.CIVIL_WAR, mainRebel.id, id);
             }
@@ -199,9 +168,6 @@ public class State : PopObject
         }
         return false;
     }
-    #endregion
-    #endregion
-    #region Government & Leaders
     public void SuccessionUpdate()
     {
         Character lastLeader = objectManager.GetCharacter(lastLeaderId);
@@ -249,21 +215,26 @@ public class State : PopObject
         switch (sovereignty)
         {
             case Sovereignty.COLONY:
-                displayColor = liege.color;
+                displayColor = vassalManager.GetLiege().color;
                 break;
             case Sovereignty.PROVINCE:
-                displayColor = liege.color;
+                displayColor = vassalManager.GetLiege().color;
                 break;
             case Sovereignty.PUPPET:
-                displayColor = liege.color;
+                displayColor = vassalManager.GetLiege().color;
                 break;
         }
     }
-    #endregion
-    #region Count Stats
-    public void CountStatePopulation()
+    public override void CountPopulation()
     {
-        realmRegions = GetRealmRegions();
+        List<Region> checkedRegions = regions;
+        Alliance realm = objectManager.GetAlliance(realmId);
+        bool isRealmLeader = realm == null ? false : realm.leadStateId == id;
+        if (realm != null && isRealmLeader)
+        {
+            checkedRegions = realm.GetRegions();
+        }
+
         int aliveCharacters = 0;
         long countedP = 0;
         long countedW = 0;
@@ -287,7 +258,8 @@ public class State : PopObject
                 aliveCharacters++;
             }
         }
-        foreach (Region region in realmRegions)
+        // If realm leader uses realm stats
+        foreach (Region region in checkedRegions)
         {
             countedP += region.population;
             countedW += region.workforce;
@@ -304,17 +276,20 @@ public class State : PopObject
                 // Gets the borders of our state
                 foreach (Region border in region.borderingRegions)
                 {
-                    if (border.owner != null && border.owner != this)
+                    // State
+                    State borderState = border.owner;
+                    // Makes sure the state is real
+                    if (borderState != null && borderState != this)
                     {
-                        if (!borders.Contains(border.owner))
+                        if (!borders.Contains(borderState))
                         {
-                            borders.Add(border.owner);
+                            borders.Add(borderState);
                         }
-                        if (!borders.Contains(border.owner.GetHighestLiege()))
+                        if (!borders.Contains(borderState.vassalManager.GetOverlord(true)))
                         {
-                            borders.Add(border.owner.GetHighestLiege());
+                            borders.Add(borderState.vassalManager.GetOverlord(true));
                         }
-                        bordersOtherState = !IsStateInRealm(border.owner);
+                        bordersOtherState = realm.memberStateIds.Contains(borderState.id);
                     }
                 }
                 // External Bordering Regions is the borders on the outside of the realm
@@ -350,8 +325,6 @@ public class State : PopObject
         workforce = countedW;
         pops = countedPops;
     }
-    #endregion
-    #region Regions
     public void AddRegion(Region region)
     {
         if (!regions.Contains(region))
@@ -400,21 +373,19 @@ public class State : PopObject
         {
             stabilityTarget *= 0.1;
         }
-        if (vassals.Count > GetMaxVassals())
+        if (vassalManager.vassalIds.Count > GetMaxVassals())
         {
-            stabilityTarget -= (vassals.Count / GetMaxVassals()) - 1;
+            stabilityTarget -= (vassalManager.vassalIds.Count / GetMaxVassals()) - 1;
         }
         //stabilityTarget -= (poorTaxRate + middleTaxRate + richTaxRate)/3d * 0.3;
 
         stabilityTarget = Mathf.Clamp(stabilityTarget, 0, 1);
         stability = Mathf.Lerp(stability, stabilityTarget, 0.05);
     }
-    #endregion
-    #region Vassals
     public void UpdateLoyalty()
     {
         double loyaltyTarget = 1;
-        
+        State liege = vassalManager.GetLiege();
         if (largestCulture != liege.GetRulingCulture())
         {
             loyaltyTarget -= 0.1;
@@ -443,7 +414,7 @@ public class State : PopObject
     public List<State> GatherRebels()
     {
         List<State> rebels = [this];
-        foreach (State vassal in liege.vassals)
+        foreach (State vassal in vassalManager.GetLiege().vassalManager.GetVassals())
         {
             double joinChance = 0.5;
             if (rng.NextDouble() < joinChance && !rebels.Contains(vassal))
@@ -453,94 +424,30 @@ public class State : PopObject
         }
         return rebels;
     }
-    public void AddVassal(State state, Sovereignty sovereignty = Sovereignty.PUPPET)
+    public long GetArmyPower(bool includeRealm)
     {
-        // Removes vassals of state
-        foreach (State vassal in state.vassals.ToArray())
-        {
-            state.RemoveVassal(vassal);
-        }
-        // Remove state from its liege
-        if (state.liege != null)
-        {
-            state.liege.RemoveVassal(state);
-        }
-        // Makes state leave its wars
-        foreach (War war in state.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
-        {
-            war.RemoveParticipant(state.id);
-        }
-
-        // Adds state to our vassals
-        state.liege = this;
-        state.sovereignty = sovereignty;
-        vassals.Add(state);
-        state.timeAsVassal = 0;
-        // Resets loyalty
-        state.loyalty = 1;
-
-        // Adds vassal to our wars
-        foreach (War war in diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
-        {
-            war.AddParticipant(state.id, diplomacy.warIds[war.id]);
-        }        
-    }
-
-    public void RemoveVassal(State state)
-    {
-        // Checks if we actually have the vassal
-        if (!vassals.Contains(state))
-        {
-            return;
-        }
-
-        // Removes the states liege and makes it independent
-        state.liege = null;
-        state.sovereignty = Sovereignty.INDEPENDENT;
-        vassals.Remove(state);
-        state.timeAsVassal = 0;
-        state.loyalty = 1;
-
-        // Removes the state from its wars
-        foreach (War war in diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
-        {
-            war.RemoveParticipant(state.id);
-        }
-    }
-    #endregion
-    #region Military
-    public long GetArmyPower(bool realm = true)
-    {
-        float interiorArmyPower = GetRealmManpower() / (float)realmRegions.Count;
-        if (!realm)
-        {
-            interiorArmyPower = manpower / (float)regions.Count;
-        }
+        float interiorArmyPower = GetManpower(includeRealm) / (float)GetRegions(includeRealm).Count;
         return (long)interiorArmyPower;
     }
-    public long GetRealmManpower()
+    public List<Region> GetRegions(bool includeRealm)
     {
-        long mp = manpower;
-        foreach (State state in vassals.ToArray())
+        List<Region> collectedRegions = [.. regions];
+        if (realmId == null || !includeRealm)
         {
-            mp += state.manpower;
+            return collectedRegions;
+        } else
+        {
+            return objectManager.GetAlliance(realmId).GetRegions();
         }
-        return mp;
     }
-    public List<Region> GetRealmRegions()
+    public long GetManpower(bool includeRealm)
     {
-        List<Region> realmRegions = [.. regions];
-        if (vassals.Count > 0)
+        if (includeRealm && realmId != null)
         {
-            foreach (State state in vassals)
-            {
-                realmRegions.AddRange(state.GetRealmRegions());
-            }            
+            return objectManager.GetAlliance(realmId).GetAllianceManpower();
         }
-        return realmRegions;
+        return manpower;
     }
-    #endregion
-    #region Misc
     public int GetMaxRegionsCount()
     {
         return 10 + (tech.societyLevel * 2);
@@ -548,8 +455,6 @@ public class State : PopObject
     public int GetMaxVassals() {
         return 5;
     } 
-    #endregion
-    #region Utility
     public Culture GetRulingCulture()
     {
         if (rulingPop != null)
@@ -558,56 +463,6 @@ public class State : PopObject
         }
         return null;
     }
-    public State GetHighestLiege()
-    {
-        State state = this;
-        while (state != null && state.liege != null)
-        {
-            state = state.liege;
-        }
-        return state;
-    }
-    public bool IsStateInRealm(State state) {
-        return GetHighestLiege() == state.GetHighestLiege();
-    }   
-    public List<State> GetRealmStates()
-    {
-        State state = GetHighestLiege();
-        List<State> collectedVassals = [state];
-        foreach (State vassal in state.vassals)
-        {
-            if (collectedVassals.Contains(vassal))
-            {
-                continue;
-            }
-            collectedVassals.Add(vassal);
-            if (vassal.vassals.Count() > 0)
-            {
-                foreach (State vassalVassal in vassal.vassals)
-                {
-                    if (collectedVassals.Contains(vassal))
-                    {
-                        continue;
-                    }
-                    collectedVassals.Add(vassalVassal);
-                }
-            }
-        }
-        return collectedVassals;
-    }
-
-    public void RemoveOccupationFromState(State state)
-    {
-        foreach (Region region in regions)
-        {
-            if (region.occupier == state)
-            {
-                region.occupier = null;
-            }
-        }
-    }
-    #endregion
-    #region Encyclopedia
     public override string GenerateDescription()
     {
         string desc = $"The {displayName} is a {govtName.ToLower()} in the simulation. It is ";
@@ -621,7 +476,7 @@ public class State : PopObject
                 desc += "an independent state";
                 break;
             default:
-                desc += $"a vassal of the {GenerateUrlText(liege, liege.displayName)}";
+                desc += $"a vassal of the {GenerateUrlText(vassalManager.GetLiege(), vassalManager.GetLiege().displayName)}";
                 break;
         }
         desc += $" lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}. "
@@ -629,7 +484,7 @@ public class State : PopObject
         return desc;
     }
 
-    #endregion
+    
 }   
 
 public enum GovernmentType {
@@ -638,14 +493,6 @@ public enum GovernmentType {
     AUTOCRACY,
 }
 
-public enum Sovereignty
-{
-    INDEPENDENT = 4,
-    REBELLIOUS = 3,
-    PUPPET = 2,
-    COLONY = 1,
-    PROVINCE = 0
-}
 
 public enum WarType
 {

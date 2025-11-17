@@ -21,9 +21,6 @@ public class Character : NamedObject
     [Key(-1)] public int significance;
     [Key(-2)] public string firstName;
     [Key(-3)] public string lastName;
-    [Key(3)] public uint birthTick;
-    [Key(4)] public uint age;
-    [Key(5)] public uint deathTick;
     [Key(6)] public ulong? stateId = null;
     [Key(7)] public CharacterRole role = CharacterRole.DEAD;
     [Key(8)] public List<ulong> parentIds = new List<ulong>();
@@ -119,7 +116,7 @@ public class Character : NamedObject
     public void Die()
     {
         dead = true;
-        deathTick = sim.timeManager.ticks;
+        tickDestroyed = sim.timeManager.ticks;
         SetRole(CharacterRole.DEAD);
         //sim.DeleteCharacter(this);
     }
@@ -165,7 +162,6 @@ public class Character : NamedObject
         }
         return level;
     }
-    #region Encyclopedia
     public override string GenerateDescription()
     {
         string[] pronouns = ["he", "she", "they"];
@@ -176,7 +172,7 @@ public class Character : NamedObject
         {
             toBe = ["was", "were"];
         }
-        string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(birthTick, true)} to ";
+        string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(tickCreated, true)} to ";
 
         if (parentIds.Count <= 0)
         {
@@ -226,11 +222,11 @@ public class Character : NamedObject
                 desc += $"living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
                 break;
         }
-        desc += $", and {pronouns[intGender]} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(sim.timeManager.ticks - birthTick)} years old. ";
+        desc += $", and {pronouns[intGender]} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(sim.timeManager.ticks - tickCreated)} years old. ";
         // Personality
         return desc;
     }
-    #endregion
+    
 }
 public enum CharacterRole
 {

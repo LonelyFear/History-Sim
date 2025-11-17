@@ -1,14 +1,22 @@
 using System.Runtime.CompilerServices;
 using MessagePack;
-
-[MessagePackObject]
-public class NamedObject
+public abstract class NamedObject
 {
+    [Key(401)] public uint tickCreated { get; set; }
+    [Key(402)] public uint tickDestroyed { get; set; }
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static ObjectManager objectManager;
-    [Key(400)] public ulong id { get; set; }
-    [Key(401)] public string name { get; set; }
-    [Key(402)]public string description { get; set; }
+    [Key(403)] public ulong id { get; set; }
+    [Key(404)] public string name { get; set; }
+    [Key(405)] public string description { get; set; }
+    public uint TicksSince(uint tick)
+    {
+        return simManager.timeManager.ticks - tick;
+    }
+    public uint GetAge()
+    {
+        return TicksSince(tickCreated);
+    }
     public virtual string GenerateDescription()
     {
         string desc = $"{name} is a named object. This is placeholder text";
@@ -20,7 +28,7 @@ public class NamedObject
         text += $"\nID: {id}";
         return text;
     }
-    public string GenerateUrlText(NamedObject obj, string text, string color = "orange")
+    public static string GenerateUrlText(NamedObject obj, string text, string color = "orange")
     {
         string typeId = "sta";
         switch (obj)
@@ -39,6 +47,8 @@ public class NamedObject
                 break;
             case Region:
                 typeId = "reg";
+                break;
+            default:
                 break;
         }
         return $"[color={color}][url={typeId}{obj.id}]{text}[/url][/color]";

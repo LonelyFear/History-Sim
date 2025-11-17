@@ -64,24 +64,24 @@ public partial class ObjectInfo : Control
                                 break;
                         }
 
-                        uint yearAge = timeManager.GetYear(state.age);
-                        uint monthAge = timeManager.GetMonth(state.age);
-                        specialLabel.Text = $"Founded in Month {timeManager.GetMonth(state.tickFounded)} of Year {timeManager.GetYear(state.tickFounded)}";
+                        uint yearAge = timeManager.GetYear(state.GetAge());
+                        uint monthAge = timeManager.GetMonth(state.GetAge());
+                        specialLabel.Text = $"Founded in Month {timeManager.GetMonth(state.tickCreated)} of Year {timeManager.GetYear(state.tickCreated)}";
                         specialLabel.Text += "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
                         specialLabel.Text += "\n" + "Wealth: " + state.totalWealth.ToString("#,###0");
-                        specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower()).ToString("#,###0") + "\n";
+                        specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower(true)).ToString("#,###0") + "\n";
                         if (state.leaderId != null)
                         {
                             Character leader = simManager.charactersIds[(ulong)state.leaderId];
                             specialLabel.Text += "\n" + $"Leader: {state.leaderTitle} {leader.firstName + " " + leader.lastName}";
-                            specialLabel.Text += "\n" + $"Leader Age: {timeManager.GetYear(leader.age)} year(s)" + "\n";
+                            specialLabel.Text += "\n" + $"Leader Age: {timeManager.GetYear(leader.GetAge())} year(s)" + "\n";
                         } else
                         {
                             specialLabel.Text += "\n" + "Leader: None";
                         }
 
                         specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("##0%");
-                        if (state.liege != null)
+                        if (state.vassalManager.liegeId != null)
                         {
                             specialLabel.Text += "\n" + "Loyalty: " + state.loyalty.ToString("##0%");
                         }
@@ -92,8 +92,8 @@ public partial class ObjectInfo : Control
                         {
                             foreach (War war in state.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)).ToArray())
                             {
-                                yearAge = timeManager.GetYear(war.age);
-                                monthAge = timeManager.GetMonth(war.age);
+                                yearAge = timeManager.GetYear(war.GetAge());
+                                monthAge = timeManager.GetMonth(war.GetAge());
                                 specialLabel.Text += "\n" + $"{war.name}";
                                 specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.primaryAgressorId}]{objectManager.GetState(war.primaryAgressorId).name}[/url][/color]";
                                 specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.primaryDefenderId}]{objectManager.GetState(war.primaryDefenderId).name}[/url][/color]";

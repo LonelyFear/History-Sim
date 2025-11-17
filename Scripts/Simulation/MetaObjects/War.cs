@@ -14,9 +14,6 @@ public class War : NamedObject
     [Key(4)] public ulong primaryDefenderId;
     [Key(5)] public WarType warType { get; set; } = WarType.CONQUEST;
     [IgnoreMember] static Random rng = new Random();
-    [Key(6)] public uint tickStarted;
-    [Key(7)] public uint age;
-    [Key(8)] public uint tickEnded;
     public void InitializeWar()
     {
 
@@ -29,11 +26,11 @@ public class War : NamedObject
         List<ulong> allies = isAttacker ? attackerIds : defenderIds;
         List<ulong> enemies = isAttacker ? defenderIds : attackerIds;
         objectManager.GetState(warLead).diplomacy.warIds[id] = isAttacker;
-        objectManager.GetState(warLead).diplomacy.enemyIds.AddRange(enemies);
+        objectManager.GetState(warLead).diplomacy.AddEnemies(enemies);
         participantIds.Add(warLead);
         allies.Add(warLead);  
 
-        objectManager.GetState(warLead).diplomacy.EstablishRelations(enemyWarLead, -5);      
+        objectManager.GetState(warLead).diplomacy.EstablishRelations(enemyWarLead, -1000);      
     }
     public void InitEnemies(bool isAttacker)
     {
@@ -45,7 +42,7 @@ public class War : NamedObject
             State state = objectManager.GetState(stateId);
             if (!participantIds.Contains(stateId)&& !targets.Contains(stateId))
             {
-                state.diplomacy.enemyIds.AddRange(enemies);
+                state.diplomacy.AddEnemies(enemies);
                 state.diplomacy.warIds[id] = false;
                 participantIds.Add(stateId);
                 state.diplomacy.EstablishRelations(enemyWarLead, -5);                
@@ -81,14 +78,15 @@ public class War : NamedObject
         State state = objectManager.GetState(stateId);
         if (attacker && !attackerIds.Contains(stateId))
         {
-            state.diplomacy.enemyIds.AddRange(attackerIds);
+            state.diplomacy.AddEnemies(defenderIds);
             isInWar = true;
         }
         else if (!defenderIds.Contains(stateId))
         {
-            state.diplomacy.enemyIds.AddRange(attackerIds);
+            state.diplomacy.AddEnemies(attackerIds);
             isInWar = true;
         }
+
         if (isInWar)
         {
             state.diplomacy.warIds.Add(id, attacker);
@@ -113,7 +111,7 @@ public class War : NamedObject
             foreach (ulong defenderId in defenderIds)
             {
                 State defender = objectManager.GetState(defenderId);
-                defender.diplomacy.enemyIds.Remove(stateId);
+                defender.diplomacy.RemoveEnemy(stateId);
             }
         }
         else if (defenderIds.Contains(stateId))
@@ -122,7 +120,7 @@ public class War : NamedObject
             foreach (ulong attackerId in attackerIds)
             {
                 State attacker = objectManager.GetState(attackerId);
-                attacker.diplomacy.enemyIds.Remove(stateId);
+                attacker.diplomacy.RemoveEnemy(stateId);
             }
         }
 

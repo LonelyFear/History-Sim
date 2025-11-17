@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Godot;
 using MessagePack;
 [MessagePackObject]
-public class Region : PopObject
+public class Region : PopObject, ISaveable
 {
     [IgnoreMember] public Tile[,] tiles { get; set; }
     [IgnoreMember] public Biome[,] biomes { get; set; }
@@ -16,7 +16,6 @@ public class Region : PopObject
     [Key(7)] public bool hasBaseTradeWeight;
     [Key(8)] public float lastWealth { get; set; } = 0;
     [Key(9)] public float lastBaseWealth { get; set; } = 0;
-    [Key(10)] public float control { get; set; } = 1f;
     [Key(11)] public float baseWealth { get; set; }
     [Key(12)] public float wealth { get; set; }
     [Key(13)] public int linkUpdateCountdown { get; set; } = 4;
@@ -57,7 +56,6 @@ public class Region : PopObject
 
     [IgnoreMember] public static int populationPerLand = 500;
     [IgnoreMember] public static int farmersPerLand = 115;
-    #region Data
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
@@ -79,8 +77,6 @@ public class Region : PopObject
         occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
         tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
     }
-    #endregion
-    #region Init
     public void CalcAverages()
     {
         name = NameGenerator.GenerateRegionName();
@@ -136,16 +132,10 @@ public class Region : PopObject
             maxSoldiers = (long)(workforce * owner.mobilizationRate);
         }
     }
-    #endregion
-    #region Nations
-    /// <summary>
-    /// Function to be used with professions
-    /// Disabled to increase the speed of development
-    /// </summary>
 
     public void UpdateOccupation()
     {
-        if (owner == null || (occupier != null && !owner.GetHighestLiege().diplomacy.enemyIds.Contains(occupier.id)))
+        if (owner == null || (occupier != null && !owner.vassalManager.GetOverlord(true).diplomacy.enemyIds.Contains(occupier.id)))
         {
             occupier = null;
         }
@@ -175,7 +165,7 @@ public class Region : PopObject
     }
     public void RandomStateFormation()
     {
-        if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
+        if (rng.NextDouble() < 0.00005 * navigability && population > Pop.ToNativePopulation(1000))
         {
             objectManager.CreateState(this);
 
@@ -211,28 +201,6 @@ public class Region : PopObject
             }
         }  
     }
-    public bool DrawBorder(Region r, ref Color color)
-    {
-        color = new Color(0, 0, 0);
-        if (r == null)
-        {
-            return false;
-        }
-        bool hasPops = pops.Count > 0;
-        bool targetHasPops = r.pops.Count > 0;
-        if (hasPops != targetHasPops || (hasPops && r.owner != owner))
-        {
-            if (r.owner == null || owner == null) {
-                return true;
-            }
-            if (owner.vassals.Contains(r.owner) || owner.liege == r.owner || (owner.liege != null && owner.liege.vassals.Contains(r.owner)))
-            {
-                color = new Color(0.5f, 0.5f, 0.5f);
-            }
-            return true;
-        }
-        return false;
-    }
     public State GetController()
     {
         if (occupier != null)
@@ -241,11 +209,11 @@ public class Region : PopObject
         }
         if (owner != null)
         {
-            return owner.GetHighestLiege();
+            return owner.vassalManager.GetOverlord(true);
         }
         return null;
     }    
-    #region Conquest
+
     public void NeutralConquest()
     {
         Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
@@ -275,7 +243,7 @@ public class Region : PopObject
 
         if (region != null && GetController() != null && region.GetController() != null && GetController().diplomacy.enemyIds.Contains(region.GetController().id))
         {
-            Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(), region.GetController().GetArmyPower());
+            Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(true), region.GetController().GetArmyPower(true));
 
             if (result.attackSuccessful)
             {
@@ -287,7 +255,7 @@ public class Region : PopObject
             }
         }
     }
-    #endregion
+    
     public double GetStability()
     {
         double totalPoliticalPower = 0;
@@ -310,22 +278,12 @@ public class Region : PopObject
         }
         return totalHappiness / totalPoliticalPower;
     }
-    #endregion
-    #region Economy & Checks
     public void CheckPopulation()
     {
         CountPopulation();
         if (population < Pop.ToNativePopulation(1) && owner != null)
         {
             owner.RemoveRegion(this);
-        }
-        if (owner != null && GetController() != owner.GetHighestLiege())
-        {
-            control = 0f;
-        }
-        else
-        {
-            control = Mathf.Clamp(control + 0.005f, 0f, 1f);
         }
     }
 
@@ -458,9 +416,6 @@ public class Region : PopObject
         }
     }
 
-    #endregion
-    #region PopActions
-
     public void MergePops()
     {
         if (pops.Count < 2)
@@ -498,9 +453,6 @@ public class Region : PopObject
         }
         return migrateable && habitable;
     }
-
-    #endregion
-    #region Utility
     public static List<Region> GetPathToRegion(Region start, Region goal, int maxDist)
     {
         List<Region> path = null;
@@ -569,8 +521,6 @@ public class Region : PopObject
         border = borderingRegions[rng.Next(0, habitableBorderingRegions.Length)];
         return border;
     }
-    #endregion
-    #region Named Object
     public override string GenerateDescription()
     {
         // Region position
@@ -608,5 +558,5 @@ public class Region : PopObject
         }
         return desc;        
     }
-    #endregion
+    
 }   

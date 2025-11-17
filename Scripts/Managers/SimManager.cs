@@ -79,8 +79,6 @@ public class SimManager
     [IgnoreMember] public ulong totalRegionTime;
     [IgnoreMember] public ulong totalCharacterTime;
     [IgnoreMember] public ulong totalMiscTime;
-    #region Utility
-
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
         return (Vector2I)(pos / (terrainMap.Scale * 16)) / tilesPerRegion;
@@ -90,8 +88,6 @@ public class SimManager
     {
         return tilesPerRegion * (regionPos * (terrainMap.Scale * 16));
     }
-    #endregion
-    #region Saving & Loading
     public void SaveSimToFile(string path)
     {
         regions.ForEach(r => r.PrepareForSave());
@@ -152,8 +148,6 @@ public class SimManager
         sim.simLoadedFromSave = true;
         return sim;
     }
-    #endregion
-    #region Initialization
     public void RebuildAfterSave()
     {
         AssignSimManager();
@@ -308,7 +302,8 @@ public class SimManager
     }
     void AssignSimManager()
     {
-        DiplomacyManager.objectManager = objectManager;
+        StateDiplomacyManager.objectManager = objectManager;
+        StateVassalManager.objectManager = objectManager;
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
 
@@ -342,7 +337,7 @@ public class SimManager
         }
         node.InvokeEvent();
     }
-    #endregion
+    
 
     void BorderingRegions()
     {
@@ -419,7 +414,6 @@ public class SimManager
             }
         }
     }
-    #region Pop Update
     public void UpdatePops()
     {
         foreach (Pop pop in pops.ToArray())
@@ -434,8 +428,6 @@ public class SimManager
                 pop.politicalPower = pop.CalculatePoliticalPower();
                 pop.EconomyUpdate();
                 pop.GrowPop();
-                pop.UpdateHappiness();
-                pop.UpdateLoyalty();
                 if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
                     pop.TechnologyUpdate();
@@ -460,8 +452,6 @@ public class SimManager
         // GD.Print("  Pops Move Time: " + migrateTime + " ms");
         */
     }
-    #endregion
-    #region Region Update
     public void UpdateRegions()
     {
         uint countedPoppedRegions = 0;
@@ -576,8 +566,6 @@ public class SimManager
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
-    #endregion
-    #region State Update
     public void UpdateStates()
     {
         foreach (State state in states.ToArray())
@@ -600,7 +588,7 @@ public class SimManager
             {
                 state.tech = state.rulingPop.Tech;
             }
-            state.GetRealmBorders();
+            //state.GetRealmBorders();
             state.Capitualate();
         }
         foreach (State state in states.ToArray())
@@ -611,7 +599,6 @@ public class SimManager
                 state.maxSize = 6 + state.rulingPop.Tech.societyLevel;
             }
 
-            state.age += TimeManager.ticksPerMonth;
             try
             {
                 if (state.leaderId == null)
@@ -623,9 +610,9 @@ public class SimManager
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
                     state.UpdateLoyalty();
-                    foreach (War war in state.liege.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
+                    foreach (War war in state.vassalManager.GetLiege().diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
                     {
-                        war.AddParticipant(state.id, state.liege.diplomacy.warIds[war.id]);
+                        war.AddParticipant(state.id, state.vassalManager.GetLiege().diplomacy.warIds[war.id]);
                     }  
                 }
 
@@ -646,32 +633,26 @@ public class SimManager
         var partitioner = Partitioner.Create(states.ToArray());
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.CountStatePopulation();
+            state.CountPopulation();
             state.Recruitment();
             state.UpdateDisplayColor();
             StateNamer.UpdateStateNames(state);
         });
     }
-    #endregion
-    #region Culture Update
     public void UpdateCultures()
     {
         foreach (Culture culture in cultures.ToArray())
         {
-            culture.age += TimeManager.ticksPerMonth;
+
         }
     }
-    #endregion
-    #region War Update
     public void UpdateWars()
     {
         foreach (War war in wars)
         {
-            war.age += TimeManager.ticksPerMonth;
+
         }
     }
-    #endregion
-    #region Character Update
     public void UpdateCharacters()
     {
         try
@@ -685,13 +666,11 @@ public class SimManager
                     objectManager.DeleteCharacter(character);
                     continue;
                 }
-
-                character.age += TimeManager.ticksPerMonth;
                 // Character Aliveness
 
                 // Character Aging
                 // Calculated yearly, decreases character health as they age
-                if (timeManager.GetMonth(character.birthTick) == timeManager.GetMonth())
+                if (timeManager.GetMonth(character.tickCreated) == timeManager.GetMonth())
                 {
                     character.CharacterAging();
                 }
@@ -709,8 +688,6 @@ public class SimManager
         }
 
     }
-    #endregion
-    #region SimTick
     public void SimMonth()
     {
         try
@@ -740,5 +717,5 @@ public class SimManager
     {
 
     }
-    #endregion
+    
 }

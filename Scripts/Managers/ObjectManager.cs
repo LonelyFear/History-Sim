@@ -11,7 +11,6 @@ public class ObjectManager
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static TimeManager timeManager;
     [Key(0)] public ulong currentId = 0;
-    #region Object Getting
     public Region GetRegion(ulong? id)
     {
         try
@@ -77,7 +76,6 @@ public class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
-    #region Pops Creation
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
     {
         simManager.currentBatch++;
@@ -163,8 +161,6 @@ public class ObjectManager
             return null;
         }
     }
-    #endregion
-    #region Cultures Creation
     public Culture CreateCulture()
     {
         float r = simManager.rng.NextSingle();
@@ -175,7 +171,7 @@ public class ObjectManager
             id = getID(),
             name = "Culture",
             color = new Color(r, g, b),
-            tickFounded = timeManager.ticks
+            tickCreated = timeManager.ticks,
         };
 
         simManager.cultures.Add(culture);
@@ -191,8 +187,6 @@ public class ObjectManager
             return null;
         }        
     }
-    #endregion
-    #region States Creation
     public void CreateState(Region region)
     {
         if (region.owner == null)
@@ -206,9 +200,10 @@ public class ObjectManager
                 name = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
-                tickFounded = timeManager.ticks,
+                tickCreated = timeManager.ticks,
             };
-            state.diplomacy = new DiplomacyManager(state);
+            state.diplomacy = new StateDiplomacyManager(state);
+            state.vassalManager = new StateVassalManager(state);
             state.AddRegion(region);
             simManager.states.Add(state);
             simManager.statesIds.Add(state.id, state);
@@ -221,18 +216,20 @@ public class ObjectManager
             simManager.mapManager.selectedMetaObj = null;
             simManager.mapManager.UpdateRegionColors(simManager.regions);
         }
-        if (state.liege != null)
+        if (state.vassalManager.liegeId != null)
         {
-            state.liege.RemoveVassal(state);
+            State liege = GetState(state.vassalManager.liegeId);
+            liege.vassalManager.RemoveVassal(state.id);
         }
         foreach (ulong warId in state.diplomacy.warIds.Keys)
         {
             War war = GetWar(warId);
             war.RemoveParticipant(state.id);
         }
-        foreach (State vassal in state.vassals.ToArray())
+        foreach (ulong vassalId in state.vassalManager.vassalIds.ToArray())
         {
-            state.RemoveVassal(vassal);
+            State vassal = GetState(vassalId);
+            state.vassalManager.RemoveVassal(vassalId);
         }
         foreach (Region region in state.regions.ToArray())
         {
@@ -266,8 +263,6 @@ public class ObjectManager
             return null;
         }
     }
-    #endregion
-    #region Characters Creation
     public Character GetCharacter(ulong? id)
     {
         if (id == null)
@@ -301,9 +296,7 @@ public class ObjectManager
             // Names character
             firstName = firstName,
             lastName = lastName,
-
-            age = age,
-            birthTick = timeManager.ticks - age,
+            tickCreated = timeManager.ticks - age,
         };
         // Adds character to state and gives it role
         character.JoinState(state.id);
@@ -333,15 +326,33 @@ public class ObjectManager
         simManager.characters.Remove(character);
         simManager.charactersIds.Remove(character.id);
     }
-    #endregion
-    #region Alliances
     public Alliance CreateAlliance(State founder, AllianceType type)
     {
-        Alliance alliance = new Alliance();
+        Alliance alliance = new Alliance()
+        {
+            id = getID(),
+            tickCreated = timeManager.ticks,
+            type = type
+        };
+        alliance.AddMember(founder.id);
+        alliance.SetLeader(founder.id);
+
+        simManager.allianceIds.Add(alliance.id, alliance);
+        simManager.alliances.Add(alliance);
         return alliance;
     }
-    #endregion
-    #region Trade Zones
+    public Alliance GetAlliance(ulong? id)
+    {
+        try
+        {
+            return simManager.allianceIds[(ulong)id];
+        }
+        catch
+        {
+            //GD.PushWarning(e);
+            return null;
+        }    
+    }
     public TradeZone CreateTradeZone(Region region)
     {
         TradeZone zone = new TradeZone()
@@ -366,8 +377,6 @@ public class ObjectManager
         simManager.tradeZones.Remove(tradeZone);
         simManager.tradeZonesIds.Remove(tradeZone.id);     
     }
-    #endregion
-    #region Wars
     public War StartWar(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
     {
         if (agressorLeader == defenderLeader || GetState(agressorLeader) == null || GetState(defenderLeader) == null)
@@ -382,6 +391,7 @@ public class ObjectManager
             primaryDefenderId = defenderLeader,
             attackerIds = atk.Select(attacker => attacker.id).ToList(),
             defenderIds = def.Select(defender => defender.id).ToList(),
+            tickCreated = timeManager.ticks,
         };
 
         war.InitWarLead(true);
@@ -404,8 +414,8 @@ public class ObjectManager
             state.diplomacy.warIds.Remove(war.id);
         }
     }
-    #endregion
-    #endregion
+    
+    
     ulong getID()
     {
         currentId++;
