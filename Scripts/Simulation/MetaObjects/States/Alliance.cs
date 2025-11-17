@@ -4,6 +4,8 @@ using System.Linq.Expressions;
 using MessagePack;
 
 [MessagePackObject]
+// Alliances
+// Versatile, can represent unions and realms. Use this class for anything involving collections of states
 public class Alliance : NamedObject
 {
 

@@ -252,6 +252,10 @@ public class ObjectManager
     }
     public State GetState(ulong? id)
     {
+        if (id == null)
+        {
+            return null;
+        }
         try {
             return simManager.statesIds[(ulong)id];
         } catch {

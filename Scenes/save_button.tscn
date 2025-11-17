@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://dpy6hp4i3relw"]
 
-[ext_resource type="Script" uid="uid://ccdhr40nqphb2" path="res://Scripts/UI/SaveButton.cs" id="1_f0tub"]
+[ext_resource type="Script" uid="uid://ccdhr40nqphb2" path="res://Scripts/UI/Saving/SaveButton.cs" id="1_f0tub"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="1_lhjyg"]
 
 [node name="SaveButton" type="Button"]

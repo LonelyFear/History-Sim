@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://8kvblrpf5g8"]
 
-[ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/InfoTab.cs" id="1_5rqtu"]
+[ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_5rqtu"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_0jkeo"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]

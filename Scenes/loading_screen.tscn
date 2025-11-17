@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://gcfy0su0hgup" path="res://Sprites/Over.png" id="5_x8yqx"]
 [ext_resource type="Texture2D" uid="uid://bdyro1h0wkigt" path="res://Sprites/Progress.png" id="6_qbyj8"]
 [ext_resource type="Texture2D" uid="uid://dgw77xp2rspt" path="res://Sprites/loading.png" id="8_umxys"]
-[ext_resource type="Script" uid="uid://bn6k8xr4csl48" path="res://Scripts/loading_icon.gd" id="9_4v7p6"]
+[ext_resource type="Script" uid="uid://bn6k8xr4csl48" path="res://Scripts/UI/loading_icon.gd" id="9_4v7p6"]
 
 [node name="Loading Screen" type="Control"]
 layout_mode = 3

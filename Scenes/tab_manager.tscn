@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://bslwmll3j6xsk"]
 
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="1_5s1ie"]
-[ext_resource type="Script" uid="uid://d3qjfmyuhe32e" path="res://Scripts/UI/TabManager.cs" id="1_egybu"]
+[ext_resource type="Script" uid="uid://d3qjfmyuhe32e" path="res://Scripts/UI/Encyclopedia/TabManager.cs" id="1_egybu"]
 [ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="2_5s1ie"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mg4q0"]

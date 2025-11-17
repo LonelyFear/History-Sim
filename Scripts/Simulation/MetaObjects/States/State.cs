@@ -281,15 +281,24 @@ public class State : PopObject, ISaveable
                     // Makes sure the state is real
                     if (borderState != null && borderState != this)
                     {
+                        // Adds the bordering state
                         if (!borders.Contains(borderState))
                         {
                             borders.Add(borderState);
                         }
+                        // Adds the bordering realm leader
                         if (!borders.Contains(borderState.vassalManager.GetOverlord(true)))
                         {
                             borders.Add(borderState.vassalManager.GetOverlord(true));
                         }
-                        bordersOtherState = realm.memberStateIds.Contains(borderState.id);
+                        // If we arent in a realm everything is considered outside of us
+                        bordersOtherState = true;                        
+                        
+                        // Checks if the state is in our realm
+                        if (realm != null)
+                        {
+                            bordersOtherState = realm.memberStateIds.Contains(borderState.id);
+                        }
                     }
                 }
                 // External Bordering Regions is the borders on the outside of the realm

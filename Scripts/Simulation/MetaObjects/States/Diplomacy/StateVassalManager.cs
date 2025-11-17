@@ -25,6 +25,21 @@ public partial class StateVassalManager
     {
         this.state = state;
     }
+    public void UpdateRealm()
+    {
+        Alliance realm = objectManager.GetAlliance(state.realmId);
+        if (realm == null && vassalIds.Count > 0)
+        {
+            // Creates a realm
+            state.realmId = objectManager.CreateAlliance(state, AllianceType.REALM).id;
+            
+            realm = objectManager.GetAlliance(state.realmId);
+            foreach (ulong vassalId in vassalIds)
+            {
+                realm.AddMember(vassalId);
+            }
+        }
+    }
     public void AddVassal(ulong vassalId)
     {
         // Realm stuff
@@ -73,12 +88,10 @@ public partial class StateVassalManager
     // Utility
     public State GetOverlord(bool includeSelf)
     {
-        // Gets the Liege
-        StateVassalManager liege = GetLiege().vassalManager;
-        if (liege.liegeId != null)
+        Alliance realm = objectManager.GetAlliance(state.realmId);
+        if (realm != null)
         {
-            // Gets the liege of the liege as overlord
-            return liege.GetLiege();
+            return objectManager.GetState(realm.leadStateId);         
         }
         // Otherwise returns the liege as overlord
         return GetLiege(includeSelf);
