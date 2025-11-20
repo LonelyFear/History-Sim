@@ -47,8 +47,8 @@ public partial class ObjectInfo : Control
                         populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
                         State state = (State)selectedObject;
 
-                        nameLabel.Text = state.displayName;
-                        switch (state.sovereignty)
+                        nameLabel.Text = state.name;
+                        switch (state.vassalManager.sovereignty)
                         {
                             case Sovereignty.COLONY:
                                 typeLabel.Text = "Colonial State";

@@ -147,15 +147,17 @@ public partial class StateDiplomacyManager
                 }
 
                 int opinion = pair.Value.opinion;
-                bool cantStartWar = target == state || enemyIds.Contains(target.id) || target.vassalManager.GetOverlord(true) == state || target.sovereignty != Sovereignty.INDEPENDENT;
+                bool cantStartWar = target == state || enemyIds.Contains(target.id) || target.vassalManager.GetOverlord(true) == state || target.vassalManager.sovereignty != Sovereignty.INDEPENDENT;
                 if (cantStartWar)
                 {
                     continue;
                 }
+                
                 // Sovereign Wars
-                if (state.sovereignty == Sovereignty.INDEPENDENT && opinion < 0 && state.vassalManager.GetLiege() != target)
+                if (state.vassalManager.sovereignty == Sovereignty.INDEPENDENT && opinion < Mathf.Inf && state.vassalManager.GetLiege() != target)
                 {
-                    float warDeclarationChance = Mathf.Lerp(0.001f, 0.005f, opinion / -100);
+                    //GD.Print("Wars");
+                    float warDeclarationChance = 0.005f;//Mathf.Lerp(0.001f, 0.005f, opinion / -100);
                     if (PopObject.rng.NextSingle() < warDeclarationChance)
                     {
                         //GD.Print("war");
@@ -165,7 +167,6 @@ public partial class StateDiplomacyManager
                     }
                 }
                 // Rebellions
-
                 if (state.loyalty < State.minRebellionLoyalty && target == state.vassalManager.GetLiege())
                 {
                     if (PopObject.rng.NextSingle() < Mathf.Lerp(1 - (state.loyalty / State.minRebellionLoyalty), 0, 0.005))
@@ -190,7 +191,7 @@ public partial class StateDiplomacyManager
   
     public void EndWars()
     {
-        if (state.sovereignty != Sovereignty.INDEPENDENT)
+        if (state.vassalManager.sovereignty != Sovereignty.INDEPENDENT)
         {
             return;
         }
@@ -203,7 +204,8 @@ public partial class StateDiplomacyManager
             {
                 continue;
             }
-            if (objectManager.GetState(war.primaryAgressorId).sovereignty != Sovereignty.INDEPENDENT || objectManager.GetState(war.primaryDefenderId).sovereignty != Sovereignty.INDEPENDENT)
+            if (objectManager.GetState(war.primaryAgressorId).vassalManager.sovereignty != Sovereignty.INDEPENDENT || 
+            objectManager.GetState(war.primaryDefenderId).vassalManager.sovereignty != Sovereignty.INDEPENDENT)
             {
                 EndWar(war);
                 continue;

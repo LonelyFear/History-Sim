@@ -316,6 +316,7 @@ public class SimManager
 
         Pop.objectManager = objectManager;
         Character.sim = this;
+        IndexTab.sim = this;
     }
     public void OnWorldgenFinished()
     {
@@ -606,7 +607,7 @@ public class SimManager
                     state.SuccessionUpdate();
                 }
                 state.UpdateStability();
-                if (state.sovereignty != Sovereignty.INDEPENDENT)
+                if (state.vassalManager.sovereignty != Sovereignty.INDEPENDENT)
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
                     state.UpdateLoyalty();
@@ -616,7 +617,7 @@ public class SimManager
                     }  
                 }
 
-
+                state.vassalManager.UpdateRealm();
                 state.UpdateCapital();
 
                 state.diplomacy.RelationsUpdate();

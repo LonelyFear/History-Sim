@@ -5,7 +5,7 @@ public class StateNamer
         switch (state.government)
         {
             case GovernmentType.REPUBLIC:
-                switch (state.sovereignty)
+                switch (state.vassalManager.sovereignty)
                 {
                     case Sovereignty.COLONY:
                         state.govtName = "Colony";
@@ -36,7 +36,7 @@ public class StateNamer
                 }
                 break;
             case GovernmentType.MONARCHY:
-                switch (state.sovereignty)
+                switch (state.vassalManager.sovereignty)
                 {
                     case Sovereignty.COLONY:
                         state.govtName = "Crown Colony";
@@ -67,7 +67,7 @@ public class StateNamer
                 }
                 break;
             case GovernmentType.AUTOCRACY:
-                switch (state.sovereignty)
+                switch (state.vassalManager.sovereignty)
                 {
                     case Sovereignty.COLONY:
                         state.govtName = "Territory";
@@ -101,6 +101,6 @@ public class StateNamer
                 state.govtName = "State";
                 break;
         }
-        state.displayName = $"{state.govtName} of {state.name}";
+        state.name = $"{state.govtName} of {state.baseName}";
     }
 }

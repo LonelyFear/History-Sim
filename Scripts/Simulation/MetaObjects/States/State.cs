@@ -8,7 +8,7 @@ using System.Data.Common;
 
 public class State : PopObject, ISaveable
 {
-    [IgnoreMember] public string displayName = "Nation";
+    [IgnoreMember] public string baseName = "Nation";
     [IgnoreMember] public string govtName;
     [IgnoreMember] public string leaderTitle { get; set; } = "King";
     [Key(2)] public Color color { get; set; }
@@ -49,7 +49,7 @@ public class State : PopObject, ISaveable
     [Key(22)] public List<ulong> borderingStatesIDs { get; set; }
     [Key(23)] public int borderingRegions { get; set; } = 0;
     [Key(24)] public int externalBorderingRegions { get; set; }= 0;
-    [Key(25)] public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
+    //[Key(25)] public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
 
     [Key(27)] public Tech tech = new Tech();
 
@@ -87,7 +87,7 @@ public class State : PopObject, ISaveable
         {
             capital = regions[0];
         }
-        switch (sovereignty)
+        switch (vassalManager.sovereignty)
         {
             case Sovereignty.INDEPENDENT:
                 capitalColor = new Color(1, 0, 0);
@@ -212,7 +212,7 @@ public class State : PopObject, ISaveable
     public void UpdateDisplayColor()
     {
         displayColor = color;
-        switch (sovereignty)
+        switch (vassalManager.sovereignty)
         {
             case Sovereignty.COLONY:
                 displayColor = vassalManager.GetLiege().color;
@@ -410,7 +410,7 @@ public class State : PopObject, ISaveable
                 timeManager.forcePause = true;
                 simManager.mapManager.selectedMetaObj = liege;
                 simManager.mapManager.UpdateRegionColors(simManager.regions);
-                GD.Print(liege.displayName);
+                GD.Print(liege.name);
             }
             loyaltyTarget -= (regions.Count - liege.regions.Count)/liege.regions.Count * 0.5;
         }
@@ -474,18 +474,18 @@ public class State : PopObject, ISaveable
     }
     public override string GenerateDescription()
     {
-        string desc = $"The {displayName} is a {govtName.ToLower()} in the simulation. It is ";
+        string desc = $"The {name} is a {govtName.ToLower()} in the simulation. It is ";
         if ("aeiou".Contains(govtName[0]))
         {
-            desc = $"The {displayName} is an {govtName.ToLower()} in the simulation. It is ";
+            desc = $"The {name} is an {govtName.ToLower()} in the simulation. It is ";
         }
-        switch (sovereignty)
+        switch (vassalManager.sovereignty)
         {
             case Sovereignty.INDEPENDENT:
                 desc += "an independent state";
                 break;
             default:
-                desc += $"a vassal of the {GenerateUrlText(vassalManager.GetLiege(), vassalManager.GetLiege().displayName)}";
+                desc += $"a vassal of the {GenerateUrlText(vassalManager.GetLiege(), vassalManager.GetLiege().name)}";
                 break;
         }
         desc += $" lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}. "

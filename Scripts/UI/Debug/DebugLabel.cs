@@ -13,7 +13,7 @@ public partial class DebugLabel : Label
             if (region != null && region.owner != null){
                 State state = region.owner;
                 string leaderText = "Leader: None";
-                Text = "State: " + state.displayName + "\n" + "Population: " + Pop.FromNativePopulation(state.population).ToString("#,###0") + "\n" + "Aristocrats: " + Pop.FromNativePopulation(state.professions[SocialClass.ARISTOCRAT]).ToString("#,###0") + "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0") + "\n" + leaderText;
+                Text = "State: " + state.name + "\n" + "Population: " + Pop.FromNativePopulation(state.population).ToString("#,###0") + "\n" + "Aristocrats: " + Pop.FromNativePopulation(state.professions[SocialClass.ARISTOCRAT]).ToString("#,###0") + "\n" + "Manpower: " + Pop.FromNativePopulation(state.manpower).ToString("#,###0") + "\n" + leaderText;
             } else {
                 Text = "";
             }            

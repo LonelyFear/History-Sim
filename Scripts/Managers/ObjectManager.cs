@@ -10,7 +10,7 @@ public class ObjectManager
 {
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static TimeManager timeManager;
-    [Key(0)] public ulong currentId = 0;
+    [Key(0)] public ulong currentId = 20;
     public Region GetRegion(ulong? id)
     {
         try
@@ -197,7 +197,7 @@ public class ObjectManager
             State state = new State()
             {
                 id = getID(),
-                name = NameGenerator.GenerateNationName(),
+                baseName = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
                 tickCreated = timeManager.ticks,
@@ -418,8 +418,6 @@ public class ObjectManager
             state.diplomacy.warIds.Remove(war.id);
         }
     }
-    
-    
     ulong getID()
     {
         currentId++;

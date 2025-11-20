@@ -55,7 +55,11 @@ public class Alliance : NamedObject
     public List<Region> GetRegions()
     {
         List<Region> regions = new List<Region>();
-        //this.regions = regions;
+        foreach (ulong stateId in memberStateIds)
+        {
+            State memberState = objectManager.GetState(stateId);
+            regions.AddRange(memberState.regions);
+        }
         return regions;
     }
     public long GetAllianceManpower()

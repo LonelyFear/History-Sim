@@ -545,16 +545,16 @@ public class Region : PopObject, ISaveable
         {
             if (GetController() != owner)
             {
-                desc += $"{GenerateUrlText(GetController(), GetController().displayName)} as occupied territory. ";
+                desc += $"{GenerateUrlText(GetController(), GetController().name)} as occupied territory. ";
             } else
             {
-                desc += $"{GenerateUrlText(owner, owner.displayName)}. ";
+                desc += $"{GenerateUrlText(owner, owner.name)}. ";
             }
         }
         // If it is the capital add to description
         if (owner != null && owner.capital == this)
         {
-            desc += $"It is the capital of the {GenerateUrlText(owner, owner.displayName)}";
+            desc += $"It is the capital of the {GenerateUrlText(owner, owner.name)}";
         }
         return desc;        
     }

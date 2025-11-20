@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=27 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
@@ -15,9 +15,11 @@
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
 [ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="10_exi56"]
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/GameUI.cs" id="11_7nbq1"]
+[ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scenes/EncyclopediaMainMenu.cs" id="11_7t8sx"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/God Mode/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scripts/UI/Debug/FrameBreakdown.cs" id="12_ewbju"]
+[ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/index_tab.tscn" id="12_mg4q0"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/ObjectInfo.cs" id="15_ewbju"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/God Mode/ActionPanel.cs" id="17_7nbq1"]
@@ -78,27 +80,50 @@ switchMap = true
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton")]
+[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenuText", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton")]
 script = ExtResource("8_iivbl")
 infoTabScene = ExtResource("9_7nbq1")
+indexTabScene = ExtResource("12_mg4q0")
 timeManager = NodePath("../Time Manager")
 encyclopediaMenu = NodePath("Encyclopedia/TabManager")
+mainMenuText = NodePath("Encyclopedia/TabManager/Main Menu/EncyclopediaDesc")
 encyclopediaHolder = NodePath("Encyclopedia")
 gameUi = NodePath("../UI")
 playerCamera = NodePath("../PlayerCamera")
-closeEncyclopediaButton = NodePath("Encyclopedia/TabManager/Main Menu/ExitEncyclopediaButton")
+closeEncyclopediaButton = NodePath("Encyclopedia/Panel/ExitEncyclopediaButton")
 
-[node name="Encyclopedia" type="Control" parent="Encyclopedia"]
+[node name="Encyclopedia" type="VBoxContainer" parent="Encyclopedia"]
 visible = false
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 1280.0
+offset_bottom = 720.0
+theme_override_constants/separation = 0
+
+[node name="Panel" type="Panel" parent="Encyclopedia/Encyclopedia"]
+custom_minimum_size = Vector2(0, 35)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("8_85qyi")
+
+[node name="ExitEncyclopediaButton" type="Button" parent="Encyclopedia/Encyclopedia/Panel"]
+z_index = 1
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -16.0
+offset_right = 199.0
+offset_bottom = 16.0
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+text = "Exit Encyclopedia"
 
 [node name="TabManager" parent="Encyclopedia/Encyclopedia" instance=ExtResource("10_exi56")]
-layout_mode = 0
+layout_mode = 2
 
 [node name="Main Menu" type="VBoxContainer" parent="Encyclopedia/Encyclopedia/TabManager"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -110,6 +135,7 @@ offset_bottom = 684.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 4
+script = ExtResource("11_7t8sx")
 
 [node name="Label" type="Label" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
 layout_mode = 2
@@ -126,7 +152,12 @@ theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/normal_font_size = 30
-text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it"
+bbcode_enabled = true
+text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it, or select an index below to browse the objects of your world.
+
+[url=chaIndex]Characters Index[/url]
+[url=regIndex]Regions Index[/url]
+[url=staIndex]States Index[/url]"
 fit_content = true
 autowrap_mode = 2
 
@@ -134,14 +165,6 @@ autowrap_mode = 2
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
-
-[node name="ExitEncyclopediaButton" type="Button" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-text = "Exit Encyclopedia"
 
 [node name="EncyclopediaMenu" type="TabContainer" parent="Encyclopedia"]
 visible = false

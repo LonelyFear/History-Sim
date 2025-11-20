@@ -204,22 +204,22 @@ public class Character : NamedObject
         switch (role)
         {
             case CharacterRole.LEADER:
-                desc += $"the {objectManager.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
+                desc += $"the {objectManager.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             case CharacterRole.HEIR:
-                desc += $"the heir to the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
+                desc += $"the heir to the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             case CharacterRole.COMMANDER:
-                desc += $"a commander in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
+                desc += $"a commander in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             case CharacterRole.POLITICIAN:
-                desc += $"are a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
+                desc += $"are a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             case CharacterRole.NOBLE:
-                desc += $"a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
+                desc += $"a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             default:
-                desc += $"living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).displayName)}";
+                desc += $"living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
         }
         desc += $", and {pronouns[intGender]} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(sim.timeManager.ticks - tickCreated)} years old. ";

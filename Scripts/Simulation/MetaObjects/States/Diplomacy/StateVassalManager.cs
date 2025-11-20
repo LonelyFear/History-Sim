@@ -58,11 +58,17 @@ public partial class StateVassalManager
         {
             objectManager.GetState(newVassal.vassalManager.liegeId).vassalManager.RemoveVassal(vassalId);
         }
+        // Removes vassal's vassals
+        foreach (ulong subVassalId in newVassal.vassalManager.vassalIds.ToArray())
+        {
+            newVassal.vassalManager.RemoveVassal(subVassalId);
+        }
 
         // Adds vassal to us
+        newVassal.vassalManager.liegeId = stateId;
         vassalIds.Add(vassalId);
         realm.AddMember(vassalId);
-        newVassal.sovereignty = Sovereignty.PUPPET;
+        newVassal.vassalManager.sovereignty = Sovereignty.PUPPET;
     }
     public void RemoveVassal(ulong vassalId)
     {

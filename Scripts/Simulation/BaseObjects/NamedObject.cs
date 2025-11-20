@@ -28,6 +28,31 @@ public abstract class NamedObject
         text += $"\nID: {id}";
         return text;
     }
+    public string GetFullId()
+    {
+        string typeId = "sta";
+        switch (this)
+        {
+            case State:
+                typeId = "sta";
+                break;
+            case War:
+                typeId = "war";
+                break;
+            case Character:
+                typeId = "cha";
+                break;
+            case Culture:
+                typeId = "cul";
+                break;
+            case Region:
+                typeId = "reg";
+                break;
+            default:
+                break;
+        }
+        return typeId + id;        
+    }
     public static string GenerateUrlText(NamedObject obj, string text, string color = "orange")
     {
         string typeId = "sta";

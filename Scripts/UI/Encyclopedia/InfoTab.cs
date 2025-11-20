@@ -4,7 +4,7 @@ using System;
 public partial class InfoTab : VBoxContainer
 {
 	public static EncyclopediaManager manager;
-	[Export] Label objName;
+	 [Export] Label objName;
 	[Export] Label objType;
 	[Export] RichTextLabel objDesc;
 	[Export] RichTextLabel objStats;
