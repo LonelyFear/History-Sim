@@ -225,7 +225,7 @@ public class State : PopObject, ISaveable
             countedSocialClasss.Add(profession, 0);
         }
 
-        Dictionary<Culture, long> cCultures = new Dictionary<Culture, long>();
+        Dictionary<ulong, long> cCultures = new Dictionary<ulong, long>();
         borderingRegions = 0;
         float countedWealth = 0;
         int occRegions = 0;
@@ -291,15 +291,15 @@ public class State : PopObject, ISaveable
             {
                 countedSocialClasss[profession] += region.professions[profession];
             }
-            foreach (Culture culture in region.cultures.Keys)
+            foreach (ulong cultureId in region.cultureIds.Keys)
             {
-                if (cCultures.ContainsKey(culture))
+                if (cCultures.ContainsKey(cultureId))
                 {
-                    cCultures[culture] += region.cultures[culture];
+                    cCultures[cultureId] += region.cultureIds[cultureId];
                 }
                 else
                 {
-                    cCultures.Add(culture, region.cultures[culture]);
+                    cCultures.Add(cultureId, region.cultureIds[cultureId]);
                 }
             }
         }
@@ -307,7 +307,7 @@ public class State : PopObject, ISaveable
         borderingStates = borders;
         totalWealth = countedWealth;
         professions = countedSocialClasss;
-        cultures = cCultures;
+        cultureIds = cCultures;
         population = countedP + aliveCharacters;
         workforce = countedW;
         pops = countedPops;
@@ -339,7 +339,7 @@ public class State : PopObject, ISaveable
         double stabilityTarget = 1;
         //stabilityTarget -= diplomacy.warIds.Count * 0.05;
 
-        if (largestCulture != GetRulingCulture())
+        if (largestCultureId != GetRulingCulture().id)
         {
             stabilityTarget -= 0.25;
         }
@@ -373,11 +373,11 @@ public class State : PopObject, ISaveable
     {
         double loyaltyTarget = 1;
         State liege = vassalManager.GetLiege();
-        if (largestCulture != liege.GetRulingCulture())
+        if (largestCultureId != liege.GetRulingCulture().id)
         {
             loyaltyTarget -= 0.1;
         }
-        if (largestCulture != liege.largestCulture)
+        if (largestCultureId != liege.largestCultureId)
         {
             loyaltyTarget -= 0.25;
         }

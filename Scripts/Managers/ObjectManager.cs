@@ -169,7 +169,7 @@ public class ObjectManager
         Culture culture = new Culture()
         {
             id = getID(),
-            name = "Culture",
+            name = NameGenerator.GenerateCultureName(),
             color = new Color(r, g, b),
             tickCreated = timeManager.ticks,
         };

@@ -196,9 +196,9 @@ public partial class MapManager : Node2D
                     }
                     break;
                 case MapModes.CULTURE:
-                    if (hoveredRegion.cultures.Keys.Count > 0)
+                    if (hoveredRegion.cultureIds.Keys.Count > 0)
                     {
-                        selectedMetaObj = hoveredRegion.largestCulture;
+                        selectedMetaObj = objectManager.GetCulture(hoveredRegion.largestCultureId);
                     }
                     else
                     {
@@ -335,9 +335,9 @@ public partial class MapManager : Node2D
                 }
                 break;
             case MapModes.CULTURE:
-                if (region.largestCulture != null)
+                if (region.largestCultureId != null)
                 {
-                    color = region.largestCulture.color;
+                    color = objectManager.GetCulture(region.largestCultureId).color;
                 }
                 else if (region.habitable)
                 {
@@ -347,12 +347,12 @@ public partial class MapManager : Node2D
                 if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == ObjectType.CULTURE)
                 {
                     Culture culture = (Culture)selectedMetaObj;
-                    if (region.cultures.ContainsKey(culture) && region.largestCulture != culture)
+                    if (region.cultureIds.ContainsKey(culture.id) && region.largestCultureId != culture.id)
                     {
                         color = culture.color;
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
                     }
-                    else if (region.largestCulture != culture)
+                    else if (region.largestCultureId != culture.id)
                     {
                         color = (color * 0.3f) + (new Color(0, 0, 0) * 0.7f);
                     }

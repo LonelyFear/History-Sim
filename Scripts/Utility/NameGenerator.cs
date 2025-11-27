@@ -71,7 +71,13 @@ public static class NameGenerator
         //string[] syllables = File.ReadAllLines("Data/Names/NameSyllables.txt");
         string[] patterns = ["CV", "CVC", "VC"];
         string[] suffixes = ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or"];
+
+        bool feminine = rng.Next(2) == 0;
         string consonants = "bcdfghjklmnpqrstvwxyz";
+        if (feminine)
+        {
+            consonants = "bdfghjklmnprstvwyz";
+        }  
 
         string name = "";
         for (int i = 0; i < rng.Next(2, 4); i++)
@@ -88,6 +94,25 @@ public static class NameGenerator
         name = name.Capitalize();
 
         return name;        
+    }
+    public static string GenerateCultureName()
+    {
+        string name = "";
+        bool feminine = rng.Next(2) == 0;
+
+        string consonants = "bcdfghjklmnpqrstvwxyz";
+        if (feminine)
+        {
+            consonants = "bdfghjklmnprstvwyz";
+        }    
+
+        string[] patterns = ["CV", "CVC", "VC"];
+        for (int i = 0; i < rng.Next(2, 4); i++)
+        {
+            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
+        }   
+
+        return GetDemonym(name).Capitalize();
     }
     public static string GenerateCharacterName(bool feminine = false)
     {

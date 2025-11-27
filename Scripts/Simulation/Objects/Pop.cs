@@ -57,10 +57,8 @@ public class Pop
         }
         workforce += amount;
         population += amount;
-        if (culture != null)
-        {
-            culture.ChangePopulation(amount, 0);
-        }
+        culture.ChangePopulation(amount, 0, profession, culture);
+        region.ChangePopulation(amount, 0, profession, culture);
     }
     public void ChangeDependents(long amount)
     {
@@ -70,10 +68,8 @@ public class Pop
         }
         dependents += amount;
         population += amount;
-        if (culture != null)
-        {
-            culture.ChangePopulation(0, amount);
-        }
+        culture.ChangePopulation(0, amount, profession, culture);
+        region.ChangePopulation(0, amount, profession, culture);
     }
     public void ChangePopulation(long workforceChange, long dependentChange)
     {

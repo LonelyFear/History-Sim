@@ -490,7 +490,7 @@ public class SimManager
                     startTime = Time.GetTicksMsec();
                     region.MergePops();
                     //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    region.CheckPopulation();
+                    //region.CheckPopulation();
                     //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
                     region.CalcSocialClassRequirements();
@@ -640,10 +640,6 @@ public class SimManager
     }
     public void UpdateCultures()
     {
-        foreach (Culture culture in cultures.ToArray())
-        {
-
-        }
     }
     public void UpdateWars()
     {

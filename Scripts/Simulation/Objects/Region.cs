@@ -558,5 +558,31 @@ public class Region : PopObject, ISaveable
         }
         return desc;        
     }
-    
+
+    public override string GenerateStatsText()
+    {
+        string text = $"Name: {name}";
+        text += $"\nPopulation: {Pop.FromNativePopulation(population):#,###0}\n";
+        text += $"Cultures Breakdown:\n";
+
+        if (Pop.FromNativePopulation(population) > 0)
+        {
+            foreach (var cultureSizePair in cultureIds)
+            {
+                Culture culture = objectManager.GetCulture(cultureSizePair.Key);
+                long localPopulation = cultureSizePair.Value;
+                
+                // Skips if the culture is too small
+                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
+
+                text += GenerateUrlText(culture, culture.name) + ":\n";
+                text += $"  Population: {Pop.FromNativePopulation(localPopulation):#,###0} ";
+
+                float culturePercentage = localPopulation/(float)population;
+                text += $"({culturePercentage:P0})\n";
+            }            
+        }
+
+        return text;
+    }
 }   
