@@ -437,7 +437,7 @@ public class State : PopObject, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 10 + (tech.societyLevel * 2);
+        return 20 + (tech.societyLevel * 2);
     }
     public int GetMaxVassals() {
         return 5;

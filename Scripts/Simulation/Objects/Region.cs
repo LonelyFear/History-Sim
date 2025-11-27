@@ -221,7 +221,7 @@ public class Region : PopObject, ISaveable
         {
             return;
         }
-        bool checks = GetController() == owner && region != null && region.pops.Count != 0 && region.owner == null;
+        bool checks = occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
         //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
 
         if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())

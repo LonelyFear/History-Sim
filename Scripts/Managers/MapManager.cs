@@ -427,7 +427,8 @@ public partial class MapManager : Node2D
     }
     public void SetRegionColor(int x, int y, Color color)
     {
-
+        int stripeThickness = 1;
+        int stripeDistance = 2;
         Region r = objectManager.GetRegion(x, y);
         for (int rx = 0; rx < regionResolution; rx++)
         {
@@ -437,8 +438,9 @@ public partial class MapManager : Node2D
                 int posX = (x * regionResolution) + rx;
                 int posY = (y * regionResolution) + ry;
                 
-                if (r.occupier != null && Mathf.PosMod(rx + ry, 3) == 0)
+                if (r.occupier != null && Mathf.PosMod(posX + posY, stripeDistance + stripeThickness) < stripeThickness)
                 {
+                    //finalColor = new Color(0,0,0);
                     finalColor = GetRegionColor(r, true);
                 }
 
