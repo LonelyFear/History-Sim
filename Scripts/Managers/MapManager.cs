@@ -14,6 +14,7 @@ public partial class MapManager : Node2D
     Sprite2D regionOverlay;
     ImageTexture regionTexture;
     Image regionImage;
+    
     public MapModes mapMode;
     public Vector2 mousePos;
     public Vector2I hoveredRegionPos;
@@ -23,10 +24,11 @@ public partial class MapManager : Node2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    int regionResolution = 1;
-
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
+
+    int regionResolution = 4;
+    public static ObjectManager objectManager;
 
     // NOTE: Painted regions are updated in TimeManager.cs
     public override void _Ready()
@@ -226,7 +228,7 @@ public partial class MapManager : Node2D
         UpdateRegionColors(simManager.habitableRegions);
     }
     
-    public Color GetRegionColor(Region region)
+    public Color GetRegionColor(Region region, bool includeOccupier = false)
     {
         Color color = new Color(0, 0, 0, 0);
         State regionOwner = region.owner;
@@ -239,7 +241,7 @@ public partial class MapManager : Node2D
                     if (regionOwner != null)
                     {
                         color = regionOwner.vassalManager.GetOverlord(true).displayColor;
-                        if (region.occupier != null)
+                        if (region.occupier != null && includeOccupier)
                         {
                             color = region.occupier.displayColor;
                         }
@@ -425,12 +427,28 @@ public partial class MapManager : Node2D
     }
     public void SetRegionColor(int x, int y, Color color)
     {
-        if (regionImage.GetPixel(x, y) != color)
+
+        Region r = objectManager.GetRegion(x, y);
+        for (int rx = 0; rx < regionResolution; rx++)
         {
-            regionImage.SetPixel(x, y, color);
-            mapUpdate = true;
+            for (int ry = 0; ry < regionResolution; ry++)
+            {
+                Color finalColor = color;
+                int posX = (x * regionResolution) + rx;
+                int posY = (y * regionResolution) + ry;
+                
+                if (r.occupier != null && Mathf.PosMod(rx + ry, 3) == 0)
+                {
+                    finalColor = GetRegionColor(r, true);
+                }
+
+                if (regionImage.GetPixel(posX, posY) != finalColor)
+                {
+                    regionImage.SetPixel(posX, posY, finalColor);
+                    mapUpdate = true;
+                }                
+            }
         }
-        //Region r = simManager.objectManager.GetRegion(x, y);
     }
     void UpdateMap(){
         if (mapUpdate)

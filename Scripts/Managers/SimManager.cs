@@ -306,6 +306,7 @@ public class SimManager
         StateVassalManager.objectManager = objectManager;
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
+        MapManager.objectManager = objectManager;
 
         NamedObject.simManager = this;
         NamedObject.objectManager = objectManager;
@@ -611,11 +612,8 @@ public class SimManager
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
                     state.UpdateLoyalty();
-                    foreach (War war in state.vassalManager.GetLiege().diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
-                    {
-                        war.AddParticipant(state.id, state.vassalManager.GetLiege().diplomacy.warIds[war.id]);
-                    }  
-                }
+                    state.diplomacy.JoinLiegeWars();
+                }   
 
                 state.vassalManager.UpdateRealm();
                 state.UpdateCapital();

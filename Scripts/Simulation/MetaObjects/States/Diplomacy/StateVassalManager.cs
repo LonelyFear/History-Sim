@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Godot;
 using MessagePack;
 
 [MessagePackObject(AllowPrivate = true)]
@@ -11,7 +12,7 @@ public partial class StateVassalManager
     [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] State state;
     [Key(0)] ulong stateId;
-    [Key(1)] public ulong? liegeId = null;
+    [Key(1)] public ulong? liegeId {get; private set; } = null;
     [Key(17)] public List<ulong?> vassalIds { get; set; } = new List<ulong?>();
     [Key(21)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     public StateVassalManager() { }
@@ -28,7 +29,20 @@ public partial class StateVassalManager
     public void UpdateRealm()
     {
         Alliance realm = objectManager.GetAlliance(state.realmId);
-        if (realm == null && vassalIds.Count > 0)
+        if (realm != null)
+        {
+            return;
+        }
+        // Join Lieges Realm
+        if (sovereignty != Sovereignty.INDEPENDENT)
+        {
+            State liege = GetLiege();
+            liege.vassalManager.UpdateRealm();
+            realm = objectManager.GetAlliance(liege.realmId);
+            realm.AddMember(stateId);
+        }
+        // Creates Realm
+        if (vassalIds.Count > 0)
         {
             // Creates a realm
             state.realmId = objectManager.CreateAlliance(state, AllianceType.REALM).id;
@@ -39,36 +53,46 @@ public partial class StateVassalManager
                 realm.AddMember(vassalId);
             }
         }
+
     }
     public void AddVassal(ulong vassalId)
     {
-        // Realm stuff
-        if (vassalIds.Count < 1 && state.realmId == null)
-        {
-            state.realmId = objectManager.CreateAlliance(state, AllianceType.REALM).id;
-        }
-        Alliance realm = objectManager.GetAlliance(state.realmId);
+        try {
+            // Realm stuff
+            if (state.realmId == null)
+            {
+                state.realmId = objectManager.CreateAlliance(state, AllianceType.REALM).id;
+            }
+            Alliance realm = objectManager.GetAlliance(state.realmId);
 
-        State newVassal = objectManager.GetState(vassalId);
-        //Relation usToThem = state.diplomacy.GetRelations(vassalId);
-        //Relation themToUs = newVassal.diplomacy.GetRelations(stateId);
+            State newVassal = objectManager.GetState(vassalId);
+            //Relation usToThem = state.diplomacy.GetRelations(vassalId);
+            //Relation themToUs = newVassal.diplomacy.GetRelations(stateId);
 
-        // Removes vassal from old liege
-        if (newVassal.vassalManager.liegeId != null)
-        {
-            objectManager.GetState(newVassal.vassalManager.liegeId).vassalManager.RemoveVassal(vassalId);
-        }
-        // Removes vassal's vassals
-        foreach (ulong subVassalId in newVassal.vassalManager.vassalIds.ToArray())
-        {
-            newVassal.vassalManager.RemoveVassal(subVassalId);
-        }
+            // Removes vassal from old liege
+            if (newVassal.vassalManager.liegeId != null)
+            {
+                objectManager.GetState(newVassal.vassalManager.liegeId).vassalManager.RemoveVassal(vassalId);
+            }
+            // Removes vassal's vassals
+            foreach (ulong subVassalId in newVassal.vassalManager.vassalIds.ToArray())
+            {
+                newVassal.vassalManager.RemoveVassal(subVassalId);
+            }
+            // Makes vassal leave all wars
+            newVassal.diplomacy.LeaveAllWars();
 
-        // Adds vassal to us
-        newVassal.vassalManager.liegeId = stateId;
-        vassalIds.Add(vassalId);
-        realm.AddMember(vassalId);
-        newVassal.vassalManager.sovereignty = Sovereignty.PUPPET;
+            // Adds vassal to us
+            newVassal.vassalManager.sovereignty = Sovereignty.PUPPET;
+            newVassal.vassalManager.liegeId = stateId;
+            
+            vassalIds.Add(vassalId);
+            realm.AddMember(vassalId);            
+        } 
+        catch (Exception e)
+        {
+            GD.PushError(e);
+        }
     }
     public void RemoveVassal(ulong vassalId)
     {
@@ -81,7 +105,7 @@ public partial class StateVassalManager
 
         vassalManager.liegeId = null;
         vassalManager.sovereignty = Sovereignty.INDEPENDENT;
-
+        vassal.diplomacy.LeaveAllWars();
         // Removes Associations
         vassalIds.Remove(vassalId);
         realm.RemoveMember(vassalId);

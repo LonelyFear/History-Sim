@@ -135,7 +135,7 @@ public class Region : PopObject, ISaveable
 
     public void UpdateOccupation()
     {
-        if (owner == null || (occupier != null && !owner.vassalManager.GetOverlord(true).diplomacy.enemyIds.Contains(occupier.id)))
+        if (owner == null || occupier == null || !owner.diplomacy.enemyIds.Contains(occupier.id))
         {
             occupier = null;
         }

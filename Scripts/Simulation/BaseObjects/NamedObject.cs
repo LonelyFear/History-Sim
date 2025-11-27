@@ -4,6 +4,7 @@ public abstract class NamedObject
 {
     [Key(401)] public uint tickCreated { get; set; }
     [Key(402)] public uint tickDestroyed { get; set; }
+    [Key(410)] public bool dead = false;
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static ObjectManager objectManager;
     [Key(403)] public ulong id { get; set; }

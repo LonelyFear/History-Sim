@@ -53,12 +53,6 @@ public class Character : NamedObject
         {"attractiveness", 50}
     };
     [Key(40)] public Gender gender = Gender.MALE;
-
-    // Character Modifiers
-
-    // Education
-
-    [Key(24)] public bool dead;
     
     public void JoinState(ulong stateJoinId)
     {

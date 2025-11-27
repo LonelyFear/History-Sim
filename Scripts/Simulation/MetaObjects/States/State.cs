@@ -48,8 +48,7 @@ public class State : PopObject, ISaveable
     [IgnoreMember] public List<State> borderingStates { get; set; } = new List<State>();
     [Key(22)] public List<ulong> borderingStatesIDs { get; set; }
     [Key(23)] public int borderingRegions { get; set; } = 0;
-    [Key(24)] public int externalBorderingRegions { get; set; }= 0;
-    //[Key(25)] public Sovereignty sovereignty { get; set; } = Sovereignty.INDEPENDENT;
+    [Key(24)] public int externalBorderingRegions { get; set; } = 0;
 
     [Key(27)] public Tech tech = new Tech();
 
@@ -140,30 +139,9 @@ public class State : PopObject, ISaveable
         double stabilityFactor = 1d - (stability / minCollapseStability);
         if (rng.NextDouble() < stabilityFactor * 0.1)
         {
-            if (vassalManager.vassalIds.Count > 0)
+            if (rng.NextDouble() < 0.001)
             {
-                State mainRebel = null;
-                foreach (State vassal in vassalManager.GetVassals())
-                {
-                    if (mainRebel == null || vassal.loyalty < mainRebel.loyalty)
-                    {
-                        mainRebel = vassal;
-                    }
-                }
-
-                List<State> fellowRebels = mainRebel.GatherRebels();
-                foreach (State rebel in fellowRebels)
-                {
-                    vassalManager.RemoveVassal(rebel.id);
-                }
-                objectManager.StartWar(fellowRebels, [this], WarType.CIVIL_WAR, mainRebel.id, id);
-            }
-            else
-            {
-                if (rng.NextDouble() < 0.001)
-                {
-                    return true;
-                }
+                //return true;
             }
         }
         return false;

@@ -14,40 +14,13 @@ public class War : NamedObject
     [Key(4)] public ulong primaryDefenderId;
     [Key(5)] public WarType warType { get; set; } = WarType.CONQUEST;
     [IgnoreMember] static Random rng = new Random();
-    public void InitializeWar()
-    {
-
-    }
     public void InitWarLead(bool isAttacker)
     {
         ulong warLead = isAttacker ? primaryAgressorId : primaryDefenderId;
         ulong enemyWarLead = isAttacker ? primaryDefenderId : primaryAgressorId;
 
-        List<ulong> allies = isAttacker ? attackerIds : defenderIds;
-        List<ulong> enemies = isAttacker ? defenderIds : attackerIds;
-        objectManager.GetState(warLead).diplomacy.warIds[id] = isAttacker;
-        objectManager.GetState(warLead).diplomacy.AddEnemies(enemies);
-        participantIds.Add(warLead);
-        allies.Add(warLead);  
-
-        objectManager.GetState(warLead).diplomacy.EstablishRelations(enemyWarLead, -1000);      
-    }
-    public void InitEnemies(bool isAttacker)
-    {
-        ulong enemyWarLead = isAttacker ? primaryDefenderId : primaryAgressorId;
-        List<ulong> targets = isAttacker ? attackerIds : defenderIds;
-        List<ulong> enemies = isAttacker ? defenderIds : attackerIds;
-        foreach (ulong stateId in targets)
-        {
-            State state = objectManager.GetState(stateId);
-            if (!participantIds.Contains(stateId)&& !targets.Contains(stateId))
-            {
-                state.diplomacy.AddEnemies(enemies);
-                state.diplomacy.warIds[id] = false;
-                participantIds.Add(stateId);
-                state.diplomacy.EstablishRelations(enemyWarLead, -5);                
-            }
-        }
+        objectManager.GetState(warLead).diplomacy.EstablishRelations(enemyWarLead, -1000);
+        AddParticipant(warLead, isAttacker);   
     }
     public void NameWar()
     {
@@ -71,52 +44,49 @@ public class War : NamedObject
                 break;
         }
     }
-    public void AddParticipant(ulong stateId, bool attacker)
+    public void AddParticipant(ulong stateId, bool isAttacker)
     {
-        bool isInWar = false;
-        RemoveParticipant(stateId);
         State state = objectManager.GetState(stateId);
-        if (attacker && !attackerIds.Contains(stateId))
+        if (participantIds.Contains(stateId))
         {
-            state.diplomacy.AddEnemies(defenderIds);
-            isInWar = true;
+            return;
         }
-        else if (!defenderIds.Contains(stateId))
+        if (isAttacker)
         {
-            state.diplomacy.AddEnemies(attackerIds);
-            isInWar = true;
+            attackerIds.Add(stateId);
         }
-
-        if (isInWar)
+        else
         {
-            state.diplomacy.warIds.Add(id, attacker);
-            participantIds.Add(stateId);
-        }
+            defenderIds.Add(stateId);
+        }    
+        state.diplomacy.warIds.Add(id, isAttacker);
+        participantIds.Add(stateId);
     }
     public void RemoveParticipant(ulong stateId)
     {
         State state = objectManager.GetState(stateId);
 
         // Removes from participants list
-        if (participantIds.Contains(stateId))
-        {
-            state.diplomacy.warIds.Remove(id);
-            participantIds.Remove(stateId);
-        }
+        state.diplomacy.warIds.Remove(id);
+        participantIds.Remove(stateId);
 
         // Removes enemies and sided participation
+        // Removes enemies of attacker
         if (attackerIds.Contains(stateId))
         {
             attackerIds.Remove(stateId);
+            state.diplomacy.RemoveEnemies(defenderIds);
             foreach (ulong defenderId in defenderIds)
             {
                 State defender = objectManager.GetState(defenderId);
                 defender.diplomacy.RemoveEnemy(stateId);
             }
         }
+        // Removes enemies of defender
         else if (defenderIds.Contains(stateId))
         {
             defenderIds.Remove(stateId);
+            state.diplomacy.RemoveEnemies(attackerIds);
             foreach (ulong attackerId in attackerIds)
             {
                 State attacker = objectManager.GetState(attackerId);

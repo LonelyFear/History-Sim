@@ -345,6 +345,15 @@ public class ObjectManager
         simManager.alliances.Add(alliance);
         return alliance;
     }
+    public void DeleteAlliance(Alliance alliance)
+    {
+        foreach (ulong memberId in alliance.memberStateIds)
+        {
+            alliance.RemoveMember(memberId);
+        }
+        simManager.allianceIds.Remove(alliance.id);
+        simManager.alliances.Remove(alliance);
+    }
     public Alliance GetAlliance(ulong? id)
     {
         try
@@ -393,15 +402,11 @@ public class ObjectManager
             warType = warType,
             primaryAgressorId = agressorLeader,
             primaryDefenderId = defenderLeader,
-            attackerIds = atk.Select(attacker => attacker.id).ToList(),
-            defenderIds = def.Select(defender => defender.id).ToList(),
             tickCreated = timeManager.ticks,
         };
 
         war.InitWarLead(true);
         war.InitWarLead(false);
-        war.InitEnemies(true);
-        war.InitEnemies(false);
         war.NameWar();
 
         simManager.wars.Add(war);
@@ -410,12 +415,17 @@ public class ObjectManager
     }
     public void EndWar(War war)
     {
-        simManager.wars.Remove(war);
-        simManager.warIds.Remove(war.id);
-        foreach (ulong stateId in war.participantIds)
+        try
         {
-            State state = GetState(stateId);
-            state.diplomacy.warIds.Remove(war.id);
+            simManager.wars.Remove(war);
+            simManager.warIds.Remove(war.id);
+            foreach (ulong stateId in war.participantIds.ToArray())
+            {
+                war.RemoveParticipant(stateId);           
+            }            
+        } catch (Exception e)
+        {
+            GD.PushError(e);
         }
     }
     ulong getID()
