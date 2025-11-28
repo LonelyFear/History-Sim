@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using MessagePack;
-public abstract class NamedObject
+[MessagePackObject]
+public class NamedObject
 {
     [Key(401)] public uint tickCreated { get; set; }
     [Key(402)] public uint tickDestroyed { get; set; }
@@ -42,7 +43,7 @@ public abstract class NamedObject
         foreach (ulong eventId in eventIds)
         {
             HistoricalEvent historicalEvent = objectManager.GetHistoricalEvent(eventId);
-            text += $"{historicalEvent.eventText}\n";
+            text += $"{historicalEvent.GetEventText()}\n";
         }
         return text;
     }

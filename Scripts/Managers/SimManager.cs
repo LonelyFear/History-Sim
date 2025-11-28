@@ -658,7 +658,12 @@ public class SimManager
                 // Dead character stuff
                 if (character.dead)
                 {
-                    objectManager.DeleteCharacter(character);
+                    // Deletes characters after 200 years if they are dead
+                    if (timeManager.GetYear(character.GetAge()) > 300)
+                    {
+                        objectManager.DeleteCharacter(character);
+                    }
+                    
                     continue;
                 }
                 // Character Aliveness

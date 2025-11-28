@@ -23,7 +23,6 @@ public abstract class PopObject : NamedObject
         {SocialClass.SOLDIER, 0},
     };
     
-    //[IgnoreMember] public Dictionary<Culture, long> cultures = new Dictionary<Culture, long>();
     [Key(108)] public Dictionary<ulong, long> cultureIds = new Dictionary<ulong, long>();
     [Key(109)] public ulong? largestCultureId = null;
     

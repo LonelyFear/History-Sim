@@ -93,8 +93,8 @@ public class War : NamedObject
                 attacker.diplomacy.RemoveEnemy(stateId);
             }
         }
-
-        if (attackerIds.Count < 1 || defenderIds.Count < 1 || primaryAgressorId == stateId || primaryDefenderId == stateId)
+        bool warEndConditions = attackerIds.Count < 1 || defenderIds.Count < 1 || primaryAgressorId == stateId || primaryDefenderId == stateId;
+        if ( warEndConditions && !dead)
         {
             objectManager.EndWar(this);
         }

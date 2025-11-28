@@ -362,8 +362,4 @@ public partial class StateDiplomacyManager
             }
         }
     }
-    public void EndWar(War war)
-    {
-        objectManager.EndWar(war);
-    }
 }

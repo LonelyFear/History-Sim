@@ -112,6 +112,7 @@ public class Character : NamedObject
         dead = true;
         tickDestroyed = sim.timeManager.ticks;
         SetRole(CharacterRole.DEAD);
+        objectManager.CreateHistoricalEvent([this], EventType.DEATH);
         //sim.DeleteCharacter(this);
     }
     public void CharacterAging()

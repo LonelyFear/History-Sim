@@ -406,7 +406,7 @@ public class ObjectManager
             primaryDefenderId = defenderLeader,
             tickCreated = timeManager.ticks,
         };
-
+        CreateHistoricalEvent([GetState(agressorLeader), GetState(defenderLeader)], EventType.WAR_DECLARATION);
         war.InitWarLead(true);
         war.InitWarLead(false);
         war.NameWar();
@@ -419,6 +419,8 @@ public class ObjectManager
     {
         try
         {
+            CreateHistoricalEvent([GetState(war.primaryAgressorId), GetState(war.primaryDefenderId)], EventType.WAR_END);
+            war.dead = true;
             simManager.wars.Remove(war);
             simManager.warIds.Remove(war.id);
             foreach (ulong stateId in war.participantIds.ToArray())
@@ -437,9 +439,9 @@ public class ObjectManager
             objIds = relevantObjects.Select(obj => obj.GetFullId()).ToList(),
             tickOccured = timeManager.ticks,
             id = getID(),
-            
+            type = eventType
         };
-        historicalEvent.eventText = historicalEvent.GetEventText();
+        historicalEvent.CloneObjects();
         foreach (NamedObject obj in relevantObjects)
         {
             obj.eventIds.Add(historicalEvent.id);
