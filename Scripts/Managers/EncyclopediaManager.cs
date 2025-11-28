@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 
 public partial class EncyclopediaManager : CanvasLayer
@@ -16,7 +17,7 @@ public partial class EncyclopediaManager : CanvasLayer
 	[Export] Button closeEncyclopediaButton;
 	public SimManager simManager;
 	public ObjectManager objectManager;
-	Dictionary<ulong, Control> infoTabs = new Dictionary<ulong, Control>();
+	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = new Dictionary<ulong, BaseEncyclopediaTab>();
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -40,6 +41,10 @@ public partial class EncyclopediaManager : CanvasLayer
 		playerCamera.controlEnabled = false;
 		gameUi.forceHide = true;
 		timeManager.forcePause = true;
+		foreach (BaseEncyclopediaTab tab in infoTabs.Values)
+        {
+            tab.InitTab();
+        }
 	}
 	public void CloseEncyclopedia()
 	{
@@ -56,11 +61,10 @@ public partial class EncyclopediaManager : CanvasLayer
 		if (stringId == "Index")
         {
 			// Opens an index
-			OpenIndexTab(GetTypeFromString(type));
+			OpenIndexTab(NamedObject.GetTypeFromString(type));
             return;
         }
-		ulong id = ulong.Parse(stringId);
-		OpenTab(GetTypeFromString(type), id);
+		OpenTab(meta);
     }
 	public void OpenIndexTab(ObjectType objectType)
     {
@@ -76,12 +80,14 @@ public partial class EncyclopediaManager : CanvasLayer
 		}
 		IndexTab newTab = indexTabScene.Instantiate<IndexTab>();
 		newTab.type = objectType;
+		newTab.InitTab();
 		encyclopediaMenu.OpenTab(newTab);
 		infoTabs.Add(id, newTab);
 		encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;		
     }
-	public void OpenTab(ObjectType objectType, ulong id)
+	public void OpenTab(string fullId)
 	{
+		ulong id = ulong.Parse(fullId[3..]);
 		int indexOffset = 2;
 		// If we already have a tab open for this object switch to it
 		if (infoTabs.ContainsKey(id))
@@ -90,28 +96,11 @@ public partial class EncyclopediaManager : CanvasLayer
 			return;
 		}
 		InfoTab newTab = infoTabScene.Instantiate<InfoTab>();
-		NamedObject obj = null;
-		switch (objectType)
-        {
-			case ObjectType.STATE:
-				obj = objectManager.GetState(id);
-				break;
-			case ObjectType.REGION:
-				obj = objectManager.GetRegion(id);
-				break;
-			case ObjectType.CULTURE:
-				obj = objectManager.GetCulture(id);
-				break;
-			case ObjectType.CHARACTER:
-				obj = objectManager.GetCharacter(id);
-				break;
-			case ObjectType.WAR:
-				obj = objectManager.GetWar(id);
-				break;
-        }
+		NamedObject obj = NamedObject.GetNamedObject(fullId);
+
 		newTab.loadedObj = obj;
 		newTab.objectId = id;
-		newTab.objectType = objectType;
+		newTab.objectType = NamedObject.GetTypeFromString(fullId[..3]);
 		newTab.InitTab();
 		encyclopediaMenu.OpenTab(newTab);
 		infoTabs.Add(id, newTab);
@@ -144,24 +133,6 @@ public partial class EncyclopediaManager : CanvasLayer
 		Control tab = infoTabs[id];
 		encyclopediaMenu.CloseTab(tab);
 		infoTabs.Remove(id);
-    }
-	public ObjectType GetTypeFromString(string s)
-    {
-        switch (s)
-        {
-			case "sta":
-				return ObjectType.STATE;
-			case "reg":
-				return ObjectType.REGION;
-			case "cul":
-				return ObjectType.CULTURE;
-			case "cha":
-				return ObjectType.CHARACTER;
-			case "war":
-				return ObjectType.WAR;
-			default:
-				return ObjectType.UNKNOWN;
-        }
     }
 
     public void OnMetaClicked(Variant meta)

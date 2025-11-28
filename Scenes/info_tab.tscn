@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://8kvblrpf5g8"]
+[gd_scene load_steps=5 format=3 uid="uid://8kvblrpf5g8"]
 
 [ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_5rqtu"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_0jkeo"]
@@ -11,18 +11,26 @@ content_margin_bottom = 0.0
 color = Color(0.5, 0.5, 0.5, 1)
 thickness = 4
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5rqtu"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+
 [node name="InfoTab" type="VBoxContainer" node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
 offset_left = 10.0
 offset_top = 32.0
 offset_right = 1270.0
-offset_bottom = 716.0
+offset_bottom = 653.0
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
 theme_override_constants/separation = 4
 script = ExtResource("1_5rqtu")
 objName = NodePath("ObjName")
 objType = NodePath("ObjType")
-objDesc = NodePath("Description")
-objStats = NodePath("Stats")
-objHist = NodePath("History")
+objDesc = NodePath("DescScrollBar/VBoxContainer/Description")
+objStats = NodePath("DescScrollBar/VBoxContainer/Stats")
+objHist = NodePath("DescScrollBar/VBoxContainer/History")
 metadata/_tab_index = 1
 
 [node name="ObjName" type="Label" parent="."]
@@ -37,18 +45,30 @@ theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 25
 text = "Object Type"
 
-[node name="HSeparator" type="HSeparator" parent="."]
+[node name="TitleSeparator" type="HSeparator" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="DescTitle" type="Label" parent="."]
+[node name="DescScrollBar" type="ScrollContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_5rqtu")
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DescScrollBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="DescTitle" type="Label" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 30
 text = "Description:"
 
-[node name="Description" type="RichTextLabel" parent="."]
+[node name="Description" type="RichTextLabel" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30
@@ -58,18 +78,18 @@ fit_content = true
 meta_underlined = false
 hint_underlined = false
 
-[node name="HSeparator2" type="HSeparator" parent="."]
+[node name="DescSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="StatsTitle" type="Label" parent="."]
+[node name="StatsTitle" type="Label" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 30
 text = "Stats:"
 
-[node name="Stats" type="RichTextLabel" parent="."]
+[node name="Stats" type="RichTextLabel" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30
@@ -78,18 +98,18 @@ text = "Statistics Go Here"
 fit_content = true
 autowrap_mode = 2
 
-[node name="HSeparator3" type="HSeparator" parent="."]
+[node name="StatsSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="HistoryTitle" type="Label" parent="."]
+[node name="HistoryTitle" type="Label" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 30
 text = "History:"
 
-[node name="History" type="RichTextLabel" parent="."]
+[node name="History" type="RichTextLabel" parent="DescScrollBar/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30
@@ -97,6 +117,3 @@ bbcode_enabled = true
 text = "History Goes Here"
 fit_content = true
 autowrap_mode = 2
-
-[node name="Control" type="Control" parent="."]
-layout_mode = 2

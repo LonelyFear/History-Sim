@@ -59,7 +59,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
     [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
-    [IgnoreMember] public Dictionary<ulong, BaseEvent> historicalEventIds = new Dictionary<ulong, BaseEvent>();
+    [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = new Dictionary<ulong, HistoricalEvent>();
 
     // Misc
     public uint currentBatch = 2;
@@ -302,6 +302,7 @@ public class SimManager
     }
     void AssignSimManager()
     {
+        HistoricalEvent.timeManager = timeManager;
         StateDiplomacyManager.objectManager = objectManager;
         StateVassalManager.objectManager = objectManager;
         ObjectManager.simManager = this;
@@ -654,7 +655,6 @@ public class SimManager
         {
             foreach (Character character in characters.ToArray())
             {
-                character.name = $"{character.firstName} {character.lastName}";
                 // Dead character stuff
                 if (character.dead)
                 {

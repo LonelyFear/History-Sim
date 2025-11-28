@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class IndexTab : VBoxContainer
+public partial class IndexTab : BaseEncyclopediaTab
 {
 	[Export] LineEdit search;
 	[Export] Label indexNameLabel;
@@ -16,13 +16,12 @@ public partial class IndexTab : VBoxContainer
 	public static EncyclopediaManager encyclopediaManager;
 	int currentIdentifier = 0;
 	// Called when the node enters the scene tree for the first time.
-	public override void _Ready()
-    {
-
+	public override void InitTab()
+	{
 		search.TextChanged += OnSearchEditSubmitted;
-        switch (type)
-        {
-            case ObjectType.CHARACTER:
+		switch (type)
+		{
+			case ObjectType.CHARACTER:
 				Name = "Character Index";
 				indexNameLabel.Text = "Character Index";
 				foreach (Character character in sim.characters)
@@ -47,10 +46,10 @@ public partial class IndexTab : VBoxContainer
 					CreateResultButton(region);
 				}
 				break;
-        }
+		}
 		
 		resultsLabel.Text = $"Results ({resultDictionary.Count:#,##0}):";
-    }
+	}
 	public void OnResultClicked(string fullId)
     {
         encyclopediaManager.OpenTab(fullId);

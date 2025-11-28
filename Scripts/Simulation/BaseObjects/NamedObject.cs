@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using MessagePack;
 public abstract class NamedObject
@@ -10,6 +11,7 @@ public abstract class NamedObject
     [Key(403)] public ulong id { get; set; }
     [Key(404)] public string name { get; set; }
     [Key(405)] public string description { get; set; }
+    [Key(406)] public List<ulong> eventIds = new List<ulong>();
     public uint TicksSince(uint tick)
     {
         return simManager.timeManager.ticks - tick;
@@ -28,6 +30,66 @@ public abstract class NamedObject
         string text = $"Name: {name}";
         text += $"\nID: {id}";
         return text;
+    }
+    public string GenerateHistoryText()
+    {
+        string text = "This object doesnt have any recorded history yet.";
+        if (eventIds.Count < 1)
+        {
+            return text;
+        }
+        text = "";
+        foreach (ulong eventId in eventIds)
+        {
+            HistoricalEvent historicalEvent = objectManager.GetHistoricalEvent(eventId);
+            text += $"{historicalEvent.eventText}\n";
+        }
+        return text;
+    }
+    public static NamedObject GetNamedObject(string fullId)
+    {
+        ulong id = ulong.Parse(fullId[3..]);
+        NamedObject obj;
+        switch (GetTypeFromString(fullId[..3]))
+        {
+			case ObjectType.STATE:
+				obj = objectManager.GetState(id);
+				break;
+			case ObjectType.REGION:
+				obj = objectManager.GetRegion(id);
+				break;
+			case ObjectType.CULTURE:
+				obj = objectManager.GetCulture(id);
+				break;
+			case ObjectType.CHARACTER:
+				obj = objectManager.GetCharacter(id);
+				break;
+			case ObjectType.WAR:
+				obj = objectManager.GetWar(id);
+				break;
+            default:
+                obj = null;
+                break;
+        }
+        return obj;
+    }
+	public static ObjectType GetTypeFromString(string s)
+    {
+        switch (s)
+        {
+			case "sta":
+				return ObjectType.STATE;
+			case "reg":
+				return ObjectType.REGION;
+			case "cul":
+				return ObjectType.CULTURE;
+			case "cha":
+				return ObjectType.CHARACTER;
+			case "war":
+				return ObjectType.WAR;
+			default:
+				return ObjectType.UNKNOWN;
+        }
     }
     public string GetFullId()
     {
@@ -77,7 +139,17 @@ public abstract class NamedObject
             default:
                 break;
         }
-        return $"[color={color}][url={typeId}{obj.id}]{text}[/url][/color]";
+        if (GetNamedObject(typeId + obj.id) != null)
+        {
+            return $"[color={color}][url={typeId}{obj.id}]{text}[/url][/color]";
+        } else
+        {
+            return $"{text}";
+        }
+    }
+    public NamedObject Clone()
+    {
+        return (NamedObject)MemberwiseClone();
     }
 }
 public enum ObjectType

@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class InfoTab : VBoxContainer
+public partial class InfoTab : BaseEncyclopediaTab
 {
 	public static EncyclopediaManager manager;
 	 [Export] Label objName;
@@ -26,7 +26,12 @@ public partial class InfoTab : VBoxContainer
 		objStats.Text = stats;
 		objHist.Text = history;
 	}
-	public void InitTab()
+	public override void _Ready() {
+		objDesc.MetaClicked += manager.OpenTab;
+		objHist.MetaClicked += manager.OpenTab;
+		objStats.MetaClicked += manager.OpenTab;		
+	}
+	public override void InitTab()
 	{
 		type = objectType.ToString().Capitalize();
 		Name = loadedObj.name;
@@ -34,9 +39,6 @@ public partial class InfoTab : VBoxContainer
 		GetDescription();
 		GetStats();
 		GetHistory();
-		objDesc.MetaClicked += manager.OpenTab;
-		objHist.MetaClicked += manager.OpenTab;
-		objStats.MetaClicked += manager.OpenTab;
 	}
 	public void GetDescription()
     {
@@ -48,6 +50,6 @@ public partial class InfoTab : VBoxContainer
 	}
 	public void GetHistory()
     {
-		history = "This object has no history yet";
+		history = loadedObj.GenerateHistoryText();
     }
 }

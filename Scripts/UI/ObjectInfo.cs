@@ -151,6 +151,6 @@ public partial class ObjectInfo : Control
     public void OnEncyclopediaClicked()
     {
         encyclopediaManager.OpenEncyclopedia();
-        encyclopediaManager.OpenTab(selectedObject.GetObjectType(), selectedObject.id);
+        encyclopediaManager.OpenTab(selectedObject.GetFullId());
     }
 }

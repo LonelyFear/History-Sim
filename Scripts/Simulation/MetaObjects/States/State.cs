@@ -169,6 +169,11 @@ public class State : PopObject, ISaveable
                 // Autocracy TODO
                 break;
         }
+        if (newLeader != null)
+        {
+            SetLeader(newLeader.id);
+            objectManager.CreateHistoricalEvent([this, newLeader], EventType.SUCCESSION);
+        }
     }
     public void SetLeader(ulong? characterId)
     {
@@ -470,8 +475,31 @@ public class State : PopObject, ISaveable
         + $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
         return desc;
     }
+    public override string GenerateStatsText()
+    {
+        string text = $"Name: {name}";
+        text += $"\nPopulation: {Pop.FromNativePopulation(population):#,###0}\n";
+        text += $"Cultures Breakdown:\n";
 
-    
+        if (Pop.FromNativePopulation(population) > 0)
+        {
+            foreach (var cultureSizePair in cultureIds)
+            {
+                Culture culture = objectManager.GetCulture(cultureSizePair.Key);
+                long localPopulation = cultureSizePair.Value;
+                
+                // Skips if the culture is too small
+                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
+
+                text += GenerateUrlText(culture, culture.name) + ":\n";
+                text += $"  Population: {Pop.FromNativePopulation(localPopulation):#,###0} ";
+
+                float culturePercentage = localPopulation/(float)population;
+                text += $"({culturePercentage:P0})\n";
+            }            
+        }
+        return text;
+    }    
 }   
 
 public enum GovernmentType {

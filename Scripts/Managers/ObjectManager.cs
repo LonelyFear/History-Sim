@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
@@ -303,6 +304,7 @@ public class ObjectManager
             tickCreated = timeManager.ticks - age,
         };
         // Adds character to state and gives it role
+        character.name = $"{character.firstName} {character.lastName}";
         character.JoinState(state.id);
         character.SetRole(role);
         // Documents character
@@ -427,6 +429,44 @@ public class ObjectManager
         {
             GD.PushError(e);
         }
+    }
+    public void CreateHistoricalEvent(NamedObject[] relevantObjects, EventType eventType)
+    {
+        HistoricalEvent historicalEvent = new HistoricalEvent()
+        {
+            objIds = relevantObjects.Select(obj => obj.GetFullId()).ToList(),
+            tickOccured = timeManager.ticks,
+            id = getID(),
+            
+        };
+        historicalEvent.eventText = historicalEvent.GetEventText();
+        foreach (NamedObject obj in relevantObjects)
+        {
+            obj.eventIds.Add(historicalEvent.id);
+        }
+        simManager.historicalEventIds.Add(historicalEvent.id, historicalEvent);
+    }
+    public void DeleteHistoricalEvent(HistoricalEvent historicalEvent)
+    {
+        foreach (string fullId in historicalEvent.objIds)
+        {
+            NamedObject obj = NamedObject.GetNamedObject(fullId);
+            obj.eventIds.Remove(historicalEvent.id);
+        }  
+        simManager.historicalEventIds.Remove(historicalEvent.id);      
+    }
+    public HistoricalEvent GetHistoricalEvent(ulong? id)
+    {
+        if (id == null)
+        {
+            return null;
+        }
+        try {
+            return simManager.historicalEventIds[(ulong)id];
+        } catch {
+            //GD.PushWarning(e);
+            return null;
+        }        
     }
     ulong getID()
     {

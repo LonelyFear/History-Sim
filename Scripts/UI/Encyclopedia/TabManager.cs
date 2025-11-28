@@ -43,6 +43,7 @@ public partial class TabManager : TabBar
         for (int i = 0; i < openTabs.Count; i++)
         {
 			Control tab = openTabs[i];
+			SetTabTitle(i, tab.Name);
 			tab.Visible = true;
 			if (CurrentTab != i)
             {
