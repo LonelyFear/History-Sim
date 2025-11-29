@@ -25,6 +25,7 @@ public partial class TimeManager : Node
     public double monthDelta = 1;
     public SimManager simManager;
     public MapManager mapManager;
+    [Export] BorderRenderer borderRenderer;
     bool simStart = false;
     Task tickTask;
     Task monthTask;
@@ -101,6 +102,7 @@ public partial class TimeManager : Node
                         try
                         {
                             mapManager.UpdateRegionColors(simManager.paintedRegions);
+                            borderRenderer.UpdateBorders();
                         } catch (Exception e)
                         {
                             GD.PushError(e);

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using Godot;
 using Vector2 = System.Numerics.Vector2;
 
@@ -26,6 +27,29 @@ public static class Utility
             list[k] = list[n];
             list[n] = value;
         }
+    }
+    public static Direction GetDirectionFromVector(Vector2I vec)
+    {
+        Direction direction;
+        switch (vec)
+        {
+            case Vector2I(-1,0):
+                direction = Direction.LEFT;
+                break;
+            case Vector2I(1,0):
+                direction = Direction.RIGHT;
+                break;
+            case Vector2I(0,-1):
+                direction = Direction.UP;
+                break;
+            case Vector2I(0,1):
+                direction = Direction.DOWN;
+                break;
+            default:
+                direction = Direction.LEFT;
+                break;
+        }
+        return direction;
     }
     public static int Vec2ToIndex(Vector2I gridSize, Vector2I pos)
     {

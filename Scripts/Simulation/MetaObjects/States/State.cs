@@ -257,8 +257,9 @@ public class State : PopObject, ISaveable
                 borderingRegions++;
                 bool bordersOtherState = false;
                 // Gets the borders of our state
-                foreach (Region border in region.borderingRegions)
+                foreach (ulong borderId in region.borderingRegionIds.Values)
                 {
+                    Region border = objectManager.GetRegion(borderId);
                     // State
                     State borderState = border.owner;
                     // Makes sure the state is real

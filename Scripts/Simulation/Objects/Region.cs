@@ -45,10 +45,8 @@ public class Region : PopObject, ISaveable
     // Demographics
     [Key(29)] public long maxFarmers { get; set; } = 0;
     [Key(30)] public long maxSoldiers { get; set; } = 0;
-    [IgnoreMember] public Region[] borderingRegions { get; set; } = new Region[4];
-    [Key(32)] public ulong[] borderingRegionsIDs { get; set; }
-    [IgnoreMember] public Region[] habitableBorderingRegions { get; set; } = new Region[4];
-    [Key(34)] public ulong[] habitableBorderingRegionsIDs { get; set; }
+    [IgnoreMember] public Dictionary<Direction, ulong> borderingRegionIds { get; set; } = new Dictionary<Direction, ulong>();
+    //[Key(32)] public ulong[] borderingRegionsIDs { get; set; }
 
     [Key(35)] public bool border { get; set; }
     [Key(36)] public bool frontier { get; set; }
@@ -60,8 +58,7 @@ public class Region : PopObject, ISaveable
     {
         PreparePopObjectForSave();
         tradeZoneID = tradeZone != null ? tradeZone.id : 0;
-        habitableBorderingRegionsIDs = habitableBorderingRegions.Select(r => r.id).ToArray();
-        borderingRegionsIDs = borderingRegions.Select(r => r.id).ToArray();
+        //borderingRegionsIDs = borderingRegions.Select(r => r.id).ToArray();
         ownerID = owner != null ? owner.id : 0;
         occupierID = occupier != null ? occupier.id : 0;
         tradeLinkID = tradeLink != null ? tradeLink.id : 0;
@@ -71,8 +68,7 @@ public class Region : PopObject, ISaveable
         //GD.Print(id);
         LoadPopObjectFromSave();
         tradeZone = tradeZoneID == 0 ? null : simManager.tradeZonesIds[tradeZoneID];
-        habitableBorderingRegions = habitableBorderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
-        borderingRegions = borderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
+        //borderingRegions = borderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
         owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
         occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
         tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
@@ -165,7 +161,7 @@ public class Region : PopObject, ISaveable
     }
     public void RandomStateFormation()
     {
-        if (rng.NextDouble() < 0.00005 * navigability && population > Pop.ToNativePopulation(1000))
+        if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
         {
             objectManager.CreateState(this);
 
@@ -189,8 +185,9 @@ public class Region : PopObject, ISaveable
     {
         border = false;
         frontier = false;
-        foreach (Region region in borderingRegions)
+        foreach (ulong regionId in borderingRegionIds.Values)
         {     
+            Region region = objectManager.GetRegion(regionId);
             if (region.owner == null)
             {
                 frontier = true;
@@ -216,11 +213,7 @@ public class Region : PopObject, ISaveable
 
     public void NeutralConquest()
     {
-        Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
-        if (region == null)
-        {
-            return;
-        }
+        Region region = PickRandomBorder();
         bool checks = occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
         //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
 
@@ -239,7 +232,7 @@ public class Region : PopObject, ISaveable
 
     public void MilitaryConquest()
     {
-        Region region = borderingRegions[rng.Next(0, borderingRegions.Length)];
+        Region region = PickRandomBorder();
 
         if (region != null && GetController() != null && region.GetController() != null && GetController().diplomacy.enemyIds.Contains(region.GetController().id))
         {
@@ -302,8 +295,9 @@ public class Region : PopObject, ISaveable
     {
         Region selectedLink = null;
         bool lowerLinks = true;
-        foreach (Region region in borderingRegions)
+        foreach (ulong regionId in borderingRegionIds.Values)
         {
+            Region region = objectManager.GetRegion(regionId);
             if (region.GetTradeWeight() >= GetTradeWeight())
                 lowerLinks = false;
             if (region.GetTradeWeight() > GetTradeWeight())
@@ -515,11 +509,17 @@ public class Region : PopObject, ISaveable
         }
         return path;
     }
-    public Region PickRandomBorder()
+    public Region PickRandomBorder(bool mustBeLiveable = false)
     {
-        Region border;
-        border = borderingRegions[rng.Next(0, habitableBorderingRegions.Length)];
-        return border;
+        Region region = objectManager.GetRegion(borderingRegionIds.Values.ToArray()[rng.Next(0, borderingRegionIds.Count)]);
+        if (mustBeLiveable)
+        {
+            while (!region.habitable)
+            {
+                region = objectManager.GetRegion(borderingRegionIds.Values.ToArray()[rng.Next(0, borderingRegionIds.Count)]);
+            }
+        }
+        return region;
     }
     public override string GenerateDescription()
     {

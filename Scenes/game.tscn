@@ -1,11 +1,13 @@
-[gd_scene load_steps=27 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=29 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
+[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_22asu"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
 [ext_resource type="Script" uid="uid://duwsoblnfw77g" path="res://Scripts/Managers/SimNodeManager.cs" id="6_nnt18"]
+[ext_resource type="Script" uid="uid://s8gc2wln5ruq" path="res://Scripts/BorderRenderer.cs" id="6_vm72l"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/UI/TerrainMap.cs" id="7_nnt18"]
 [ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="8_85qyi"]
@@ -55,9 +57,19 @@ theme_override_font_sizes/font_size = 62
 text = "Pixel History"
 horizontal_alignment = 1
 
-[node name="Time Manager" type="Node" parent="."]
+[node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("borderRenderer")]
 script = ExtResource("7_ewbju")
+borderRenderer = NodePath("../Border Renderer")
 gameSpeed = 0
+
+[node name="Border Renderer" type="Node2D" parent="." node_paths=PackedStringArray("mapManager")]
+script = ExtResource("6_vm72l")
+mapManager = NodePath("../Map Manager")
+
+[node name="BorderMultiMesh" type="MultiMeshInstance2D" parent="Border Renderer"]
+z_index = 100
+z_as_relative = false
+texture = ExtResource("6_22asu")
 
 [node name="Map Manager" type="Node2D" parent="."]
 z_index = 2

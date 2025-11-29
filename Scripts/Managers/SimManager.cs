@@ -79,14 +79,15 @@ public class SimManager
     [IgnoreMember] public ulong totalRegionTime;
     [IgnoreMember] public ulong totalCharacterTime;
     [IgnoreMember] public ulong totalMiscTime;
+    [IgnoreMember] public const int regionGlobalWidth = 16;
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
-        return (Vector2I)(pos / (terrainMap.Scale * 16)) / tilesPerRegion;
+        return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth)) / tilesPerRegion;
     }
 
     public Vector2 RegionToGlobalPos(Vector2 regionPos)
     {
-        return tilesPerRegion * (regionPos * (terrainMap.Scale * 16));
+        return tilesPerRegion * (regionPos * (terrainMap.Scale * regionGlobalWidth));
     }
     public void SaveSimToFile(string path)
     {
@@ -308,6 +309,7 @@ public class SimManager
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
         MapManager.objectManager = objectManager;
+        Battle.objectManager = objectManager;
 
         NamedObject.simManager = this;
         NamedObject.objectManager = objectManager;
@@ -360,8 +362,10 @@ public class SimManager
                     {
                         continue;
                     }
+                    Direction direction = Utility.GetDirectionFromVector(new Vector2I(dx, dy));
                     Region r = objectManager.GetRegion(region.pos.X + dx, region.pos.Y + dy);
-                    region.borderingRegions[i] = r;
+                    region.borderingRegionIds.Add(direction, r.id);
+
                     i++;
                     if (r.habitable)
                     {
@@ -369,37 +373,10 @@ public class SimManager
                     }
                     if (r.habitable || region.habitable && !paintedRegions.Contains(region))
                     {
-                        if (region == null)
-                        {
-                            GD.PushError("Something is wrong");
-                        }
-                        else
-                        {
-                            paintedRegions.Add(region);
-                        }
+                        paintedRegions.Add(region);
                     }
                 }
-            }
-            //GD.Print(habitableBorderCount);
-            region.habitableBorderingRegions = new Region[habitableBorderCount];
-            i = 0;
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
-                    {
-                        continue;
-                    }
-                    Region r = objectManager.GetRegion(region.pos.X + dx, region.pos.Y + dy);
-                    if (r.habitable)
-                    {
-                        region.habitableBorderingRegions[i] = r;
-                        i++;
-                    }
-
-                }
-            }            
+            }           
         }
     }
     void InitPops()
@@ -434,26 +411,11 @@ public class SimManager
                 if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
                     pop.TechnologyUpdate();
-                    //pop.SocialClassTransitions();
-                    try
-                    {
-                        pop.Migrate();
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-
+                    pop.SocialClassTransitions();
+                    pop.Migrate();
                 }
             }
         }
-        /*
-
-        // GD.Print("Pops Processing Time: " + (Time.GetTicksMsec() - tickStartTime) + " ms");
-        // GD.Print("  Pops Delete Time: " + destroyTime + " ms");
-        // GD.Print("  Pops Grow Time: " + growTime + " ms");
-        // GD.Print("  Pops Move Time: " + migrateTime + " ms");
-        */
     }
     public void UpdateRegions()
     {

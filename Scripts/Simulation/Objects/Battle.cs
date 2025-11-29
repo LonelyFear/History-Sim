@@ -2,6 +2,7 @@ using System;
 using Godot;
 
 public class Battle{
+    public static ObjectManager objectManager;
     public Region location;
     public State attacker;
     public State defender;
@@ -15,8 +16,9 @@ public class Battle{
         int borderingEnemyRegions = 0;
         bool nearStronghold = false;
         State locationState = loc.owner;
-        foreach (Region r in loc.borderingRegions)
+        foreach (ulong rId in loc.borderingRegionIds.Values)
         {
+            Region r = objectManager.GetRegion(rId);
             if (r.GetController() == atk.vassalManager.GetOverlord(true))
             {
                 borderingEnemyRegions++;
