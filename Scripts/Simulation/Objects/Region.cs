@@ -77,9 +77,9 @@ public class Region : PopObject, ISaveable
     {
         name = NameGenerator.GenerateRegionName();
         landCount = 0;
-        for (int x = 0; x < simManager.tilesPerRegion; x++)
+        for (int x = 0; x < SimManager.tilesPerRegion; x++)
         {
-            for (int y = 0; y < simManager.tilesPerRegion; y++)
+            for (int y = 0; y < SimManager.tilesPerRegion; y++)
             {
                 Tile tile = tiles[x, y];
 

@@ -11,9 +11,7 @@ using FileAccess = Godot.FileAccess;
 [MessagePackObject(keyAsPropertyName: true)]
 public class SimManager
 {
-    // Exported
-    [IgnoreMember] [Export(PropertyHint.Range, "4,16,4")] public int tilesPerRegion = 4; 
-    
+    // Exported 
     [Export] [IgnoreMember] public TileMapLayer reliefs;
 
     [Export][IgnoreMember] public TimeManager timeManager;
@@ -79,6 +77,9 @@ public class SimManager
     [IgnoreMember] public ulong totalRegionTime;
     [IgnoreMember] public ulong totalCharacterTime;
     [IgnoreMember] public ulong totalMiscTime;
+    
+    // Constants
+    [IgnoreMember] public const int tilesPerRegion = 4; 
     [IgnoreMember] public const int regionGlobalWidth = 16;
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {

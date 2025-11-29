@@ -70,8 +70,8 @@ public class ObjectManager
         {
             id = getID(),
             pos = new Vector2I(x, y),
-            tiles = new Tile[simManager.tilesPerRegion, simManager.tilesPerRegion],
-            biomes = new Biome[simManager.tilesPerRegion, simManager.tilesPerRegion]
+            tiles = new Tile[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
+            biomes = new Biome[SimManager.tilesPerRegion, SimManager.tilesPerRegion]
         };
         simManager.regions.Add(region);
         simManager.regionIds.Add(region.id, region);

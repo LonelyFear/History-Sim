@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
-[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="6_22asu"]
+[ext_resource type="Texture2D" uid="uid://3m0jff0p0tkl" path="res://Sprites/border_texture.png" id="6_22asu"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
 [ext_resource type="Script" uid="uid://duwsoblnfw77g" path="res://Scripts/Managers/SimNodeManager.cs" id="6_nnt18"]
 [ext_resource type="Script" uid="uid://s8gc2wln5ruq" path="res://Scripts/BorderRenderer.cs" id="6_vm72l"]
@@ -71,9 +71,10 @@ z_index = 100
 z_as_relative = false
 texture = ExtResource("6_22asu")
 
-[node name="Map Manager" type="Node2D" parent="."]
+[node name="Map Manager" type="Node2D" parent="." node_paths=PackedStringArray("borderRenderer")]
 z_index = 2
 script = ExtResource("6_85qyi")
+borderRenderer = NodePath("../Border Renderer")
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager"]
 scale = Vector2(16, 16)

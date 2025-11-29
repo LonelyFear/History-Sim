@@ -23,17 +23,17 @@ public partial class BorderRenderer : Node2D
     {
         borderMultiMesh.Multimesh = new MultiMesh()
         {
-            Mesh = CreateLineMesh(),
+            Mesh = CreateLineMesh(2),
 			TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
 			UseColors = true,
 			InstanceCount = 0,
         };
     }
-	QuadMesh CreateLineMesh()
+	QuadMesh CreateLineMesh(int thickness)
     {
         QuadMesh lineMesh = new QuadMesh()
         {
-            Size = new Vector2(SimManager.regionGlobalWidth, 1),
+            Size = new Vector2(SimManager.regionGlobalWidth/2, thickness),
         };
 		StandardMaterial3D material = new StandardMaterial3D(){
 			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
@@ -53,7 +53,7 @@ public partial class BorderRenderer : Node2D
 		List<int> borderSegments = new List<int>();
         foreach (Region region in simManager.regions)
         {
-			if (region.owner == null) continue;
+			if (region.pops.Count < 1) continue;
             int x = region.pos.X;
 			int y = region.pos.Y;
 			foreach (var pair in region.borderingRegionIds)
@@ -64,7 +64,7 @@ public partial class BorderRenderer : Node2D
 				switch (mapManager.mapMode)
                 {
                     case MapModes.REALM:
-						if (border.owner == null || border.owner.vassalManager.GetOverlord(true) != region.owner.vassalManager.GetOverlord(true))
+						if ((region.owner == null && border.pops.Count < 1) || region.owner != null && (border.owner == null || border.owner.vassalManager.GetOverlord(true) != region.owner.vassalManager.GetOverlord(true)))
                         {
 							borderSegments.Add(x);
 							borderSegments.Add(y);							
@@ -74,7 +74,7 @@ public partial class BorderRenderer : Node2D
                 }
             }
         }
-		BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,1,0,1));
+		BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,0,0,1));
     }
 	void BuildBorderMesh(MultiMesh multiMesh, List<int> borderSegments, Color color)
     {
@@ -112,7 +112,6 @@ public partial class BorderRenderer : Node2D
             }
 			Transform2D borderTransform = new Transform2D(rotationRad, simManager.RegionToGlobalPos(new Vector2(xPos + offset.X, yPos + offset.Y)));
 			multiMesh.SetInstanceTransform2D(i, borderTransform);
-			//GD.Print(borderTransform.Origin);
 			multiMesh.SetInstanceColor(i, color);
         }
     }

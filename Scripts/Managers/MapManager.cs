@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 public partial class MapManager : Node2D
 {
+    [Export] BorderRenderer borderRenderer;
     Task mapmodeTask = null;
     SimManager simManager;
     Vector2I worldSize;
@@ -41,15 +42,13 @@ public partial class MapManager : Node2D
     void InitMapManager() {
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         simManager.mapManager = this;
-        Scale = simManager.terrainMap.Scale * (simManager.tilesPerRegion/(float)regionResolution);
+        Scale = simManager.terrainMap.Scale * (SimManager.tilesPerRegion/(float)regionResolution);
         worldSize = SimManager.worldSize;
-        //GD.Print(worldSize.X * regionResolution);
         regionImage = Image.CreateEmpty(worldSize.X * regionResolution, worldSize.Y * regionResolution, true, Image.Format.Rgba8);
         regionTexture = ImageTexture.CreateFromImage(regionImage);
         regionOverlay.Texture = regionTexture;
         initialized = true;
     }
-
     public void UpdateRegionColors(IEnumerable<Region> regions)
     {
         var partitioner = Partitioner.Create(regions);
@@ -106,6 +105,7 @@ public partial class MapManager : Node2D
         if (value != regionOverlay.Visible)
         {
             regionOverlay.Visible = value;
+            borderRenderer.Visible = value;
             if (!value)
             {
                 hoveredRegion = null;
@@ -113,19 +113,6 @@ public partial class MapManager : Node2D
             }            
         }
 
-    }
-
-    void ShowRegions()
-    {
-        regionOverlay.Visible = true;
-        UpdateRegionColors(simManager.regions);
-    }
-
-    void HideRegions()
-    {
-        regionOverlay.Visible = false;
-        hoveredRegion = null;
-        hoveredState = null;       
     }
 
     void CheckMapmodeChange(){
@@ -153,10 +140,9 @@ public partial class MapManager : Node2D
     }
     public void SelectMetaObject(PopObject newObject)
     {
-        PopObject smo = selectedMetaObj;
-        selectedMetaObj = newObject;
-        if (smo != selectedMetaObj)
+        if (newObject != selectedMetaObj)
         {
+            selectedMetaObj = newObject;
             UpdateRegionColors(simManager.regions);
         }   
     }
@@ -164,30 +150,30 @@ public partial class MapManager : Node2D
     {
         if (evnt.IsAction("Select") && hoveredRegion != null)
         {
-            PopObject smo = selectedMetaObj;
+            PopObject newSelected = selectedMetaObj;
             switch (mapMode)
             {
                 case MapModes.REALM:
                     if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
                     {
-                        selectedMetaObj = hoveredRegion;
+                        newSelected = hoveredRegion;
                         if (hoveredState != null)
                         {
-                            selectedMetaObj = hoveredState.vassalManager.GetOverlord(true);
+                            newSelected = hoveredState.vassalManager.GetOverlord(true);
                         }
                     }
                     else
                     {
-                        selectedMetaObj = null;
+                        newSelected = null;
                     }
                     break;
                 case MapModes.POLITIY:
                     if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
                     {
-                        selectedMetaObj = hoveredRegion;
+                        newSelected = hoveredRegion;
                         if (hoveredState != null)
                         {
-                            selectedMetaObj = hoveredState;
+                            newSelected = hoveredState;
                         }
                     }
                     else
@@ -198,31 +184,27 @@ public partial class MapManager : Node2D
                 case MapModes.CULTURE:
                     if (hoveredRegion.cultureIds.Keys.Count > 0)
                     {
-                        selectedMetaObj = objectManager.GetCulture(hoveredRegion.largestCultureId);
+                        newSelected = objectManager.GetCulture(hoveredRegion.largestCultureId);
                     }
                     else
                     {
-                        selectedMetaObj = null;
+                        newSelected = null;
                     }
                     break;
                 case MapModes.TRADE_WEIGHT:
                     if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
                     {
-                        selectedMetaObj = hoveredRegion;
+                        newSelected = hoveredRegion;
                     }
                     break;
             }
-            if (smo != selectedMetaObj)
-            {
-                UpdateRegionColors(simManager.regions);
-            }   
+            SelectMetaObject(newSelected);
         }
     }
 
     public void SetMapMode(MapModes mode)
     {
-        selectedMetaObj = null;
-        UpdateRegionColors(simManager.regions);
+        SelectMetaObject(null);
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
         UpdateRegionColors(simManager.habitableRegions);
@@ -326,7 +308,7 @@ public partial class MapManager : Node2D
             case MapModes.POPULATION:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    long regionPopulation = Pop.ToNativePopulation(1000 * (int)Mathf.Pow(simManager.tilesPerRegion, 2));
+                    long regionPopulation = Pop.ToNativePopulation(1000 * (int)Mathf.Pow(SimManager.tilesPerRegion, 2));
                     color = new Color(0, region.population / Mathf.Max(simManager.highestPopulation, regionPopulation), 0, 1);
                 }
                 else if (region.habitable)
