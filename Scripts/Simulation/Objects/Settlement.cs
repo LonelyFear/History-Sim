@@ -1,4 +1,4 @@
-public class Settlement()
+public class Settlement : NamedObject
 {
-    public string name = "Regiontown";
+    
 }

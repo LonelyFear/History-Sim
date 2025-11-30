@@ -136,29 +136,6 @@ public class Region : PopObject, ISaveable
             occupier = null;
         }
     }
-    public void TryFormState()
-    {
-        if (professions[SocialClass.ARISTOCRAT] > 0 && rng.NextSingle() < wealth * 0.001f && owner == null)
-        {
-            objectManager.CreateState(this);
-
-            owner.population = population;
-            owner.workforce = workforce;
-            Pop rulingPop = null;
-            foreach (Pop pop in pops)
-            {
-                if (pop.profession == SocialClass.ARISTOCRAT)
-                {
-                    rulingPop = pop;
-                    break;
-                }
-            }
-
-            owner.rulingPop = rulingPop;
-            owner.tech = rulingPop.Tech;
-            StateNamer.UpdateStateNames(owner);
-        }
-    }
     public void RandomStateFormation()
     {
         if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
@@ -167,15 +144,10 @@ public class Region : PopObject, ISaveable
 
             owner.population = population;
             owner.workforce = workforce;
-            Pop rulingPop = null;
-            foreach (Pop pop in pops)
-            {
-                rulingPop = pop;
-                break;
-            }
+            Pop rulingPop = pops[0].ChangeSocialClass(Pop.ToNativePopulation(50),Pop.ToNativePopulation(75),SocialClass.ARISTOCRAT,1);
 
             owner.rulingPop = rulingPop;
-            owner.tech = rulingPop.Tech;
+            owner.tech = rulingPop.tech;
             // Sets Leader
             objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
             StateNamer.UpdateStateNames(owner);           
@@ -563,10 +535,11 @@ public class Region : PopObject, ISaveable
     {
         string text = $"Name: {name}";
         text += $"\nPopulation: {Pop.FromNativePopulation(population):#,###0}\n";
-        text += $"Cultures Breakdown:\n";
+        
 
         if (Pop.FromNativePopulation(population) > 0)
         {
+            text += $"Cultures Breakdown:\n";
             foreach (var cultureSizePair in cultureIds)
             {
                 Culture culture = objectManager.GetCulture(cultureSizePair.Key);
@@ -580,8 +553,25 @@ public class Region : PopObject, ISaveable
 
                 float culturePercentage = localPopulation/(float)population;
                 text += $"({culturePercentage:P0})\n";
-            }            
+            }     
+            text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
+            text += $"Professions Breakdown:\n";     
+            foreach (var professionSizePair in professions)
+            {
+                SocialClass socialClass = professionSizePair.Key;
+                long localPopulation = professionSizePair.Value;
+                
+                // Skips if the culture is too small
+                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
+                text += $"{socialClass.ToString().Capitalize()}\n";
+
+                text += $"  Workers: {Pop.FromNativePopulation(localPopulation):#,###0} ";
+
+                float percentage = localPopulation/(float)workforce;
+                text += $"({percentage:P0})\n";
+            }   
         }
+        
 
         return text;
     }

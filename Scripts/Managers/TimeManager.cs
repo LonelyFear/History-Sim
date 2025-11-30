@@ -102,7 +102,10 @@ public partial class TimeManager : Node
                         try
                         {
                             mapManager.UpdateRegionColors(simManager.paintedRegions);
-                            borderRenderer.UpdateBorders();
+                            if (borderRenderer.Visible)
+                            {
+                                borderRenderer.UpdateBorders();
+                            }
                         } catch (Exception e)
                         {
                             GD.PushError(e);

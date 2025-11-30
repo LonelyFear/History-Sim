@@ -480,10 +480,10 @@ public class State : PopObject, ISaveable
     {
         string text = $"Name: {name}";
         text += $"\nPopulation: {Pop.FromNativePopulation(population):#,###0}\n";
-        text += $"Cultures Breakdown:\n";
-
+        
         if (Pop.FromNativePopulation(population) > 0)
         {
+            text += $"Cultures Breakdown:\n";
             foreach (var cultureSizePair in cultureIds)
             {
                 Culture culture = objectManager.GetCulture(cultureSizePair.Key);
@@ -497,7 +497,23 @@ public class State : PopObject, ISaveable
 
                 float culturePercentage = localPopulation/(float)population;
                 text += $"({culturePercentage:P0})\n";
-            }            
+            }    
+            text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
+            text += $"Professions Breakdown:\n";     
+            foreach (var professionSizePair in professions)
+            {
+                SocialClass socialClass = professionSizePair.Key;
+                long localPopulation = professionSizePair.Value;
+                
+                // Skips if the culture is too small
+                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
+                text += $"{socialClass.ToString().Capitalize()}\n";
+
+                text += $"  Workers: {Pop.FromNativePopulation(localPopulation):#,###0} ";
+
+                float percentage = localPopulation/(float)workforce;
+                text += $"({percentage:P0})\n";
+            }           
         }
         return text;
     }    

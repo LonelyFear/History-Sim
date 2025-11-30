@@ -31,9 +31,12 @@ public partial class BorderRenderer : Node2D
     }
 	QuadMesh CreateLineMesh(int thickness)
     {
+		float mult = simManager.worldGenerator.WorldMult;
         QuadMesh lineMesh = new QuadMesh()
         {
-            Size = new Vector2(SimManager.regionGlobalWidth/2, thickness),
+			// thick 1: -0.8
+			// thick 2: 0.15
+            Size = new Vector2((SimManager.regionGlobalWidth - 0.8f + (0.95f * (thickness - 1)))/mult , thickness/mult),
         };
 		StandardMaterial3D material = new StandardMaterial3D(){
 			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,

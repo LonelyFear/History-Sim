@@ -77,7 +77,7 @@ public class SimManager
     [IgnoreMember] public ulong totalRegionTime;
     [IgnoreMember] public ulong totalCharacterTime;
     [IgnoreMember] public ulong totalMiscTime;
-    
+
     // Constants
     [IgnoreMember] public const int tilesPerRegion = 4; 
     [IgnoreMember] public const int regionGlobalWidth = 16;
@@ -552,7 +552,7 @@ public class SimManager
             }
             if (state.rulingPop != null)
             {
-                state.tech = state.rulingPop.Tech;
+                state.tech = state.rulingPop.tech;
             }
             //state.GetRealmBorders();
             state.Capitualate();
@@ -562,7 +562,7 @@ public class SimManager
 
             if (state.rulingPop != null)
             {
-                state.maxSize = 6 + state.rulingPop.Tech.societyLevel;
+                state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             }
 
             try

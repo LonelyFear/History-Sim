@@ -27,7 +27,7 @@ public class Pop
     [Key(13)] public ulong cultureId { get; set; }
     [Key(14)] public SocialClass profession { get; set; } = SocialClass.FARMER;
 
-    [Key(15)] public Tech Tech { get; set; }
+    [Key(15)] public Tech tech { get; set; } = new Tech();
     [Key(16)] public uint batchId { get; set; } = 1;
 
     [Key(17)] public List<Character> characters { get; set; } = new List<Character>();
@@ -94,28 +94,28 @@ public class Pop
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public Pop ChangeSocialClass(long workforceDelta, long dependentDelta, SocialClass newSocialClass, int landMoved)
+    public Pop ChangeSocialClass(long workforceDelta, long dependentsDelta, SocialClass newSocialClass, int landMoved)
     {
         // Makes sure the profession is actually changing
         // And that we arent just creating an empty pop
-        if (newSocialClass == profession && (workforceDelta >= ToNativePopulation(1) || dependentDelta >= ToNativePopulation(1)))
+        if (newSocialClass == profession || (workforceDelta < ToNativePopulation(1) && dependentsDelta < ToNativePopulation(1)))
         {
             return null;
         }
         // Clamping
         workforceDelta = Math.Clamp(workforceDelta, 0, workforce);
-        dependentDelta = Math.Clamp(dependentDelta, 0, dependents);
+        dependentsDelta = Math.Clamp(dependentsDelta, 0, dependents);
 
         // If we are changing the whole pop just change the profession
-        if (workforceDelta == workforce && dependentDelta == dependents)
+        if (workforceDelta == workforce && dependentsDelta == dependents)
         {
             profession = newSocialClass;
             return this;
         }
         // Makes a new pop with the new profession
-        Pop newWorkers = objectManager.CreatePop(workforceDelta, dependentDelta, region, Tech, culture, newSocialClass);
+        Pop newWorkers = objectManager.CreatePop(workforceDelta, dependentsDelta, region, tech, culture, newSocialClass);
         // And removes the people who switched to the new profession
-        ChangePopulation(-workforceDelta, -dependentDelta);
+        ChangePopulation(-workforceDelta, -dependentsDelta);
         // Land Stuff
 
         ClaimLand(-landMoved);
@@ -140,7 +140,7 @@ public class Pop
         double militaryTechChance = 0.002;
         double societyTechChance = 0.002;
         double industryTechChance = 0.01;
-        Tech t = Tech;
+        Tech t = tech;
         if (rng.NextDouble() < militaryTechChance)
         {
             t.militaryLevel++;
@@ -149,11 +149,11 @@ public class Pop
         {
             t.societyLevel++;
         }
-        if (Tech.societyLevel >= 20 && Tech.militaryLevel >= 20 && rng.NextDouble() < industryTechChance)
+        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && rng.NextDouble() < industryTechChance)
         {
             t.industryLevel++;
         }
-        Tech = t;
+        tech = t;
     }
     public void SocialClassTransitions()
     {
@@ -249,7 +249,7 @@ public class Pop
             {
                 movedDependents = dependents;
             }
-            Pop npop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, Tech, culture, profession);
+            Pop npop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
             ChangePopulation(-movedWorkforce, -movedDependents);     
         }
     }
@@ -294,7 +294,7 @@ public class Pop
     }
     public long GetMaxPopulation()
     {
-        double techFactor = 1 + (Tech.societyLevel * 0.5);
+        double techFactor = 1 + (tech.societyLevel * 0.5);
         double wealthFactor = wealth * 10;
         return ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand / region.landCount)));
     }    

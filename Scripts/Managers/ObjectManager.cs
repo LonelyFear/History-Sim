@@ -77,6 +77,14 @@ public class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
+    public Settlement CreateSettlement(Region region)
+    {
+        Settlement settlement = new Settlement()
+        {
+            name = NameGenerator.GenerateRegionName()
+        };
+        return settlement;
+    }
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
     {
         simManager.currentBatch++;
@@ -89,7 +97,7 @@ public class ObjectManager
             id = getID(),
             batchId = simManager.currentBatch,
             profession = profession,
-            Tech = tech,
+            tech = tech,
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
