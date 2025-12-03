@@ -392,8 +392,7 @@ public class State : PopObject, ISaveable
             if (liege.regions.Count <= 0)
             {
                 timeManager.forcePause = true;
-                simManager.mapManager.selectedMetaObj = liege;
-                simManager.mapManager.UpdateRegionColors(simManager.regions);
+                simManager.mapManager.SelectMetaObject(liege);
                 GD.Print(liege.name);
             }
             loyaltyTarget -= (regions.Count - liege.regions.Count)/liege.regions.Count * 0.5;
@@ -484,7 +483,8 @@ public class State : PopObject, ISaveable
         if (Pop.FromNativePopulation(population) > 0)
         {
             text += $"Cultures Breakdown:\n";
-            foreach (var cultureSizePair in cultureIds)
+
+            foreach (var cultureSizePair in cultureIds.OrderByDescending(pair => pair.Value))
             {
                 Culture culture = objectManager.GetCulture(cultureSizePair.Key);
                 long localPopulation = cultureSizePair.Value;
@@ -500,7 +500,8 @@ public class State : PopObject, ISaveable
             }    
             text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
             text += $"Professions Breakdown:\n";     
-            foreach (var professionSizePair in professions)
+
+            foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
             {
                 SocialClass socialClass = professionSizePair.Key;
                 long localPopulation = professionSizePair.Value;

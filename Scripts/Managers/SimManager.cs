@@ -58,6 +58,7 @@ public class SimManager
     [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
     [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = new Dictionary<ulong, HistoricalEvent>();
+    [IgnoreMember] public Dictionary<ulong, Settlement> settlementIds = new Dictionary<ulong, Settlement>();
 
     // Misc
     public uint currentBatch = 2;
@@ -122,6 +123,10 @@ public class SimManager
         charactersSave.StoreBuffer(MessagePackSerializer.Serialize(charactersIds, options));
         FileAccess warsSave = FileAccess.Open($"{path}/wars.pxsave", FileAccess.ModeFlags.Write);
         warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
+        FileAccess eventsSave = FileAccess.Open($"{path}/events.pxsave", FileAccess.ModeFlags.Write);
+        eventsSave.StoreBuffer(MessagePackSerializer.Serialize(historicalEventIds, options));
+        FileAccess settlementsSave = FileAccess.Open($"{path}/settlements.pxsave", FileAccess.ModeFlags.Write);
+        settlementsSave.StoreBuffer(MessagePackSerializer.Serialize(settlementIds, options));
     }
     public static SimManager LoadSimFromFile(string path)
     {
@@ -146,7 +151,8 @@ public class SimManager
         sim.tradeZonesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/trade_zones.pxsave"), options);
         sim.charactersIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
-
+        sim.historicalEventIds = MessagePackSerializer.Deserialize<Dictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
+        sim.settlementIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Settlement>>(FileAccess.GetFileAsBytes($"{path}/settlements.pxsave"), options);
         sim.simLoadedFromSave = true;
         return sim;
     }
@@ -475,6 +481,8 @@ public class SimManager
                     //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     region.RandomStateFormation();
                     region.UpdateOccupation();
+                    region.settlement.UpdateSlots();
+                    
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)
                     {
@@ -536,16 +544,7 @@ public class SimManager
     {
         foreach (State state in states.ToArray())
         {
-            if (state.rulingPop == null)
-            {
-                // State Collapse or Smth
-                if (rng.NextSingle() < 0.5f)
-                {
-                    Region r = state.regions[rng.Next(0, state.regions.Count)];
-                    state.RemoveRegion(r);
-                }
-            }   
-            if (state.regions.Count < 1 || state.StateCollapse())
+            if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null)
             {
                 objectManager.DeleteState(state);
                 continue;
@@ -559,7 +558,7 @@ public class SimManager
         }
         foreach (State state in states.ToArray())
         {
-
+            
             if (state.rulingPop != null)
             {
                 state.maxSize = 6 + state.rulingPop.tech.societyLevel;
@@ -581,10 +580,10 @@ public class SimManager
 
                 state.vassalManager.UpdateRealm();
                 state.UpdateCapital();
-
+                
+                state.diplomacy.UpdateEnemies();
                 state.diplomacy.RelationsUpdate();
                 state.diplomacy.UpdateDiplomacy();
-                state.diplomacy.UpdateEnemies();
 
                 state.diplomacy.EndWars();
                 state.diplomacy.StartWars();     

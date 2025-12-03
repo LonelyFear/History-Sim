@@ -32,6 +32,10 @@ public class NamedObject
         text += $"\nID: {id}";
         return text;
     }
+    public virtual void Die()
+    {
+        
+    }
     public string GenerateHistoryText()
     {
         string text = "This object doesnt have any recorded history yet.";

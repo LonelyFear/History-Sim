@@ -99,17 +99,7 @@ public partial class TimeManager : Node
                             monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
                         }
                         TickGame();
-                        try
-                        {
-                            mapManager.UpdateRegionColors(simManager.paintedRegions);
-                            if (borderRenderer.Visible)
-                            {
-                                borderRenderer.UpdateBorders();
-                            }
-                        } catch (Exception e)
-                        {
-                            GD.PushError(e);
-                        }
+                        mapManager.UpdateRegionColors(simManager.paintedRegions);
                     }
 
                 }

@@ -21,7 +21,7 @@ public partial class MapManager : Node2D
     public Vector2I hoveredRegionPos;
     public Region hoveredRegion = null;
     public State hoveredState = null;
-    public PopObject selectedMetaObj;
+    public PopObject selectedMetaObj {get; private set; }
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
@@ -53,6 +53,7 @@ public partial class MapManager : Node2D
     {
         if (!regionOverlay.Visible) return;
         var partitioner = Partitioner.Create(regions);
+        borderRenderer.RedrawBorders();
         Parallel.ForEach(partitioner, (region) =>
         {
             if (region != null)
@@ -179,7 +180,7 @@ public partial class MapManager : Node2D
                     }
                     else
                     {
-                        selectedMetaObj = null;
+                        newSelected = null;
                     }
                     break;
                 case MapModes.CULTURE:
@@ -208,7 +209,7 @@ public partial class MapManager : Node2D
         SelectMetaObject(null);
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
-        UpdateRegionColors(simManager.habitableRegions);
+        UpdateRegionColors(simManager.regions);
     }
     
     public Color GetRegionColor(Region region, bool includeOccupier = false)

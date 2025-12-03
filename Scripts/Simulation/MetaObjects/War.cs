@@ -99,5 +99,5 @@ public class War : NamedObject
             objectManager.EndWar(this);
         }
     }
-
+    
 }

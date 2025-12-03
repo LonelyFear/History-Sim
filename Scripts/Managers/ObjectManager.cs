@@ -68,22 +68,16 @@ public class ObjectManager
     {
         Region region = new Region()
         {
-            id = getID(),
+            id = GetId(),
             pos = new Vector2I(x, y),
             tiles = new Tile[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
-            biomes = new Biome[SimManager.tilesPerRegion, SimManager.tilesPerRegion]
+            biomes = new Biome[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
+            
         };
+        region.settlement = new Settlement(region);
         simManager.regions.Add(region);
         simManager.regionIds.Add(region.id, region);
         return region;
-    }
-    public Settlement CreateSettlement(Region region)
-    {
-        Settlement settlement = new Settlement()
-        {
-            name = NameGenerator.GenerateRegionName()
-        };
-        return settlement;
     }
     public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
     {
@@ -94,7 +88,7 @@ public class ObjectManager
         }
         Pop pop = new Pop()
         {
-            id = getID(),
+            id = GetId(),
             batchId = simManager.currentBatch,
             profession = profession,
             tech = tech,
@@ -177,7 +171,7 @@ public class ObjectManager
         float b = simManager.rng.NextSingle();
         Culture culture = new Culture()
         {
-            id = getID(),
+            id = GetId(),
             name = NameGenerator.GenerateCultureName(),
             color = new Color(r, g, b),
             tickCreated = timeManager.ticks,
@@ -205,7 +199,7 @@ public class ObjectManager
             float b = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
             State state = new State()
             {
-                id = getID(),
+                id = GetId(),
                 baseName = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
                 capital = region,
@@ -218,46 +212,46 @@ public class ObjectManager
             simManager.statesIds.Add(state.id, state);
         }
     }
-    public void DeleteState(State state)
+    public void DeleteState(State deletedState)
     {
-        if (simManager.mapManager.selectedMetaObj == state)
+        if (simManager.mapManager.selectedMetaObj == deletedState)
         {
-            simManager.mapManager.selectedMetaObj = null;
-            simManager.mapManager.UpdateRegionColors(simManager.regions);
+            simManager.mapManager.SelectMetaObject(null);
         }
-        if (state.vassalManager.liegeId != null)
+        if (deletedState.vassalManager.liegeId != null)
         {
-            State liege = GetState(state.vassalManager.liegeId);
-            liege.vassalManager.RemoveVassal(state.id);
+            State liege = GetState(deletedState.vassalManager.liegeId);
+            liege.vassalManager.RemoveVassal(deletedState.id);
         }
-        foreach (ulong warId in state.diplomacy.warIds.Keys)
+        foreach (ulong warId in deletedState.diplomacy.warIds.Keys)
         {
             War war = GetWar(warId);
-            war.RemoveParticipant(state.id);
+            war.RemoveParticipant(deletedState.id);
         }
-        foreach (ulong vassalId in state.vassalManager.vassalIds.ToArray())
+        foreach (ulong vassalId in deletedState.vassalManager.vassalIds.ToArray())
         {
             State vassal = GetState(vassalId);
-            state.vassalManager.RemoveVassal(vassalId);
+            deletedState.vassalManager.RemoveVassal(vassalId);
         }
-        foreach (Region region in state.regions.ToArray())
+        foreach (Region region in deletedState.regions.ToArray())
         {
-            state.RemoveRegion(region);
+            deletedState.RemoveRegion(region);
         }
-        foreach (ulong characterId in state.characterIds.ToArray())
+        foreach (ulong characterId in deletedState.characterIds.ToArray())
         {
             GetCharacter(characterId).LeaveState();
         }
         foreach (ulong relationId in simManager.statesIds.Keys)
         {
             State relation = GetState(relationId);
-            relation.diplomacy.RemoveRelations(state.id);
+            relation.diplomacy.RemoveRelations(deletedState.id);
+            relation.borderingStates.Remove(deletedState);
         }
 
-        simManager.objectDeleted.Invoke(state.id);
-        simManager.deletedStateIds.Add(state.id);
-        simManager.states.Remove(state);
-        simManager.statesIds.Remove(state.id);
+        simManager.objectDeleted.Invoke(deletedState.id);
+        simManager.deletedStateIds.Add(deletedState.id);
+        simManager.states.Remove(deletedState);
+        simManager.statesIds.Remove(deletedState.id);
     }
     public State GetState(ulong? id)
     {
@@ -304,7 +298,7 @@ public class ObjectManager
         Character character = new Character()
         {
             // Gives character id
-            id = getID(),
+            id = GetId(),
 
             // Names character
             firstName = firstName,
@@ -344,7 +338,7 @@ public class ObjectManager
     {
         Alliance alliance = new Alliance()
         {
-            id = getID(),
+            id = GetId(),
             tickCreated = timeManager.ticks,
             type = type
         };
@@ -380,7 +374,7 @@ public class ObjectManager
     {
         TradeZone zone = new TradeZone()
         {
-            id = getID(),
+            id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
             CoT = region,
             regions = [region],
@@ -408,7 +402,7 @@ public class ObjectManager
         }
         War war = new War()
         {
-            id = getID(),
+            id = GetId(),
             warType = warType,
             primaryAgressorId = agressorLeader,
             primaryDefenderId = defenderLeader,
@@ -446,7 +440,7 @@ public class ObjectManager
         {
             objIds = relevantObjects.Select(obj => obj.GetFullId()).ToList(),
             tickOccured = timeManager.ticks,
-            id = getID(),
+            id = GetId(),
             type = eventType
         };
         historicalEvent.CloneObjects();
@@ -478,7 +472,7 @@ public class ObjectManager
             return null;
         }        
     }
-    ulong getID()
+    ulong GetId()
     {
         currentId++;
         if (currentId == ulong.MaxValue)

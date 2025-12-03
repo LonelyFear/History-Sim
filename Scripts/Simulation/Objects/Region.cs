@@ -46,6 +46,9 @@ public class Region : PopObject, ISaveable
     [Key(29)] public long maxFarmers { get; set; } = 0;
     [Key(30)] public long maxSoldiers { get; set; } = 0;
     [IgnoreMember] public Dictionary<Direction, ulong> borderingRegionIds { get; set; } = new Dictionary<Direction, ulong>();
+
+    // Settlements
+    [Key(31)] public Settlement settlement = new Settlement();
     //[Key(32)] public ulong[] borderingRegionsIDs { get; set; }
 
     [Key(35)] public bool border { get; set; }
@@ -72,6 +75,7 @@ public class Region : PopObject, ISaveable
         owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
         occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
         tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
+        settlement.Init();
     }
     public void CalcAverages()
     {
@@ -144,10 +148,26 @@ public class Region : PopObject, ISaveable
 
             owner.population = population;
             owner.workforce = workforce;
-            Pop rulingPop = pops[0].ChangeSocialClass(Pop.ToNativePopulation(50),Pop.ToNativePopulation(75),SocialClass.ARISTOCRAT,1);
+            Pop rulingPop = null;
+            foreach (Pop pop in pops)
+            {
+                if (pop.profession == SocialClass.ARISTOCRAT || Pop.FromNativePopulation(pop.population) > 300)
+                {
+                    rulingPop = pop;
+                }
+            }
+            if (rulingPop.profession != SocialClass.ARISTOCRAT)
+            {
+                rulingPop = rulingPop.ChangeSocialClass(Pop.ToNativePopulation(50),Pop.ToNativePopulation(75),SocialClass.ARISTOCRAT,1);
+            }
 
             owner.rulingPop = rulingPop;
             owner.tech = rulingPop.tech;
+            // Builds Manor
+            if (!settlement.buildings.ContainsKey("manor"))
+            {
+                settlement.PlaceBuilding("manor");
+            }
             // Sets Leader
             objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
             StateNamer.UpdateStateNames(owner);           
@@ -419,68 +439,6 @@ public class Region : PopObject, ISaveable
         }
         return migrateable && habitable;
     }
-    public static List<Region> GetPathToRegion(Region start, Region goal, int maxDist)
-    {
-        List<Region> path = null;
-        bool validPath = false;
-
-        PriorityQueue<Vector2I, float> frontier = new PriorityQueue<Vector2I, float>();
-        PriorityQueue<int, float> distFrontier = new PriorityQueue<int, float>();
-        distFrontier.Enqueue(0, 0);
-        frontier.Enqueue(start.pos, 0);
-        Dictionary<Vector2I, Vector2I> flow = new Dictionary<Vector2I, Vector2I>();
-        flow[start.pos] = new Vector2I(0, 0);
-        Dictionary<Vector2I, float> flowCost = new Dictionary<Vector2I, float>();
-        flowCost[start.pos] = 0;
-
-        uint attempts = 0;
-
-        while (attempts < 10000 && frontier.Count > 0)
-        {
-            attempts++;
-            int currentDist = distFrontier.Dequeue();
-            Vector2I current = frontier.Dequeue();
-            if (current == goal.pos)
-            {
-                validPath = true;
-                break;
-            }
-            if (maxDist != 0 && currentDist > maxDist)
-            {
-                break;
-            }
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
-                    {
-                        continue;
-                    }
-                    Vector2I next = new Vector2I(Mathf.PosMod(current.X + dx, SimManager.worldSize.X), Mathf.PosMod(current.Y + dy, SimManager.worldSize.Y));
-                    float newCost = 1 - objectManager.GetRegion(next).navigability;
-                    if ((!flowCost.ContainsKey(next) || newCost < flowCost[next]) && objectManager.GetRegion(next).habitable)
-                    {
-                        frontier.Enqueue(next, newCost);
-                        distFrontier.Enqueue(currentDist + 1, newCost);
-                        flowCost[next] = newCost;
-                        flow[next] = current;
-                    }
-                }
-            }
-        }
-        if (validPath)
-        {
-            path = new List<Region>();
-            Vector2I pos = goal.pos;
-            while (pos != start.pos)
-            {
-                path.Add(objectManager.GetRegion(pos));
-                pos = flow[pos];
-            }
-        }
-        return path;
-    }
     public Region PickRandomBorder(bool mustBeLiveable = false)
     {
         Region region = objectManager.GetRegion(borderingRegionIds.Values.ToArray()[rng.Next(0, borderingRegionIds.Count)]);
@@ -540,7 +498,8 @@ public class Region : PopObject, ISaveable
         if (Pop.FromNativePopulation(population) > 0)
         {
             text += $"Cultures Breakdown:\n";
-            foreach (var cultureSizePair in cultureIds)
+
+            foreach (var cultureSizePair in cultureIds.OrderByDescending(pair => pair.Value))
             {
                 Culture culture = objectManager.GetCulture(cultureSizePair.Key);
                 long localPopulation = cultureSizePair.Value;
@@ -556,7 +515,8 @@ public class Region : PopObject, ISaveable
             }     
             text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
             text += $"Professions Breakdown:\n";     
-            foreach (var professionSizePair in professions)
+
+            foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
             {
                 SocialClass socialClass = professionSizePair.Key;
                 long localPopulation = professionSizePair.Value;
@@ -571,8 +531,6 @@ public class Region : PopObject, ISaveable
                 text += $"({percentage:P0})\n";
             }   
         }
-        
-
         return text;
     }
 }   

@@ -47,11 +47,7 @@ public partial class BorderRenderer : Node2D
 		return lineMesh;
     }
 
-	public void UpdateBorders()
-    {
-        CreateBorders();
-    }
-	void CreateBorders()
+	public void RedrawBorders()
     {
 		List<int> borderSegments = new List<int>();
         foreach (Region region in simManager.regions)

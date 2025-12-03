@@ -11,28 +11,27 @@ public static class AssetManager
     public static List<string> loadedModIds;
     public static List<string> foundModPaths;
     public static Dictionary<string, Biome> biomes = new Dictionary<string, Biome>();
+    public static Dictionary<string, Building> buildings = new Dictionary<string, Building>();
     public static Dictionary<string, Crop> crops = new Dictionary<string, Crop>();
     public static Dictionary<string, BaseResource> resources = new Dictionary<string, BaseResource>();
-    public static void LoadBiomes()
+    public static void LoadBiomes(string modPath)
     {
-        string biomesPath = @"Data/biomes.json";
+        string biomesPath = modPath + "/Biomes/biomes.json";
         FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
         if (bio != null)
         {
             string biomeData = bio.GetAsText();
 
-            Biome[] biomeArray = JsonSerializer.Deserialize<Biome[]>(biomeData);
-            foreach (Biome biome in biomeArray)
+            foreach (Biome biome in JsonSerializer.Deserialize<Biome[]>(biomeData))
             {
                 biomes.Add(biome.id, biome);
             }
-            GD.Print("Loaded " + biomeArray.Length + " biomes");
+            GD.Print("Loaded " + biomes.Count + " biomes");
         }
         else
         {
-            GD.PushError("Biomes.json not found at path '" + biomesPath + "'");
+            GD.PushError("biomes.json not found at path '" + biomesPath + "'");
         }
-        
     }
     public static void GetLoadedMods()
     {
@@ -75,6 +74,7 @@ public static class AssetManager
     public static void LoadMods()
     {
         biomes = new Dictionary<string, Biome>();
+        buildings = new Dictionary<string, Building>();
         crops = new Dictionary<string, Crop>();
         resources = new Dictionary<string, BaseResource>();
 
@@ -87,9 +87,28 @@ public static class AssetManager
         foreach (string modPath in foundModPaths)
         {
             LoadCrops(modPath);
+            LoadBiomes(modPath);
+            LoadBuildings(modPath);
         }
-        LoadBiomes();
-        GD.Print("Crops: " + crops.Count);
+    }
+    public static void LoadBuildings(string modPath)
+    {
+        string buildingsPath = modPath + "/Buildings/buildings.json";
+        FileAccess buildingFile = FileAccess.Open(buildingsPath, FileAccess.ModeFlags.Read);
+        if (buildingFile != null)
+        {
+            string buildingData = buildingFile.GetAsText();
+
+            foreach (Building building in JsonSerializer.Deserialize<Building[]>(buildingData))
+            {
+                buildings.Add(building.id, building);
+            }
+            GD.Print("Loaded " + buildings.Count+ " buildings");
+        }
+        else
+        {
+            GD.PushError("buildings.json not found at path '" + buildingsPath + "'");
+        }
     }
     public static void LoadFood(string modPath)
     {
@@ -158,6 +177,18 @@ public static class AssetManager
             }
 
         }
+    }
+    public static Building GetBuilding(string id)
+    {
+        if (buildings.ContainsKey(id))
+        {
+            return buildings[id];
+        }
+        else
+        {
+            GD.PushError("Building not found with ID '" + id + "'");
+            return null;
+        }        
     }
     public static BaseResource GetResource(string id)
     {

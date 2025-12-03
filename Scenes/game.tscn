@@ -382,6 +382,7 @@ text = "Game Speed:"
 
 [node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
 layout_mode = 2
+focus_mode = 0
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 selected = 6
@@ -413,6 +414,7 @@ text = "Map Mode:"
 
 [node name="MapMode" type="OptionButton" parent="UI/Action Panel/HBoxContainer/MapModeHolder"]
 layout_mode = 2
+focus_mode = 0
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 selected = 0

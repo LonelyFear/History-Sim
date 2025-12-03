@@ -95,7 +95,7 @@ public partial class StateDiplomacyManager
             State target = objectManager.GetState(pair.Key);
             if (target == null || !relationStates.Contains(target))
             {
-                relationIds.Remove(pair.Key);
+                RemoveRelations(pair.Key);
                 continue;
             }
         }
@@ -152,7 +152,7 @@ public partial class StateDiplomacyManager
     }    
     public void RemoveRelations(ulong? targetId)
     {
-        if (targetId != null && !relationIds.Keys.Contains(targetId))
+        if (relationIds.ContainsKey(targetId))
         {
             relationIds.Remove(targetId);
         }
