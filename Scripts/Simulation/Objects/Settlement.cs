@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 using MessagePack;
 
 [MessagePackObject(AllowPrivate = true)]
@@ -19,6 +20,7 @@ public class Settlement : NamedObject
     [IgnoreMember] Region region;
     [Key(3)] public int buildingCount = 0;
     [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = new Dictionary<SocialClass, long>();
+    [IgnoreMember] public Dictionary<SocialClass, long> maxJobs = new Dictionary<SocialClass, long>();
     public Settlement(){}
     public Settlement(Region r)
     {
@@ -36,13 +38,38 @@ public class Settlement : NamedObject
             UpdateBuildingSlot(pair.Key);
         }        
     }
-    public void UpdateRequiredWorkers()
-    {
-        // TODO
-    }
     public void UpdateEmployment()
     {
-        // TODO
+        // Updates worker requirements
+        requiredWorkers = [];
+        foreach (var pair in buildings)
+        {
+            Building building = AssetManager.GetBuilding(pair.Key);
+            BuildingSlot slot = pair.Value;
+
+            if (!requiredWorkers.ContainsKey(building.profession))
+            {
+                requiredWorkers[building.profession] = slot.maxEmployment;
+            } else
+            {
+                requiredWorkers[building.profession] += slot.maxEmployment;
+            }
+        }
+        // Clones dictionary
+        maxJobs = requiredWorkers.ToDictionary(entry => entry.Key, entry => entry.Value);
+
+        // Updates employment
+        Dictionary<SocialClass, long> workers = region.professions.ToDictionary(entry => entry.Key, entry => entry.Value);
+        foreach (var pair in buildings)
+        {
+            Building building = AssetManager.GetBuilding(pair.Key);
+            BuildingSlot slot = pair.Value;
+            SocialClass buildingProfession = building.profession;
+
+            slot.currentEmployment = Math.Clamp(workers[buildingProfession], 0, slot.maxEmployment);
+            workers[buildingProfession] -= slot.currentEmployment;
+            requiredWorkers[buildingProfession] -= slot.currentEmployment;
+        }
     }
     public void PlaceBuilding(string buildingId)
     {
@@ -70,7 +97,7 @@ public class Settlement : NamedObject
     public void UpdateBuildingSlot(string buildingId)
     {
         BuildingSlot slot = buildings[buildingId];
-        slot.maxEmployment = slot.buildingLevel * AssetManager.GetBuilding(buildingId).workersPerLevel;
+        slot.maxEmployment = slot.buildingLevel * Pop.ToNativePopulation(AssetManager.GetBuilding(buildingId).workersPerLevel);
         if (slot.buildingLevel <= 0)
         {
             buildings.Remove(buildingId);

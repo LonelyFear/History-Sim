@@ -482,6 +482,7 @@ public class SimManager
                     region.RandomStateFormation();
                     region.UpdateOccupation();
                     region.settlement.UpdateSlots();
+                    region.settlement.UpdateEmployment();
                     
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)

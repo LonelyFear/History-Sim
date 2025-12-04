@@ -64,6 +64,8 @@ public class State : PopObject, ISaveable
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
     [Key(367)] public uint timeAsVassal = 0;
+    [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = new Dictionary<SocialClass, long>();
+    [IgnoreMember] public Dictionary<SocialClass, long> maxJobs = new Dictionary<SocialClass, long>();
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
@@ -224,10 +226,14 @@ public class State : PopObject, ISaveable
 
         List<Pop> countedPops = new List<Pop>();
         List<State> borders = new List<State>();
-        Dictionary<SocialClass, long> countedSocialClasss = new Dictionary<SocialClass, long>();
+        Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
+        Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
+        Dictionary<SocialClass, long> countedJobs = new Dictionary<SocialClass, long>();
         foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
         {
-            countedSocialClasss.Add(profession, 0);
+            countedSocialClasses.Add(profession, 0);
+            countedRequiredWorkers.Add(profession, 0);
+            countedJobs.Add(profession, 0);
         }
 
         Dictionary<ulong, long> cCultures = new Dictionary<ulong, long>();
@@ -295,7 +301,12 @@ public class State : PopObject, ISaveable
 
             foreach (SocialClass profession in region.professions.Keys)
             {
-                countedSocialClasss[profession] += region.professions[profession];
+                countedSocialClasses[profession] += region.professions[profession];
+                if (region.settlement.requiredWorkers.ContainsKey(profession))
+                {
+                    countedRequiredWorkers[profession] += region.settlement.requiredWorkers[profession];
+                    countedJobs[profession] += region.settlement.maxJobs[profession];                    
+                }
             }
             foreach (ulong cultureId in region.cultureIds.Keys)
             {
@@ -312,7 +323,9 @@ public class State : PopObject, ISaveable
         occupiedLand = occRegions;
         borderingStates = borders;
         totalWealth = countedWealth;
-        professions = countedSocialClasss;
+        professions = countedSocialClasses;
+        requiredWorkers = countedRequiredWorkers;
+        maxJobs = countedJobs;
         cultureIds = cCultures;
         population = countedP + aliveCharacters;
         workforce = countedW;
@@ -511,10 +524,12 @@ public class State : PopObject, ISaveable
                 text += $"{socialClass.ToString().Capitalize()}\n";
 
                 text += $"  Workers: {Pop.FromNativePopulation(localPopulation):#,###0} ";
-
                 float percentage = localPopulation/(float)workforce;
-                text += $"({percentage:P0})\n";
-            }           
+                text += $"({percentage:P0})\n";                
+                long workersNeed = Pop.FromNativePopulation(requiredWorkers[socialClass]);
+                long maxWorkers = Pop.FromNativePopulation(maxJobs[socialClass]);
+                text += $"  Employed: {maxWorkers - Mathf.Max(workersNeed, 0):#,###0}\n";
+            }        
         }
         return text;
     }    
