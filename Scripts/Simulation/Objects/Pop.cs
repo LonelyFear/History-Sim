@@ -12,7 +12,7 @@ public class Pop
     [Key(3)] public long workforce { get; set; } = 0;
     [Key(4)] public long dependents { get; set; } = 0;
 
-    [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
+    [Key(5)] public float baseBirthRate { get; set; } = 0.3f * 1000;
     [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.75f;

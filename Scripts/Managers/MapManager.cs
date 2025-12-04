@@ -28,7 +28,7 @@ public partial class MapManager : Node2D
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
 
-    int regionResolution = 4;
+    int regionResolution = 1;
     public static ObjectManager objectManager;
 
     // NOTE: Painted regions are updated in TimeManager.cs
@@ -422,7 +422,7 @@ public partial class MapManager : Node2D
                 int posX = (x * regionResolution) + rx;
                 int posY = (y * regionResolution) + ry;
                 
-                if (r.occupier != null && Mathf.PosMod(posX + posY, stripeDistance + stripeThickness) < stripeThickness)
+                if (regionResolution == 1 || r.occupier != null && Mathf.PosMod(posX + posY, stripeDistance + stripeThickness) < stripeThickness)
                 {
                     //finalColor = new Color(0,0,0);
                     finalColor = GetRegionColor(r, true);

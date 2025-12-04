@@ -11,7 +11,6 @@ using Mutex = System.Threading.Mutex;
 public class HeightmapGenerator
 {
     float[,] heightmap;
-    bool[,] midpoints;
     int gridSizeX = 16;
     int gridSizeY = 16;
     int ppcx;
@@ -51,7 +50,6 @@ public class HeightmapGenerator
         worldSize = world.WorldSize;
         worldMult = world.WorldMult;
         heightmap = new float[worldSize.X, worldSize.Y];
-        midpoints = new bool[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
         ulong startTime = Time.GetTicksMsec();
         points = GeneratePoints();
@@ -59,6 +57,7 @@ public class HeightmapGenerator
         startTime = Time.GetTicksMsec();
         GenerateRegions(world.continents);
         GD.Print("Voronoi Region Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        world.Stage++;
         startTime = Time.GetTicksMsec();
         GenerateContinents();
         GD.Print("Continent Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
@@ -66,6 +65,7 @@ public class HeightmapGenerator
         GetDistances();
         GD.Print("Distance Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
+        world.Stage++;
         try
         {
             GeneratePlates(10);
@@ -91,6 +91,7 @@ public class HeightmapGenerator
             GD.PushError(e);
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
+        world.Stage++;
         /*
         float aboveSeaLevelTiles = 0;
         for (int x = 0; x < worldSize.X; x++)
@@ -115,11 +116,12 @@ public class HeightmapGenerator
         widthNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         widthNoise.SetFractalOctaves(8);
         widthNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-
+        widthNoise.SetFrequency(0.05f);
         FastNoiseLite heightNoise = new FastNoiseLite(rng.Next(-99999, 99999));
-        heightNoise.SetFractalType(FastNoiseLite.FractalType.Ridged);
+        heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        heightNoise.SetFrequency(0.05f);
         int divisions = 4;
         Parallel.For(1, divisions + 1, (i) =>
         {
@@ -130,7 +132,7 @@ public class HeightmapGenerator
                     float minWidth = 0f;
                     TerrainTile tile = tiles[x, y];
 
-                    float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x/2f, y/2f));
+                    float noiseValue = Mathf.InverseLerp(-1, 1, heightNoise.GetNoise(x, y));
                     float boundaryFactor;
                     TerrainTile boundary = tile.nearestBoundary;
 
@@ -138,7 +140,7 @@ public class HeightmapGenerator
                     {
                         continue;
                     }
-
+                    float widthNoiseValue = widthNoise.GetNoise(x, y);
                     if (boundary.region.continental)
                     {
                         if (boundary.collisionContinental)
@@ -147,7 +149,7 @@ public class HeightmapGenerator
                             if (boundary.pressure > 0)
                             {
                                 // Normal Ranges
-                                minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
+                                minWidth = 8f + (widthNoiseValue * 3f);
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                                 if (tile.boundaryDist <= minWidth)
                                 {
@@ -157,7 +159,7 @@ public class HeightmapGenerator
                             else
                             {
                                 // Rift Valleys
-                                minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
+                                minWidth = 8f + (widthNoiseValue* 3f);
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                                 if (tile.boundaryDist <= minWidth)
                                 {
@@ -170,7 +172,7 @@ public class HeightmapGenerator
                             // Inland Volcanoes
                             if (boundary.pressure > 0)
                             {
-                                minWidth = 12f + (widthNoise.GetNoise(x, y) * 3f);
+                                minWidth = 12f + (widthNoiseValue * 3f);
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                                 if (tile.boundaryDist <= minWidth)
                                 {
@@ -190,7 +192,7 @@ public class HeightmapGenerator
                             // Island Arcs
                             if (boundary.pressure > 0)
                             {
-                                minWidth = 8f + (widthNoise.GetNoise(x, y) * 3f);
+                                minWidth = 8f + (widthNoiseValue * 3f);
                                 boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                                 if (tile.boundaryDist <= minWidth && tile.nearestBoundary.sank)
                                 {
@@ -484,23 +486,26 @@ public class HeightmapGenerator
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         float scale = 2;
         GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
-        for (int x = 0; x < worldSize.X; x++)
+
+        int divisions = 18;
+        Parallel.For(1, divisions + 1, (parallelIterator) =>
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int x = worldSize.X / divisions * (parallelIterator - 1); x < worldSize.X / divisions * parallelIterator; x++)
             {
-
-                TerrainTile tile = new TerrainTile();
-                // Domain warping
-                int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.X);
-                int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.Y);
-
-                Vector2I pos = new Vector2I(fx, fy);
-                VoronoiRegion region = null;
-                // Loops through the points
-                int gx = fx / ppcx;
-                int gy = fy / ppcy;
-                try
+                for (int y = 0; y < worldSize.Y; y++)
                 {
+
+                    TerrainTile tile = new TerrainTile();
+                    // Domain warping
+                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.X);
+                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.Y);
+
+                    Vector2I pos = new Vector2I(fx, fy);
+                    VoronoiRegion region = null;
+                    // Loops through the points
+                    int gx = fx / ppcx;
+                    int gy = fy / ppcy;
+
                     PriorityQueue<VoronoiRegion, float> distances = new PriorityQueue<VoronoiRegion, float>();
                     for (int i = -1; i < 2; i++)
                     {
@@ -514,60 +519,17 @@ public class HeightmapGenerator
                     }
                     region = distances.Dequeue();
                     tile.region = region;
-                    tiles[x, y] = tile;
-                }
-                catch (Exception e)
-                {
-                    GD.PushError(e);
-                }
-
-
-            }
-        }
-
-        // Gets Region Borders
-        for (int x = 0; x < worldSize.X; x++)
-        {
-            for (int y = 0; y < worldSize.Y; y++)
-            {
-                VoronoiRegion region = tiles[x, y].region;
-                Vector2I pos = new Vector2I(x, y);
-                for (int dx = -1; dx < 2; dx++)
-                {
-                    for (int dy = -1; dy < 2; dy++)
+                    lock (tiles)
                     {
-                        if (dx == 0 && dy == 0)
-                        {
-                            continue;
-                        }
-                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
-                        VoronoiRegion neighbor = tiles[next.X, next.Y].region;
-                        if (neighbor != region)
-                        {
-                            tiles[x, y].border = true;
-                            if (!region.borderingRegions.Contains(neighbor))
-                            {
-                                region.borderingRegions.Add(neighbor);
-                            }
-                            if (!region.edges.Contains(pos))
-                            {
-                                region.edges.Add(pos);
-                            }
-                        }
-
+                        tiles[x, y] = tile;
                     }
                 }
             }
-        }    
-    }
-
-    void GetDistances()
-    {
-        ulong startTime = Time.GetTicksMsec();
-        int divisions = 8;
-        Parallel.For(1, divisions + 1, (i) =>
+        });
+        Parallel.For(1, divisions + 1, (parallelIterator) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            // Gets Region Borders
+            for (int x = worldSize.X / divisions * (parallelIterator - 1); x < worldSize.X / divisions * parallelIterator; x++)
             {
                 for (int y = 0; y < worldSize.Y; y++)
                 {
@@ -586,15 +548,60 @@ public class HeightmapGenerator
                             if (neighbor != region)
                             {
                                 tiles[x, y].border = true;
+                                lock (region)
+                                {
+                                    if (!region.borderingRegions.Contains(neighbor))
+                                    {
+                                        region.borderingRegions.Add(neighbor);
+                                    }
+                                    if (!region.edges.Contains(pos))
+                                    {
+                                        region.edges.Add(pos);
+                                    }                                
+                                }
+                            }
+
+                        }
+                    }
+                }
+            } 
+        });
+    }
+
+    void GetDistances()
+    {
+        ulong startTime = Time.GetTicksMsec();
+        int divisions = 20;
+        Parallel.For(1, divisions + 1, (i) =>
+        {
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            {
+                for (int y = 0; y < worldSize.Y; y++)
+                {
+                    VoronoiRegion region = tiles[x, y].region;
+                    Vector2I pos = new(x, y);
+                    for (int dx = -1; dx < 2; dx++)
+                    {
+                        for (int dy = -1; dy < 2; dy++)
+                        {
+                            if (dx == 0 && dy == 0)
+                            {
+                                continue;
+                            }
+                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                            VoronoiRegion neighbor = tiles[next.X, next.Y].region;
+                            if (neighbor != region)
+                            {
+                                tiles[x, y].border = true;
                                 if (!region.borderingRegions.Contains(neighbor))
                                 {
                                     region.borderingRegions.Add(neighbor);
                                 }
-                                if (region.continental != neighbor.continental)
+                                if (region.continental != neighbor.continental && !region.coastalTiles.Contains(pos))
                                 {
                                     region.coastal = true;
                                     tiles[x, y].coastal = true;
-                                    region.coastalTiles.Add(pos);
+                                    region.coastalTiles.Add(pos);                                
                                 }
                             }
 
@@ -606,43 +613,39 @@ public class HeightmapGenerator
         GD.Print("  Neighbor Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
         // Gets Relevant Tiles for each Tile
-        try
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            Parallel.For(1, divisions + 1, (i) =>
+            TerrainTile tile = null;
+            List<Vector2I> tilesToCheck = [];
+            Vector2I pos = Vector2I.Down;
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
             {
-                TerrainTile tile = null;
-                List<Vector2I> tilesToCheck = null;
-                Vector2I pos = Vector2I.Down;
-                for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+                for (int y = 0; y < worldSize.Y; y++)
                 {
-                    for (int y = 0; y < worldSize.Y; y++)
+                    tile = tiles[x, y];
+                    if (tile.region.coastal)
                     {
-                        tile = tiles[x, y];
                         tilesToCheck = [.. tile.region.edges];
-                        foreach (VoronoiRegion region in tile.region.borderingRegions)
+                    }
+                    foreach (VoronoiRegion region in tile.region.borderingRegions)
+                    {
+                        if (region.coastal && tile.region.continental && region.continental)
                         {
-                            if (region.coastal && tile.region.continental && region.continental)
-                            {
-                                tilesToCheck.AddRange(region.edges);
-                            }
+                            tilesToCheck.AddRange(region.coastalTiles);
                         }
+                    }
 
-                        pos = new Vector2I(x, y);
-                        if (tilesToCheck.Count > 0)
+                    pos = new Vector2I(x, y);
+                    if (tilesToCheck.Count > 0)
+                    {
+                        foreach (Vector2I next in tilesToCheck)
                         {
-                            foreach (Vector2I next in tilesToCheck)
-                            {
-                                tile.edgeDistancesSquared.Add(next, pos.WrappedDistanceSquaredTo(next, worldSize));
-                            }
+                            tile.edgeDistancesSquared[next] = pos.WrappedDistanceSquaredTo(next, worldSize);
                         }
                     }
                 }
-            });
-        }
-        catch (Exception e)
-        {
-            GD.PrintErr(e);
-        }
+            }
+        });
         GD.Print("  Tile Search Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
         Parallel.For(1, divisions + 1, (i) =>
@@ -693,6 +696,7 @@ internal class VoronoiRegion
     public List<Vector2I> boundaryTiles = new List<Vector2I>();
     public List<VoronoiRegion> borderingRegions = new List<VoronoiRegion>();
     public List<Vector2I> edges = new List<Vector2I>();
+    //public Dictionary<VoronoiRegion, Vector2I> edges = Dictionary<VoronoiRegion, Vector2I>();
 }
 internal class TerrainTile
 {

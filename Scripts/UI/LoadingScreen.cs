@@ -76,28 +76,20 @@ public partial class LoadingScreen : Control
         }
 
         float tileCount = generator.WorldSize.X * generator.WorldSize.Y;
-        GetNode<TextureProgressBar>("ProgressBar").Value = generator.Stage/5f;
-        switch (generator.Stage){
-            case 0:
-                splash.Text = "Colliding Plates...";
-            break;
-            case 1:
-                splash.Text = "Heating Planet...";
-            break;
-            case 2:
-                splash.Text = "Forming Clouds...";
-            break;
-            case 3:
-                splash.Text = "Seeding Forests...";
-            break;
-            case 4:
-                splash.Text = "Carving Rivers...";
-                break;
-            default:
-                splash.Text = "Finishing Up...";
-            break;
-        }
+        GetNode<TextureProgressBar>("ProgressBar").Value = generator.Stage/7f * 100;
+        splash.Text = generator.Stage switch
+        {
+            0 => "Creating Voronoi Regions...",
+            1 => "Calculating Distances...",
+            2 => "Colliding Continents...",
+            3 => "Heating Planet...",
+            4 => "Forming Clouds...",
+            5 => "Seeding Forests...",
+            6 => "Carving Rivers...",
+            _ => "Finishing Up...",
+        };
         //splash.Text = "Generating World";
+
 
         if ((task == null || task.IsCompleted) && generator.WorldExists && !textureGenerated)
         {

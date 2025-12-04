@@ -50,7 +50,7 @@ public partial class BorderRenderer : Node2D
 	public void RedrawBorders()
     {
 		List<int> borderSegments = new List<int>();
-        foreach (Region region in simManager.regions)
+        foreach (Region region in simManager.habitableRegions)
         {
 			if (region.pops.Count < 1) continue;
             int x = region.pos.X;

@@ -89,13 +89,15 @@ tooltip_text = "The size of the simulated regions in the world. Larger simulatio
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 selected = 1
-item_count = 3
-popup/item_0/text = "Large"
-popup/item_0/id = 3
-popup/item_1/text = "Medium"
-popup/item_1/id = 2
-popup/item_2/text = "Small"
-popup/item_2/id = 1
+item_count = 4
+popup/item_0/text = "Huge"
+popup/item_0/id = 4
+popup/item_1/text = "Large"
+popup/item_1/id = 3
+popup/item_2/text = "Medium"
+popup/item_2/id = 2
+popup/item_3/text = "Small"
+popup/item_3/id = 1
 
 [node name="Game Title" type="Label" parent="WorldSettingsPanel"]
 layout_mode = 1
