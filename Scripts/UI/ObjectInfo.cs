@@ -42,12 +42,11 @@ public partial class ObjectInfo : Control
 
                 panel.Visible = true;
                 typeLabel.Text = selectedObject.GetType().ToString();
+                nameLabel.Text = selectedObject.name;
                 switch (selectedObject.GetObjectType()) {
                     case ObjectType.STATE:
                         populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
                         State state = (State)selectedObject;
-
-                        nameLabel.Text = state.name;
                         switch (state.vassalManager.sovereignty)
                         {
                             case Sovereignty.COLONY:
@@ -108,11 +107,9 @@ public partial class ObjectInfo : Control
                     case ObjectType.REGION:
                         populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
                         Region region = (Region)selectedObject;
-                        populationLabel.Text += "\nRequired Farmers: " + Pop.FromNativePopulation(region.maxFarmers - region.professions[SocialClass.FARMER]);
                         populationLabel.Text += "\n" + "Wealth: " + region.wealth.ToString("#,###0");
                         populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0");
 
-                        nameLabel.Text = "Disorganized Tribes";
                         specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand / region.landCount).ToString("0.0%") + "\n";
                         specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");
                         /*
@@ -124,7 +121,6 @@ public partial class ObjectInfo : Control
                     case ObjectType.CULTURE:
                         populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
                         Culture culture = (Culture)selectedObject;
-                        nameLabel.Text = culture.name;
                         specialLabel.Text = "Pops: " + culture.pops.Count.ToString("#,###0");
                         break;
                 }

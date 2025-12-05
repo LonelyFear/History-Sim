@@ -53,7 +53,7 @@ public partial class MapManager : Node2D
     {
         if (!regionOverlay.Visible) return;
         var partitioner = Partitioner.Create(regions);
-        borderRenderer.RedrawBorders();
+        //borderRenderer.RedrawBorders();
         Parallel.ForEach(partitioner, (region) =>
         {
             if (region != null)

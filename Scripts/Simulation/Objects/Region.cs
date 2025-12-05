@@ -43,8 +43,6 @@ public class Region : PopObject, ISaveable
     [Key(28)] public ulong ownerID { get; set; }
 
     // Demographics
-    [Key(29)] public long maxFarmers { get; set; } = 0;
-    [Key(30)] public long maxSoldiers { get; set; } = 0;
     [IgnoreMember] public Dictionary<Direction, ulong> borderingRegionIds { get; set; } = new Dictionary<Direction, ulong>();
 
     // Settlements
@@ -121,15 +119,6 @@ public class Region : PopObject, ISaveable
         else
         {
             habitable = false;
-        }
-    }
-    public void CalcSocialClassRequirements()
-    {
-        maxFarmers = (long)(Pop.ToNativePopulation(farmersPerLand) * arableLand);
-        maxSoldiers = 0;
-        if (owner != null)
-        {
-            maxSoldiers = (long)(workforce * owner.mobilizationRate);
         }
     }
 
@@ -421,10 +410,16 @@ public class Region : PopObject, ISaveable
             {
                 if (Pop.CanPopsMerge(pop, merger))
                 {
-                    pop.ChangePopulation(merger.workforce, merger.dependents);
-                    pop.wealth += merger.wealth;
-                    merger.ChangePopulation(-merger.workforce, -merger.dependents);
-                    merger.wealth -= merger.wealth;
+                    lock (pop)
+                    {
+                        pop.ChangePopulation(merger.workforce, merger.dependents);
+                        pop.wealth += merger.wealth;                        
+                    }
+                    lock (merger)
+                    {
+                        merger.ChangePopulation(-merger.workforce, -merger.dependents);
+                        merger.wealth -= merger.wealth;                        
+                    }
                     break;
                 }
             }

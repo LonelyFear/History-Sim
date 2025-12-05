@@ -27,7 +27,15 @@ public partial class FrameBreakdown : Label
 				Text = "Frame Breakdown:\n";
 				Text += "Total Step Time: " + simManager.totalStepTime.ToString("#,##0ms\n");
 				Text += "Total Pops Time: " + simManager.totalPopsTime.ToString("#,##0ms\n");
+				foreach (var pair in simManager.popsBreakdown)
+                {
+                    Text += $"   {pair.Key}: " + pair.Value.ToString("#,##0ms\n");
+                }
 				Text += "Total Regions Time: " + simManager.totalRegionTime.ToString("#,##0ms\n");
+				foreach (var pair in simManager.regionBreakdown)
+                {
+                    Text += $"   {pair.Key}: " + pair.Value.ToString("#,##0ms\n");
+                }
 				Text += "Total State Time: " + simManager.totalStateTime.ToString("#,##0ms\n");
 				Text += "Total Misc Time: " + simManager.totalMiscTime.ToString("#,##0ms\n");				
 			}

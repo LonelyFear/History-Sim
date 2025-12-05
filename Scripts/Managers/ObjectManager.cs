@@ -97,10 +97,12 @@ public class ObjectManager
             population = workforce + dependents,
         };
         //pop.ChangePopulation(workforce, dependents);
+        /*
         lock (simManager.pops)
         {
             simManager.pops.Add(pop);
         }
+        */
         lock (simManager.popsIds)
         {
             simManager.popsIds.Add(pop.id, pop);
@@ -119,22 +121,16 @@ public class ObjectManager
 
     public void DestroyPop(Pop pop)
     {
-        try
+        if (pop.region != null && pop.region.owner != null && pop.region.owner.rulingPop == pop)
         {
-            if (pop.region != null && pop.region.owner != null && pop.region.owner.rulingPop == pop)
+            lock (pop.region.owner)
             {
-                lock (pop.region.owner)
-                {
-                    pop.region.owner.rulingPop = null;
-                }
+                pop.region.owner.rulingPop = null;
             }
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
         }
 
         pop.ClaimLand(-pop.ownedLand);
+        ulong startTime = Time.GetTicksMsec();
         lock (pop.region)
         {
             pop.region.RemovePop(pop, pop.region);
@@ -143,14 +139,15 @@ public class ObjectManager
         {
             pop.culture.RemovePop(pop, pop.culture);
         }
-        lock (simManager.pops)
-        {
-            simManager.pops.Remove(pop);
-        }
+        simManager.popsPerformanceInfo["Removing From Objects"] += Time.GetTicksMsec() - startTime;
+
+        startTime = Time.GetTicksMsec();
         lock (simManager.popsIds)
         {
+            //simManager.pops.Remove(pop);
             simManager.popsIds.Remove(pop.id);
         }
+        simManager.popsPerformanceInfo["Removing From Sim"] += Time.GetTicksMsec() - startTime;
     }
     public Pop GetPop(ulong? id)
     {

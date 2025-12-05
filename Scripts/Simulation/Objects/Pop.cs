@@ -289,8 +289,7 @@ public class Pop
         long change = Mathf.RoundToInt((workforce + dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * targetDependencyRatio);
         long workforceChange = change - dependentChange;
-        ChangeWorkforce(workforceChange);
-        ChangeDependents(dependentChange);
+        ChangePopulation(workforceChange, dependentChange);
     }
     public long GetMaxPopulation()
     {

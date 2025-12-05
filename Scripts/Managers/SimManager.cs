@@ -42,7 +42,7 @@ public class SimManager
     // Saved Data
     [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
     [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
-    [IgnoreMember] public List<Pop> pops { get; set; } = new List<Pop>();
+    //[IgnoreMember] public List<Pop> pops { get; set; } = new List<Pop>();
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
     [IgnoreMember] public List<Culture> cultures { get; set; } = new List<Culture>();
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
@@ -82,6 +82,10 @@ public class SimManager
     // Constants
     [IgnoreMember] public const int tilesPerRegion = 4; 
     [IgnoreMember] public const int regionGlobalWidth = 16;
+    [IgnoreMember] public Dictionary<string, ulong> popsBreakdown = [];
+    [IgnoreMember] public Dictionary<string, ulong> popsPerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, ulong> regionBreakdown = [];
+    [IgnoreMember] public Dictionary<string, ulong> regionPerformanceInfo = [];
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
         return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth)) / tilesPerRegion;
@@ -94,7 +98,7 @@ public class SimManager
     public void SaveSimToFile(string path)
     {
         regions.ForEach(r => r.PrepareForSave());
-        pops.ForEach(r => r.PrepareForSave());
+        //pops.ForEach(r => r.PrepareForSave());
         //wars.ForEach(r => r.PrepareForSave());
         states.ForEach(r => r.PrepareForSave());
         tradeZones.ForEach(r => r.PrepareForSave());
@@ -161,7 +165,7 @@ public class SimManager
         AssignSimManager();
         timeManager.ticks = tick;
         regions = [.. regionIds.Values];
-        pops = [.. popsIds.Values];
+        //pops = [.. popsIds.Values];
         states = [.. statesIds.Values];
         cultures = [.. cultureIds.Values];
         wars = [.. warIds.Values];
@@ -193,12 +197,10 @@ public class SimManager
             {
                 habitableRegions.Add(region);
             }
-            // Calc max populaiton
-            region.CalcSocialClassRequirements();
         }
         BorderingRegions();
 
-        pops.ForEach(r => r.LoadFromSave());
+        //pops.ForEach(r => r.LoadFromSave());
         //wars.ForEach(r => r.LoadFromSave());
         states.ForEach(r => r.LoadFromSave());
         tradeZones.ForEach(r => r.LoadFromSave());
@@ -303,8 +305,6 @@ public class SimManager
                 {
                     habitableRegions.Add(newRegion);
                 }
-                // Calc max populaiton
-                newRegion.CalcSocialClassRequirements();
             }
         }
     }
@@ -401,49 +401,76 @@ public class SimManager
             }
         }
     }
+    // Updating pops
     public void UpdatePops()
     {
-        foreach (Pop pop in pops.ToArray())
+        popsPerformanceInfo["Destroy Time"] = 0; 
+        popsPerformanceInfo["Removing From Sim"] = 0; 
+        popsPerformanceInfo["Removing From Objects"] = 0;
+        popsPerformanceInfo["Economy Time"] = 0; 
+        popsPerformanceInfo["Growth Time"] = 0; 
+        popsPerformanceInfo["Migration Time"] = 0; 
+        
+        foreach (var pair in popsIds.ToArray())
         {
-            ulong startTime = Time.GetTicksMsec();
+            Pop pop = pair.Value;
             if (pop.region == null || pop.population <= Pop.ToNativePopulation(1))
             {
+                ulong startTime = Time.GetTicksMsec();
                 objectManager.DestroyPop(pop);
+                popsPerformanceInfo["Destroy Time"] += Time.GetTicksMsec() - startTime;
             }
             else
             {
                 pop.politicalPower = pop.CalculatePoliticalPower();
+
+                ulong startTime = Time.GetTicksMsec();
                 pop.EconomyUpdate();
+                popsPerformanceInfo["Economy Time"] += Time.GetTicksMsec() - startTime;
+
+                startTime = Time.GetTicksMsec();
                 pop.GrowPop();
+                popsPerformanceInfo["Growth Time"] += Time.GetTicksMsec() - startTime;
+
                 if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
                 {
                     pop.TechnologyUpdate();
                     pop.SocialClassTransitions();
+                    startTime = Time.GetTicksMsec();
                     pop.Migrate();
+                    popsPerformanceInfo["Migration Time"] += Time.GetTicksMsec() - startTime;
                 }
             }
         }
+        popsBreakdown = popsPerformanceInfo.ToDictionary(k => k.Key, v => v.Value);
     }
     public void UpdateRegions()
     {
+        regionPerformanceInfo["Parallel Time"] = 0;
+        regionPerformanceInfo["Economy Time"] = 0;
+        regionPerformanceInfo["State Formation Time"] = 0;
+        regionPerformanceInfo["Conquest Time"] = 0;
+        regionPerformanceInfo["Trade Weight Time"] = 0;
         uint countedPoppedRegions = 0;
 
         long worldPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
-        ulong totalPopTime = 0;
-        ulong totalEconomyTime = 0;
-        ulong distributionTime = 0;
-        ulong totalConquestTime = 0;
         try
         {
-            var partitioner = Partitioner.Create(regions);
+            var partitioner = Partitioner.Create(habitableRegions);
             ulong startTime = Time.GetTicksMsec();
             Parallel.ForEach(partitioner, (region) =>
             {
                 //region.CalcTradeRoutes();
                 region.UpdateWealth();
-                region.DistributeWealth();
+                if (region.pops.Count > 0)
+                {
+                    region.DistributeWealth();
+                    region.MergePops();
+                    region.settlement.UpdateSlots();
+                    region.settlement.UpdateEmployment();
+                }
                 //region.zoneSize = 1;
                 region.hasBaseTradeWeight = false;
                 region.hasTradeWeight = false;
@@ -451,20 +478,20 @@ public class SimManager
                 region.taxIncome = 0f;
                 region.linkUpdateCountdown--;
             });
+            regionPerformanceInfo["Parallel Time"] = Time.GetTicksMsec() - startTime;
 
-            distributionTime = Time.GetTicksMsec() - startTime;
             foreach (Region region in habitableRegions)
             {
+
                 if (region.pops.Count > 0)
                 {
                     startTime = Time.GetTicksMsec();
-                    region.MergePops();
+                    
                     //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     //region.CheckPopulation();
                     //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
-                    region.CalcSocialClassRequirements();
-                    totalPopTime += Time.GetTicksMsec() - startTime;
+                    
                     startTime = Time.GetTicksMsec();
                     // Economy
                     region.CalcBaseWealth();
@@ -473,16 +500,14 @@ public class SimManager
                         region.linkUpdateCountdown = 12;
                         region.LinkTrade();
                     }
-
-
-
+                    regionPerformanceInfo["Economy Time"] += Time.GetTicksMsec() - startTime;
                     //region.CalcTaxes();
-                    totalEconomyTime += Time.GetTicksMsec() - startTime;
                     //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+                    startTime = Time.GetTicksMsec();
                     region.RandomStateFormation();
                     region.UpdateOccupation();
-                    region.settlement.UpdateSlots();
-                    region.settlement.UpdateEmployment();
+
+                    regionPerformanceInfo["State Formation Time"] += Time.GetTicksMsec() - startTime;
                     
                     startTime = Time.GetTicksMsec();
                     if (region.owner != null)
@@ -495,7 +520,7 @@ public class SimManager
                         }
                         region.MilitaryConquest();
                     }
-                    totalConquestTime += Time.GetTicksMsec() - startTime;
+                    regionPerformanceInfo["Conquest Time"] += Time.GetTicksMsec() - startTime;
                     startTime = Time.GetTicksMsec();
                     //GD.Print("  Conquest Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
                     countedPoppedRegions += 1;
@@ -508,6 +533,7 @@ public class SimManager
             }
             foreach (Region region in habitableRegions)
             {
+                startTime = Time.GetTicksMsec();
                 if (region.owner != null)
                 {
                     if (region.occupier != null && !region.owner.diplomacy.enemyIds.Contains(region.occupier.id))
@@ -527,17 +553,14 @@ public class SimManager
                 {
                     maxTradeWeight = region.GetTradeWeight();
                 }
+                regionPerformanceInfo["Trade Weight Time"] += Time.GetTicksMsec() - startTime;
             }
         }
         catch (Exception e)
         {
             GD.PushError(e);
         }
-        //GD.Print("Regions Time: " + (Time.GetTicksMsec() - rStartTime).ToString("#,##0 ms"));
-        //GD.Print("  Pop Time: " + totalPopTime.ToString("#,##0 ms"));
-        //GD.Print("  Economy Time: " + totalEconomyTime.ToString("#,##0 ms"));
-        //GD.Print("  Economy Completion Time: " + distributionTime.ToString("#,##0 ms"));
-        //GD.Print("  Conquest Time: " + totalConquestTime.ToString("#,##0 ms"));
+        regionBreakdown = regionPerformanceInfo.ToDictionary(k => k.Key, v => v.Value);
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
