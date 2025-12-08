@@ -145,7 +145,7 @@ public partial class MapManager : Node2D
         if (newObject != selectedMetaObj)
         {
             selectedMetaObj = newObject;
-            UpdateRegionColors(simManager.regions);
+            UpdateRegionColors(simManager.regionIds.Values);
         }   
     }
     public override void _UnhandledInput(InputEvent evnt)
@@ -209,7 +209,7 @@ public partial class MapManager : Node2D
         SelectMetaObject(null);
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
-        UpdateRegionColors(simManager.regions);
+        UpdateRegionColors(simManager.regionIds.Values);
     }
     
     public Color GetRegionColor(Region region, bool includeOccupier = false)
@@ -411,8 +411,8 @@ public partial class MapManager : Node2D
     }
     public void SetRegionColor(int x, int y, Color color)
     {
-        int stripeThickness = 1;
-        int stripeDistance = 2;
+        //int stripeThickness = 1;
+        //int stripeDistance = 2;
         Region r = objectManager.GetRegion(x, y);
         for (int rx = 0; rx < regionResolution; rx++)
         {
@@ -421,12 +421,6 @@ public partial class MapManager : Node2D
                 Color finalColor = color;
                 int posX = (x * regionResolution) + rx;
                 int posY = (y * regionResolution) + ry;
-                
-                if (regionResolution == 1 || r.occupier != null && Mathf.PosMod(posX + posY, stripeDistance + stripeThickness) < stripeThickness)
-                {
-                    //finalColor = new Color(0,0,0);
-                    finalColor = GetRegionColor(r, true);
-                }
 
                 if (regionImage.GetPixel(posX, posY) != finalColor)
                 {

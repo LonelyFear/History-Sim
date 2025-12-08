@@ -11,45 +11,22 @@ public class Battle{
     public long attackerLosses;
     public long defenderLosses;
     public bool attackSuccessful;
-    static Random rng = new Random();
-    public static Battle CalcBattle(Region loc, State atk, State def, long attackers, long defenders){
-        int borderingEnemyRegions = 0;
-        bool nearStronghold = false;
-        State locationState = loc.owner;
-        foreach (ulong rId in loc.borderingRegionIds.Values)
-        {
-            Region r = objectManager.GetRegion(rId);
-            if (r.GetController() == atk.vassalManager.GetOverlord(true))
-            {
-                borderingEnemyRegions++;
-            }
-            bool isNearCapital = locationState != null && (locationState.capital == r || loc == locationState.capital);
-            if (isNearCapital)
-            {
-                nearStronghold = true;
-            }
-        }
-        Battle result = new Battle(){
-            location = loc,
-            attacker = atk,
-            defender = def,
-            attackerStrength = attackers,
-            defenderStrength = defenders
-        };
+    static readonly Random rng = new();
+    public static bool CalcBattle(Region loc, long attackers, long defenders){
+        bool attackSuccessful = false;
         long baseAttackerPower = Pop.FromNativePopulation(attackers);
         long baseDefenderPower = Pop.FromNativePopulation(defenders);
         double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
         double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
 
-        float surroundedModifier = Mathf.Clamp(1.50f - (0.25f * borderingEnemyRegions), 0, 1);
-        float strongholdModifier = Mathf.Max(1f, Convert.ToInt32(nearStronghold) * 3f);
-        defendPower *= Mathf.Lerp(1.2f, 2.2f, 1f - loc.navigability) * strongholdModifier * surroundedModifier;
+        defendPower *= Mathf.Lerp(1.2f, 2.2f, 1f - loc.navigability);
 
         double totalPower = attackPower + defendPower;
 
         if (rng.NextDouble() < attackPower/totalPower){
-            result.attackSuccessful = true;
+            attackSuccessful = true;
         }
+        /*
         float attackerLossRatio = (float)(defendPower / totalPower);
         float defenderLossRatio = (float)(attackPower / totalPower);
 
@@ -64,7 +41,7 @@ public class Battle{
         
         result.defenderLosses = (long)(defenders * defenderLossRatio);
         result.attackerLosses = (long)(attackers * attackerLossRatio);
-
-        return result;
+        */
+        return attackSuccessful;
     }
 }

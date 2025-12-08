@@ -24,7 +24,7 @@ public partial class LabelManager : Node
 
 	public override void _Process(double delta)
 	{
-
+		/*
 		foreach (State state in simManager.states.ToArray())
 		{
 			Vector2 averageWorldPos = GetAveragePosition(state);
@@ -61,6 +61,7 @@ public partial class LabelManager : Node
 			currentLabels[state].AddThemeFontSizeOverride("name", (int)(scale));
 			//currentLabels[state].AddThemeFontSizeOverride("name", (int)(10 * scale));
 		}
+		*/
 	}
 
 	public Vector2 GetAveragePosition(State state)
@@ -73,5 +74,5 @@ public partial class LabelManager : Node
 		averagePos /= (float)state.regions.Count;
 		return averagePos;
 	}
-
+	
 }

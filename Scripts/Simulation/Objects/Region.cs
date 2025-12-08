@@ -36,7 +36,6 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float avgRainfall { get; set; }
     [IgnoreMember] public float avgElevation { get; set; }
     [Key(25)] public int landCount { get; set; }
-    [Key(26)] public int freeLand { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
     [Key(27)] public ulong occupierID { get; set; }
     [IgnoreMember] public State owner { get; set; } = null;
@@ -53,8 +52,12 @@ public class Region : PopObject, ISaveable
     [Key(36)] public bool frontier { get; set; }
     [IgnoreMember] public float arableLand { get; set; }
 
-    [IgnoreMember] public static int populationPerLand = 500;
-    [IgnoreMember] public static int farmersPerLand = 115;
+    [Key(37)] public int populationDensity = 500;
+    [Key(38)] public long maxPopulation = Pop.ToNativePopulation(500) * 16;
+    public void UpdateMaxPopulation()
+    {
+        maxPopulation = Pop.ToNativePopulation(populationDensity) * landCount;
+    }
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
@@ -102,7 +105,6 @@ public class Region : PopObject, ISaveable
                 }
             }
         }
-        freeLand = landCount;
 
         navigability /= landCount;
         avgTemperature /= tiles.Length;
@@ -200,13 +202,21 @@ public class Region : PopObject, ISaveable
 
         if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())
         {
+            long attackerPower;
+            lock (GetController())
+            {
+                attackerPower = GetController().GetArmyPower(false);
+            }
             //long defendingCivilians = region.workforce - region.professions[SocialClass.ARISTOCRAT];
             //double distanceFactor = 1 - Mathf.Min(pos.DistanceTo(owner.capital.pos)/10f, 0.9);
-            Battle result = Battle.CalcBattle(region, owner, null, owner.GetArmyPower(false), Pop.ToNativePopulation(200000));
+            bool attackerVictory = Battle.CalcBattle(region, attackerPower, Pop.ToNativePopulation(200000));
 
-            if (result.attackSuccessful)
+            if (attackerVictory)
             {
-                owner.AddRegion(region);
+                lock (owner)
+                {
+                    owner.AddRegion(region);
+                }
             }
         }
     }
@@ -214,20 +224,51 @@ public class Region : PopObject, ISaveable
     public void MilitaryConquest()
     {
         Region region = PickRandomBorder();
-
-        if (region != null && GetController() != null && region.GetController() != null && GetController().diplomacy.enemyIds.Contains(region.GetController().id))
+        lock (region)
         {
-            Battle result = Battle.CalcBattle(region, GetController(), region.GetController(), GetController().GetArmyPower(true), region.GetController().GetArmyPower(true));
+            lock (this)
+            {
+                if (region == null || region.GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
+                {
+                    return;
+                }                 
+            }
+        }
 
-            if (result.attackSuccessful)
+        long attackerPower = 0;
+        long defenderPower = 0;
+        lock (GetController())
+        {
+            if (GetController() == null)
+            {
+                return;
+            }
+            attackerPower = GetController().GetArmyPower(true);
+        }
+        lock (region.GetController())
+        {
+            if (region.GetController() == null)
+            {
+                return;
+            }
+            defenderPower = region.GetController().GetArmyPower(true);
+        }
+        
+        bool attackerVictory = Battle.CalcBattle(region, attackerPower, defenderPower);
+        if (attackerVictory)
+        {
+            lock (region)
             {
                 region.occupier = GetController();
             }
-            if (region.occupier == region.owner)
+        }
+        if (region.occupier == region.owner)
+        {
+            lock (region)
             {
                 region.occupier = null;
             }
-        }
+        }            
     }
     
     public double GetStability()
@@ -428,7 +469,7 @@ public class Region : PopObject, ISaveable
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;
-        if (arableLand / landCount < 0.2f)
+        if (arableLand / landCount < -0.2f)
         {
             migrateable = false;
         }

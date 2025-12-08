@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
@@ -46,7 +47,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
     [IgnoreMember] public List<Culture> cultures { get; set; } = new List<Culture>();
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
-    [IgnoreMember] public List<State> states { get; set; } = new List<State>();
+    //[IgnoreMember] public List<State> states { get; set; } = new List<State>();
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
     [IgnoreMember] public List<ulong> deletedStateIds = new List<ulong>();
     [IgnoreMember] public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
@@ -72,20 +73,14 @@ public class SimManager
     [IgnoreMember] public ObjectDeletedEvent objectDeleted;
     
     // Debug info
-    [IgnoreMember] public ulong totalStepTime;
-    [IgnoreMember] public ulong totalPopsTime;
-    [IgnoreMember] public ulong totalStateTime;
-    [IgnoreMember] public ulong totalRegionTime;
-    [IgnoreMember] public ulong totalCharacterTime;
-    [IgnoreMember] public ulong totalMiscTime;
+    [IgnoreMember] public double totalStepTime;
 
     // Constants
     [IgnoreMember] public const int tilesPerRegion = 4; 
     [IgnoreMember] public const int regionGlobalWidth = 16;
-    [IgnoreMember] public Dictionary<string, ulong> popsBreakdown = [];
-    [IgnoreMember] public Dictionary<string, ulong> popsPerformanceInfo = [];
-    [IgnoreMember] public Dictionary<string, ulong> regionBreakdown = [];
-    [IgnoreMember] public Dictionary<string, ulong> regionPerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, double> stepPerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, double> popsPerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, double> regionPerformanceInfo = [];
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
         return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth)) / tilesPerRegion;
@@ -97,10 +92,8 @@ public class SimManager
     }
     public void SaveSimToFile(string path)
     {
-        regions.ForEach(r => r.PrepareForSave());
-        //pops.ForEach(r => r.PrepareForSave());
-        //wars.ForEach(r => r.PrepareForSave());
-        states.ForEach(r => r.PrepareForSave());
+        regionIds.Values.ToList().ForEach(r => r.PrepareForSave());
+        statesIds.Values.ToList().ForEach(r => r.PrepareForSave());
         tradeZones.ForEach(r => r.PrepareForSave());
         cultures.ForEach(r => r.PreparePopObjectForSave());
         tick = timeManager.ticks;
@@ -165,15 +158,14 @@ public class SimManager
         AssignSimManager();
         timeManager.ticks = tick;
         regions = [.. regionIds.Values];
-        //pops = [.. popsIds.Values];
-        states = [.. statesIds.Values];
         cultures = [.. cultureIds.Values];
         wars = [.. warIds.Values];
         tradeZones = [.. tradeZonesIds.Values];
         characters = [.. charactersIds.Values];
         
-        foreach (Region region in regions)
+        foreach (var pair in regionIds)
         {
+            Region region = pair.Value;
             region.LoadFromSave();
             // Adds tiles and biomes
             region.tiles = new Tile[tilesPerRegion, tilesPerRegion];
@@ -202,7 +194,7 @@ public class SimManager
 
         //pops.ForEach(r => r.LoadFromSave());
         //wars.ForEach(r => r.LoadFromSave());
-        states.ForEach(r => r.LoadFromSave());
+        statesIds.Values.ToList().ForEach(r => r.LoadFromSave());
         tradeZones.ForEach(r => r.LoadFromSave());
         cultures.ForEach(r => r.LoadPopObjectFromSave());   
     }
@@ -243,14 +235,14 @@ public class SimManager
                 {
                     if (worldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
                     {
-                        newTile.navigability *= 0.25f;
+                        newTile.navigability *= 0.1f;
                         newTile.arability *= 0.25f;
                         newTile.survivalbility *= 0.8f;
                         newTile.terrainType = TerrainType.MOUNTAINS;
                     }
                     else if (worldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
                     {
-                        newTile.navigability *= 0.5f;
+                        newTile.navigability *= 0.25f;
                         newTile.arability *= 0.5f;
                         newTile.terrainType = TerrainType.HILLS;
                     }
@@ -353,8 +345,9 @@ public class SimManager
 
     void BorderingRegions()
     {
-        foreach (Region region in regions)
+        foreach (var pair in regionIds)
         {
+            Region region = pair.Value;
             if (region == null)
             {
                 GD.PushError("Something is wrong");
@@ -404,52 +397,51 @@ public class SimManager
     // Updating pops
     public void UpdatePops()
     {
+        Stopwatch totalTime = Stopwatch.StartNew();
+
         popsPerformanceInfo["Destroy Time"] = 0; 
-        popsPerformanceInfo["Removing From Sim"] = 0; 
-        popsPerformanceInfo["Removing From Objects"] = 0;
         popsPerformanceInfo["Economy Time"] = 0; 
         popsPerformanceInfo["Growth Time"] = 0; 
         popsPerformanceInfo["Migration Time"] = 0; 
-        
+        popsPerformanceInfo["Parallel Time"] = 0;
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
         foreach (var pair in popsIds.ToArray())
         {
             Pop pop = pair.Value;
+            // Deletions
             if (pop.region == null || pop.population <= Pop.ToNativePopulation(1))
             {
-                ulong startTime = Time.GetTicksMsec();
                 objectManager.DestroyPop(pop);
-                popsPerformanceInfo["Destroy Time"] += Time.GetTicksMsec() - startTime;
-            }
-            else
-            {
-                pop.politicalPower = pop.CalculatePoliticalPower();
-
-                ulong startTime = Time.GetTicksMsec();
-                pop.EconomyUpdate();
-                popsPerformanceInfo["Economy Time"] += Time.GetTicksMsec() - startTime;
-
-                startTime = Time.GetTicksMsec();
-                pop.GrowPop();
-                popsPerformanceInfo["Growth Time"] += Time.GetTicksMsec() - startTime;
-
-                if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
-                {
-                    pop.TechnologyUpdate();
-                    pop.SocialClassTransitions();
-                    startTime = Time.GetTicksMsec();
-                    pop.Migrate();
-                    popsPerformanceInfo["Migration Time"] += Time.GetTicksMsec() - startTime;
-                }
             }
         }
-        popsBreakdown = popsPerformanceInfo.ToDictionary(k => k.Key, v => v.Value);
+        popsPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        
+        stopwatch.Restart();
+
+        var partitioner = Partitioner.Create(popsIds.ToArray());
+        Parallel.ForEach(partitioner, (popsPair) =>
+        {
+            Pop pop = popsPair.Value;
+            pop.GrowPop();
+            pop.politicalPower = pop.CalculatePoliticalPower();          
+            if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
+            {
+                pop.TechnologyUpdate();
+                pop.SocialClassTransitions();
+                pop.Migrate();
+            }            
+        });
+        popsPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
     }
     public void UpdateRegions()
     {
         regionPerformanceInfo["Parallel Time"] = 0;
+        regionPerformanceInfo["Pop Merging Time"] = 0;
         regionPerformanceInfo["Economy Time"] = 0;
         regionPerformanceInfo["State Formation Time"] = 0;
         regionPerformanceInfo["Conquest Time"] = 0;
+        regionPerformanceInfo["Border Time"] = 0;
         regionPerformanceInfo["Trade Weight Time"] = 0;
         uint countedPoppedRegions = 0;
 
@@ -458,82 +450,76 @@ public class SimManager
         ulong rStartTime = Time.GetTicksMsec();
         try
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             var partitioner = Partitioner.Create(habitableRegions);
-            ulong startTime = Time.GetTicksMsec();
             Parallel.ForEach(partitioner, (region) =>
             {
-                //region.CalcTradeRoutes();
+                region.UpdateMaxPopulation();
                 region.UpdateWealth();
                 if (region.pops.Count > 0)
                 {
-                    region.DistributeWealth();
                     region.MergePops();
+                    region.DistributeWealth();
                     region.settlement.UpdateSlots();
                     region.settlement.UpdateEmployment();
                 }
-                //region.zoneSize = 1;
                 region.hasBaseTradeWeight = false;
                 region.hasTradeWeight = false;
                 region.tradeIncome = 0f;
                 region.taxIncome = 0f;
                 region.linkUpdateCountdown--;
             });
-            regionPerformanceInfo["Parallel Time"] = Time.GetTicksMsec() - startTime;
+            regionPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();
 
             foreach (Region region in habitableRegions)
             {
-
-                if (region.pops.Count > 0)
+                if (region.pops.Count <= 0)
                 {
-                    startTime = Time.GetTicksMsec();
-                    
-                    //GD.Print("  Pops Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    //region.CheckPopulation();
-                    //GD.Print("  Population Check Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
-                    
-                    startTime = Time.GetTicksMsec();
-                    // Economy
-                    region.CalcBaseWealth();
-                    if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
-                    {
-                        region.linkUpdateCountdown = 12;
-                        region.LinkTrade();
-                    }
-                    regionPerformanceInfo["Economy Time"] += Time.GetTicksMsec() - startTime;
-                    //region.CalcTaxes();
-                    //GD.Print("  Wealth Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
-                    startTime = Time.GetTicksMsec();
-                    region.RandomStateFormation();
-                    region.UpdateOccupation();
+                    region.linkUpdateCountdown = 0;
+                    continue;
+                }
+                
+                
+                // Economy
+                region.CalcBaseWealth();
+                if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
+                {
+                    region.linkUpdateCountdown = 12;
+                    region.LinkTrade();
+                }
+                regionPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
+                stopwatch.Restart();
 
-                    regionPerformanceInfo["State Formation Time"] += Time.GetTicksMsec() - startTime;
-                    
-                    startTime = Time.GetTicksMsec();
-                    if (region.owner != null)
-                    {
+                // States
+                region.RandomStateFormation();
+                region.UpdateOccupation();
+                regionPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
+                stopwatch.Restart();
 
-                        region.StateBordering();
-                        if (region.frontier && region.owner.rulingPop != null && region.occupier == null)
-                        {
-                            region.NeutralConquest();
-                        }
-                        region.MilitaryConquest();
+                if (region.owner != null)
+                {
+                    region.StateBordering();
+                    if (region.frontier && region.occupier == null)
+                    {
+                        region.NeutralConquest();
                     }
-                    regionPerformanceInfo["Conquest Time"] += Time.GetTicksMsec() - startTime;
-                    startTime = Time.GetTicksMsec();
-                    //GD.Print("  Conquest Time: " + (Time.GetTicksMsec() - startTime).ToString("#,##0 ms"));
+                    region.MilitaryConquest();
+                    
+                }  
+                regionPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
+                // Increments
+                lock (this)
+                {
                     countedPoppedRegions += 1;
                     worldPop += region.population;
                 }
-                else
-                {
-                    region.linkUpdateCountdown = 0;
-                }
             }
+
+            stopwatch.Restart();
             foreach (Region region in habitableRegions)
             {
-                startTime = Time.GetTicksMsec();
+                highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
                 if (region.owner != null)
                 {
                     if (region.occupier != null && !region.owner.diplomacy.enemyIds.Contains(region.occupier.id))
@@ -553,21 +539,21 @@ public class SimManager
                 {
                     maxTradeWeight = region.GetTradeWeight();
                 }
-                regionPerformanceInfo["Trade Weight Time"] += Time.GetTicksMsec() - startTime;
             }
+            regionPerformanceInfo["Trade Weight Time"] = stopwatch.Elapsed.TotalMilliseconds;
         }
         catch (Exception e)
         {
             GD.PushError(e);
         }
-        regionBreakdown = regionPerformanceInfo.ToDictionary(k => k.Key, v => v.Value);
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
     public void UpdateStates()
     {
-        foreach (State state in states.ToArray())
+        foreach (var pair in statesIds.ToArray())
         {
+            State state = pair.Value;
             if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null)
             {
                 objectManager.DeleteState(state);
@@ -580,9 +566,9 @@ public class SimManager
             //state.GetRealmBorders();
             state.Capitualate();
         }
-        foreach (State state in states.ToArray())
+        foreach (var pair in statesIds.ToArray())
         {
-            
+            State state = pair.Value;
             if (state.rulingPop != null)
             {
                 state.maxSize = 6 + state.rulingPop.tech.societyLevel;
@@ -616,7 +602,7 @@ public class SimManager
                 GD.PushError(e);
             }
         }
-        var partitioner = Partitioner.Create(states.ToArray());
+        var partitioner = Partitioner.Create(statesIds.Values);
         Parallel.ForEach(partitioner, (state) =>
         {
             state.CountPopulation();
@@ -676,28 +662,33 @@ public class SimManager
     }
     public void SimMonth()
     {
+        Stopwatch stepStopwatch = Stopwatch.StartNew();
         try
         {
-            ulong stepTime = Time.GetTicksMsec();
-            ulong startTime = Time.GetTicksMsec();
+            Stopwatch processStopwatch = Stopwatch.StartNew();
             UpdatePops();
-            totalPopsTime = Time.GetTicksMsec() - startTime;
-            startTime = Time.GetTicksMsec();
+            stepPerformanceInfo["Pops"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
             UpdateRegions();
-            totalRegionTime = Time.GetTicksMsec() - startTime;
-            startTime = Time.GetTicksMsec();
+            stepPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
             UpdateStates();
-            totalStateTime = Time.GetTicksMsec() - startTime;
-            startTime = Time.GetTicksMsec();
+            stepPerformanceInfo["States"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
             UpdateCharacters();
             UpdateCultures();
             UpdateWars();
-            totalMiscTime = Time.GetTicksMsec() - startTime;
-            totalStepTime = Time.GetTicksMsec() - stepTime;            
+            stepPerformanceInfo["Misc"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+          
         } catch  (Exception e)
         {
             GD.PushError(e);
         }
+        totalStepTime = stepStopwatch.Elapsed.TotalMilliseconds;
     }
     public void SimYear()
     {

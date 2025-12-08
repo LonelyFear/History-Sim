@@ -115,7 +115,7 @@
 		"color":"4F8A10",
 		"textureX": 1,
 		"textureY": 0,
-		"navigability":0.7,
+		"navigability":0.5,
 		"arability":0.8,
 		"survivability":0.8
 	},
@@ -147,7 +147,7 @@
 		"color":"D4B85D",
 		"textureX": 1,
 		"textureY": 1,
-		"navigability":0.9,
+		"navigability":0.7,
 		"arability":0.7,
 		"survivability":0.8
 	},	
@@ -163,7 +163,7 @@
 		"color":"E5C07B",
 		"textureX": 1,
 		"textureY": 2,
-		"navigability":0.5,
+		"navigability":0.2,
 		"arability":0.15,
 		"survivability":0.3
 	},	
@@ -195,7 +195,7 @@
 		"color":"2E5E4F",
 		"textureX": 3,
 		"textureY": 0,
-		"navigability":0.4,
+		"navigability":0.2,
 		"arability":0.25,
 		"survivability":0.7
 	}

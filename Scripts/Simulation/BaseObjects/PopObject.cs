@@ -11,7 +11,7 @@ public abstract class PopObject : NamedObject
     [Key(104)] public long dependents { get; set; } = 0;
     [Key(105)] public long workforce { get; set; } = 0;
     
-    [IgnoreMember] public List<Pop> pops = new List<Pop>();
+    [IgnoreMember] public HashSet<Pop> pops = new HashSet<Pop>();
     [Key(106)] public List<ulong> popsIds;
     [IgnoreMember] public static TimeManager timeManager;
     [Key(107)] public Dictionary<SocialClass, long> professions = new Dictionary<SocialClass, long>()
@@ -31,13 +31,13 @@ public abstract class PopObject : NamedObject
 
     public void PreparePopObjectForSave()
     {
-        popsIds = pops.Count > 0 ? pops.Select(p => p.id).ToList() : null;
+        popsIds = pops.Count > 0 ? [.. pops.Select(p => p.id)] : null;
         //largestCultureId = largestCulture == null ? 0 : largestCulture.id;
         //culturesIds = cultures.Count > 0 ? cultures.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
     }
     public void LoadPopObjectFromSave()
     {
-        pops = popsIds == null ? new List<Pop>() : popsIds.Select(p => objectManager.GetPop(p)).ToList();
+        pops = popsIds == null ? new HashSet<Pop>() : [.. popsIds.Select(p => objectManager.GetPop(p))];
         //largestCulture = largestCultureId == 0 ? null : objectManager.GetCulture(largestCultureId);
         //cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => objectManager.GetCulture(kv.Key), kv => kv.Value);
     }
@@ -60,7 +60,6 @@ public abstract class PopObject : NamedObject
         //Culture currentLargest = null;
         foreach (Pop pop in pops)
         {
-            maxPopulation += pop.GetMaxPopulation();
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
@@ -131,32 +130,41 @@ public abstract class PopObject : NamedObject
             case Region:
                 pop.region = null;
                 break;    
-        }
+        } 
     }
     public void ChangePopulation(long workforceChange, long dependentChange, SocialClass socialClass, Culture culture)
     {
         // Updates numbers
-        workforce += workforceChange;
-        dependents += dependentChange;
-        population += workforceChange + dependentChange;
-
+        lock (this)
+        {
+            workforce += workforceChange;
+            dependents += dependentChange;
+            population += workforceChange + dependentChange;            
+        }
         // Updates Demographics
-        if (!professions.ContainsKey(socialClass))
+        lock (professions)
         {
-            professions.Add(socialClass, workforceChange);
-        } else
-        {
-            professions[socialClass] += workforceChange;
+            if (!professions.ContainsKey(socialClass))
+            {
+                professions.Add(socialClass, workforceChange);
+            } else
+            {
+                professions[socialClass] += workforceChange;
+            }            
         }
-        
+
         // Cultures
-        if (!cultureIds.ContainsKey(culture.id))
+        lock (cultureIds)
         {
-            cultureIds.Add(culture.id, workforceChange + dependentChange);
-        } else
-        {
-            cultureIds[culture.id] += workforceChange + dependentChange;
+            if (!cultureIds.ContainsKey(culture.id))
+            {
+                cultureIds.Add(culture.id, workforceChange + dependentChange);
+            } else
+            {
+                cultureIds[culture.id] += workforceChange + dependentChange;
+            }            
         }
+
         // Updates largest culture
         if (largestCultureId == null || cultureIds[culture.id] > cultureIds[(ulong)largestCultureId])
         {

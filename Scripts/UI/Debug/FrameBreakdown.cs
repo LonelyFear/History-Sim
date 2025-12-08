@@ -4,7 +4,7 @@ using System;
 public partial class FrameBreakdown : Label
 {
     SimManager simManager;
-	[Export] double updateDelay = 0.25;
+	[Export] double updateDelay = 0.1;
 	double currentTime = 0;
 
     public override void _Ready()
@@ -25,19 +25,19 @@ public partial class FrameBreakdown : Label
 			{
 				currentTime = updateDelay;
 				Text = "Frame Breakdown:\n";
-				Text += "Total Step Time: " + simManager.totalStepTime.ToString("#,##0ms\n");
-				Text += "Total Pops Time: " + simManager.totalPopsTime.ToString("#,##0ms\n");
-				foreach (var pair in simManager.popsBreakdown)
+				Text += "Total Step Time: " + simManager.totalStepTime.ToString("#,##0.0ms\n");
+				Text += "Total Pops Time: " + simManager.stepPerformanceInfo["Pops"].ToString("#,##0.0ms\n");
+				foreach (var pair in simManager.popsPerformanceInfo)
                 {
-                    Text += $"   {pair.Key}: " + pair.Value.ToString("#,##0ms\n");
+                    Text += $"   {pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
                 }
-				Text += "Total Regions Time: " + simManager.totalRegionTime.ToString("#,##0ms\n");
-				foreach (var pair in simManager.regionBreakdown)
+				Text += "Total Regions Time: " + simManager.stepPerformanceInfo["Regions"].ToString("#,##0.0ms\n");
+				foreach (var pair in simManager.regionPerformanceInfo)
                 {
-                    Text += $"   {pair.Key}: " + pair.Value.ToString("#,##0ms\n");
+                    Text += $"   {pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
                 }
-				Text += "Total State Time: " + simManager.totalStateTime.ToString("#,##0ms\n");
-				Text += "Total Misc Time: " + simManager.totalMiscTime.ToString("#,##0ms\n");				
+				Text += "Total State Time: " + simManager.stepPerformanceInfo["States"].ToString("#,##0.0ms\n");
+				Text += "Total Misc Time: " + simManager.stepPerformanceInfo["Misc"].ToString("#,##0.0ms\n");				
 			}
 
         }

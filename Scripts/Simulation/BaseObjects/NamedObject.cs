@@ -51,7 +51,7 @@ public class NamedObject
         }
         return text;
     }
-    public static NamedObject GetNamedObject(string fullId)
+    public static T GetNamedObject<T>(string fullId) where T : NamedObject
     {
         ulong id = ulong.Parse(fullId[3..]);
         NamedObject obj;
@@ -76,7 +76,11 @@ public class NamedObject
                 obj = null;
                 break;
         }
-        return obj;
+        return (T)obj;
+    }
+    public static NamedObject GetNamedObject(string fullId)
+    {
+        return GetNamedObject<NamedObject>(fullId);
     }
 	public static ObjectType GetTypeFromString(string s)
     {
@@ -144,7 +148,7 @@ public class NamedObject
             default:
                 break;
         }
-        if (GetNamedObject(typeId + obj.id) != null)
+        if (obj != null && GetNamedObject(typeId + obj.id) != null)
         {
             return $"[color={color}][url={typeId}{obj.id}]{text}[/url][/color]";
         } else

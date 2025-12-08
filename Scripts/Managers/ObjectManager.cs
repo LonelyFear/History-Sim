@@ -72,7 +72,7 @@ public class ObjectManager
             pos = new Vector2I(x, y),
             tiles = new Tile[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
             biomes = new Biome[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
-            
+            linkUpdateCountdown = simManager.rng.Next(0, 13)
         };
         region.settlement = new Settlement(region);
         simManager.regions.Add(region);
@@ -84,7 +84,7 @@ public class ObjectManager
         simManager.currentBatch++;
         if (simManager.currentBatch > 12)
         {
-            simManager.currentBatch = 2;
+            simManager.currentBatch = 1;
         }
         Pop pop = new Pop()
         {
@@ -129,25 +129,9 @@ public class ObjectManager
             }
         }
 
-        pop.ClaimLand(-pop.ownedLand);
-        ulong startTime = Time.GetTicksMsec();
-        lock (pop.region)
-        {
-            pop.region.RemovePop(pop, pop.region);
-        }
-        lock (pop.culture)
-        {
-            pop.culture.RemovePop(pop, pop.culture);
-        }
-        simManager.popsPerformanceInfo["Removing From Objects"] += Time.GetTicksMsec() - startTime;
-
-        startTime = Time.GetTicksMsec();
-        lock (simManager.popsIds)
-        {
-            //simManager.pops.Remove(pop);
-            simManager.popsIds.Remove(pop.id);
-        }
-        simManager.popsPerformanceInfo["Removing From Sim"] += Time.GetTicksMsec() - startTime;
+        pop.region.RemovePop(pop, pop.region);
+        pop.culture.RemovePop(pop, pop.culture);
+        simManager.popsIds.Remove(pop.id);
     }
     public Pop GetPop(ulong? id)
     {
@@ -205,7 +189,6 @@ public class ObjectManager
             state.diplomacy = new StateDiplomacyManager(state);
             state.vassalManager = new StateVassalManager(state);
             state.AddRegion(region);
-            simManager.states.Add(state);
             simManager.statesIds.Add(state.id, state);
         }
     }
@@ -227,7 +210,6 @@ public class ObjectManager
         }
         foreach (ulong vassalId in deletedState.vassalManager.vassalIds.ToArray())
         {
-            State vassal = GetState(vassalId);
             deletedState.vassalManager.RemoveVassal(vassalId);
         }
         foreach (Region region in deletedState.regions.ToArray())
@@ -244,10 +226,14 @@ public class ObjectManager
             relation.diplomacy.RemoveRelations(deletedState.id);
             relation.borderingStates.Remove(deletedState);
         }
+        foreach (ulong allianceId in deletedState.allianceIds.ToArray())
+        {
+            Alliance alliance = GetAlliance(allianceId);
+            alliance.RemoveMember(deletedState.id);
+        }
 
         simManager.objectDeleted.Invoke(deletedState.id);
-        simManager.deletedStateIds.Add(deletedState.id);
-        simManager.states.Remove(deletedState);
+        //simManager.deletedStateIds.Add(deletedState.id);
         simManager.statesIds.Remove(deletedState.id);
     }
     public State GetState(ulong? id)
@@ -263,7 +249,6 @@ public class ObjectManager
             {
                 GD.PushError("Deleted state still referenced!");
             }
-            //GD.PushWarning(e);
             return null;
         }
     }
@@ -440,7 +425,7 @@ public class ObjectManager
             id = GetId(),
             type = eventType
         };
-        historicalEvent.CloneObjects();
+        historicalEvent.InitEvent();
         foreach (NamedObject obj in relevantObjects)
         {
             obj.eventIds.Add(historicalEvent.id);

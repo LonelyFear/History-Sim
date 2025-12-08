@@ -7,12 +7,13 @@ using MessagePack;
 public class Pop
 {
     [Key(0)] public ulong id;
-    [Key(1)] public long maxPopulation { get; set; } = 0;
     [Key(2)] public long population { get; set; } = 0;
     [Key(3)] public long workforce { get; set; } = 0;
     [Key(4)] public long dependents { get; set; } = 0;
+    [IgnoreMember] public long workforceChange { get; set; } = 0;
+    [IgnoreMember] public long dependentChange { get; set; } = 0;
 
-    [Key(5)] public float baseBirthRate { get; set; } = 0.3f * 1000;
+    [Key(5)] public float baseBirthRate { get; set; } = 0.3f * 10;
     [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.75f;
@@ -49,32 +50,17 @@ public class Pop
         region = objectManager.GetRegion(regionId);
         culture = objectManager.GetCulture(cultureId);
     }
-    public void ChangeWorkforce(long amount)
+    public void ChangePopulation(long wfChange, long dfChange)
     {
-        if (workforce + amount < 0)
-        {
-            amount = -workforce;
-        }
-        workforce += amount;
-        population += amount;
-        culture.ChangePopulation(amount, 0, profession, culture);
-        region.ChangePopulation(amount, 0, profession, culture);
-    }
-    public void ChangeDependents(long amount)
-    {
-        if (dependents + amount < 0)
-        {
-            amount = -dependents;
-        }
-        dependents += amount;
-        population += amount;
-        culture.ChangePopulation(0, amount, profession, culture);
-        region.ChangePopulation(0, amount, profession, culture);
-    }
-    public void ChangePopulation(long workforceChange, long dependentChange)
-    {
-        ChangeWorkforce(workforceChange);
-        ChangeDependents(dependentChange);
+        wfChange = Math.Max(wfChange, -workforce);
+        dfChange = Math.Max(dfChange, -dependents);
+
+        workforce += wfChange;
+        dependents += dfChange;
+        population += wfChange + dfChange;    
+
+        culture.ChangePopulation(wfChange, dfChange, profession, culture);
+        region.ChangePopulation(wfChange, dfChange, profession, culture);
     }
 
     public const long simPopulationMultiplier = 1000;
@@ -117,22 +103,7 @@ public class Pop
         // And removes the people who switched to the new profession
         ChangePopulation(-workforceDelta, -dependentsDelta);
         // Land Stuff
-
-        ClaimLand(-landMoved);
-        newWorkers.ClaimLand(landMoved);
         return newWorkers;
-    }
-    public void EconomyUpdate()
-    {
-        if (population > maxPopulation && region.freeLand > 0)
-        {
-            ClaimLand(1);
-        }
-        if (population < maxPopulation / 2 && ownedLand > 1)
-        {
-            ClaimLand(-1);
-        }
-        maxPopulation = GetMaxPopulation();
     }
 
     public void TechnologyUpdate()
@@ -188,10 +159,14 @@ public class Pop
         // Chance of pop to migrate
         float migrateChance = 0f;
         // Simple Migration
-        if (population >= maxPopulation)
+        lock (region)
         {
-            migrateChance = 1f;
+            if (region.population >= region.maxPopulation)
+            {
+                migrateChance = 1f;
+            }            
         }
+
         if (profession == SocialClass.ARISTOCRAT)
         {
             migrateChance *= 0.1f;
@@ -199,37 +174,42 @@ public class Pop
         // If the pop migrates
         if (rng.NextSingle() <= migrateChance)
         {
-            lock (region)
+            Region target = region.PickRandomBorder();
+            bool professionAllows = true;
+
+            switch (profession)
             {
-                Region target = region.PickRandomBorder();
-                bool professionAllows = true;
-                switch (profession)
-                {
-                    case SocialClass.SOLDIER:
-                        if (target.owner != region.owner)
-                        {
-                            professionAllows = false;
-                        }
-                        break;
-                    case SocialClass.ARISTOCRAT:
-                        if (target.owner != region.owner)
-                        {
-                            professionAllows = false;
-                        }
-                        break;
-                }
-                lock (target)
-                {
-                    if (target.Migrateable(this) && professionAllows && (rng.NextSingle() < target.navigability))
+                case SocialClass.ARISTOCRAT:
+                    if (target.owner != region.owner)
                     {
-                        float movedPercentage = (population - maxPopulation) / (float)population;
-                        long movedDependents = (long)(dependents * movedPercentage);
-                        long movedWorkforce = (long)(workforce * movedPercentage);
-
-                        MovePop(target, movedWorkforce, movedDependents);
+                        professionAllows = false;
                     }
+                    break;
+            }
+            float chanceToMoveOnTile = target.navigability;
+            lock (target)
+            {
+                if (target.population > target.maxPopulation)
+                {
+                    chanceToMoveOnTile *= 0.1f;
                 }
+                if (!target.Migrateable(this))
+                {
+                    chanceToMoveOnTile *= 0;
+                }
+            }
+            if (professionAllows && rng.NextSingle() < chanceToMoveOnTile)
+            {
+                float movedPercentage = 0;
+                lock (region)
+                {
+                    movedPercentage = (region.population - region.maxPopulation) / (float)population;
+                }
+                
+                long movedDependents = (long)(dependents * movedPercentage);
+                long movedWorkforce = (long)(workforce * movedPercentage);
 
+                MovePop(target, movedWorkforce, movedDependents);
             }
         }
     }
@@ -239,19 +219,14 @@ public class Pop
         {
             return;
         }
-        if (movedWorkforce >= ToNativePopulation(1) || movedDependents >= ToNativePopulation(1))
+        movedWorkforce = Math.Clamp(movedWorkforce, 0, workforce);
+        movedDependents = Math.Clamp(movedDependents, 0, dependents);
+
+        lock (objectManager)
         {
-            if (movedWorkforce > workforce)
-            {
-                movedWorkforce = workforce;
-            }
-            if (movedDependents > dependents)
-            {
-                movedDependents = dependents;
-            }
-            Pop npop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
-            ChangePopulation(-movedWorkforce, -movedDependents);     
+            objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
         }
+        ChangePopulation(-movedWorkforce, -movedDependents);     
     }
     public float GetDeathRate()
     {
@@ -261,10 +236,14 @@ public class Pop
     public float GetBirthRate()
     {
         float birthRate = baseBirthRate;
-        if (population < maxPopulation * 0.5f)
+        lock (region)
         {
-            birthRate *= 1.5f;
+            if (region.population < region.maxPopulation * 0.5f)
+            {
+                birthRate *= 1.5f;
+            }            
         }
+
         return birthRate;
     }
     public void GrowPop()
@@ -279,10 +258,14 @@ public class Pop
         {
             bRate = GetBirthRate();
         }
-        if (population > maxPopulation)
+        lock (region)
         {
-            bRate *= FromNativePopulation(maxPopulation)/(float)FromNativePopulation(population);
+            if (region.population > region.maxPopulation)
+            {
+                bRate *= FromNativePopulation(region.maxPopulation)/(float)FromNativePopulation(region.population);
+            }            
         }
+
 
         float NIR = (bRate - GetDeathRate()) / 12f;
 
@@ -290,33 +273,6 @@ public class Pop
         long dependentChange = Mathf.RoundToInt(change * targetDependencyRatio);
         long workforceChange = change - dependentChange;
         ChangePopulation(workforceChange, dependentChange);
-    }
-    public long GetMaxPopulation()
-    {
-        double techFactor = 1 + (tech.societyLevel * 0.5);
-        double wealthFactor = wealth * 10;
-        return ToNativePopulation((long)((Region.populationPerLand + wealthFactor) * techFactor * ownedLand * (region.arableLand / region.landCount)));
-    }    
-    
-    public void ClaimLand(int amount)
-    {
-        lock (region) {
-            int fixedAmount;
-            if (amount >= 0)
-            {
-                fixedAmount = Mathf.Clamp(amount, 0, region.freeLand);
-                ownedLand += fixedAmount;
-
-                region.freeLand -= fixedAmount;
-            }
-            else
-            {
-                fixedAmount = Mathf.Clamp(Mathf.Abs(amount), 0, ownedLand);
-                ownedLand -= fixedAmount;
-
-                region.freeLand += fixedAmount;
-            }            
-        }
     }
 }
 

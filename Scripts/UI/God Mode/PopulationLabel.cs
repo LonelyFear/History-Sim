@@ -23,6 +23,7 @@ public partial class PopulationLabel : Label
             Text += "Total Events: " + simManager.historicalEventIds.Count.ToString("#,##0\n");
             Text += "Total Characters: " + simManager.characters.Count.ToString("#,##0\n");
             Text += "Populated Regions: " + simManager.populatedRegions.ToString("#,##0\n");
+            Text += "Total Pops: " + simManager.popsIds.Count.ToString("#,##0\n");
             Text += "Wars: " + simManager.wars.Count.ToString("#,##0");
         }
         else

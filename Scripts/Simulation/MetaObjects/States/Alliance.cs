@@ -16,7 +16,7 @@ public class Alliance : NamedObject
     public void AddMember(ulong memberId)
     {
         State newMember = objectManager.GetState(memberId);
-        if (newMember.allianceIds.Contains(id))
+        if (newMember == null || newMember.allianceIds.Contains(id))
         {
             return;
         }
@@ -52,13 +52,19 @@ public class Alliance : NamedObject
             member.realmId = null;
         }      
     }
-    public List<Region> GetRegions()
+    public HashSet<Region> GetRegions()
     {
-        List<Region> regions = new List<Region>();
+        HashSet<Region> regions = new HashSet<Region>();
         foreach (ulong stateId in memberStateIds)
         {
             State memberState = objectManager.GetState(stateId);
-            regions.AddRange(memberState.regions);
+            lock (memberState.regions)
+            {
+                foreach (Region region in memberState.regions)
+                {
+                    regions.Add(region);
+                }                
+            }
         }
         return regions;
     }

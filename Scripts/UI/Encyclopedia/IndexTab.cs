@@ -32,7 +32,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			case ObjectType.STATE:
 				Name = "State Index";
 				indexNameLabel.Text = "State Index";
-				foreach (State state in sim.states)
+				foreach (State state in sim.statesIds.Values)
 				{
 					CreateResultButton(state);
 				}

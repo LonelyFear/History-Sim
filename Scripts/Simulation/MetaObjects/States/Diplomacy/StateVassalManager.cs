@@ -108,10 +108,13 @@ public partial class StateVassalManager
         vassal.diplomacy.LeaveAllWars();
         // Removes Associations
         vassalIds.Remove(vassalId);
-        realm.RemoveMember(vassalId);
-        foreach (ulong subVassalId in vassalManager.vassalIds)
+        if (realm != null)
         {
-            realm.RemoveMember(subVassalId);
+            realm.RemoveMember(vassalId);
+            foreach (ulong subVassalId in vassalManager.vassalIds)
+            {
+                realm.RemoveMember(subVassalId);
+            }            
         }
     }
 

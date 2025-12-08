@@ -18,7 +18,7 @@ public class State : PopObject, ISaveable
 
     [Key(6)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     
-    [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
+    [IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
     [Key(7)] public List<ulong> regionsIDs { get; set; } = new List<ulong>();
     [IgnoreMember] public Region capital { get; set; }
     [Key(8)] public ulong capitalID;
@@ -77,17 +77,13 @@ public class State : PopObject, ISaveable
     {
         LoadPopObjectFromSave();
         capital = objectManager.GetRegion(capitalID);
-        regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToList();
+        regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToHashSet();
         diplomacy.Init(this);
         vassalManager.Init(this);
         borderingStates = borderingStatesIDs == null ? new List<State>() : borderingStatesIDs.Select(r => simManager.statesIds[r]).ToList();
     }
     public void UpdateCapital()
     {
-        if (capital == null)
-        {
-            capital = regions[0];
-        }
         switch (vassalManager.sovereignty)
         {
             case Sovereignty.INDEPENDENT:
@@ -212,7 +208,7 @@ public class State : PopObject, ISaveable
     }
     public override void CountPopulation()
     {
-        List<Region> checkedRegions = regions;
+        HashSet<Region> checkedRegions = regions;
         Alliance realm = objectManager.GetAlliance(realmId);
         bool isRealmLeader = realm == null ? false : realm.leadStateId == id;
         if (realm != null && isRealmLeader)
@@ -224,7 +220,6 @@ public class State : PopObject, ISaveable
         long countedP = 0;
         long countedW = 0;
 
-        List<Pop> countedPops = new List<Pop>();
         List<State> borders = new List<State>();
         Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
@@ -253,7 +248,6 @@ public class State : PopObject, ISaveable
             countedP += region.population;
             countedW += region.workforce;
             countedWealth += region.wealth;
-            countedPops.AddRange(region.pops);
             if (region.frontier || region.border)
             {
                 if (region.occupier != null && regions.Contains(region))
@@ -329,7 +323,6 @@ public class State : PopObject, ISaveable
         cultureIds = cCultures;
         population = countedP + aliveCharacters;
         workforce = countedW;
-        pops = countedPops;
     }
     public void AddRegion(Region region)
     {
@@ -341,7 +334,10 @@ public class State : PopObject, ISaveable
             }
             region.owner = this;
             regions.Add(region);
-            pops.AddRange(region.pops);
+            foreach (Pop pop in region.pops)
+            {
+                pops.Add(pop);
+            }
         }
     }
     public void RemoveRegion(Region region)
@@ -350,7 +346,10 @@ public class State : PopObject, ISaveable
         {
             region.owner = null;
             regions.Remove(region);
-            pops.RemoveAll(p => p.region == region);
+            foreach (Pop pop in region.pops)
+            {
+                pops.Remove(pop);
+            }
         }
     }
     public void UpdateStability()
@@ -434,9 +433,9 @@ public class State : PopObject, ISaveable
         float interiorArmyPower = GetManpower(includeRealm) / (float)GetRegions(includeRealm).Count;
         return (long)interiorArmyPower;
     }
-    public List<Region> GetRegions(bool includeRealm)
+    public HashSet<Region> GetRegions(bool includeRealm)
     {
-        List<Region> collectedRegions = [.. regions];
+        HashSet<Region> collectedRegions = [.. regions];
         if (realmId == null || !includeRealm)
         {
             return collectedRegions;
