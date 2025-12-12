@@ -45,7 +45,6 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
     //[IgnoreMember] public List<Pop> pops { get; set; } = new List<Pop>();
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
-    [IgnoreMember] public List<Culture> cultures { get; set; } = new List<Culture>();
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
     //[IgnoreMember] public List<State> states { get; set; } = new List<State>();
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
@@ -54,7 +53,6 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZonesIds { get; set; } = new Dictionary<ulong, TradeZone>();
     [IgnoreMember] public List<Character> characters { get; set; } = new List<Character>();
     [IgnoreMember] public Dictionary<ulong, Character> charactersIds { get; set; } = new Dictionary<ulong, Character>();
-    [IgnoreMember] public List<Alliance> alliances { get; set; } = new List<Alliance>();
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
     [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
@@ -78,24 +76,30 @@ public class SimManager
     // Constants
     [IgnoreMember] public const int tilesPerRegion = 4; 
     [IgnoreMember] public const int regionGlobalWidth = 16;
-    [IgnoreMember] public Dictionary<string, double> stepPerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, double> stepPerformanceInfo = new(){
+        {"Pops", 0},
+        {"Regions", 0},
+        {"States", 0},
+        {"Misc", 0}
+    };
+        
     [IgnoreMember] public Dictionary<string, double> popsPerformanceInfo = [];
     [IgnoreMember] public Dictionary<string, double> regionPerformanceInfo = [];
+    [IgnoreMember] public Vector2 terrainMapScale;
     public Vector2I GlobalToRegionPos(Vector2 pos)
     {
-        return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth)) / tilesPerRegion;
+        return (Vector2I)(pos / (terrainMapScale * regionGlobalWidth)) / tilesPerRegion;
     }
 
     public Vector2 RegionToGlobalPos(Vector2 regionPos)
     {
-        return tilesPerRegion * (regionPos * (terrainMap.Scale * regionGlobalWidth));
+        return tilesPerRegion * (regionPos * (terrainMapScale * regionGlobalWidth));
     }
     public void SaveSimToFile(string path)
     {
         regionIds.Values.ToList().ForEach(r => r.PrepareForSave());
         statesIds.Values.ToList().ForEach(r => r.PrepareForSave());
-        tradeZones.ForEach(r => r.PrepareForSave());
-        cultures.ForEach(r => r.PreparePopObjectForSave());
+        cultureIds.Values.ToList().ForEach(r => r.PreparePopObjectForSave());
         tick = timeManager.ticks;
 
         var resolver = CompositeResolver.Create(
@@ -158,7 +162,6 @@ public class SimManager
         AssignSimManager();
         timeManager.ticks = tick;
         regions = [.. regionIds.Values];
-        cultures = [.. cultureIds.Values];
         wars = [.. warIds.Values];
         tradeZones = [.. tradeZonesIds.Values];
         characters = [.. charactersIds.Values];
@@ -195,8 +198,7 @@ public class SimManager
         //pops.ForEach(r => r.LoadFromSave());
         //wars.ForEach(r => r.LoadFromSave());
         statesIds.Values.ToList().ForEach(r => r.LoadFromSave());
-        tradeZones.ForEach(r => r.LoadFromSave());
-        cultures.ForEach(r => r.LoadPopObjectFromSave());   
+        cultureIds.Values.ToList().ForEach(r => r.LoadPopObjectFromSave());   
     }
     public void InitTerrainTiles()
     {
@@ -302,6 +304,7 @@ public class SimManager
     }
     void AssignSimManager()
     {
+        terrainMapScale = terrainMap.Scale;
         HistoricalEvent.timeManager = timeManager;
         StateDiplomacyManager.objectManager = objectManager;
         StateVassalManager.objectManager = objectManager;
@@ -583,6 +586,10 @@ public class SimManager
                 state.UpdateStability();
                 if (state.vassalManager.sovereignty != Sovereignty.INDEPENDENT)
                 {
+                    if (state.vassalManager.GetLiege() == null)
+                    {
+                        GD.Print(state.vassalManager.liegeId);
+                    }
                     state.timeAsVassal += TimeManager.ticksPerMonth;
                     state.UpdateLoyalty();
                     state.diplomacy.JoinLiegeWars();
@@ -613,12 +620,40 @@ public class SimManager
     }
     public void UpdateCultures()
     {
-    }
-    public void UpdateWars()
-    {
-        foreach (War war in wars)
+        foreach (var pair in cultureIds)
         {
+            Culture culture = pair.Value;
 
+            if (culture.dead)
+            {
+                objectManager.DeleteCulture(culture);
+                continue;
+            }
+
+            if (culture.pops.Count < 1)
+            {
+                culture.Die();
+                continue;
+            }
+        }       
+    }
+    public void UpdateAlliances()
+    {
+        foreach (var pair in allianceIds)
+        {
+            Alliance alliance = pair.Value;
+
+            if (alliance.dead)
+            {
+                objectManager.DeleteAlliance(alliance);
+                continue;
+            }
+
+            if (alliance.leadStateId == null || alliance.memberStateIds.Count < 2)
+            {
+                alliance.Die();
+                continue;
+            }
         }
     }
     public void UpdateCharacters()
@@ -680,7 +715,7 @@ public class SimManager
 
             UpdateCharacters();
             UpdateCultures();
-            UpdateWars();
+            UpdateAlliances();
             stepPerformanceInfo["Misc"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
           

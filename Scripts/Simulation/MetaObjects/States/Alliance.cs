@@ -29,6 +29,15 @@ public class Alliance : NamedObject
             newMember.realmId = id;
         }
     }
+    public override void Die()
+    {
+        dead = true;
+        foreach (ulong memberId in memberStateIds.ToArray())
+        {
+            RemoveMember(memberId);
+        }
+        leadStateId = null;
+    }
     public void SetLeader(ulong? leaderId)
     {
         if (memberStateIds.Contains((ulong)leaderId))

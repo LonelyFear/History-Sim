@@ -23,10 +23,10 @@ public partial class TerrainMap : Node2D
             if (isBiomeMap)
             {
                 isBiomeMap = false;
-                SetMapImageTexture(world.GetTerrainImage(true));
+                SetMapImageTexture(world.GetTerrainImage(TerrainMapMode.HEIGHTMAP_REALISTIC));
             } else {
                 isBiomeMap = true;
-                SetMapImageTexture(world.GetTerrainImage(false));
+                SetMapImageTexture(world.GetTerrainImage(TerrainMapMode.HEIGHTMAP));
             }
         }
     }

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class BorderRenderer : Node2D
 {
@@ -70,18 +71,25 @@ public partial class BorderRenderer : Node2D
                             borderSegments.Add((int)direction);
                         }
 						break;
+                    case MapModes.POLITIY:
+						if ((region.owner == null && border.pops.Count < 1) || region.owner != null && (border.owner == null || border.owner != region.owner))
+                        {
+							borderSegments.Add(x);
+							borderSegments.Add(y);							
+                            borderSegments.Add((int)direction);
+                        }
+						break;
                 }
             }
         }
-		BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,0,0,1));
+		//BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,0,0,1));
     }
 	void BuildBorderMesh(MultiMesh multiMesh, List<int> borderSegments, Color color)
     {
         int segmentCount = borderSegments.Count / 3;
 		multiMesh.InstanceCount = segmentCount;
-		for (int i = 0; i < segmentCount; i++)
+		Parallel.For(0, segmentCount, (i) =>
         {
-			//GD.Print("Segment!");
             int idx = i * 3;
 			int xPos = borderSegments[idx];
 			int yPos = borderSegments[idx + 1];
@@ -109,9 +117,14 @@ public partial class BorderRenderer : Node2D
 					offset = new Vector2(0, 0.5f);
 					break;
             }
-			Transform2D borderTransform = new Transform2D(rotationRad, simManager.RegionToGlobalPos(new Vector2(xPos + offset.X, yPos + offset.Y)));
-			multiMesh.SetInstanceTransform2D(i, borderTransform);
-			multiMesh.SetInstanceColor(i, color);
+			Transform2D borderTransform = new(rotationRad, simManager.RegionToGlobalPos(new Vector2(xPos + offset.X, yPos + offset.Y)));
+			multiMesh.CallDeferred("set_instance_transform_2d", [i, borderTransform]);
+			multiMesh.CallDeferred("set_instance_color", [i, color]);            
+        });
+		for (int i = 0; i < segmentCount; i++)
+        {
+			//GD.Print("Segment!");
+
         }
     }
 

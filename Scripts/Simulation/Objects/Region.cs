@@ -228,7 +228,7 @@ public class Region : PopObject, ISaveable
         {
             lock (this)
             {
-                if (region == null || region.GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
+                if (region == null || region.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
                 {
                     return;
                 }                 
@@ -338,11 +338,11 @@ public class Region : PopObject, ISaveable
         }
 
         isCoT = lowerLinks && selectedLink == null;
-        if (isCoT && (tradeZone == null || tradeZone.CoT != this))
+        if (isCoT && (tradeZone == null || tradeZone.CoTid != id))
         {
             tradeZone = objectManager.CreateTradeZone(this);
         }
-        if (!isCoT && tradeZone != null && tradeZone.CoT == this)
+        if (!isCoT && tradeZone != null && tradeZone.CoTid == id)
         {
             objectManager.DeleteTradeZone(tradeZone);
         }

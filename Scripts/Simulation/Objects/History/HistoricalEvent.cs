@@ -32,6 +32,7 @@ public partial class HistoricalEvent
                 break;
             case EventType.DEATH:
                 objText.Add(NamedObject.GetNamedObject<NamedObject>(objIds[0]).name);
+                objText.Add(timeManager.GetYear(NamedObject.GetNamedObject<NamedObject>(objIds[0]).GetAge()).ToString());
                 break;
         }
     }

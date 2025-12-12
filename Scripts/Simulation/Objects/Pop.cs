@@ -129,6 +129,13 @@ public class Pop
     public void SocialClassTransitions()
     {
         // TODO: Social Class Transitions
+        switch (profession)
+        {
+            case SocialClass.ARISTOCRAT:
+                break;
+            case SocialClass.FARMER:
+                break;
+        }
     }
     public double CalculatePoliticalPower()
     {
@@ -172,45 +179,48 @@ public class Pop
             migrateChance *= 0.1f;
         }
         // If the pop migrates
-        if (rng.NextSingle() <= migrateChance)
+        if (rng.NextSingle() > migrateChance) return;
+
+        Region target = region.PickRandomBorder();
+        bool professionAllows = true;
+
+        switch (profession)
         {
-            Region target = region.PickRandomBorder();
-            bool professionAllows = true;
+            case SocialClass.ARISTOCRAT:
+                if (target.owner != region.owner)
+                {
+                    professionAllows = false;
+                }
+                break;
+        }
 
-            switch (profession)
-            {
-                case SocialClass.ARISTOCRAT:
-                    if (target.owner != region.owner)
-                    {
-                        professionAllows = false;
-                    }
-                    break;
-            }
-            float chanceToMoveOnTile = target.navigability;
-            lock (target)
-            {
-                if (target.population > target.maxPopulation)
-                {
-                    chanceToMoveOnTile *= 0.1f;
-                }
-                if (!target.Migrateable(this))
-                {
-                    chanceToMoveOnTile *= 0;
-                }
-            }
-            if (professionAllows && rng.NextSingle() < chanceToMoveOnTile)
-            {
-                float movedPercentage = 0;
-                lock (region)
-                {
-                    movedPercentage = (region.population - region.maxPopulation) / (float)population;
-                }
-                
-                long movedDependents = (long)(dependents * movedPercentage);
-                long movedWorkforce = (long)(workforce * movedPercentage);
+        if (!professionAllows) return;
+        // If the profession allows migration
 
-                MovePop(target, movedWorkforce, movedDependents);
+        float chanceToMoveOnTile = target.navigability;
+        lock (target)
+        {
+            if (target.population > target.maxPopulation)
+            {
+                chanceToMoveOnTile *= 0.1f;
             }
+            if (!target.Migrateable(this))
+            {
+                chanceToMoveOnTile *= 0;
+            }
+        }
+        if (rng.NextSingle() < chanceToMoveOnTile)
+        {
+            float movedPercentage = 0;
+            lock (region)
+            {
+                movedPercentage = (region.population - region.maxPopulation) / (float)population;
+            }
+            
+            long movedDependents = (long)(dependents * movedPercentage);
+            long movedWorkforce = (long)(workforce * movedPercentage);
+
+            MovePop(target, movedWorkforce, movedDependents);
         }
     }
     public void MovePop(Region destination, long movedWorkforce, long movedDependents)
@@ -275,7 +285,6 @@ public class Pop
         ChangePopulation(workforceChange, dependentChange);
     }
 }
-
 
 public enum SocialClass
 {

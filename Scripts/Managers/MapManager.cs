@@ -224,12 +224,12 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f);
                     if (regionOwner != null)
                     {
-                        color = regionOwner.vassalManager.GetOverlord(true).displayColor;
-                        if (region.occupier != null && includeOccupier)
+                        color = regionOwner.displayColor;
+                        if (region.occupier != null)
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (regionOwner.vassalManager.GetOverlord(true).capital == region)
+                        if (regionOwner.capital == region && regionOwner.vassalManager.sovereignty == Sovereignty.INDEPENDENT)
                         {
                             color = region.owner.capitalColor;
                         }

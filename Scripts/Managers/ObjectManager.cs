@@ -158,9 +158,16 @@ public class ObjectManager
             tickCreated = timeManager.ticks,
         };
 
-        simManager.cultures.Add(culture);
         simManager.cultureIds.Add(culture.id, culture);
         return culture;
+    }
+    public void DeleteCulture(Culture culture)
+    {
+        foreach (Pop pop in culture.pops)
+        {
+            culture.RemovePop(pop, culture);
+        }
+        simManager.cultureIds.Remove(culture.id);
     }
     public Culture GetCulture(ulong? id)
     {
@@ -328,17 +335,15 @@ public class ObjectManager
         alliance.SetLeader(founder.id);
 
         simManager.allianceIds.Add(alliance.id, alliance);
-        simManager.alliances.Add(alliance);
         return alliance;
     }
     public void DeleteAlliance(Alliance alliance)
     {
-        foreach (ulong memberId in alliance.memberStateIds)
+        foreach (ulong memberId in alliance.memberStateIds.ToArray())
         {
             alliance.RemoveMember(memberId);
         }
         simManager.allianceIds.Remove(alliance.id);
-        simManager.alliances.Remove(alliance);
     }
     public Alliance GetAlliance(ulong? id)
     {
@@ -358,10 +363,9 @@ public class ObjectManager
         {
             id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
-            CoT = region,
-            regions = [region],
+            CoTid = region.id,
         };
-
+        zone.regionIds.Add(region.id);
         simManager.tradeZones.Add(zone);
         simManager.tradeZonesIds.Add(zone.id, zone);
         return zone;
@@ -369,8 +373,9 @@ public class ObjectManager
     public void DeleteTradeZone(TradeZone tradeZone )
     {
         if (tradeZone == null) return;
-        foreach (Region region in tradeZone.regions.ToArray())
+        foreach (ulong regionId in tradeZone.regionIds.ToArray())
         {
+            Region region = GetRegion(regionId);
             tradeZone.RemoveRegion(region);
         }
         simManager.tradeZones.Remove(tradeZone);
