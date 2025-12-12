@@ -16,7 +16,7 @@ public class RiverGenerator
     bool[,] rivers;
     void GeneratePoints(WorldGenerator world)
     {
-        Random rng = WorldGenerator.rng;
+        Random rng = world.rng;
 
         for (int i = 0; i < attemptedRivers; i++)
         {

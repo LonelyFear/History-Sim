@@ -6,7 +6,6 @@ public class BiomeGenerator
     public string[,] map;
     public string[,] GenerateBiomes(WorldGenerator world)
     {
-        GD.Print("Something is running");
         map = new string[world.WorldSize.X, world.WorldSize.Y];
         for (int x = 0; x < world.WorldSize.X; x++)
         {

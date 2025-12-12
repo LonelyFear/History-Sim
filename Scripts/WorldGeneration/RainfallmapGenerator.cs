@@ -11,7 +11,7 @@ public class RainfallMapGenerator
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-        noise.SetSeed(WorldGenerator.rng.Next(-99999, 99999));
+        noise.SetSeed(world.rng.Next());
         float minValue = float.MaxValue;
         float maxValue = float.MinValue;
         for (int x = 0; x < world.WorldSize.X; x++)

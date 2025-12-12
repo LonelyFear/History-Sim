@@ -25,9 +25,8 @@ public class HeightmapGenerator
     float seaLevel;
 
     Mutex m = new Mutex();
-    
+    WorldGenerator world;
     Dictionary<Vector2I, VoronoiRegion> points;
-    static Random rng = new Random();
     Curve riftValleyCurve = GD.Load<Curve>("res://Curves/Landforms/RiftValley.tres");
     Curve islandArcCurve = GD.Load<Curve>("res://Curves/Landforms/IslandArc.tres");
     Curve volcanicRangeCurve = GD.Load<Curve>("res://Curves/Landforms/VolcanicRange.tres");
@@ -43,9 +42,9 @@ public class HeightmapGenerator
 
 
 
-    public float[,] GenerateHeightmap(WorldGenerator world)
+    public float[,] GenerateHeightmap(WorldGenerator worldAssigned)
     {
-        rng = new Random(world.Seed);
+        world = worldAssigned;
         seaLevel = world.SeaLevel - shelfDepth;
         worldSize = world.WorldSize;
         worldMult = world.WorldMult;
@@ -92,32 +91,18 @@ public class HeightmapGenerator
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.Stage++;
-        /*
-        float aboveSeaLevelTiles = 0;
-        for (int x = 0; x < worldSize.X; x++)
-        {
-            for (int y = 0; y < worldSize.Y; y++)
-            {
-                if (heightmap[x, y] > world.SeaLevel) {
-                    avgElevationAboveSea += heightmap[x, y];
-                    aboveSeaLevelTiles++;
-                }
-            }
-        }
-        avgElevationAboveSea /= aboveSeaLevelTiles;
-        GD.Print("Avg Elevation Above Sea Level: " + world.GetUnitElevation(avgElevationAboveSea).ToString("#,###0 meters"));
-        */
+        world.tiles = tiles;
         return heightmap;
     }
 
     public void TectonicEffects()
     {
-        FastNoiseLite widthNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        FastNoiseLite widthNoise = new FastNoiseLite(world.rng.Next(-99999, 99999));
         widthNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         widthNoise.SetFractalOctaves(8);
         widthNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         widthNoise.SetFrequency(0.05f);
-        FastNoiseLite heightNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        FastNoiseLite heightNoise = new FastNoiseLite(world.rng.Next(-99999, 99999));
         heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -220,9 +205,9 @@ public class HeightmapGenerator
                 int otherTiles = 0;
                 int density = tile.region.plate.density;
 
-                for (int dx = -3; dx < 4; dx++)
+                for (int dx = -10; dx <= 10; dx++)
                 {
-                    for (int dy = -3; dy < 4; dy++)
+                    for (int dy = -10; dy <= 10; dy++)
                     {
                         Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
                         TerrainTile next = tiles[testPos.X, testPos.Y];
@@ -232,11 +217,11 @@ public class HeightmapGenerator
                             Vector2 relativeVel = tile.region.plate.dir - next.region.plate.dir;
                             if (relativeVel.Length() * relativeVel.Normalized().Dot(testPos - new Vector2I(x, y)) < 0)
                             {
-                                tile.pressure += 0.5f * relativeVel.Length();
+                                tile.pressure += 1f * relativeVel.Length();
                             }
                             else
                             {
-                                tile.pressure += -0.5f * relativeVel.Length();
+                                tile.pressure += -1f * relativeVel.Length();
                             }
                             tile.collisionContinental = next.region.continental;
                             
@@ -263,13 +248,13 @@ public class HeightmapGenerator
         int attempts = 99999;
         while (platesToGenerate > 0)
         {
-            VoronoiRegion region = voronoiRegions.PickRandom(rng);
+            VoronoiRegion region = voronoiRegions.PickRandom(world.rng);
             if (region.continental && region.plate == null)
             {
                 Plate plate = new Plate()
                 {
-                    dir = new Vector2(Mathf.Lerp(-2, 2, rng.NextSingle()), Mathf.Lerp(-2, 2, rng.NextSingle())),
-                    density = rng.Next(0, 100)
+                    dir = new Vector2(Mathf.Lerp(-2, 2, world.rng.NextSingle()), Mathf.Lerp(-2, 2, world.rng.NextSingle())),
+                    density = world.rng.Next(0, 100)
                 };
                 region.plate = plate;
                 plates.Add(plate);
@@ -288,7 +273,7 @@ public class HeightmapGenerator
                 {
                     continue;
                 }
-                VoronoiRegion border = region.borderingRegions.PickRandom(rng);
+                VoronoiRegion border = region.borderingRegions.PickRandom(world.rng);
                 if (border.plate == null)
                 {
                     border.plate = region.plate;
@@ -340,13 +325,11 @@ public class HeightmapGenerator
                     foreach (var entry in tile.edgeDistancesSquared)
                     {
                         TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                        if (entry.Value < shortestDistSquared && nextTile.fault)
+                        if (entry.Value < Mathf.Pow(30,2) && nextTile.fault)
                         {
-                            boundary = nextTile;
-                            shortestDistSquared = entry.Value;
+                            tile.nearbyBoundaries.Add(boundary);
                         }
                     }
-                    tile.nearestBoundary = boundary;
                     tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
                 }
             }
@@ -364,7 +347,7 @@ public class HeightmapGenerator
                 {
                     continue;
                 }
-                VoronoiRegion border = region.borderingRegions[rng.Next(0, region.borderingRegions.Count)];
+                VoronoiRegion border = region.borderingRegions[world.rng.Next(0, region.borderingRegions.Count)];
                 if (continentalRegions.Count < Mathf.RoundToInt(voronoiRegions.Count * landCoverage))
                 {
                     SetRegionContinental(true, border);
@@ -375,12 +358,12 @@ public class HeightmapGenerator
 
     public void AdjustHeightMap()
     {
-        FastNoiseLite heightNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        FastNoiseLite heightNoise = new FastNoiseLite(world.rng.Next(-99999, 99999));
         heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
 
-        FastNoiseLite erosion = new FastNoiseLite(rng.Next(-99999, 99999));
+        FastNoiseLite erosion = new FastNoiseLite(world.rng.Next(-99999, 99999));
         erosion.SetFractalType(FastNoiseLite.FractalType.Ridged);
         erosion.SetFractalOctaves(4);
         erosion.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -452,7 +435,7 @@ public class HeightmapGenerator
             for (int j = 0; j < gridSizeY; j++)
             {
                 VoronoiRegion region = new VoronoiRegion();
-                region.seed = new Vector2I(i * ppcx + rng.Next(0, ppcx), j * ppcy + rng.Next(0, ppcy));
+                region.seed = new Vector2I(i * ppcx + world.rng.Next(0, ppcx), j * ppcy + world.rng.Next(0, ppcy));
                 point.Add(new Vector2I(i, j), region);
                 voronoiRegions.Add(region);
             }
@@ -466,7 +449,7 @@ public class HeightmapGenerator
         while (addedLand < landCount && attempts > 0)
         {
             attempts--;
-            VoronoiRegion region = voronoiRegions[rng.Next(0, voronoiRegions.Count)];
+            VoronoiRegion region = voronoiRegions[world.rng.Next(0, voronoiRegions.Count)];
             if (!region.continental)
             {
                 addedLand += 1;
@@ -475,12 +458,12 @@ public class HeightmapGenerator
         }
 
         // Assigns tiles to their region
-        FastNoiseLite xNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        FastNoiseLite xNoise = new FastNoiseLite(world.rng.Next());
         xNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         xNoise.SetFractalOctaves(8);
         xNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
 
-        FastNoiseLite yNoise = new FastNoiseLite(rng.Next(-99999, 99999));
+        FastNoiseLite yNoise = new FastNoiseLite(world.rng.Next());
         yNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         yNoise.SetFractalOctaves(8);
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -686,7 +669,7 @@ public class HeightmapGenerator
         }
     }
 }
-internal class VoronoiRegion
+public class VoronoiRegion
 {
     public Vector2I seed;
     public bool continental = false;
@@ -698,12 +681,12 @@ internal class VoronoiRegion
     public List<Vector2I> edges = new List<Vector2I>();
     //public Dictionary<VoronoiRegion, Vector2I> edges = Dictionary<VoronoiRegion, Vector2I>();
 }
-internal class TerrainTile
+public class TerrainTile
 {
     public VoronoiRegion region;
     public float coastDist = Mathf.Inf;
     public float boundaryDist = Mathf.Inf;
-    public TerrainTile nearestBoundary = null;
+    public List<TerrainTile> nearbyBoundaries = null;
     public Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
     public float pressure = 0f;
     public bool collisionContinental = false;
@@ -721,7 +704,7 @@ internal class TerrainTile
             region = region,
             coastDist = coastDist,
             boundaryDist = boundaryDist,
-            nearestBoundary = nearestBoundary,
+            nearbyBoundaries = nearbyBoundaries,
             edgeDistancesSquared = edgeDistancesSquared,
             pressure = pressure,
             collisionContinental = collisionContinental,
@@ -734,7 +717,7 @@ internal class TerrainTile
         };
     }
 }
-internal class Plate
+public class Plate
 {
     public List<VoronoiRegion> regions;
     public Vector2 dir;

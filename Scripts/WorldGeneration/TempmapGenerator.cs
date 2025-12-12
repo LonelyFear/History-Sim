@@ -7,7 +7,7 @@ public class TempmapGenerator
     float[,] map;
     public float[,] GenerateTempMap(float scale, WorldGenerator world){
         map = new float[world.WorldSize.X, world.WorldSize.Y];
-        FastNoiseLite noise = new FastNoiseLite(WorldGenerator.rng.Next(-99999, 99999));
+        FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
