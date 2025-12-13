@@ -13,7 +13,7 @@ public partial class StateDiplomacyManager
     // Diplomacy
     [Key(19)] Dictionary<ulong?, Relation> relationIds { get; set; } = [];
     [Key(20)] public Dictionary<ulong, bool> warIds { get; set; } = [];
-    [Key(21)] public List<ulong> enemyIds { get; private set; } = [];
+    [Key(21)] public HashSet<ulong> enemyIds { get; private set; } = [];
     [Key(0)] public ulong stateId;
     [IgnoreMember] State state;
     [IgnoreMember] public Random rng = PopObject.rng;
@@ -50,7 +50,7 @@ public partial class StateDiplomacyManager
         }
 
         // Updates enemy ids
-        List<ulong> newEnemies = [];
+        HashSet<ulong> newEnemies = [];
         foreach (var pair in relationIds)
         {
             ulong? potentialEnemyId = pair.Key;

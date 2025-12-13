@@ -64,7 +64,7 @@ public class Alliance : NamedObject
     public HashSet<Region> GetRegions()
     {
         HashSet<Region> regions = new HashSet<Region>();
-        foreach (ulong stateId in memberStateIds)
+        foreach (ulong stateId in memberStateIds.ToArray())
         {
             State memberState = objectManager.GetState(stateId);
             lock (memberState.regions)

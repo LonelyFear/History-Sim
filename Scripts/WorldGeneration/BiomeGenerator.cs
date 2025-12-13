@@ -31,7 +31,7 @@ public class BiomeGenerator
                         if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
                         {
                             selectedBiome = AssetManager.GetBiome("ice_sheet");
-                            world.HeightMap[x, y] = 1f;
+                            world.HeightMap[x, y] = world.SeaLevel;
                             break;
                         }
                         else

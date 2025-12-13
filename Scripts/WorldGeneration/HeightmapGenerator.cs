@@ -36,9 +36,8 @@ public class HeightmapGenerator
 
     // Public Variables
     public float seaFloorLevel = 0.1f;
-    float landCoverage = 0.9f;
+    float landCoverage = 0.5f;
     float shelfDepth = 0.05f;
-    float avgElevationAboveSea = 0f;
     const float slopeErosionThreshold = 0.1f;
 
 
@@ -50,6 +49,7 @@ public class HeightmapGenerator
         worldMult = world.WorldMult;
         heightmap = new float[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
+        GD.Print(worldSize);
         ulong startTime = Time.GetTicksMsec();
         points = GeneratePoints();
         GD.Print("Point Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
@@ -325,8 +325,9 @@ public class HeightmapGenerator
     }
     public void GenerateContinents()
     {
-        int attempts = 2000;
-        while (continentalRegions.Count < Mathf.RoundToInt(voronoiRegions.Count * landCoverage) && attempts > 0)
+        int attempts = 4000;
+        GD.Print(Mathf.RoundToInt(voronoiRegions.Count * landCoverage));
+        while (continentalRegions.Count != Mathf.RoundToInt(voronoiRegions.Count * landCoverage) && attempts > 0)
         {
             attempts--;
             foreach (VoronoiRegion region in continentalRegions.ToArray())
@@ -342,6 +343,7 @@ public class HeightmapGenerator
                 }
             }
         }
+        GD.Print(continentalRegions.Count);
     }
 
     public void AdjustHeightMap()
@@ -645,15 +647,10 @@ public class HeightmapGenerator
 
     void SetRegionContinental(bool value, VoronoiRegion region) {
 
-        if (value == true)
+        if (value == true && !continentalRegions.Contains(region))
         {
             region.continental = true;
             continentalRegions.Add(region);
-        }
-        else
-        {
-            region.continental = false;
-            continentalRegions.Remove(region);
         }
     }
 }

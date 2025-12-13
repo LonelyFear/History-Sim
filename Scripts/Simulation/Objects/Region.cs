@@ -199,24 +199,19 @@ public class Region : PopObject, ISaveable
         Region region = PickRandomBorder();
         bool checks = occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
         //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
+        if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
-        if (checks && owner.regions.Count() < owner.GetMaxRegionsCount())
+        long attackerPower;
+        lock (owner)
         {
-            long attackerPower;
-            lock (GetController())
+            attackerPower = owner.GetArmyPower(false);
+        }
+        bool attackerVictory = true;//Battle.CalcBattle(region, attackerPower, Pop.ToNativePopulation(200000));
+        if (attackerVictory)
+        {
+            lock (owner)
             {
-                attackerPower = GetController().GetArmyPower(false);
-            }
-            //long defendingCivilians = region.workforce - region.professions[SocialClass.ARISTOCRAT];
-            //double distanceFactor = 1 - Mathf.Min(pos.DistanceTo(owner.capital.pos)/10f, 0.9);
-            bool attackerVictory = Battle.CalcBattle(region, attackerPower, Pop.ToNativePopulation(200000));
-
-            if (attackerVictory)
-            {
-                lock (owner)
-                {
-                    owner.AddRegion(region);
-                }
+                owner.AddRegion(region);
             }
         }
     }
@@ -261,14 +256,7 @@ public class Region : PopObject, ISaveable
             {
                 region.occupier = GetController();
             }
-        }
-        if (region.occupier == region.owner)
-        {
-            lock (region)
-            {
-                region.occupier = null;
-            }
-        }            
+        }         
     }
     
     public double GetStability()

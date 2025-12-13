@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Godot;
 using MessagePack;
@@ -228,6 +229,10 @@ public class SimManager
                         break;
                     case "water":
                         newTile.terrainType = TerrainType.WATER;
+                        if (newTile.biome.id != "river")
+                        {
+                            newTile.renderOverlay = false;
+                        }
                         break;
                     default:
                         newTile.terrainType = TerrainType.ICE;
@@ -465,6 +470,11 @@ public class SimManager
                     region.DistributeWealth();
                     region.settlement.UpdateSlots();
                     region.settlement.UpdateEmployment();
+
+                    if (region.owner != null)
+                    {
+                        region.StateBordering();
+                    }
                 }
                 region.hasBaseTradeWeight = false;
                 region.hasTradeWeight = false;
@@ -477,6 +487,7 @@ public class SimManager
 
             foreach (Region region in habitableRegions)
             {
+                stopwatch.Restart();
                 if (region.pops.Count <= 0)
                 {
                     region.linkUpdateCountdown = 0;
@@ -502,7 +513,6 @@ public class SimManager
 
                 if (region.owner != null)
                 {
-                    region.StateBordering();
                     if (region.frontier && region.occupier == null)
                     {
                         region.NeutralConquest();

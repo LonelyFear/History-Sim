@@ -28,7 +28,7 @@ public partial class MapManager : Node2D
     public OptionButton mapModeUI;
     public CheckBox showRegionsCheckbox;
 
-    int regionResolution = 1;
+    int regionResolution = 4;
     public static ObjectManager objectManager;
 
     // NOTE: Painted regions are updated in TimeManager.cs
@@ -58,7 +58,7 @@ public partial class MapManager : Node2D
         {
             if (region != null)
             {
-                SetRegionColor(region.pos.X, region.pos.Y, GetRegionColor(region));
+                UpdateRegionColor(region.pos.X, region.pos.Y);
             }
         });
     }
@@ -88,7 +88,7 @@ public partial class MapManager : Node2D
         if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible)
         {
             hoveredRegion = simManager.objectManager.GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
-            SetRegionColor(hoveredRegion.pos.X, hoveredRegion.pos.Y, GetRegionColor(hoveredRegion));
+            UpdateRegionColor(hoveredRegion.pos.X, hoveredRegion.pos.Y);
             hoveredState = hoveredRegion.owner;
         }
         else
@@ -99,7 +99,7 @@ public partial class MapManager : Node2D
 
         if (lastHovered != null)
         {
-            SetRegionColor(lastHovered.pos.X, lastHovered.pos.Y, GetRegionColor(lastHovered));
+            UpdateRegionColor(lastHovered.pos.X, lastHovered.pos.Y);
         }      
     }
 
@@ -212,11 +212,16 @@ public partial class MapManager : Node2D
         UpdateRegionColors(simManager.regionIds.Values);
     }
     
-    public Color GetRegionColor(Region region, bool includeOccupier = false)
+    public Color GetRegionColor(Region region, bool includeOverlay = true)
     {
         Color color = new Color(0, 0, 0, 0);
         State regionOwner = region.owner;
-        switch (mapMode)
+        MapModes drawnMapMode = mapMode;
+        if (!includeOverlay)
+        {
+            drawnMapMode = MapModes.NONE;
+        }
+        switch (drawnMapMode)
         {
             case MapModes.REALM:
                 if (region.pops.Count > 0)
@@ -401,19 +406,27 @@ public partial class MapManager : Node2D
                 {
                     color = new Color(0, 0, 0, 1);
                 }
-
+                break;
+            case MapModes.NONE:
+                if (selectedMetaObj != null)
+                {
+                    color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
+                }
                 break;
         }
         if (hoveredRegion == region){
-            color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
+            color = Utility.MultiColourLerp([new Color(0, 0, 0), color], 0.7f);
         }
         return color;
     }
-    public void SetRegionColor(int x, int y, Color color)
+    public void UpdateRegionColor(int x, int y)
     {
-        //int stripeThickness = 1;
-        //int stripeDistance = 2;
+
         Region r = objectManager.GetRegion(x, y);
+
+        Color noneColor = GetRegionColor(r, false);
+        Color color = GetRegionColor(r);
+
         for (int rx = 0; rx < regionResolution; rx++)
         {
             for (int ry = 0; ry < regionResolution; ry++)
@@ -422,6 +435,11 @@ public partial class MapManager : Node2D
                 int posX = (x * regionResolution) + rx;
                 int posY = (y * regionResolution) + ry;
 
+                // Carved Borders
+                if (!r.tiles[rx, ry].renderOverlay)
+                {
+                    finalColor = noneColor;
+                }
                 if (regionImage.GetPixel(posX, posY) != finalColor)
                 {
                     regionImage.SetPixel(posX, posY, finalColor);
@@ -448,5 +466,6 @@ public enum MapModes {
     TECH,
     WEALTH,
     TRADE_WEIGHT,
-    POPS
+    POPS,
+    NONE
 }
