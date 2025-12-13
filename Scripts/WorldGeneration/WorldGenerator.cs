@@ -198,11 +198,12 @@ public class WorldGenerator
                 Color highHillColor = Color.Color8(95, 42, 22);
                 Color shallowWatersColor = Color.Color8(71, 149, 197);
                 Color deepWatersColor = Color.Color8(27, 59, 111);
+                float hf = (HeightMap[x, y] - SeaLevel) / (1f - SeaLevel);
+                bool isWater = AssetManager.GetBiome(BiomeMap[x, y]).type == "water";
+                bool isIce = AssetManager.GetBiome(BiomeMap[x, y]).type == "water";
                 switch (mapMode)
                 {
                     case TerrainMapMode.HEIGHTMAP:
-                        
-                        float hf = (HeightMap[x, y] - SeaLevel) / (1f - SeaLevel);
                         image.SetPixel(x, y, Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf));
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {
@@ -226,24 +227,49 @@ public class WorldGenerator
                         }                        
                         break;     
                     case TerrainMapMode.REALISTIC:
-                        if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
+                        float sampleElevation = HeightMap[Mathf.PosMod(x + 1, WorldSize.X), Mathf.PosMod(y + 1, WorldSize.Y)];
+                        float slope = sampleElevation - HeightMap[x, y];
+
+                        Color finalColor = Color.FromHtml(AssetManager.GetBiome(BiomeMap[x, y]).color);
+                        if (isWater)
                         {
-                            image.SetPixel(x, y, Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f)));
-                        }
-                        //terrainImage.SetPixel(x, y, oceanColor);
-                        else
+                            finalColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
+                        }      
+                                
+                        if (slope > 0)
                         {
-                            Color biomeColor = Color.FromHtml(AssetManager.GetBiome(BiomeMap[x, y]).color);
-                            image.SetPixel(x, y, biomeColor * HeightMap[x, y]);
-                        }                        
+                            // In light
+                            image.SetPixel(x, y, Utility.MultiColourLerp([finalColor, new Color(1, 1, 1)], Math.Abs(slope)));
+                        } else
+                        {
+                            if (isWater)
+                            {
+                                // In Shadow
+                                image.SetPixel(x, y, Utility.MultiColourLerp([finalColor, new Color(0, 0, 0)], Math.Abs(slope) * 1.5f));                                
+                            }
+                            else
+                            {
+                                image.SetPixel(x, y, Utility.MultiColourLerp([finalColor, new Color(0, 0, 0)], Math.Abs(slope) * 5f));  
+                            }
+                        }  
                         break;    
                     case TerrainMapMode.DEBUG_PLATES:
-                        Color color = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0), new Color(1,0,0)], Mathf.InverseLerp(-1, 1, tiles[x, y].pressure * 2));
-                        image.SetPixel(x, y, color);
+                        Color pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0), new Color(1,0,0)], Mathf.InverseLerp(-1, 1, tiles[x, y].pressure));
+                        Color baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {
-                            image.SetPixel(x, y, Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f)));
+                            baseColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
                         }
+                        image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
+                        break;     
+                    case TerrainMapMode.DEBUG_COAST:
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0)], Mathf.Clamp(tiles[x, y].coastDist / 10f, 0, 1));
+                        baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
+                        if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
+                        {
+                            baseColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
+                        }
+                        image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
                         break;           
                 }
             }
@@ -256,5 +282,6 @@ public enum TerrainMapMode{
     HEIGHTMAP,
     HEIGHTMAP_REALISTIC,
     REALISTIC,
-    DEBUG_PLATES
+    DEBUG_PLATES,
+    DEBUG_COAST
 }

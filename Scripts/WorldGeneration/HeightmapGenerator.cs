@@ -36,10 +36,10 @@ public class HeightmapGenerator
 
     // Public Variables
     public float seaFloorLevel = 0.1f;
-    float landCoverage = 0.5f;
+    float landCoverage = 0.9f;
     float shelfDepth = 0.05f;
     float avgElevationAboveSea = 0f;
-
+    const float slopeErosionThreshold = 0.1f;
 
 
     public float[,] GenerateHeightmap(WorldGenerator worldAssigned)
@@ -67,7 +67,7 @@ public class HeightmapGenerator
         world.Stage++;
         try
         {
-            GeneratePlates(10);
+            GeneratePlates(15);
         }
         catch (Exception e)
         {
@@ -81,18 +81,50 @@ public class HeightmapGenerator
         AdjustHeightMap();
         GD.Print("Heightmap Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
-        try
+
+        TectonicEffects();
+
+        world.Stage++;
+        for (int i = 0; i <= 10; i++)
         {
-            TectonicEffects();
-        }
-        catch (Exception e)
-        {
-            GD.PushError(e);
+            ThermalErosion();
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.Stage++;
         world.tiles = tiles;
         return heightmap;
+    }
+
+    public void ThermalErosion()
+    {
+        int divisions = 1;
+        Parallel.For(1, divisions + 1, (i) =>
+        {
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            {
+                for (int y = 0; y < worldSize.Y; y++)
+                {
+                    TerrainTile tile = tiles[x, y];
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        for (int dy = -1; dy <= 1; dy++)
+                        {
+                            Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                            TerrainTile testTile = tiles[testPos.X, testPos.Y];
+                            float slope = heightmap[testPos.X, testPos.Y] - heightmap[x,y];
+
+                            if (Mathf.Abs(slope) > slopeErosionThreshold)
+                            {
+                                float elevation = heightmap[x,y];
+                                float testElevation = heightmap[testPos.X, testPos.Y];
+
+                                heightmap[x,y] = Mathf.Lerp(elevation, testElevation, 0.5f);
+                            }
+                        }
+                    }
+                }
+            }
+        });          
     }
 
     public void TectonicEffects()
@@ -101,13 +133,13 @@ public class HeightmapGenerator
         widthNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         widthNoise.SetFractalOctaves(8);
         widthNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        widthNoise.SetFrequency(0.05f);
+        widthNoise.SetFrequency(0.1f);
         FastNoiseLite heightNoise = new FastNoiseLite(world.rng.Next(-99999, 99999));
         heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        heightNoise.SetFrequency(0.05f);
-        int divisions = 4;
+        heightNoise.SetFrequency(0.1f);
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
@@ -125,65 +157,18 @@ public class HeightmapGenerator
                     {
                         continue;
                     }
-                    float widthNoiseValue = widthNoise.GetNoise(x, y);
+                    float widthNoiseValue =  Mathf.InverseLerp(-1, 1, widthNoise.GetNoise(x, y));
                     if (boundary.region.continental)
                     {
-                        if (boundary.collisionContinental)
+                        // Mountain Ranges
+                        if (boundary.pressure > 0)
                         {
-                            // Mountain Ranges
-                            if (boundary.pressure > 0)
+                            // Normal Ranges
+                            minWidth = 15f * Mathf.Lerp(0.2f, 1f, widthNoiseValue);
+                            boundaryFactor = 1f - (tile.boundaryDist / minWidth);
+                            if (tile.boundaryDist <= minWidth)
                             {
-                                // Normal Ranges
-                                minWidth = 8f + (widthNoiseValue * 3f);
-                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                                if (tile.boundaryDist <= minWidth)
-                                {
-                                    heightmap[x, y] += 0.35f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
-                                }
-                            }
-                            else
-                            {
-                                // Rift Valleys
-                                minWidth = 8f + (widthNoiseValue* 3f);
-                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                                if (tile.boundaryDist <= minWidth)
-                                {
-                                    heightmap[x, y] -= 0.3f * (1f - riftValleyCurve.Sample(boundaryFactor)) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Inland Volcanoes
-                            if (boundary.pressure > 0)
-                            {
-                                minWidth = 12f + (widthNoiseValue * 3f);
-                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                                if (tile.boundaryDist <= minWidth)
-                                {
-                                    heightmap[x, y] += 0.4f * volcanicRangeCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.4f, 1f, noiseValue);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (boundary.collisionContinental)
-                        {
-                            // TODO
-                        }
-                        else
-                        {
-                            // Island Arcs
-                            if (boundary.pressure > 0)
-                            {
-                                minWidth = 8f + (widthNoiseValue * 3f);
-                                boundaryFactor = 1f - (tile.boundaryDist / minWidth);
-                                if (tile.boundaryDist <= minWidth && tile.nearestBoundary.sank)
-                                {
-                                    heightmap[x, y] += 0.6f * islandArcCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
-                                }
-
+                                heightmap[x, y] += 0.3f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
                             }
                         }
                     }
@@ -205,9 +190,9 @@ public class HeightmapGenerator
                 int otherTiles = 0;
                 int density = tile.region.plate.density;
 
-                for (int dx = -10; dx <= 10; dx++)
+                for (int dx = -2; dx <= 2; dx++)
                 {
-                    for (int dy = -10; dy <= 10; dy++)
+                    for (int dy = -2; dy <= 2; dy++)
                     {
                         Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
                         TerrainTile next = tiles[testPos.X, testPos.Y];
@@ -215,13 +200,14 @@ public class HeightmapGenerator
                         {
                             otherTiles++;
                             Vector2 relativeVel = tile.region.plate.dir - next.region.plate.dir;
+                            float relativeSpeed = relativeVel.Length();
                             if (relativeVel.Length() * relativeVel.Normalized().Dot(testPos - new Vector2I(x, y)) < 0)
                             {
-                                tile.pressure += 1f * relativeVel.Length();
+                                tile.pressure += 1f * relativeSpeed;
                             }
                             else
                             {
-                                tile.pressure += -1f * relativeVel.Length();
+                                tile.pressure += -1f * relativeSpeed;
                             }
                             tile.collisionContinental = next.region.continental;
                             
@@ -253,7 +239,7 @@ public class HeightmapGenerator
             {
                 Plate plate = new Plate()
                 {
-                    dir = new Vector2(Mathf.Lerp(-2, 2, world.rng.NextSingle()), Mathf.Lerp(-2, 2, world.rng.NextSingle())),
+                    dir = new Vector2(Mathf.Lerp(-1, 1, world.rng.NextSingle()), Mathf.Lerp(-1, 1, world.rng.NextSingle())),
                     density = world.rng.Next(0, 100)
                 };
                 region.plate = plate;

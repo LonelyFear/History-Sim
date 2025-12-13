@@ -82,10 +82,11 @@ public partial class LoadingScreen : Control
             0 => "Creating Voronoi Regions...",
             1 => "Calculating Distances...",
             2 => "Colliding Continents...",
-            3 => "Heating Planet...",
-            4 => "Forming Clouds...",
-            5 => "Seeding Forests...",
-            6 => "Carving Rivers...",
+            3 => "Grinding It All Down...",
+            4 => "Heating Planet...",
+            5 => "Forming Clouds...",
+            6 => "Seeding Forests...",
+            7 => "Carving Rivers...",
             _ => "Finishing Up...",
         };
         //splash.Text = "Generating World";
@@ -96,7 +97,7 @@ public partial class LoadingScreen : Control
             textureGenerated = true;
             splash.Text = "Finishing Up...";
             map.Init();
-            map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.HEIGHTMAP));
+            map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
         }
         else if (task == null || task.IsCompleted)
         {
