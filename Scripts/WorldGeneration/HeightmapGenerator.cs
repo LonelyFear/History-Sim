@@ -325,11 +325,13 @@ public class HeightmapGenerator
                     foreach (var entry in tile.edgeDistancesSquared)
                     {
                         TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                        if (entry.Value < Mathf.Pow(30,2) && nextTile.fault)
+                        if (entry.Value < shortestDistSquared && nextTile.fault)
                         {
-                            tile.nearbyBoundaries.Add(boundary);
+                            boundary = nextTile;
+                            shortestDistSquared = entry.Value;
                         }
                     }
+                    tile.nearestBoundary = boundary;
                     tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
                 }
             }
@@ -686,7 +688,7 @@ public class TerrainTile
     public VoronoiRegion region;
     public float coastDist = Mathf.Inf;
     public float boundaryDist = Mathf.Inf;
-    public List<TerrainTile> nearbyBoundaries = null;
+    public TerrainTile nearestBoundary = null;
     public Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
     public float pressure = 0f;
     public bool collisionContinental = false;
@@ -704,7 +706,7 @@ public class TerrainTile
             region = region,
             coastDist = coastDist,
             boundaryDist = boundaryDist,
-            nearbyBoundaries = nearbyBoundaries,
+            nearestBoundary = nearestBoundary,
             edgeDistancesSquared = edgeDistancesSquared,
             pressure = pressure,
             collisionContinental = collisionContinental,
