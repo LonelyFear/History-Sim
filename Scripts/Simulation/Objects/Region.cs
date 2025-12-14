@@ -149,7 +149,7 @@ public class Region : PopObject, ISaveable
             }
             if (rulingPop.profession != SocialClass.ARISTOCRAT)
             {
-                rulingPop = rulingPop.ChangeSocialClass(Pop.ToNativePopulation(50),Pop.ToNativePopulation(75),SocialClass.ARISTOCRAT,1);
+                rulingPop = rulingPop.ChangeSocialClass(Pop.ToNativePopulation(50),Pop.ToNativePopulation(75),SocialClass.ARISTOCRAT);
             }
 
             owner.rulingPop = rulingPop;
@@ -457,7 +457,7 @@ public class Region : PopObject, ISaveable
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;
-        if (arableLand / landCount < -0.2f)
+        if (arableLand / landCount < 0.2f)
         {
             migrateable = false;
         }

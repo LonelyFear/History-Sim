@@ -16,7 +16,7 @@
 	{
 		"id":"manor",
 		"name":"Manor House",
-		"workersPerLevel":200,
+		"workersPerLevel":500,
 		"profession":4,
 		"baseCost":60
 	}

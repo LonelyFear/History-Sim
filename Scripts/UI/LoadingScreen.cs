@@ -79,15 +79,15 @@ public partial class LoadingScreen : Control
         GetNode<TextureProgressBar>("ProgressBar").Value = generator.Stage/7f * 100;
         splash.Text = generator.Stage switch
         {
-            0 => "Creating Voronoi Regions...",
-            1 => "Calculating Distances...",
-            2 => "Colliding Continents...",
-            3 => "Grinding It All Down...",
+            0 => "Forming Continents...",
+            1 => "Measuring Terrain...",
+            2 => "Raising Mountains...",
+            3 => "Eroding Continents...",
             4 => "Heating Planet...",
             5 => "Forming Clouds...",
-            6 => "Seeding Forests...",
+            6 => "Seeding Biomes...",
             7 => "Carving Rivers...",
-            _ => "Finishing Up...",
+            _ => "Settling World...",
         };
         //splash.Text = "Generating World";
 

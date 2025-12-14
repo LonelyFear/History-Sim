@@ -127,7 +127,7 @@ public class WorldGenerator
         {
             return float.NaN;
         }
-        return MinRainfall + Mathf.Pow(value, 1f) * (MaxRainfall - MinRainfall);
+        return MinRainfall + Mathf.Pow(value, 1.2f) * (MaxRainfall - MinRainfall);
     }
     public float GetUnitElevation(float value)
     {

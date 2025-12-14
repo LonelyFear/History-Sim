@@ -96,13 +96,6 @@ public class ObjectManager
             dependents = dependents,
             population = workforce + dependents,
         };
-        //pop.ChangePopulation(workforce, dependents);
-        /*
-        lock (simManager.pops)
-        {
-            simManager.pops.Add(pop);
-        }
-        */
         lock (simManager.popsIds)
         {
             simManager.popsIds.Add(pop.id, pop);
@@ -461,11 +454,14 @@ public class ObjectManager
     }
     ulong GetId()
     {
-        currentId++;
-        if (currentId == ulong.MaxValue)
+        lock (this)
         {
-            currentId = 1;
+            currentId++;
+            if (currentId == ulong.MaxValue)
+            {
+                currentId = 1;
+            }
+            return currentId;            
         }
-        return currentId;
     }
 }

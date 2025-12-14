@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security.Claims;
 using Godot;
@@ -13,7 +14,7 @@ public class Pop
     [IgnoreMember] public long workforceChange { get; set; } = 0;
     [IgnoreMember] public long dependentChange { get; set; } = 0;
 
-    [Key(5)] public float baseBirthRate { get; set; } = 0.3f * 10;
+    [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
     [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.75f;
@@ -80,7 +81,7 @@ public class Pop
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public Pop ChangeSocialClass(long workforceDelta, long dependentsDelta, SocialClass newSocialClass, int landMoved)
+    public Pop ChangeSocialClass(long workforceDelta, long dependentsDelta, SocialClass newSocialClass)
     {
         // Makes sure the profession is actually changing
         // And that we arent just creating an empty pop
@@ -129,11 +130,43 @@ public class Pop
     public void SocialClassTransitions()
     {
         // TODO: Social Class Transitions
+        float percentageOfRegionWorkforce = region.workforce / (float)workforce;
+        long requiredWorkersInField = 0;
+        try
+        {
+           requiredWorkersInField = region.settlement.requiredWorkers[profession];
+        } catch (Exception) {}
+        
         switch (profession)
         {
             case SocialClass.ARISTOCRAT:
+                if (requiredWorkersInField < 0)
+                {
+                    ChangeSocialClass((long)Mathf.Abs(requiredWorkersInField * percentageOfRegionWorkforce), 0, SocialClass.FARMER);
+                }
+                break;
+            case SocialClass.MERCHANT:
+                if (requiredWorkersInField < 0)
+                {
+                    ChangeSocialClass((long)Mathf.Abs(requiredWorkersInField * percentageOfRegionWorkforce), 0, SocialClass.FARMER);
+                }
                 break;
             case SocialClass.FARMER:
+                if (requiredWorkersInField > 0) break;
+
+                // If there are extra farmers
+                foreach (var classPair in region.settlement.requiredWorkers)
+                {
+                    SocialClass socialClass = classPair.Key;
+                    long requiredWorkers = classPair.Value;
+                    if (requiredWorkers < 1)
+                    {
+                        continue;
+                    }
+                    // If there is an opening
+                    long workersTransferred = (long)(Math.Clamp(requiredWorkers, 0, Math.Abs(requiredWorkersInField)) * 0.1);
+                    ChangeSocialClass(workersTransferred, 0, socialClass);
+                }
                 break;
         }
     }

@@ -36,24 +36,23 @@ public class Settlement : NamedObject
         foreach (var pair in buildings.ToArray())
         {
             UpdateBuildingSlot(pair.Key);
-        }        
+        }   
+        if (region.owner != null && region.owner.capital != region)
+        {
+            DestroyBuilding("manor", "downsizing");
+        }  
     }
     public void UpdateEmployment()
     {
         // Updates worker requirements
-        requiredWorkers = [];
+        requiredWorkers = region.professions.ToDictionary(entry => entry.Key, entry => 0L);
+
         foreach (var pair in buildings)
         {
             Building building = AssetManager.GetBuilding(pair.Key);
             BuildingSlot slot = pair.Value;
 
-            if (!requiredWorkers.ContainsKey(building.profession))
-            {
-                requiredWorkers[building.profession] = slot.maxEmployment;
-            } else
-            {
-                requiredWorkers[building.profession] += slot.maxEmployment;
-            }
+            requiredWorkers[building.profession] += slot.maxEmployment;
         }
         // Clones dictionary
         maxJobs = requiredWorkers.ToDictionary(entry => entry.Key, entry => entry.Value);
@@ -67,8 +66,17 @@ public class Settlement : NamedObject
             SocialClass buildingProfession = building.profession;
 
             slot.currentEmployment = Math.Clamp(workers[buildingProfession], 0, slot.maxEmployment);
-            workers[buildingProfession] -= slot.currentEmployment;
-            requiredWorkers[buildingProfession] -= slot.currentEmployment;
+            workers[buildingProfession] -= slot.currentEmployment;     
+        }
+        foreach (var pair in region.professions)
+        {
+            if (!requiredWorkers.TryGetValue(pair.Key, out long value))
+            {
+                requiredWorkers[pair.Key] = -region.professions[pair.Key];
+            } else
+            {
+                requiredWorkers[pair.Key] -= region.professions[pair.Key];
+            }
         }
     }
     public void PlaceBuilding(string buildingId)
@@ -90,8 +98,8 @@ public class Settlement : NamedObject
     }
     public void DestroyBuilding(string buildingId, string reason)
     {
-        if (!buildings.ContainsKey(buildingId)) return;
-        buildings[buildingId].buildingLevel--;
+        if (!buildings.TryGetValue(buildingId, out BuildingSlot value)) return;
+        value.buildingLevel--;
         UpdateBuildingSlot(buildingId);
     }
     public void UpdateBuildingSlot(string buildingId)

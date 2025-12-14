@@ -525,9 +525,9 @@ public class State : PopObject, ISaveable
                 text += $"  Workers: {Pop.FromNativePopulation(localPopulation):#,###0} ";
                 float percentage = localPopulation/(float)workforce;
                 text += $"({percentage:P0})\n";                
-                long workersNeed = Pop.FromNativePopulation(requiredWorkers[socialClass]);
+                long workersNeed = Math.Max(Pop.FromNativePopulation(requiredWorkers[socialClass]), 0);
                 long maxWorkers = Pop.FromNativePopulation(maxJobs[socialClass]);
-                text += $"  Employed: {maxWorkers - Mathf.Max(workersNeed, 0):#,###0}\n";
+                text += $"  Employed: {maxWorkers - Math.Max(workersNeed, 0):#,###0}/{maxWorkers:#,###0}\n";
             }        
         }
         return text;
