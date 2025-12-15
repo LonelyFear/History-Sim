@@ -74,7 +74,7 @@ public class ObjectManager
             biomes = new Biome[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
             linkUpdateCountdown = simManager.rng.Next(0, 13)
         };
-        region.settlement = new Settlement(region);
+        //region.settlement = new Settlement(region);
         simManager.regions.Add(region);
         simManager.regionIds.Add(region.id, region);
         return region;

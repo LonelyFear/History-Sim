@@ -127,6 +127,7 @@ public class Pop
         }
         tech = t;
     }
+    /*
     public void SocialClassTransitions()
     {
         // TODO: Social Class Transitions
@@ -170,6 +171,7 @@ public class Pop
                 break;
         }
     }
+    */
     public double CalculatePoliticalPower()
     {
         double popSizePoliticalPower = FromNativePopulation(workforce) * 0.0005;

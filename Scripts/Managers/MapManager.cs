@@ -440,9 +440,9 @@ public partial class MapManager : Node2D
                 {
                     finalColor = noneColor;
                 }
-                if (regionImage.GetPixel(posX, posY) != finalColor)
+                if (regionImage.GetPixel(posX, posY) != finalColor * 0.9f)
                 {
-                    regionImage.SetPixel(posX, posY, finalColor);
+                    regionImage.SetPixel(posX, posY, finalColor * 0.9f);
                     mapUpdate = true;
                 }                
             }

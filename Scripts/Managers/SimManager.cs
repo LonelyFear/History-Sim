@@ -436,7 +436,6 @@ public class SimManager
             if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
             {
                 pop.TechnologyUpdate();
-                pop.SocialClassTransitions();
                 pop.Migrate();
             }            
         });
@@ -468,14 +467,13 @@ public class SimManager
                 {
                     region.MergePops();
                     region.DistributeWealth();
-                    region.settlement.UpdateSlots();
-                    region.settlement.UpdateEmployment();
 
                     if (region.owner != null)
                     {
                         region.StateBordering();
                     }
                 }
+                region.conquered = false;
                 region.hasBaseTradeWeight = false;
                 region.hasTradeWeight = false;
                 region.tradeIncome = 0f;

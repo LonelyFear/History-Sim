@@ -3,11 +3,13 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
+using System.Text.RegularExpressions;
 [MessagePackObject]
 public class Region : PopObject, ISaveable
 {
     [IgnoreMember] public Tile[,] tiles { get; set; }
     [IgnoreMember] public Biome[,] biomes { get; set; }
+    [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
     [Key(4)] public int tradeWeight { get; set; } = 0;
@@ -45,7 +47,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public Dictionary<Direction, ulong> borderingRegionIds { get; set; } = new Dictionary<Direction, ulong>();
 
     // Settlements
-    [Key(31)] public Settlement settlement = new Settlement();
+    //[Key(31)] public Settlement settlement = new Settlement();
     //[Key(32)] public ulong[] borderingRegionsIDs { get; set; }
 
     [Key(35)] public bool border { get; set; }
@@ -76,7 +78,7 @@ public class Region : PopObject, ISaveable
         owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
         occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
         tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
-        settlement.Init();
+        //settlement.Init();
     }
     public void CalcAverages()
     {
@@ -142,23 +144,12 @@ public class Region : PopObject, ISaveable
             Pop rulingPop = null;
             foreach (Pop pop in pops)
             {
-                if (pop.profession == SocialClass.ARISTOCRAT || Pop.FromNativePopulation(pop.population) > 300)
-                {
-                    rulingPop = pop;
-                }
+                rulingPop = pop;
+                break;
             }
-            if (rulingPop.profession != SocialClass.ARISTOCRAT)
-            {
-                rulingPop = rulingPop.ChangeSocialClass(Pop.ToNativePopulation(50),Pop.ToNativePopulation(75),SocialClass.ARISTOCRAT);
-            }
-
             owner.rulingPop = rulingPop;
             owner.tech = rulingPop.tech;
-            // Builds Manor
-            if (!settlement.buildings.ContainsKey("manor"))
-            {
-                settlement.PlaceBuilding("manor");
-            }
+
             // Sets Leader
             objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
             StateNamer.UpdateStateNames(owner);           
@@ -197,38 +188,28 @@ public class Region : PopObject, ISaveable
     public void NeutralConquest()
     {
         Region region = PickRandomBorder();
-        bool checks = occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
+        bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
         //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
-        lock (owner)
-        {
-            attackerPower = owner.GetArmyPower(false);
-        }
-        bool attackerVictory = true;//Battle.CalcBattle(region, attackerPower, Pop.ToNativePopulation(200000));
+        attackerPower = owner.GetArmyPower(false);
+
+        bool attackerVictory = Battle.CalcBattle(region, attackerPower, Pop.ToNativePopulation(200000));
+
         if (attackerVictory)
         {
-            lock (owner)
-            {
-                owner.AddRegion(region);
-            }
+            owner.AddRegion(region);
         }
     }
 
     public void MilitaryConquest()
     {
         Region region = PickRandomBorder();
-        lock (region)
+        if (region == null || region.conquered || region.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
         {
-            lock (this)
-            {
-                if (region == null || region.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
-                {
-                    return;
-                }                 
-            }
-        }
+            return;
+        }                 
 
         long attackerPower = 0;
         long defenderPower = 0;
@@ -538,6 +519,7 @@ public class Region : PopObject, ISaveable
                 text += $"({culturePercentage:P0})\n";
             }     
             text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
+            /*
             text += $"Professions Breakdown:\n";     
 
             foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
@@ -553,7 +535,8 @@ public class Region : PopObject, ISaveable
 
                 float percentage = localPopulation/(float)workforce;
                 text += $"({percentage:P0})\n";
-            }   
+            } 
+            */  
         }
         return text;
     }

@@ -296,11 +296,13 @@ public class State : PopObject, ISaveable
             foreach (SocialClass profession in region.professions.Keys)
             {
                 countedSocialClasses[profession] += region.professions[profession];
+                /*
                 if (region.settlement.requiredWorkers.ContainsKey(profession))
                 {
                     countedRequiredWorkers[profession] += region.settlement.requiredWorkers[profession];
                     countedJobs[profession] += region.settlement.maxJobs[profession];                    
                 }
+                */
             }
             foreach (ulong cultureId in region.cultureIds.Keys)
             {
@@ -338,6 +340,7 @@ public class State : PopObject, ISaveable
             {
                 pops.Add(pop);
             }
+            region.conquered = true;
         }
     }
     public void RemoveRegion(Region region)
@@ -350,6 +353,7 @@ public class State : PopObject, ISaveable
             {
                 pops.Remove(pop);
             }
+            region.conquered = true;
         }
     }
     public void UpdateStability()
@@ -511,6 +515,7 @@ public class State : PopObject, ISaveable
                 text += $"({culturePercentage:P0})\n";
             }    
             text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
+            /*
             text += $"Professions Breakdown:\n";     
 
             foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
@@ -528,7 +533,8 @@ public class State : PopObject, ISaveable
                 long workersNeed = Math.Max(Pop.FromNativePopulation(requiredWorkers[socialClass]), 0);
                 long maxWorkers = Pop.FromNativePopulation(maxJobs[socialClass]);
                 text += $"  Employed: {maxWorkers - Math.Max(workersNeed, 0):#,###0}/{maxWorkers:#,###0}\n";
-            }        
+            }   
+            */     
         }
         return text;
     }    

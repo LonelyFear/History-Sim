@@ -233,7 +233,7 @@ public class WorldGenerator
                         Color finalColor = Color.FromHtml(AssetManager.GetBiome(BiomeMap[x, y]).color);
                         if (isWater)
                         {
-                            finalColor = Utility.MultiColourLerp([shallowWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
+                            finalColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
                         }      
                                 
                         if (slope > 0)
