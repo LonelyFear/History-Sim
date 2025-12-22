@@ -11,7 +11,7 @@ public partial class StateDiplomacyManager
     [IgnoreMember] public static ObjectManager objectManager;
     [Key(37)] public List<ulong> allianceIds = [];    
     // Diplomacy
-    [Key(19)] Dictionary<ulong?, Relation> relationIds { get; set; } = [];
+    [Key(19)] public Dictionary<ulong?, Relation> relationIds { get; set; } = [];
     [Key(20)] public Dictionary<ulong, bool> warIds { get; set; } = [];
     [Key(21)] public HashSet<ulong> enemyIds { get; private set; } = [];
     [Key(0)] public ulong stateId;
@@ -85,15 +85,15 @@ public partial class StateDiplomacyManager
             RemoveEnemy(stateId);     
         }
     }
-    public void RelationsUpdate()
+    public void UpdateRelations()
     {
         // All bordering or enemy states
-        List<State> relationStates = [.. state.borderingStates, .. enemyIds.Select(id => objectManager.GetState(id))];
+        List<State> relationStates = [.. state.borderingStateIds.Select(pair => objectManager.GetState(pair.Key)), .. enemyIds.Select(id => objectManager.GetState(id))];
         // Removes unneeded relations
         foreach (var pair in relationIds)
         {
             State target = objectManager.GetState(pair.Key);
-            if (target == null || !relationStates.Contains(target))
+            if (target == null/*|| !relationStates.Contains(target)*/)
             {
                 RemoveRelations(pair.Key);
                 continue;
@@ -102,15 +102,32 @@ public partial class StateDiplomacyManager
         // Establishes relations
         foreach (State target in relationStates)
         {
-            if (target != null && target.id != stateId && !relationIds.ContainsKey(target.id))
+            if (relationIds.ContainsKey(target.id) && target != null && target.id != stateId)
             {
                 EstablishRelations(target.id);
-            }
-        }
+            } 
+        }  
+        UpdateRelationValues();
     }
-    public Relation GetRelations(ulong state)
-    {
-        return relationIds[state];
+    void UpdateRelationValues(){
+        foreach (var pair in relationIds){
+            Relation relation = pair.Value;
+            State relationState = objectManager.GetState(pair.Key);
+
+            if (relationState == null) continue;
+
+            if (state.borderingStateIds.TryGetValue(relationState.id, out int borderLength))
+            {
+                relationIds[relationState.id].borderLength = borderLength;
+            } else
+            {
+                relationIds[relationState.id].borderLength = 0;
+            }          
+
+            // Calc Percieved Threat
+            int newThreat = 0;
+            relation.threat = Mathf.Lerp(relation.threat, newThreat, 0.05f);
+        }
     }
     public void LeaveAllWars()
     {
@@ -128,28 +145,7 @@ public partial class StateDiplomacyManager
         {
             war.AddParticipant(state.id, liege.diplomacy.warIds[war.id]);
         }  
-    }
-    public void UpdateDiplomacy()
-    {
-        foreach (var pair in relationIds)
-        {
-            State target = objectManager.GetState(pair.Key);
-            if (target == null) continue;
-            if (state.realmId != target.realmId)
-            {
-                float relationChangeChance = 0.5f;
-                //float relationDamageChance = 0.5f;
-                if (enemyIds.Contains(target.id))
-                {
-                    relationChangeChance *= 0.75f;
-                }
-                if (PopObject.rng.NextSingle() < relationChangeChance)
-                {
-                    relationIds[pair.Key].SetOpinion(-100);
-                }
-            }
-        }
-    }    
+    } 
     public void RemoveRelations(ulong? targetId)
     {
         if (relationIds.ContainsKey(targetId))
@@ -174,13 +170,15 @@ public partial class StateDiplomacyManager
 
         if (!relationIds.ContainsKey(targetId))
         {
-            relationIds.Add(targetId, new Relation(opinion));
-        }
-        else
-        {
-            //relationIds[targetId].SetOpinion(opinion);
+            relationIds.Add(targetId, new Relation(opinion, false, false));
+
+            if (state.borderingStateIds.TryGetValue((ulong)targetId, out int borderLength))
+            {
+                relationIds[targetId].borderLength = borderLength;
+            }
         }
     }
+    /*
     public void StartWars()
     {
         try
@@ -362,4 +360,5 @@ public partial class StateDiplomacyManager
             }
         }
     }
+    */
 }

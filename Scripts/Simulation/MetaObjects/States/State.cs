@@ -45,10 +45,8 @@ public class State : PopObject, ISaveable
     [Key(40)] public StateDiplomacyManager diplomacy = new StateDiplomacyManager();
     [Key(41)] public StateVassalManager vassalManager = new StateVassalManager();
     // Borders & Sovereignty
-    [IgnoreMember] public List<State> borderingStates { get; set; } = new List<State>();
-    [Key(22)] public List<ulong> borderingStatesIDs { get; set; }
-    [Key(23)] public int borderingRegions { get; set; } = 0;
-    [Key(24)] public int externalBorderingRegions { get; set; } = 0;
+    [IgnoreMember] public Dictionary<ulong, int> borderingStateIds { get; set; } = new Dictionary<ulong, int>();
+    //[Key(22)] public Dictionary<ulong, int> borderingStatesIDs { get; set; }
 
     [Key(27)] public Tech tech = new Tech();
 
@@ -71,7 +69,6 @@ public class State : PopObject, ISaveable
         PreparePopObjectForSave();
         capitalID = capital.id;
         regionsIDs = regions.Select(r => r.id).ToList();
-        borderingStatesIDs = borderingStates.Count > 0 ? borderingStates.Select(r => r.id).ToList() : null;
     }
     public void LoadFromSave()
     {
@@ -80,7 +77,6 @@ public class State : PopObject, ISaveable
         regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToHashSet();
         diplomacy.Init(this);
         vassalManager.Init(this);
-        borderingStates = borderingStatesIDs == null ? new List<State>() : borderingStatesIDs.Select(r => simManager.statesIds[r]).ToList();
     }
     public void UpdateCapital()
     {
@@ -220,7 +216,7 @@ public class State : PopObject, ISaveable
         long countedP = 0;
         long countedW = 0;
 
-        List<State> borders = new List<State>();
+        Dictionary<ulong, int> borders = new Dictionary<ulong, int>();
         Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedJobs = new Dictionary<SocialClass, long>();
@@ -232,7 +228,6 @@ public class State : PopObject, ISaveable
         }
 
         Dictionary<ulong, long> cCultures = new Dictionary<ulong, long>();
-        borderingRegions = 0;
         float countedWealth = 0;
         int occRegions = 0;
         foreach (ulong charId in characterIds)
@@ -254,8 +249,7 @@ public class State : PopObject, ISaveable
                 {
                     occRegions++;
                 }
-                borderingRegions++;
-                bool bordersOtherState = false;
+                List<State> checkedBordersForRegion = new List<State>();
                 // Gets the borders of our state
                 foreach (ulong borderId in region.borderingRegionIds.Values)
                 {
@@ -263,33 +257,34 @@ public class State : PopObject, ISaveable
                     // State
                     State borderState = border.owner;
                     // Makes sure the state is real
-                    if (borderState != null && borderState != this)
+                    if (borderState == null || borderState == this)
                     {
-                        // Adds the bordering state
-                        if (!borders.Contains(borderState))
-                        {
-                            borders.Add(borderState);
-                        }
-                        // Adds the bordering realm leader
-                        if (!borders.Contains(borderState.vassalManager.GetOverlord(true)))
-                        {
-                            borders.Add(borderState.vassalManager.GetOverlord(true));
-                        }
-                        // If we arent in a realm everything is considered outside of us
-                        bordersOtherState = true;                        
-                        
-                        // Checks if the state is in our realm
-                        if (realm != null)
-                        {
-                            bordersOtherState = realm.memberStateIds.Contains(borderState.id);
-                        }
+                        continue;
                     }
-                }
-                // External Bordering Regions is the borders on the outside of the realm
-                // (NO INTERIOR BORDERS)
-                if (bordersOtherState)
-                {
-                    externalBorderingRegions++;
+
+                    checkedBordersForRegion.Add(borderState);
+                    bool borderAlreadyCounted = checkedBordersForRegion.Contains(borderState);
+
+                    // Adds the bordering state
+                    if (!borders.ContainsKey(borderState.id))
+                    {
+                        //diplomacy.GetRelations(borderState.id);
+                        borders.Add(borderState.id, 1);
+                    } else if (!borderAlreadyCounted)
+                    {
+                        // Extends border length
+                        borders[borderState.id]++;
+                    }
+
+                    // Adds the bordering realm leader
+                    if (!borders.ContainsKey(borderState.vassalManager.GetOverlord(true).id))
+                    {
+                        borders.Add(borderState.vassalManager.GetOverlord(true).id, 1);
+                    } else if (!borderAlreadyCounted)
+                    {
+                        // Extends borderLength with realm
+                        borders[borderState.vassalManager.GetOverlord(true).id]++;
+                    }
                 }
             }
 
@@ -317,7 +312,7 @@ public class State : PopObject, ISaveable
             }
         }
         occupiedLand = occRegions;
-        borderingStates = borders;
+        borderingStateIds = borders;
         totalWealth = countedWealth;
         professions = countedSocialClasses;
         requiredWorkers = countedRequiredWorkers;

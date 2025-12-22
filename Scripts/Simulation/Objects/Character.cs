@@ -107,7 +107,7 @@ public class Character : NamedObject
         }
 
     }
-    public void Die()
+    public override void Die()
     {
         dead = true;
         tickDestroyed = sim.timeManager.ticks;

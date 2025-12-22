@@ -214,6 +214,7 @@ public partial class MapManager : Node2D
     
     public Color GetRegionColor(Region region, bool includeOverlay = true)
     {
+        float colorDarkness = 0.4f;
         Color color = new Color(0, 0, 0, 0);
         State regionOwner = region.owner;
         MapModes drawnMapMode = mapMode;
@@ -248,7 +249,7 @@ public partial class MapManager : Node2D
                         case ObjectType.REGION:
                             if (region != selectedMetaObj)
                             {
-                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.4f);
+                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                             }
                             break;
                         case ObjectType.STATE:
@@ -287,7 +288,7 @@ public partial class MapManager : Node2D
                         case ObjectType.REGION:
                             if (region != selectedMetaObj)
                             {
-                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.4f);
+                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                             }
                             break;
                         case ObjectType.STATE:
@@ -305,7 +306,7 @@ public partial class MapManager : Node2D
                             // Highlights Realms
                             if (region.owner.vassalManager.GetOverlord(true) == selectedMetaObj)
                             {
-                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.4f);;
+                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], colorDarkness);
                             }
                             break;
                     }
@@ -343,7 +344,7 @@ public partial class MapManager : Node2D
                     }
                     else if (region.largestCultureId != culture.id)
                     {
-                        color = (color * 0.3f) + (new Color(0, 0, 0) * 0.7f);
+                        color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                     }
                 }                
                 break;
@@ -410,12 +411,12 @@ public partial class MapManager : Node2D
             case MapModes.NONE:
                 if (selectedMetaObj != null)
                 {
-                    color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
+                    color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                 }
                 break;
         }
         if (hoveredRegion == region){
-            color = Utility.MultiColourLerp([new Color(0, 0, 0), color], 0.7f);
+            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.3f);
         }
         return color;
     }

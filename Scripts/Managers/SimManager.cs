@@ -431,11 +431,16 @@ public class SimManager
         Parallel.ForEach(partitioner, (popsPair) =>
         {
             Pop pop = popsPair.Value;
-            pop.GrowPop();
-            pop.politicalPower = pop.CalculatePoliticalPower();          
-            if (pop.batchId == timeManager.GetMonth(timeManager.ticks))
+            bool isInBatch = pop.batchId == timeManager.GetMonth(timeManager.ticks);
+            pop.politicalPower = pop.CalculatePoliticalPower(); 
+              
+            if (isInBatch)
             {
-                pop.TechnologyUpdate();
+                pop.GrowPop();
+                pop.TechnologyUpdate(); 
+            }    
+            if (isInBatch || pop.shipborne)
+            {
                 pop.Migrate();
             }            
         });
@@ -607,11 +612,10 @@ public class SimManager
                 state.UpdateCapital();
                 
                 state.diplomacy.UpdateEnemies();
-                state.diplomacy.RelationsUpdate();
-                state.diplomacy.UpdateDiplomacy();
+                state.diplomacy.UpdateRelations();
 
-                state.diplomacy.EndWars();
-                state.diplomacy.StartWars();     
+                //state.diplomacy.EndWars();
+                //state.diplomacy.StartWars();     
             } catch (Exception e)
             {
                 GD.PushError(e);

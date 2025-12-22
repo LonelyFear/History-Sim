@@ -38,6 +38,7 @@ public class Pop
     [IgnoreMember] public static Random rng = new Random();
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
+    [Key(20)] public bool shipborne { get; set; } = false;
 
     public void PrepareForSave()
     {
@@ -312,7 +313,7 @@ public class Pop
         }
 
 
-        float NIR = (bRate - GetDeathRate()) / 12f;
+        float NIR = bRate - GetDeathRate();
 
         long change = Mathf.RoundToInt((workforce + dependents) * NIR);
         long dependentChange = Mathf.RoundToInt(change * targetDependencyRatio);

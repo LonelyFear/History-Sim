@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using Godot;
+using MessagePack.Formatters;
 using Vector2 = System.Numerics.Vector2;
 
 public static class Utility
@@ -101,8 +102,18 @@ public static class Utility
         }
         return false;
     }
-
-    public static string[] GetAsArray(this Godot.FileAccess f)
+    public static float CalcWeightedAverage(params (float value, float weight)[] traits)
+    {
+        float average = 0;
+        float totalWeights = 0;
+        foreach (var (value, weight) in traits)
+        {
+            average += value * weight;
+            totalWeights += weight;
+        }
+        return average / totalWeights;
+    }
+    public static string[] GetAsArray(this FileAccess f)
     {
         List<string> result = new List<string>();
         while (!f.EofReached())
