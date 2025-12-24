@@ -12,6 +12,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
+    [Key(300)] public bool isWater { get; set; }
     [Key(4)] public int tradeWeight { get; set; } = 0;
     [Key(5)] public int baseTradeWeight { get; set; } = 0;
     [Key(6)] public bool hasTradeWeight;
@@ -38,6 +39,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float avgRainfall { get; set; }
     [IgnoreMember] public float avgElevation { get; set; }
     [Key(25)] public int landCount { get; set; }
+    [Key(29)] public int waterCount { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
     [Key(27)] public ulong occupierID { get; set; }
     [IgnoreMember] public State owner { get; set; } = null;
@@ -84,6 +86,7 @@ public class Region : PopObject, ISaveable
     {
         name = NameGenerator.GenerateRegionName();
         landCount = 0;
+        waterCount = 0;
         for (int x = 0; x < SimManager.tilesPerRegion; x++)
         {
             for (int y = 0; y < SimManager.tilesPerRegion; y++)
@@ -94,20 +97,26 @@ public class Region : PopObject, ISaveable
                 avgRainfall += tile.moisture;
                 avgElevation += tile.elevation;
 
+                if (tile.terrainType == TerrainType.WATER)
+                {
+                    waterCount++;
+                }
                 if (tile.IsLand())
                 {
                     landCount++;
                     arableLand += tile.arability;
                     navigability += tile.navigability;
-
                 }
-                else if (tile.coastal)
+                if (tile.coastal)
                 {
                     coastal = true;
                 }
             }
         }
-
+        if (waterCount == 16)
+        {
+            isWater = true;
+        }
         navigability /= landCount;
         avgTemperature /= tiles.Length;
         avgRainfall /= tiles.Length;
@@ -187,7 +196,7 @@ public class Region : PopObject, ISaveable
 
     public void NeutralConquest()
     {
-        Region region = PickRandomBorder();
+        Region region = PickRandomBorder(out _);
         bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
         //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
@@ -205,7 +214,7 @@ public class Region : PopObject, ISaveable
 
     public void MilitaryConquest()
     {
-        Region region = PickRandomBorder();
+        Region region = PickRandomBorder(out _);
         if (region == null || region.conquered || region.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
         {
             return;
@@ -442,16 +451,23 @@ public class Region : PopObject, ISaveable
         {
             migrateable = false;
         }
+
+        if (pop != null)
+        {
+            return (migrateable && habitable) || isWater;
+        }
         return migrateable && habitable;
     }
-    public Region PickRandomBorder(bool mustBeLiveable = false)
+    public Region PickRandomBorder(out Direction direction, bool mustBeLiveable = false)
     {
-        Region region = objectManager.GetRegion(borderingRegionIds.Values.ToArray()[rng.Next(0, borderingRegionIds.Count)]);
+        direction = (Direction)rng.Next(0, 4); 
+        Region region = objectManager.GetRegion(borderingRegionIds[direction]);
         if (mustBeLiveable)
         {
             while (!region.habitable)
             {
-                region = objectManager.GetRegion(borderingRegionIds.Values.ToArray()[rng.Next(0, borderingRegionIds.Count)]);
+                direction = (Direction)rng.Next(0, 3); 
+                region = objectManager.GetRegion(borderingRegionIds[direction]);
             }
         }
         return region;

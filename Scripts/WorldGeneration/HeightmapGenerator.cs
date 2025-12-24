@@ -495,6 +495,7 @@ public class HeightmapGenerator
                     lock (tiles)
                     {
                         tiles[x, y] = tile;
+                        tile.pos = new Vector2I(x,y);
                     }
                 }
             }
@@ -585,64 +586,44 @@ public class HeightmapGenerator
         });
         GD.Print("  Neighbor Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
-        // Gets Relevant Tiles for each Tile
-        Parallel.For(1, divisions + 1, (i) =>
+        PriorityQueue<TerrainTile, int> tilesToCheck = new();
+        foreach (VoronoiRegion region in voronoiRegions)
         {
-            TerrainTile tile = null;
-            List<Vector2I> tilesToCheck = [];
-            Vector2I pos = Vector2I.Down;
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            foreach (Vector2I coastalTilePos in region.coastalTiles)
             {
-                for (int y = 0; y < worldSize.Y; y++)
-                {
-                    tile = tiles[x, y];
-                    if (tile.region.coastal)
-                    {
-                        tilesToCheck = [.. tile.region.edges];
-                    }
-                    foreach (VoronoiRegion region in tile.region.borderingRegions)
-                    {
-                        if (region.coastal && tile.region.continental && region.continental)
-                        {
-                            tilesToCheck.AddRange(region.coastalTiles);
-                        }
-                    }
+                TerrainTile coastalTile = tiles[coastalTilePos.X, coastalTilePos.Y];
+                tilesToCheck.Enqueue(coastalTile, 0);
+                coastalTile.coastDist = 0;
+            }
+        }
 
-                    pos = new Vector2I(x, y);
-                    if (tilesToCheck.Count > 0)
-                    {
-                        foreach (Vector2I next in tilesToCheck)
-                        {
-                            tile.edgeDistancesSquared[next] = pos.WrappedDistanceSquaredTo(next, worldSize);
-                        }
-                    }
-                }
-            }
-        });
-        GD.Print("  Tile Search Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
-        Parallel.For(1, divisions + 1, (i) =>
+        HashSet<TerrainTile> measuredTiles = new(worldSize.X * worldSize.Y);
+
+        bool fullQueue = true;
+        while (fullQueue)
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            fullQueue = tilesToCheck.TryDequeue(out TerrainTile currentTile, out int priority);
+            if (!fullQueue) break;
+            for (int dx = -1; dx < 2; dx++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int dy = -1; dy < 2; dy++)
                 {
-                    TerrainTile tile = tiles[x, y];
-                    Vector2I pos = new Vector2I(x, y);
-                    float shortestDistSquared = Mathf.Inf;
-                    foreach (var entry in tile.edgeDistancesSquared)
+                    if (dx == 0 && dy == 0)
                     {
-                        TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                        if (entry.Value < shortestDistSquared && nextTile.coastal)
-                        {
-                            shortestDistSquared = entry.Value;
-                        }
+                        continue;
                     }
-                    tile.coastDist = Mathf.Sqrt(shortestDistSquared);
+                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
+                    TerrainTile neighbor = tiles[next.X, next.Y];              
+                    if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
+                    {
+                        measuredTiles.Add(neighbor);
+                        neighbor.coastDist = currentTile.coastDist + 1;
+                        tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
+                    }          
                 }
             }
-        });
-        GD.Print("  Coast Dist Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));    
+        }
+        GD.Print("  Coast Dist Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s")); 
     }
 
     void SetRegionContinental(bool value, VoronoiRegion region) {
@@ -668,6 +649,7 @@ public class VoronoiRegion
 }
 public class TerrainTile
 {
+    public Vector2I pos;
     public VoronoiRegion region;
     public float coastDist = Mathf.Inf;
     public float boundaryDist = Mathf.Inf;

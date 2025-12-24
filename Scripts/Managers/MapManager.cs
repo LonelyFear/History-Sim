@@ -441,6 +441,10 @@ public partial class MapManager : Node2D
                 {
                     finalColor = noneColor;
                 }
+                if (r.isWater && r.pops.Count > 0)
+                {
+                    finalColor = new Color(1, 0.5f, 0);
+                }
                 if (regionImage.GetPixel(posX, posY) != finalColor * 0.9f)
                 {
                     regionImage.SetPixel(posX, posY, finalColor * 0.9f);

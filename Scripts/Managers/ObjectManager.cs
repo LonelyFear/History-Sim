@@ -95,6 +95,7 @@ public class ObjectManager
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
+            shipborne = region.isWater
         };
         lock (simManager.popsIds)
         {

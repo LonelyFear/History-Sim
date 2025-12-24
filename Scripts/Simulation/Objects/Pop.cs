@@ -17,7 +17,7 @@ public class Pop
     [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
     [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
-    [Key(7)] public float targetDependencyRatio { get; set; } = 0.75f;
+    [Key(7)] public float targetDependencyRatio { get; set; } = 0.6f;
     [Key(8)] public float netIncome { get; set; } = 0f;
     [Key(9)] public double happiness { get; set; } = 1;
     [Key(10)] public double loyalty { get; set; } = 1;
@@ -39,6 +39,7 @@ public class Pop
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
     [Key(20)] public bool shipborne { get; set; } = false;
+    [Key(21)] public Direction lastDirection = Direction.RIGHT;
 
     public void PrepareForSave()
     {
@@ -204,49 +205,69 @@ public class Pop
         // Simple Migration
         lock (region)
         {
-            if (region.population >= region.maxPopulation)
+            if (region.population >= region.maxPopulation || shipborne)
             {
                 migrateChance = 1f;
             }            
         }
 
-        if (profession == SocialClass.ARISTOCRAT)
+        if (profession == SocialClass.ARISTOCRAT && !shipborne)
         {
             migrateChance *= 0.1f;
         }
         // If the pop migrates
         if (rng.NextSingle() > migrateChance) return;
 
-        Region target = region.PickRandomBorder();
-        bool professionAllows = true;
-
-        switch (profession)
+        Region target = objectManager.GetRegion(region.borderingRegionIds[lastDirection]);
+        if (!shipborne || !target.Migrateable(this) || rng.NextDouble() < 0.2)
         {
-            case SocialClass.ARISTOCRAT:
-                if (target.owner != region.owner)
-                {
-                    professionAllows = false;
-                }
-                break;
+            target = region.PickRandomBorder(out lastDirection);
         }
 
-        if (!professionAllows) return;
-        // If the profession allows migration
+        bool professionAllows = true;
 
-        float chanceToMoveOnTile = target.navigability;
+        // If the profession allows migration
+        if (!shipborne)
+        {
+            switch (profession)
+            {
+                case SocialClass.ARISTOCRAT:
+                    if (target.owner != region.owner)
+                    {
+                        professionAllows = false;
+                    }
+                    break;
+            }
+            if (!professionAllows) return;            
+        }
+
+        float chanceToMoveOnTile = target.isWater ? 0.1f : target.navigability;
+        if (shipborne)
+        {
+            chanceToMoveOnTile = 1f;
+        }   
+
         lock (target)
         {
             if (target.population > target.maxPopulation)
             {
                 chanceToMoveOnTile *= 0.1f;
             }
+
             if (!target.Migrateable(this))
             {
                 chanceToMoveOnTile *= 0;
             }
         }
+
         if (rng.NextSingle() < chanceToMoveOnTile)
         {
+            if (shipborne)
+            {
+                MovePop(target, workforce, dependents);
+                return;
+            }
+
             float movedPercentage = 0;
             lock (region)
             {
@@ -270,13 +291,18 @@ public class Pop
 
         lock (objectManager)
         {
-            objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
+            Pop newPop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
+            newPop.lastDirection = lastDirection;
         }
         ChangePopulation(-movedWorkforce, -movedDependents);     
     }
     public float GetDeathRate()
     {
         float deathRate = baseDeathRate;
+        if (shipborne)
+        {
+            deathRate *= 3f;
+        }
         return deathRate;
     }
     public float GetBirthRate()
@@ -304,13 +330,17 @@ public class Pop
         {
             bRate = GetBirthRate();
         }
-        lock (region)
+        if (!shipborne)
         {
-            if (region.population > region.maxPopulation)
+            lock (region)
             {
-                bRate *= FromNativePopulation(region.maxPopulation)/(float)FromNativePopulation(region.population);
+                if (region.population > region.maxPopulation)
+                {
+                    bRate *= FromNativePopulation(region.maxPopulation)/(float)FromNativePopulation(region.population);
+                }            
             }            
         }
+
 
 
         float NIR = bRate - GetDeathRate();

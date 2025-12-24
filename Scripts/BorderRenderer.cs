@@ -50,7 +50,9 @@ public partial class BorderRenderer : Node2D
 
 	public void RedrawBorders()
     {
+		List<(Region, Region)> drawnBorders = [];
 		List<int> borderSegments = new List<int>();
+
         foreach (Region region in simManager.habitableRegions)
         {
 			if (region.pops.Count < 1) continue;
@@ -61,6 +63,10 @@ public partial class BorderRenderer : Node2D
                 Direction direction = pair.Key;
 				Region border = objectManager.GetRegion(pair.Value);
 
+				if (drawnBorders.Contains((region,border)) || drawnBorders.Contains((border,region))){
+					continue;
+				} 
+
 				switch (mapManager.mapMode)
                 {
                     case MapModes.REALM:
@@ -69,6 +75,7 @@ public partial class BorderRenderer : Node2D
 							borderSegments.Add(x);
 							borderSegments.Add(y);							
                             borderSegments.Add((int)direction);
+							drawnBorders.Add((region, border));
                         }
 						break;
                     case MapModes.POLITIY:
@@ -77,12 +84,13 @@ public partial class BorderRenderer : Node2D
 							borderSegments.Add(x);
 							borderSegments.Add(y);							
                             borderSegments.Add((int)direction);
+							drawnBorders.Add((region, border));
                         }
 						break;
                 }
             }
         }
-		//BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,0,0,1));
+		BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,0,0,1));
     }
 	void BuildBorderMesh(MultiMesh multiMesh, List<int> borderSegments, Color color)
     {
