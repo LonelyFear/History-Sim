@@ -10,7 +10,7 @@ public class RiverGenerator
     public bool allowCornerConnections = true;
     public float maxRiverLength = Mathf.Inf;
     public bool riverMustEndInWater = true;
-    public float minRiverHeight = 0.6f;
+    public int minRiverHeight = 1000;
     int invalidRivers = 0;
     List<Vector2I> validPositions = new List<Vector2I>();
     bool[,] rivers;
@@ -61,7 +61,7 @@ public class RiverGenerator
 
     void GenerateRivers(WorldGenerator world)
     {
-        float[,] heightmap = world.HeightMap;
+        int[,] heightmap = world.HeightMap;
         int maxAttempts = 10000;
         foreach (Vector2I riverStart in validPositions)
         {

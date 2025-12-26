@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class WindGenerator()
 {
     Vector2I worldSize;
-    float[,] heightMap;
+    int[,] heightMap;
     Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/PrevailingWindCurve.tres");
     Curve windSpeedCurve = GD.Load<Curve>("res://Curves/WindSpeedCurve.tres");
     public Vector2[,] GeneratePrevailingWinds(WorldGenerator world)
@@ -31,7 +31,7 @@ public class WindGenerator()
                 windDirMap[x, y] = prevailingWindCurve.Sample(latitudeFactor);
                 windSpeedMap[x, y] = 10 * windSpeedCurve.Sample(posY / world.WorldSize.Y);
 
-                if (heightMap[x, y] > world.SeaLevel)
+                if (heightMap[x, y] > world.SeaLevel * WorldGenerator.WorldHeight)
                 {
                     windSpeedMap[x, y] *= 0.5f;
                     float currentElevation = world.HeightMap[x,y];

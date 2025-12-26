@@ -34,7 +34,7 @@ public class WorldGenerator
     [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
     [IgnoreMember] public TerrainTile[,] tiles;
     [Key(5)]
-    public float[,] HeightMap { get; set; } 
+    public int[,] HeightMap { get; set; } 
     [Key(6)]
     public float[,] RainfallMap { get; set; } 
     [Key(7)]
@@ -104,7 +104,7 @@ public class WorldGenerator
         Stage = WorldGenStage.RAINFALL;
         try
         {
-            RainfallMap = new RainfallMapGenerator().GenerateRainfallMap(2f, this, false);
+            RainfallMap = new RainfallMapGenerator().GenerateRainfallMap(2f, this, true);
         } catch (Exception e)
         {
             GD.PushError(e);
@@ -118,7 +118,7 @@ public class WorldGenerator
             minRiverDist = 3f,
             minRiverLength = 5,
             maxRiverLength = 500000,
-            minRiverHeight = 0.7f,
+            minRiverHeight = 2000,
             riverMustEndInWater = true
         };
 
@@ -139,6 +139,7 @@ public class WorldGenerator
     {
         worldgenFinishedEvent.Invoke();
     }
+    /*
     public float GetUnitTemp(float value)
     {
         if (value < 0 || value > 1)
@@ -147,6 +148,7 @@ public class WorldGenerator
         }
         return MinTemperature + Mathf.Pow(value, 1f) * (MaxTemperature - MinTemperature);
     }
+    */
     public float GetUnitRainfall(float value)
     {
         if (value < 0 || value > 1)
@@ -155,11 +157,13 @@ public class WorldGenerator
         }
         return MinRainfall + Mathf.Pow(value, 1f) * (MaxRainfall - MinRainfall);
     }
+    /*
     public float GetUnitElevation(float value)
     {
         float seaElevation = WorldHeight * SeaLevel;
         return (value * WorldHeight) - seaElevation;
     }
+    */
     public void SaveTerrainToFile(string path)
     {
         //GD.Print(JsonSerializer.Serialize(BiomeMap, options));
@@ -253,8 +257,8 @@ public class WorldGenerator
                         }                        
                         break;     
                     case TerrainMapMode.REALISTIC:
-                        float sampleElevation = HeightMap[Mathf.PosMod(x + 1, WorldSize.X), Mathf.PosMod(y + 1, WorldSize.Y)];
-                        float slope = sampleElevation - HeightMap[x, y];
+                        int sampleElevation = HeightMap[Mathf.PosMod(x + 1, WorldSize.X), Mathf.PosMod(y + 1, WorldSize.Y)];
+                        float slope = (sampleElevation - HeightMap[x, y])/(float)WorldHeight;
 
                         Color finalColor = Color.FromHtml(AssetManager.GetBiome(BiomeMap[x, y]).color);
                         if (isWater)

@@ -12,7 +12,7 @@ public class BiomeGenerator
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
                 Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
-                float temp = world.GetUnitTemp(world.TempMap[x, y]);
+                float temp = world.TempMap[x, y];
                 float elevation = world.HeightMap[x, y];
                 float moist = world.GetUnitRainfall(world.RainfallMap[x, y]);
                 Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
@@ -22,16 +22,16 @@ public class BiomeGenerator
                     bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
                     bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
 
-                    if (tempInRange && moistInRange && elevation >= world.SeaLevel)
+                    if (tempInRange && moistInRange && elevation >= world.SeaLevel * WorldGenerator.WorldHeight)
                     {
                         candidates.Add(biome, 0);
                     }
-                    if (elevation < world.SeaLevel)
+                    if (elevation < world.SeaLevel * WorldGenerator.WorldHeight)
                     {
                         if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
                         {
                             selectedBiome = AssetManager.GetBiome("ice_sheet");
-                            world.HeightMap[x, y] = world.SeaLevel;
+                            world.HeightMap[x, y] = (int)(world.SeaLevel * WorldGenerator.WorldHeight);
                             break;
                         }
                         else

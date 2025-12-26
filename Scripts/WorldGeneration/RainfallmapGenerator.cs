@@ -50,7 +50,7 @@ public class RainfallMapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    moistureMap[x,y] += rainfallMap[x,y] * 0.02f * evaporationCurve.Sample(world.GetUnitTemp(world.TempMap[x,y]));
+                    moistureMap[x,y] += rainfallMap[x,y] * 0.02f * evaporationCurve.Sample(world.TempMap[x,y]);
 
                     Vector2 vel = -world.WindVelMap[x,y];
 
@@ -90,7 +90,7 @@ public class RainfallMapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(Math.Clamp(world.GetUnitTemp(world.TempMap[x,y]), -40, 30));
+                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(world.TempMap[x,y]);
                     //if (world.HeightMap[x,y] < world.SeaLevel) continue;
                     moistureMap[x,y] -= precipitation;
                     rainfallMap[x,y] += precipitation;
@@ -122,9 +122,9 @@ public class RainfallMapGenerator
     {
         if (world.HeightMap[x,y] < world.SeaLevel)
         {
-            return evaporationCurve.Sample(world.GetUnitTemp(world.TempMap[x,y]));
+            return evaporationCurve.Sample(world.TempMap[x,y]);
         }
-        return 0.02f * evaporationCurve.Sample(world.GetUnitTemp(world.TempMap[x,y]));
+        return 0.02f * evaporationCurve.Sample(world.TempMap[x,y]);
     }
     float[,] GenerateSimpleMap(float scale)
     {

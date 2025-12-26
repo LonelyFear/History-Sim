@@ -13,6 +13,7 @@ using Mutex = System.Threading.Mutex;
 
 public class HeightmapGenerator
 {
+    int[,] map;
     float[,] heightmap;
     int gridSizeX = 16;
     int gridSizeY = 16;
@@ -43,11 +44,11 @@ public class HeightmapGenerator
     float shelfDepth = 0.05f;
     const float slopeErosionThreshold = 0.1f;
 
-    public float[,] GetHeightMapFromImage(WorldGenerator worldAssigned, Image image)
+    public int[,] GetHeightMapFromImage(WorldGenerator worldAssigned, Image image)
     {
         world = worldAssigned;
         worldSize = world.WorldSize;
-        heightmap = new float[worldSize.X, worldSize.Y];
+        map = new int[worldSize.X, worldSize.Y];
         float pixelPerX = 4320 / (float)worldSize.X;
         float pixelPerY = 2160 / (float)worldSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
@@ -61,10 +62,10 @@ public class HeightmapGenerator
                 int py = (int)(y * pixelPerY);
                 int flippedPy = (2160 - 1) - py;
 
-                heightmap[x,y] = realElevation[px, flippedPy]/(float)WorldGenerator.WorldHeight;
+                map[x,y] = realElevation[px, flippedPy];
             }
         }       
-        return heightmap;
+        return map;
     }
     public int[,] ReadBinaryHeightModel(string path, int width, int height)
     {
@@ -86,12 +87,13 @@ public class HeightmapGenerator
         }
         return heightData;
     }
-    public float[,] GenerateHeightmap(WorldGenerator worldAssigned)
+    public int[,] GenerateHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         seaLevel = world.SeaLevel - shelfDepth;
         worldSize = world.WorldSize;
         worldMult = world.WorldMult;
+        map = new int[worldSize.X, worldSize.Y];
         heightmap = new float[worldSize.X, worldSize.Y];
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
         GD.Print(worldSize);
@@ -137,17 +139,16 @@ public class HeightmapGenerator
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.tiles = tiles;
-        /*
+
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
                 float seaElevation = WorldGenerator.WorldHeight * world.SeaLevel;
-                heightmap[x,y] = (heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation;        
+                map[x,y] = (int)((heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation);        
             }
         }
-        */
-        return heightmap;
+        return map;
     }
 
     public void ThermalErosion()

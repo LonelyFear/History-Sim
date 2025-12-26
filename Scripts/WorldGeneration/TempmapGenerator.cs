@@ -5,6 +5,11 @@ public class TempmapGenerator
 {
     Curve tempCurve = GD.Load<Curve>("res://Curves/TempCurve.tres");
     float[,] map;
+    public float[,] GenerateWindyTempMap(WorldGenerator world)
+    {
+        map = new float[world.WorldSize.X, world.WorldSize.Y];
+        return map;
+    }
     public float[,] GenerateTempMap(float scale, WorldGenerator world){
         map = new float[world.WorldSize.X, world.WorldSize.Y];
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
@@ -21,16 +26,16 @@ public class TempmapGenerator
                 float latitudeFactor = 1f - (Mathf.Abs(y - (world.WorldSize.Y / 2f)) / (world.WorldSize.Y / 2f));
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
                 
-                map[x,y] = Mathf.Lerp(Mathf.InverseLerp(WorldGenerator.MinTemperature, WorldGenerator.MaxTemperature, tempCurve.Sample(latitudeFactor)), noiseValue, 0.15f);
+                map[x,y] = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, 0.15f));
 
-                float heightFactor = 6.5f * (world.GetUnitElevation(world.HeightMap[x, y])/1000f);
-                if (world.GetUnitElevation(world.HeightMap[x, y]) > 0)
+                float heightFactor = 6.5f * (world.HeightMap[x, y]/1000f);
+                if (world.HeightMap[x, y] > 0)
                 {
-                    map[x, y] -= Mathf.InverseLerp(0, WorldGenerator.MaxTemperature + Mathf.Abs(WorldGenerator.MinTemperature), heightFactor);
+                    map[x, y] -= heightFactor;
                 }
 
-                map[x, y] = Mathf.Clamp(map[x,y], 0, 1);
-                averageTemp += world.GetUnitTemp(map[x, y]);
+                //map[x, y] = Mathf.Clamp(map[x,y], 0, 1);
+                averageTemp += map[x, y];
             }
         }
         GD.Print((averageTemp/(world.WorldSize.X*world.WorldSize.Y)).ToString("Average: 0.0") + " C");
