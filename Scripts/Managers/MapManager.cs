@@ -218,10 +218,6 @@ public partial class MapManager : Node2D
         Color color = new Color(0, 0, 0, 0);
         State regionOwner = region.owner;
         MapModes drawnMapMode = mapMode;
-        if (!includeOverlay)
-        {
-            drawnMapMode = MapModes.NONE;
-        }
         switch (drawnMapMode)
         {
             case MapModes.REALM:
@@ -408,6 +404,29 @@ public partial class MapManager : Node2D
                     color = new Color(0, 0, 0, 1);
                 }
                 break;
+            case MapModes.TERRAIN_TYPE:
+                switch (region.terrainType)
+                {
+                    case TerrainType.SHALLOW_WATER:
+                        color = new Color(0.5f, 0.5f, 1f);
+                        break;
+                    case TerrainType.DEEP_WATER:
+                        color = new Color(0, 0, 0.8f);
+                        break;
+                    case TerrainType.LAND:
+                        color = new Color(0f, 1f, 0f);
+                        break;
+                    case TerrainType.HILLS:
+                        color = new Color(0.4f, 0.4f, 0f);
+                        break;
+                    case TerrainType.MOUNTAINS:
+                        color = new Color(0.1f, 0.1f, 0.1f);
+                        break;
+                    case TerrainType.ICE:
+                        color = new Color(1f, 1f, 1f);
+                        break;
+                }
+                break;
             case MapModes.NONE:
                 if (selectedMetaObj != null)
                 {
@@ -437,13 +456,13 @@ public partial class MapManager : Node2D
                 int posY = (y * regionResolution) + ry;
 
                 // Carved Borders
-                if (!r.tiles[rx, ry].renderOverlay)
+                if (!r.tiles[rx, ry].renderOverlay && !IsMapModeCarved())
                 {
                     finalColor = noneColor;
                 }
                 if (r.isWater && r.pops.Count > 0)
                 {
-                    finalColor = new Color(1, 0.5f, 0);
+                    //finalColor = new Color(1, 0.5f, 0);
                 }
                 if (regionImage.GetPixel(posX, posY) != finalColor * 0.9f)
                 {
@@ -452,6 +471,14 @@ public partial class MapManager : Node2D
                 }                
             }
         }
+    }
+    public bool IsMapModeCarved()
+    {
+        if (mapMode == MapModes.TERRAIN_TYPE)
+        {
+            return false;
+        }
+        return true;
     }
     void UpdateMap(){
         if (mapUpdate)
@@ -471,6 +498,7 @@ public enum MapModes {
     TECH,
     WEALTH,
     TRADE_WEIGHT,
+    TERRAIN_TYPE,
     POPS,
     NONE
 }

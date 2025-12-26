@@ -76,17 +76,18 @@ public partial class LoadingScreen : Control
         }
 
         float tileCount = generator.WorldSize.X * generator.WorldSize.Y;
-        GetNode<TextureProgressBar>("ProgressBar").Value = generator.Stage/7f * 100;
+        GetNode<TextureProgressBar>("ProgressBar").Value = (int)generator.Stage/9f * 100;
         splash.Text = generator.Stage switch
         {
-            0 => "Forming Continents...",
-            1 => "Measuring Terrain...",
-            2 => "Raising Mountains...",
-            3 => "Eroding Continents...",
-            4 => "Heating Planet...",
-            5 => "Forming Clouds...",
-            6 => "Seeding Biomes...",
-            7 => "Carving Rivers...",
+            WorldGenStage.CONTINENTS => "Forming Continents...",
+            WorldGenStage.MEASURING => "Measuring Terrain...",
+            WorldGenStage.TECTONICS => "Raising Mountains...",
+            WorldGenStage.EROSION => "Eroding Continents...",
+            WorldGenStage.WIND => "Blowing Winds...",
+            WorldGenStage.TEMPERATURE => "Heating Planet...",
+            WorldGenStage.RAINFALL => "Forming Clouds...",
+            WorldGenStage.BIOMES => "Seeding Biomes...",
+            WorldGenStage.RIVERS => "Carving Rivers...",
             _ => "Settling World...",
         };
         //splash.Text = "Generating World";
@@ -97,7 +98,14 @@ public partial class LoadingScreen : Control
             textureGenerated = true;
             splash.Text = "Finishing Up...";
             map.Init();
-            map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
+            try
+            {
+                map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
+            } catch (Exception e)
+            {
+                GD.PushError(e);
+            }
+            
         }
         else if (task == null || task.IsCompleted)
         {

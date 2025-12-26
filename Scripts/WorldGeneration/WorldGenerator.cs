@@ -11,11 +11,12 @@ public class WorldGenerator
 {
     public const float HillThreshold = 0.76f;
     public const float MountainThreshold = 0.9f;
-    public const float MaxTemperature = 35;
-    public const float MinTemperature = -30;
+    public const float MaxTemperature = 50;
+    public const float MinTemperature = -50;
     public const float MaxRainfall = 3500;
     public const float MinRainfall = 50;
     public const int WorldHeight = 10000;
+    [IgnoreMember] CompressedTexture2D earthHeightmap = GD.Load<CompressedTexture2D>("res://Sprites/earth_heightmap.jpg");
     [Key(0)]
     public Vector2I WorldSize { get; set; } = new Vector2I(360, 180) ;
     [IgnoreMember]
@@ -25,11 +26,11 @@ public class WorldGenerator
     [Key(1)]
     public float WorldMult { get; set; } = 3f;
     [Key(2)]
-    public float SeaLevel { get; set; } = 0.6f;
+    public float SeaLevel { get; set; } = 0.0001f;
     [Key(3)]
     public int Seed { get; set; } = 1;
     [Key(4)]
-    public int continents { get; set; } = 12;
+    public int continents { get; set; } = 6;
     [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
     [IgnoreMember] public TerrainTile[,] tiles;
     [Key(5)]
@@ -40,6 +41,8 @@ public class WorldGenerator
     public float[,] TempMap { get; set; } 
     [Key(8)]
     public string[,] BiomeMap { get; set; } 
+    [Key(9)]
+    public Vector2[,] WindVelMap { get; set; } 
     [IgnoreMember] public Random rng;
     [IgnoreMember]
     public bool TempDone;
@@ -52,7 +55,7 @@ public class WorldGenerator
     [IgnoreMember]
     public bool WorldExists = false;
     [IgnoreMember]
-    public int Stage;
+    public WorldGenStage Stage;
 
     public void GenerateWorld()
     {
@@ -80,7 +83,7 @@ public class WorldGenerator
         ulong startTime = Time.GetTicksMsec();
         try
         {
-            HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
+            HeightMap = new HeightmapGenerator().GetHeightMapFromImage(this, earthHeightmap.GetImage());//GenerateHeightmap(this);
         }
         catch (Exception e)
         {
@@ -88,11 +91,26 @@ public class WorldGenerator
         }
         
         GD.Print("Heightmap Generation Finished After " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        Stage++;
+        Stage = WorldGenStage.WIND;
+        try
+        {
+            WindVelMap = new WindGenerator().GeneratePrevailingWinds(this);
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        Stage = WorldGenStage.TEMPERATURE;
         TempMap = new TempmapGenerator().GenerateTempMap(1f, this);
-        Stage++;
-        RainfallMap = new RainfallMapGenerator().GenerateRainfallMap(2f, this);
-        Stage++;
+        Stage = WorldGenStage.RAINFALL;
+        try
+        {
+            RainfallMap = new RainfallMapGenerator().GenerateRainfallMap(2f, this, false);
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        
+        Stage = WorldGenStage.BIOMES;
         //HydroMap = new HydrologyGenerator().GenerateHydrologyMap();
         RiverGenerator riverGenerator = new RiverGenerator()
         {
@@ -103,10 +121,18 @@ public class WorldGenerator
             minRiverHeight = 0.7f,
             riverMustEndInWater = true
         };
-        BiomeMap = new BiomeGenerator().GenerateBiomes(this);
+
+        try
+        {
+            BiomeMap = new BiomeGenerator().GenerateBiomes(this);
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        Stage = WorldGenStage.RIVERS;
         riverGenerator.RunRiverGeneration(this);
         //GD.Print("Worldgen Started");
-        Stage++;
+        Stage = WorldGenStage.FINISHING;
         // TODO: Add water flow simulations
     }
     public void FinishWorldgen()
@@ -127,7 +153,7 @@ public class WorldGenerator
         {
             return float.NaN;
         }
-        return MinRainfall + Mathf.Pow(value, 1.2f) * (MaxRainfall - MinRainfall);
+        return MinRainfall + Mathf.Pow(value, 1f) * (MaxRainfall - MinRainfall);
     }
     public float GetUnitElevation(float value)
     {
@@ -270,18 +296,50 @@ public class WorldGenerator
                             baseColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
                         }
                         image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
-                        break;           
+                        break;  
+                    case TerrainMapMode.DEBUG_RAINFALL:
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(0,0,1), new Color(1,1,0)], RainfallMap[x,y]);
+                        baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
+                        if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
+                        {
+                            baseColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
+                        }
+                        image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
+                        break;      
+                    case TerrainMapMode.DEBUG_WIND:
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(1,0,0)], WindVelMap[x,y].Length()/8.6f);
+                        baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
+                        if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
+                        {
+                            baseColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(1f - HeightMap[x, y] / SeaLevel, 0f, 1f));
+                        }
+                        image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
+                        break;        
                 }
             }
         }
         return image;
     }
 }
-
+public enum WorldGenStage
+{
+    CONTINENTS,
+    MEASURING,
+    TECTONICS,
+    EROSION,
+    WIND,
+    TEMPERATURE,
+    RAINFALL,
+    BIOMES,
+    RIVERS,
+    FINISHING
+}
 public enum TerrainMapMode{
     HEIGHTMAP,
     HEIGHTMAP_REALISTIC,
     REALISTIC,
     DEBUG_PLATES,
-    DEBUG_COAST
+    DEBUG_COAST,
+    DEBUG_RAINFALL,
+    DEBUG_WIND
 }

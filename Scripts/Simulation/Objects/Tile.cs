@@ -22,12 +22,22 @@ public class Tile
 	{
 		return terrainType == TerrainType.LAND || terrainType == TerrainType.MOUNTAINS || terrainType == TerrainType.HILLS;
 	}
+	public bool IsWater()
+	{
+		return terrainType == TerrainType.DEEP_WATER || terrainType == TerrainType.SHALLOW_WATER || terrainType == TerrainType.RIVER;
+	}
+	public bool IsOcean()
+	{
+		return terrainType == TerrainType.DEEP_WATER || terrainType == TerrainType.SHALLOW_WATER;
+	}
 }
 public enum TerrainType
 {
-	LAND,
-	WATER,
 	ICE,
+	DEEP_WATER,
+	SHALLOW_WATER,
+	RIVER,
+	LAND,
 	HILLS,
 	MOUNTAINS,
 	

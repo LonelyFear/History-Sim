@@ -20,14 +20,16 @@ public class TempmapGenerator
             {
                 float latitudeFactor = 1f - (Mathf.Abs(y - (world.WorldSize.Y / 2f)) / (world.WorldSize.Y / 2f));
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
-                map[x, y] = Mathf.Lerp(Mathf.Pow(tempCurve.Sample(latitudeFactor), 2.5f), noiseValue, 0.15f);
-                float elevationAboveSeaLevel = (world.HeightMap[x, y] - world.SeaLevel) / (1f - world.SeaLevel);
-                float heightFactor = 0.446f * elevationAboveSeaLevel;
-                if (heightFactor > 0)
+                
+                map[x,y] = Mathf.Lerp(Mathf.InverseLerp(WorldGenerator.MinTemperature, WorldGenerator.MaxTemperature, tempCurve.Sample(latitudeFactor)), noiseValue, 0.15f);
+
+                float heightFactor = 6.5f * (world.GetUnitElevation(world.HeightMap[x, y])/1000f);
+                if (world.GetUnitElevation(world.HeightMap[x, y]) > 0)
                 {
-                    map[x, y] -= heightFactor;
+                    map[x, y] -= Mathf.InverseLerp(0, WorldGenerator.MaxTemperature + Mathf.Abs(WorldGenerator.MinTemperature), heightFactor);
                 }
-                map[x, y] = Mathf.Clamp(map[x, y], 0, 1);
+
+                map[x, y] = Mathf.Clamp(map[x,y], 0, 1);
                 averageTemp += world.GetUnitTemp(map[x, y]);
             }
         }

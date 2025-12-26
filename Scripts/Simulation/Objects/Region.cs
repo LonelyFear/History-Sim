@@ -39,7 +39,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float avgRainfall { get; set; }
     [IgnoreMember] public float avgElevation { get; set; }
     [Key(25)] public int landCount { get; set; }
-    [Key(29)] public int waterCount { get; set; }
+    [Key(26)] public TerrainType terrainType { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
     [Key(27)] public ulong occupierID { get; set; }
     [IgnoreMember] public State owner { get; set; } = null;
@@ -86,7 +86,8 @@ public class Region : PopObject, ISaveable
     {
         name = NameGenerator.GenerateRegionName();
         landCount = 0;
-        waterCount = 0;
+        int waterCount = 0;
+        Dictionary<TerrainType, int> terrainTypes = [];
         for (int x = 0; x < SimManager.tilesPerRegion; x++)
         {
             for (int y = 0; y < SimManager.tilesPerRegion; y++)
@@ -97,7 +98,12 @@ public class Region : PopObject, ISaveable
                 avgRainfall += tile.moisture;
                 avgElevation += tile.elevation;
 
-                if (tile.terrainType == TerrainType.WATER)
+                if (!terrainTypes.TryAdd(tile.terrainType, 1))
+                {
+                    terrainTypes[tile.terrainType]++;
+                }
+                
+                if (tile.IsWater())
                 {
                     waterCount++;
                 }
@@ -113,9 +119,27 @@ public class Region : PopObject, ISaveable
                 }
             }
         }
+        terrainType = TerrainType.LAND;
         if (waterCount == 16)
         {
             isWater = true;
+            terrainType = TerrainType.DEEP_WATER;
+            if (terrainTypes.ContainsKey(TerrainType.SHALLOW_WATER))
+            {
+                terrainType = TerrainType.SHALLOW_WATER;
+            }
+        }
+        if (terrainTypes.TryGetValue(TerrainType.ICE, out int ice) && ice > 1 && landCount == 0)
+        {
+            terrainType = TerrainType.ICE;
+        }
+        if (terrainTypes.TryGetValue(TerrainType.HILLS, out int hillCount) && hillCount > 1)
+        {
+            terrainType = TerrainType.HILLS;
+        }
+        if (terrainTypes.TryGetValue(TerrainType.MOUNTAINS, out int mountainCount) && mountainCount > 1)
+        {
+            terrainType = TerrainType.MOUNTAINS;
         }
         navigability /= landCount;
         avgTemperature /= tiles.Length;

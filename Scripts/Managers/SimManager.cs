@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
@@ -212,12 +213,12 @@ public class SimManager
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
                 
-                //GD.Print(worldGenerator);
-                newTile.biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
+                Biome biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
+                newTile.biome = biome != null ? biome : AssetManager.GetBiome("rock");
+                
                 newTile.temperature = worldGenerator.GetUnitTemp(worldGenerator.TempMap[x, y]);
                 newTile.moisture = worldGenerator.GetUnitRainfall(worldGenerator.RainfallMap[x, y]);
                 newTile.elevation = worldGenerator.GetUnitElevation(worldGenerator.HeightMap[x, y]);
-
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
                 newTile.survivalbility = newTile.biome.survivability;
@@ -228,10 +229,17 @@ public class SimManager
                         newTile.terrainType = TerrainType.LAND;
                         break;
                     case "water":
-                        newTile.terrainType = TerrainType.WATER;
-                        if (newTile.biome.id != "river")
+                        if (newTile.biome.id == "river")
                         {
-                            newTile.renderOverlay = false;
+                            newTile.terrainType = TerrainType.RIVER;
+                            break;
+                        }
+
+                        newTile.renderOverlay = false;
+                        newTile.terrainType = TerrainType.DEEP_WATER;
+                        if (newTile.elevation > -800f)
+                        {
+                            newTile.terrainType = TerrainType.SHALLOW_WATER;
                         }
                         break;
                     default:
@@ -259,13 +267,13 @@ public class SimManager
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0) || newTile.coastal || newTile.terrainType == TerrainType.WATER)
+                        if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0) || newTile.coastal || newTile.IsWater())
                         {
                             continue;
                         }
                         int nx = Mathf.PosMod(x + dx, worldSize.X);
                         int ny = Mathf.PosMod(y + dy, worldSize.Y);
-                        if (AssetManager.GetBiome(worldGenerator.BiomeMap[nx, ny]).type == "water")
+                        if (newTile.biome.type == "water")
                         {
                             newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
                             newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);
@@ -306,6 +314,10 @@ public class SimManager
                 }
             }
         }
+    }
+    public void GenerateSeaZones()
+    {
+        
     }
     void AssignSimManager()
     {

@@ -112,11 +112,9 @@ public partial class ObjectInfo : Control
 
                         specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand / region.landCount).ToString("0.0%") + "\n";
                         specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");
-                        /*
-                        specialLabel.Text = "Temperature: " + region.avgTemperature.ToString("0.0C") + "\n";
-                        specialLabel.Text += "Rainfall: " + region.avgRainfall.ToString("#,###0 mm") + "\n";
-                        specialLabel.Text += "Elevation: " + region.avgElevation.ToString("#,###0 meters");
-                        */
+                        specialLabel.Text = "Average Temperature: " + region.avgTemperature.ToString("0.0C") + "\n";
+                        specialLabel.Text += "Average Rainfall: " + region.avgRainfall.ToString("#,###0 mm") + "\n";
+                        specialLabel.Text += "Average Elevation: " + region.avgElevation.ToString("#,###0 meters");
                         break;
                     case ObjectType.CULTURE:
                         populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
