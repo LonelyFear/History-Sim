@@ -9,8 +9,8 @@ public delegate void WorldgenFinished();
 [Serializable]
 public class WorldGenerator
 {
-    public const float HillThreshold = 0.76f;
-    public const float MountainThreshold = 0.9f;
+    public const int HillThreshold = 800;
+    public const int MountainThreshold = 2000;
     public const float MaxTemperature = 50;
     public const float MinTemperature = -50;
     public const float MaxRainfall = 3500;
