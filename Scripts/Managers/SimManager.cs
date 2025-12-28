@@ -216,9 +216,6 @@ public class SimManager
                 Biome biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
                 newTile.biome = biome != null ? biome : AssetManager.GetBiome("rock");
                 
-                newTile.temperature = worldGenerator.TempMap[x, y];
-                newTile.moisture = worldGenerator.RainfallMap[x, y];
-                newTile.elevation = worldGenerator.HeightMap[x, y];
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
                 newTile.survivalbility = newTile.biome.survivability;
@@ -237,7 +234,7 @@ public class SimManager
 
                         newTile.renderOverlay = false;
                         newTile.terrainType = TerrainType.DEEP_WATER;
-                        if (newTile.elevation > -800f)
+                        if (worldGenerator.HeightMap[x,y] > -800f)
                         {
                             newTile.terrainType = TerrainType.SHALLOW_WATER;
                         }

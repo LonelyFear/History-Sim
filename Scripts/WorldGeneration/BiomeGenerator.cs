@@ -12,9 +12,9 @@ public class BiomeGenerator
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
                 Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
-                float temp = world.TempMap[x, y];
+                float temp = world.GetAverageAnnualTemp(x,y);
                 float elevation = world.HeightMap[x, y];
-                float moist = world.RainfallMap[x, y];
+                float moist = world.GetAnnualRainfall(x,y);
                 Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
 
                 foreach (Biome biome in AssetManager.biomes.Values)

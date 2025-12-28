@@ -36,13 +36,20 @@ public class WorldGenerator
     [Key(5)]
     public int[,] HeightMap { get; set; } 
     [Key(6)]
-    public float[,] RainfallMap { get; set; } 
+    public float[,] SummerRainfallMap { get; set; } 
+    [Key(67)]
+    public float[,] WinterRainfallMap { get; set; } 
+
     [Key(7)]
-    public float[,] TempMap { get; set; } 
+    public float[,] SummerTempMap { get; set; } 
+    [Key(77)] public float[,] WinterTempMap { get; set; } 
+
     [Key(8)]
     public string[,] BiomeMap { get; set; } 
     [Key(9)]
-    public Vector2[,] WindVelMap { get; set; } 
+    public Vector2[,] SummerWindVelMap { get; set; } 
+    [Key(10)]
+    public Vector2[,] WinterWindVelMap { get; set; } 
     [IgnoreMember] public float[,] ContMap { get; set; } 
     [IgnoreMember] public Random rng;
     [IgnoreMember]
@@ -96,19 +103,24 @@ public class WorldGenerator
         Stage = WorldGenStage.WIND;
         try
         {
-            WindVelMap = new WindGenerator().GeneratePrevailingWinds(this);
+            new WindGenerator().GeneratePrevailingWinds(this, out Vector2[,] sv, out Vector2[,] wv);
+            SummerWindVelMap = sv;
+            WinterWindVelMap = wv;
         } catch (Exception e)
         {
             GD.PushError(e);
         }
         Stage = WorldGenStage.TEMPERATURE;
-        TempMap = new TempmapGenerator().GenerateTempMap(1f, this, out float[,] c);
-        ContMap = c;
+        new TempmapGenerator().GenerateTempMap(1f, this, out float[,] st, out float[,] wt);
+        SummerTempMap = st;
+        WinterTempMap = wt;
 
-        Stage = WorldGenStage.RAINFALL;
+        Stage = WorldGenStage.SUMMER_RAINFALL;
         try
         {
-            RainfallMap = new RainfallMapGenerator().GenerateRainfallMap(2f, this, true);
+            new RainfallMapGenerator().GenerateRainfallMap(this, out float[,] sr, out float[,] wr);
+            SummerRainfallMap = sr;
+            WinterRainfallMap = wr;
         } catch (Exception e)
         {
             GD.PushError(e);
@@ -142,6 +154,36 @@ public class WorldGenerator
     public void FinishWorldgen()
     {
         worldgenFinishedEvent.Invoke();
+    }
+    public float GetTempForMonth(int x, int y, int month)
+    {
+        float phase = (month / 12f) * Mathf.Pi * 2f;
+        float seasonal = (Mathf.Cos(phase - Mathf.Pi) + 1f) * 0.5f;
+        return Mathf.Lerp(WinterTempMap[x,y], SummerTempMap[x,y], seasonal);
+    }
+    public float GetAverageAnnualTemp(int x, int y)
+    {
+        float annualTemp = 0;
+        for (int i = 0; i < 12; i++)
+        {
+            annualTemp += GetTempForMonth(x, y, i);
+        }
+        return annualTemp / 12f;
+    }
+    public float GetRainfallForMonth(int x, int y, int month)
+    {
+        float phase = (month / 12f) * Mathf.Pi * 2f;
+        float seasonal = (Mathf.Cos(phase - Mathf.Pi) + 1f) * 0.5f;
+        return Mathf.Lerp(WinterRainfallMap[x,y], SummerRainfallMap[x,y], seasonal);        
+    }
+    public float GetAnnualRainfall(int x, int y)
+    {
+        float annualRainfall = 0;
+        for (int i = 0; i < 12; i++)
+        {
+            annualRainfall += GetRainfallForMonth(x, y, i);
+        }
+        return annualRainfall;
     }
     /*
     public float GetUnitTemp(float value)
@@ -311,7 +353,7 @@ public class WorldGenerator
                         image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
                         break;  
                     case TerrainMapMode.DEBUG_RAINFALL:
-                        pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(0,0,1), new Color(1,1,0)], RainfallMap[x,y]/3500f);
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(0,0,1), new Color(1,1,0)], SummerRainfallMap[x,y]/3500f);
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {
@@ -320,7 +362,7 @@ public class WorldGenerator
                         image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
                         break;      
                     case TerrainMapMode.DEBUG_WIND:
-                        pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(1,0,0)], WindVelMap[x,y].Length()/8.6f);
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(1,0,0)], SummerWindVelMap[x,y].Length()/8.6f);
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {
@@ -329,7 +371,7 @@ public class WorldGenerator
                         image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
                         break;   
                     case TerrainMapMode.DEBUG_TEMP:
-                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(1,1,1), new Color(1,0,0)], Mathf.InverseLerp(-40, 40, TempMap[x,y]));
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(1,1,1), new Color(1,0,0)], Mathf.InverseLerp(-40, 40, SummerTempMap[x,y]));
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {
@@ -337,8 +379,8 @@ public class WorldGenerator
                         }
                         image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
                         break;        
-                    case TerrainMapMode.DEBUG_CONTINENTIALITY:
-                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(1,1,0)], ContMap[x,y]);
+                    case TerrainMapMode.DEBUG_LATITUDE:
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(1,1,0)], y / (float)WorldSize.Y);
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {
@@ -360,7 +402,8 @@ public enum WorldGenStage
     EROSION,
     WIND,
     TEMPERATURE,
-    RAINFALL,
+    SUMMER_RAINFALL,
+    WINTER_RAINFALL,
     BIOMES,
     RIVERS,
     FINISHING
@@ -374,5 +417,5 @@ public enum TerrainMapMode{
     DEBUG_RAINFALL,
     DEBUG_WIND,
     DEBUG_TEMP,
-    DEBUG_CONTINENTIALITY
+    DEBUG_LATITUDE
 }

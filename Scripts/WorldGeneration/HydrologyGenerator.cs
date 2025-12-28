@@ -4,6 +4,7 @@ public class HydrologyGenerator()
 {
     Dictionary<Vector2I, Vector2I> flowDirMap;
     float[,] waterFlow;
+    /*
     public void CalculateFlowDirection(WorldGenerator world)
     {
         flowDirMap = new Dictionary<Vector2I, Vector2I>();
@@ -71,4 +72,5 @@ public class HydrologyGenerator()
         CalculateFlow(world);
         return waterFlow;
     }
+    */
 }

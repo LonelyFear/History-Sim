@@ -6,25 +6,18 @@ using Godot;
 
 public class RainfallMapGenerator
 {
-    float[,] map;
     float[,] moistureMap;
-    float[,] rainfallMap;
     WorldGenerator world;
     Curve precipitationCurve = GD.Load<Curve>("res://Curves/Climate/PrecipitationCurve.tres");
     Curve evaporationCurve = GD.Load<Curve>("res://Curves/EvaporationCurve.tres");
     Curve simpleEvaporationCurve = GD.Load<Curve>("res://Curves/Climate/SimpleEvaporationCurve.tres");
-    public float[,] GenerateRainfallMap(float scale, WorldGenerator world, bool complexRainfallGeneration = false){
+    public void GenerateRainfallMap(WorldGenerator world, out float[,] summerRainfallMap, out float[,] winterRainfallMap){
         this.world = world;
-        if (!complexRainfallGeneration)
-        {
-            return GenerateSimpleMap(scale);
-        }
-        return GenerateComplexMap(scale);
+        GenerateComplexMap(out summerRainfallMap, out winterRainfallMap);
     }
-    float[,] GenerateComplexMap(float scale)
+    void GenerateComplexMap(out float[,] summerRainfallMap, out float[,] winterRainfallMap)
     {
         moistureMap = new float[world.WorldSize.X, world.WorldSize.Y];
-        rainfallMap = new float[world.WorldSize.X, world.WorldSize.Y];
 
         FastNoiseLite noise = new FastNoiseLite();
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
@@ -32,18 +25,20 @@ public class RainfallMapGenerator
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(world.rng.Next());
         // Evaporation
-        RunRainfallPass(50);
-        return rainfallMap;         
+        summerRainfallMap = RunRainfallPass(50, false);
+        world.Stage = WorldGenStage.WINTER_RAINFALL;
+        winterRainfallMap = RunRainfallPass(50, true);      
     }
-    void RunRainfallPass(int stepCount)
+    float[,] RunRainfallPass(int stepCount, bool winter)
     {
+        float[,] map = new float[world.WorldSize.X, world.WorldSize.Y];
         float initialMoisture = 0;
         float moistureRatio = 0;
         for (int x = 0; x < world.WorldSize.X; x++)
         {
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
-                moistureMap[x,y] = GetEvaporation(x,y);
+                moistureMap[x,y] = GetEvaporation(x,y, winter);
                 initialMoisture += moistureMap[x,y];
             }
         }
@@ -56,8 +51,8 @@ public class RainfallMapGenerator
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
 
-                    Vector2 vel = -world.WindVelMap[x,y];
-
+                    Vector2 vel = winter ? -world.WinterWindVelMap[x,y] : -world.SummerWindVelMap[x,y];
+                    
                     float sampleX = x + vel.X;
                     float sampleY = y + vel.Y;
 
@@ -95,10 +90,10 @@ public class RainfallMapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(world.TempMap[x,y]);
+                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y]);
                     //if (world.HeightMap[x,y] < world.SeaLevel) continue;
                     moistureMap[x,y] -= precipitation;
-                    rainfallMap[x,y] += precipitation;
+                    map[x,y] += precipitation;
                     stepMoisture += moistureMap[x,y];
                 }
             }
@@ -117,32 +112,33 @@ public class RainfallMapGenerator
                         for (int dy = -1; dy <= 1; dy++)
                         {
                             Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, world.WorldSize.X), Mathf.PosMod(y + dy, world.WorldSize.Y));
-                            rainfallMap[x,y] = Mathf.Lerp(rainfallMap[x,y], rainfallMap[testPos.X, testPos.Y], 0.3f);
+                            map[x,y] = Mathf.Lerp(map[x,y], map[testPos.X, testPos.Y], 0.3f);
                         }
                     }
                 }
             }
-        }        
+        }     
+        return map;   
     }
-    float GetEvaporation(int x, int y)
+    float GetEvaporation(int x, int y, bool winter)
     {
-        double PET = GetPET(x,y);
+        double PET = GetPET(x,y, winter);
         if (world.HeightMap[x,y] < world.SeaLevel)
         {
             //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
-            return ((float)PET) * 12f;
+            return (float)PET;
         }
         //float latitudeFactor = Mathf.Abs((y / world.WorldSize.Y) - 0.5f) * 2f;
         float landEvaporation = 160f * evaporationCurve.Sample(y / (float)world.WorldSize.Y);
-        return Mathf.Min((float)PET, landEvaporation) * 12f;
-        //return (float)PET * evaporationCurve.Sample(y / (float)world.WorldSize.Y) * 12f;
+        //return Mathf.Min((float)PET, landEvaporation) * 12f;
+        return (float)PET * evaporationCurve.Sample(y / (float)world.WorldSize.Y);
     }
-    double GetPET(int x, int y)
+    double GetPET(int x, int y, bool winter)
     {
         float latitudeFactor = y / (float)world.WorldSize.Y;
 
         double dayLength = 12.0;
-        double temp = Math.Clamp(world.TempMap[x,y], 0.0, 10000.0);
+        double temp = Math.Clamp(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y], 0.0, 10000.0);
         double PET;
         /*
         if (temp > 26.5)
@@ -155,7 +151,7 @@ public class RainfallMapGenerator
         double[] monthlyMeanTemperatures = new double[12];
         for (int i = 0; i < 12; i++)
         {
-            double monthTemp = temp;
+            double monthTemp = world.GetTempForMonth(x, y, i);
             monthlyMeanTemperatures[i] = Math.Pow(monthTemp/5.0, 1.514);
         }
         double heatIndex = monthlyMeanTemperatures.Sum();
@@ -172,6 +168,7 @@ public class RainfallMapGenerator
         }
         return PET;
     }
+    /*
     float[,] GenerateSimpleMap(float scale)
     {
         map = new float[world.WorldSize.X, world.WorldSize.Y];
@@ -207,4 +204,5 @@ public class RainfallMapGenerator
         }
         return map;        
     }
+    */
 }

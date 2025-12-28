@@ -3,33 +3,51 @@ using System;
 
 public class TempmapGenerator
 {
-    Curve tempCurve = GD.Load<Curve>("res://Curves/Climate/TempCurve.tres");
-    Curve oceanCurve = GD.Load<Curve>("res://Curves/Climate/OceanicTempCurve.tres");
+    Curve tempCurve = GD.Load<Curve>("res://Curves/Climate/SeasonalTempCurve.tres");
+    Curve oceanCurve = GD.Load<Curve>("res://Curves/Climate/SeasonalOceanicTempCurve.tres");
     Curve continentialityCurve = GD.Load<Curve>("res://Curves/ContinentialityCurve.tres");
     WorldGenerator world;
     float[,] map;
-    public float[,] GenerateTempMap(float scale, WorldGenerator world, out float[,] continentialityMap)
+    public float[,] GenerateTempMap(float scale, WorldGenerator world, out float[,] summerMap, out float[,] winterMap)
     {
         this.world = world;
         map = new float[world.WorldSize.X, world.WorldSize.Y];
-        continentialityMap = new float[world.WorldSize.X, world.WorldSize.Y];
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+
+        summerMap = GenerateTempMap(false, scale);
+        winterMap = GenerateTempMap(true, scale);
+        return map;
+    }
+    float[,] GenerateTempMap(bool winter, float scale)
+    {
+        map = new float[world.WorldSize.X, world.WorldSize.Y];
+        FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
+        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        noise.SetFractalOctaves(8);
+        noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+
         for (int x = 0; x < world.WorldSize.X; x++)
         {
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
-                float latitudeFactor = 1f - (Mathf.Abs((y / (float)world.WorldSize.Y) - 0.5f) * 2f);
+                float latitudeFactor = y / (float)world.WorldSize.Y;
                 float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
 
                 float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, 0.15f));
                 float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, 0.15f));
+                if (winter)
+                {
+                    tempValue = tempCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, 0.15f));
+                    oceanValue = oceanCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, 0.15f));                    
+                }
+                
                 //map[x, y] = tempValue;
-                float continentiality = CalculateContinentiality(x,y);
-                continentialityMap[x,y] = continentiality;
+                float continentiality = CalculateContinentiality(x,y, winter);
                 map[x, y] = Mathf.Lerp(oceanValue, tempValue, continentiality);
+
                 float heightFactor = 6.5f * (world.HeightMap[x, y]/1000f);
                 if (world.HeightMap[x, y] > 0)
                 {
@@ -40,7 +58,7 @@ public class TempmapGenerator
 
         return map;
     }
-    public float CalculateContinentiality(int x, int y)
+    public float CalculateContinentiality(int x, int y, bool winter)
     {
         int stepsTaken = 0;
 
@@ -48,7 +66,7 @@ public class TempmapGenerator
         while (stepsTaken < 50)
         {
             stepsTaken++;
-            Vector2 windVel = GetWindVelocity(x, y);
+            Vector2 windVel = GetWindVelocity(x, y, winter);
             currentPos -= windVel;
             float sampleX = currentPos.X;
             float sampleY = currentPos.Y;
@@ -77,7 +95,7 @@ public class TempmapGenerator
         }
         return Mathf.Clamp(continentialityCurve.Sample(stepsTaken), 0, 1);
     }
-    Vector2 GetWindVelocity(float x, float y)
+    Vector2 GetWindVelocity(float x, float y, bool winter)
     {
         float sampleX = x;
         float sampleY = y;
@@ -94,9 +112,9 @@ public class TempmapGenerator
 
         float tx = sampleX - Mathf.Floor(sampleX);
         float ty = sampleY - Mathf.Floor(sampleY);
-
-        Vector2 bottomX = world.WindVelMap[bottomCorner.X, bottomCorner.Y].Lerp(world.WindVelMap[topCorner.X, bottomCorner.Y], tx);
-        Vector2 topX = world.WindVelMap[bottomCorner.X, topCorner.Y].Lerp(world.WindVelMap[topCorner.X, topCorner.Y], tx);  
+        Vector2[,] windVelMap = winter ? world.WinterWindVelMap : world.SummerWindVelMap;
+        Vector2 bottomX = windVelMap[bottomCorner.X, bottomCorner.Y].Lerp(windVelMap[topCorner.X, bottomCorner.Y], tx);
+        Vector2 topX = windVelMap[bottomCorner.X, topCorner.Y].Lerp(windVelMap[topCorner.X, topCorner.Y], tx);  
         return bottomX.Lerp(topX, ty);      
     }
     /*

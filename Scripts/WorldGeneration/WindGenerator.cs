@@ -8,12 +8,17 @@ public class WindGenerator()
     Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/PrevailingWindCurve.tres");
     Curve windSpeedCurve = GD.Load<Curve>("res://Curves/WindSpeedCurve.tres");
     WorldGenerator world;
-    public Vector2[,] GeneratePrevailingWinds(WorldGenerator world)
+    public void GeneratePrevailingWinds(WorldGenerator world, out Vector2[,] summerMap, out Vector2[,] winterMap)
     {
         this.world = world;
         worldSize = world.WorldSize;
-        heightMap = world.HeightMap;
+        heightMap = world.HeightMap;       
+        summerMap = GeneratePrevailingWinds(false);
+        winterMap = GeneratePrevailingWinds(true);
 
+    }
+    Vector2[,] GeneratePrevailingWinds(bool winter)
+    {
         Vector2[,] windVectorMap = new Vector2[worldSize.X, worldSize.Y];
         float[,] windDirMap = new float[worldSize.X, worldSize.Y];
         float[,] windSpeedMap = new float[worldSize.X, worldSize.Y];
@@ -40,9 +45,13 @@ public class WindGenerator()
                     windDirMap[x, y] = Mathf.PosMod(180f - dir, 360f);
                 }
                 
-                
-                
-                windSpeedMap[x, y] = 15f * windSpeedCurve.Sample(posY / world.WorldSize.Y);
+                float windMaxSpeed = 10f;
+
+                windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(posY / world.WorldSize.Y);
+                if (winter)
+                {
+                    windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(1f - (posY / world.WorldSize.Y));
+                }
 
                 if (heightMap[x, y] > world.SeaLevel * WorldGenerator.WorldHeight)
                 {

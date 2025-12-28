@@ -19,7 +19,7 @@ public partial class StreamlineRenderer : Node2D
 				{
 					for (int ay = 0; ay < sampleDist; ay++)
 					{
-						wind += world.WindVelMap[(x/sampleDist * sampleDist) + ax, (y/sampleDist * sampleDist) + ay];
+						wind += world.SummerWindVelMap[(x/sampleDist * sampleDist) + ax, (y/sampleDist * sampleDist) + ay];
 					}
 				}
 				wind /= sampleDist * sampleDist;

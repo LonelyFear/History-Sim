@@ -77,7 +77,7 @@ public partial class LoadingScreen : Control
         }
 
         float tileCount = generator.WorldSize.X * generator.WorldSize.Y;
-        GetNode<TextureProgressBar>("ProgressBar").Value = (int)generator.Stage/9f * 100;
+        GetNode<TextureProgressBar>("ProgressBar").Value = (int)generator.Stage/10f * 100;
         splash.Text = generator.Stage switch
         {
             WorldGenStage.CONTINENTS => "Forming Continents...",
@@ -86,7 +86,8 @@ public partial class LoadingScreen : Control
             WorldGenStage.EROSION => "Eroding Continents...",
             WorldGenStage.WIND => "Blowing Winds...",
             WorldGenStage.TEMPERATURE => "Heating Planet...",
-            WorldGenStage.RAINFALL => "Forming Clouds...",
+            WorldGenStage.SUMMER_RAINFALL => "Forming Clouds...",
+            WorldGenStage.WINTER_RAINFALL => "Snowing Snow...",
             WorldGenStage.BIOMES => "Seeding Biomes...",
             WorldGenStage.RIVERS => "Carving Rivers...",
             _ => "Settling World...",

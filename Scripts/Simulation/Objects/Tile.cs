@@ -6,9 +6,6 @@ public class Tile
 {
 	public long maxPopulation;
 	public Biome biome;
-	public float moisture;
-	public float temperature;
-	public float elevation;
 	public float navigability;
 	public float arability;
 	public float survivalbility;

@@ -11,6 +11,7 @@ public partial class MapManager : Node2D
     [Export] BorderRenderer borderRenderer;
     Task mapmodeTask = null;
     SimManager simManager;
+    TimeManager timeManager;
     Vector2I worldSize;
     Sprite2D regionOverlay;
     ImageTexture regionTexture;
@@ -41,6 +42,7 @@ public partial class MapManager : Node2D
 	}
     void InitMapManager() {
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        timeManager = simManager.timeManager;
         simManager.mapManager = this;
         Scale = simManager.terrainMap.Scale * (SimManager.tilesPerRegion/(float)regionResolution);
         worldSize = SimManager.worldSize;
@@ -394,6 +396,7 @@ public partial class MapManager : Node2D
                     color = new Color(0, 0, 0, 1);
                 }     
                 break;
+            /*
             case MapModes.POPS:
                 if (region.habitable && region.pops.Count > 0)
                 {
@@ -404,6 +407,7 @@ public partial class MapManager : Node2D
                     color = new Color(0, 0, 0, 1);
                 }
                 break;
+            */
             case MapModes.TERRAIN_TYPE:
                 switch (region.terrainType)
                 {
@@ -432,6 +436,16 @@ public partial class MapManager : Node2D
                 {
                     color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                 }
+                break;
+            case MapModes.TEMPERATURE:
+                float opacity = 0.75f;
+                color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,1,1, opacity), new Color(1,0, 0, opacity)], 
+                Mathf.InverseLerp(-40, 40, region.avgMonthlyTemps[timeManager.GetMonth() - 1]));
+                break;
+            case MapModes.RAINFALL:
+                opacity = 0.75f;
+                color = Utility.MultiColourLerp([new Color(0,0,0, opacity), new Color(0,0,1, opacity), new Color(1,1,0, opacity)], 
+                Mathf.InverseLerp(0, 170, region.avgMonthlyRainfall[timeManager.GetMonth() - 1]));
                 break;
         }
         if (hoveredRegion == region){
@@ -499,6 +513,7 @@ public enum MapModes {
     WEALTH,
     TRADE_WEIGHT,
     TERRAIN_TYPE,
-    POPS,
+    TEMPERATURE,
+    RAINFALL,
     NONE
 }
