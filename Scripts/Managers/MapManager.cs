@@ -156,7 +156,7 @@ public partial class MapManager : Node2D
             switch (mapMode)
             {
                 case MapModes.REALM:
-                    if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
+                    if (!hoveredRegion.isWater)
                     {
                         newSelected = hoveredRegion;
                         if (hoveredState != null)

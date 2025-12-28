@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Security.AccessControl;
 using Godot;
 
@@ -9,8 +10,9 @@ public class RainfallMapGenerator
     float[,] moistureMap;
     float[,] rainfallMap;
     WorldGenerator world;
-    Curve precipitationCurve = GD.Load<Curve>("res://Curves/PrecipitationCurve.tres");
+    Curve precipitationCurve = GD.Load<Curve>("res://Curves/Climate/PrecipitationCurve.tres");
     Curve evaporationCurve = GD.Load<Curve>("res://Curves/EvaporationCurve.tres");
+    Curve simpleEvaporationCurve = GD.Load<Curve>("res://Curves/Climate/SimpleEvaporationCurve.tres");
     public float[,] GenerateRainfallMap(float scale, WorldGenerator world, bool complexRainfallGeneration = false){
         this.world = world;
         if (!complexRainfallGeneration)
@@ -30,16 +32,19 @@ public class RainfallMapGenerator
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(world.rng.Next());
         // Evaporation
-        RunRainfallPass(100);
+        RunRainfallPass(50);
         return rainfallMap;         
     }
     void RunRainfallPass(int stepCount)
     {
+        float initialMoisture = 0;
+        float moistureRatio = 0;
         for (int x = 0; x < world.WorldSize.X; x++)
         {
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
-                moistureMap[x,y] = Mathf.Max(moistureMap[x,y], GetEvaporation(x,y));
+                moistureMap[x,y] = GetEvaporation(x,y);
+                initialMoisture += moistureMap[x,y];
             }
         }
         for (int i = 0; i < stepCount; i++)
@@ -50,7 +55,6 @@ public class RainfallMapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    moistureMap[x,y] += rainfallMap[x,y] * 0.02f * evaporationCurve.Sample(world.TempMap[x,y]);
 
                     Vector2 vel = -world.WindVelMap[x,y];
 
@@ -85,6 +89,7 @@ public class RainfallMapGenerator
                 }
             }
             moistureMap = newMap;
+            float stepMoisture = 0;
             // Precipitation
             for (int x = 0; x < world.WorldSize.X; x++)
             {
@@ -94,12 +99,13 @@ public class RainfallMapGenerator
                     //if (world.HeightMap[x,y] < world.SeaLevel) continue;
                     moistureMap[x,y] -= precipitation;
                     rainfallMap[x,y] += precipitation;
-
-                    rainfallMap[x,y] = Mathf.Clamp(rainfallMap[x,y], 0, 1);
-                    moistureMap[x,y] = Mathf.Clamp(moistureMap[x,y], 0, 1);
+                    stepMoisture += moistureMap[x,y];
                 }
             }
+            moistureRatio = 1f - (stepMoisture/initialMoisture);
+            GD.Print($"Moisture Precipitated After Step {i}: " + moistureRatio.ToString("#0.0%"));
         }
+        GD.Print("Total Moisture Precipitated: " + moistureRatio.ToString("#0.0%"));
         for (int i = 0; i < 3; i++)
         {
             for (int x = 0; x < world.WorldSize.X; x++)
@@ -120,11 +126,51 @@ public class RainfallMapGenerator
     }
     float GetEvaporation(int x, int y)
     {
+        double PET = GetPET(x,y);
         if (world.HeightMap[x,y] < world.SeaLevel)
         {
-            return evaporationCurve.Sample(world.TempMap[x,y]);
+            //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
+            return ((float)PET) * 12f;
         }
-        return 0.02f * evaporationCurve.Sample(world.TempMap[x,y]);
+        //float latitudeFactor = Mathf.Abs((y / world.WorldSize.Y) - 0.5f) * 2f;
+        float landEvaporation = 160f * evaporationCurve.Sample(y / (float)world.WorldSize.Y);
+        return Mathf.Min((float)PET, landEvaporation) * 12f;
+        //return (float)PET * evaporationCurve.Sample(y / (float)world.WorldSize.Y) * 12f;
+    }
+    double GetPET(int x, int y)
+    {
+        float latitudeFactor = y / (float)world.WorldSize.Y;
+
+        double dayLength = 12.0;
+        double temp = Math.Clamp(world.TempMap[x,y], 0.0, 10000.0);
+        double PET;
+        /*
+        if (temp > 26.5)
+        {
+            PET = (dayLength/12.0) * (-415.85 + (32.24 * temp) - (0.43 * Math.Pow(temp, 2)));
+            return PET;
+        }
+        */
+
+        double[] monthlyMeanTemperatures = new double[12];
+        for (int i = 0; i < 12; i++)
+        {
+            double monthTemp = temp;
+            monthlyMeanTemperatures[i] = Math.Pow(monthTemp/5.0, 1.514);
+        }
+        double heatIndex = monthlyMeanTemperatures.Sum();
+
+        double a = (6.75e-07 * Math.Pow(heatIndex, 3)) - 
+        (7.71e-05 * Math.Pow(heatIndex, 2)) + 
+        (1.792e-02 * heatIndex) +
+        0.49239;
+
+        PET = 16.0 * (dayLength/12.0) * 1d * Math.Pow(10.0 * temp/heatIndex, a);
+        if (double.IsNaN(PET))
+        {
+            PET = 0;
+        }
+        return PET;
     }
     float[,] GenerateSimpleMap(float scale)
     {

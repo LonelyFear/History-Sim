@@ -44,7 +44,7 @@ public class HeightmapGenerator
     float shelfDepth = 0.05f;
     const float slopeErosionThreshold = 0.1f;
 
-    public int[,] GetHeightMapFromImage(WorldGenerator worldAssigned, Image image)
+    public int[,] UseEarthHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         worldSize = world.WorldSize;
@@ -67,7 +67,7 @@ public class HeightmapGenerator
         }       
         return map;
     }
-    public int[,] ReadBinaryHeightModel(string path, int width, int height)
+    public static int[,] ReadBinaryHeightModel(string path, int width, int height)
     {
         int[,] heightData = new int[width,height];
 
@@ -139,12 +139,11 @@ public class HeightmapGenerator
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.tiles = tiles;
-
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                float seaElevation = WorldGenerator.WorldHeight * world.SeaLevel;
+                int seaElevation = (int)(WorldGenerator.WorldHeight * world.SeaLevel);
                 map[x,y] = (int)((heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation);        
             }
         }

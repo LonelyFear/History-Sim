@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 public partial class LoadingScreen : Control
 {
+    [Export] StreamlineRenderer streamlineRenderer;
     Task task;
     SimNodeManager simNodeManager;
     SimManager sim = new SimManager();
@@ -101,6 +102,8 @@ public partial class LoadingScreen : Control
             try
             {
                 map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
+                streamlineRenderer.world = generator;
+                streamlineRenderer.QueueRedraw();
             } catch (Exception e)
             {
                 GD.PushError(e);

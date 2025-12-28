@@ -217,7 +217,7 @@ public class SimManager
                 newTile.biome = biome != null ? biome : AssetManager.GetBiome("rock");
                 
                 newTile.temperature = worldGenerator.TempMap[x, y];
-                newTile.moisture = worldGenerator.GetUnitRainfall(worldGenerator.RainfallMap[x, y]);
+                newTile.moisture = worldGenerator.RainfallMap[x, y];
                 newTile.elevation = worldGenerator.HeightMap[x, y];
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;

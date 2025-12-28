@@ -14,7 +14,7 @@ public class BiomeGenerator
                 Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
                 float temp = world.TempMap[x, y];
                 float elevation = world.HeightMap[x, y];
-                float moist = world.GetUnitRainfall(world.RainfallMap[x, y]);
+                float moist = world.RainfallMap[x, y];
                 Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
 
                 foreach (Biome biome in AssetManager.biomes.Values)

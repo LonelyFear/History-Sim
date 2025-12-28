@@ -1,6 +1,7 @@
-[gd_scene load_steps=29 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene load_steps=30 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
+[ext_resource type="Script" uid="uid://bwv1j01u212xb" path="res://Scenes/StreamlineRenderer.cs" id="2_fkdbe"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
@@ -56,6 +57,9 @@ theme_override_fonts/font = ExtResource("4_nnt18")
 theme_override_font_sizes/font_size = 62
 text = "Pixel History"
 horizontal_alignment = 1
+
+[node name="StreamlineRenderer" type="Node2D" parent="."]
+script = ExtResource("2_fkdbe")
 
 [node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("borderRenderer")]
 script = ExtResource("7_ewbju")
@@ -613,12 +617,14 @@ text = "Save Simulation"
 
 [node name="Loading" type="CanvasLayer" parent="."]
 
-[node name="Loading Screen" parent="Loading" instance=ExtResource("2_nb51f")]
+[node name="Loading Screen" parent="Loading" node_paths=PackedStringArray("streamlineRenderer") instance=ExtResource("2_nb51f")]
 visible = false
 z_index = 100
+streamlineRenderer = NodePath("../../StreamlineRenderer")
 
 [node name="PlayerCamera" parent="." instance=ExtResource("13_rfjv2")]
 position = Vector2(640, 360)
+limit_enabled = false
 limit_left = 0
 limit_top = 0
 limit_right = 1280
