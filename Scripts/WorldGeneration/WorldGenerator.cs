@@ -54,7 +54,7 @@ public class WorldGenerator
     public Vector2[,] SummerWindVelMap { get; set; } 
     [Key(10)]
     public Vector2[,] WinterWindVelMap { get; set; } 
-    [IgnoreMember] public float[,] ContMap { get; set; } 
+    [IgnoreMember] public float[,] CoastDistMap { get; set; } 
     [IgnoreMember] public Random rng;
     [IgnoreMember]
     public bool TempDone;
@@ -354,7 +354,7 @@ public class WorldGenerator
                         image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
                         break;     
                     case TerrainMapMode.DEBUG_COAST:
-                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0)], Mathf.Clamp(tiles[x, y].coastDist / 10f, 0, 1));
+                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0)], Mathf.Clamp(CoastDistMap[x,y] / 30f, 0, 1));
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(BiomeMap[x, y]).type == "water")
                         {

@@ -53,18 +53,76 @@ public class HeightmapGenerator
         float pixelPerY = 2160 / (float)worldSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
         int[,] realElevation = ReadBinaryHeightModel("Sprites/Earth2014.SUR2014.5min.geod.bin", 4320, 2160);
-        
+        tiles = new TerrainTile[worldSize.X, worldSize.Y];
+
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
+                tiles[x,y] = new TerrainTile()
+                {
+                    pos = new Vector2I(x,y)
+                };
                 int px = (int)(x * pixelPerX);
                 int py = (int)(y * pixelPerY);
                 int flippedPy = (2160 - 1) - py;
-
                 map[x,y] = realElevation[px, flippedPy];
             }
-        }       
+        }    
+
+        PriorityQueue<TerrainTile, int> tilesToCheck = new();
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                        {
+                            continue;
+                        }
+                        Vector2I next = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                        if (map[x,y] < world.SeaLevel * WorldGenerator.WorldHeight)
+                        {
+                            tiles[x,y].coastal = true;
+                            tiles[x,y].coastDist = 0;
+                            tilesToCheck.Enqueue(tiles[x,y], 0);
+                        }
+                    }
+                }
+            }
+        }  
+       
+        HashSet<TerrainTile> measuredTiles = new(worldSize.X * worldSize.Y);
+        world.CoastDistMap = new float[worldSize.X, worldSize.Y];
+        
+        bool fullQueue = true;
+        while (fullQueue)
+        {
+            fullQueue = tilesToCheck.TryDequeue(out TerrainTile currentTile, out int priority);
+            if (!fullQueue) break;
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
+                    TerrainTile neighbor = tiles[next.X, next.Y];              
+                    if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
+                    {
+                        measuredTiles.Add(neighbor);
+                        neighbor.coastDist = currentTile.coastDist + 1;
+                        world.CoastDistMap[neighbor.pos.X, neighbor.pos.Y] = neighbor.coastDist;
+                        tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
+                    }          
+                }
+            }
+        }             
         return map;
     }
     public static int[,] ReadBinaryHeightModel(string path, int width, int height)
@@ -139,12 +197,15 @@ public class HeightmapGenerator
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.tiles = tiles;
+
+        world.CoastDistMap = new float[worldSize.X, worldSize.Y];
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
                 int seaElevation = (int)(WorldGenerator.WorldHeight * world.SeaLevel);
-                map[x,y] = (int)((heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation);        
+                map[x,y] = (int)((heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation);  
+                world.CoastDistMap[x,y] = tiles[x,y].coastDist;      
             }
         }
         return map;
