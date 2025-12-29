@@ -19,6 +19,9 @@ public class RainfallMapGenerator
     {
         moistureMap = new float[world.WorldSize.X, world.WorldSize.Y];
 
+        world.SummerPETMap = new float[world.WorldSize.X, world.WorldSize.Y];
+        world.WinterPETMap = new float[world.WorldSize.X, world.WorldSize.Y];
+
         FastNoiseLite noise = new FastNoiseLite();
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
@@ -40,6 +43,7 @@ public class RainfallMapGenerator
             {
                 moistureMap[x,y] = GetEvaporation(x,y, winter);
                 initialMoisture += moistureMap[x,y];
+
             }
         }
         for (int i = 0; i < stepCount; i++)
@@ -122,7 +126,7 @@ public class RainfallMapGenerator
     }
     float GetEvaporation(int x, int y, bool winter)
     {
-        double PET = GetPET(x,y, winter);
+        double PET = GetPET(world, x,y, winter);
         if (world.HeightMap[x,y] < world.SeaLevel)
         {
             //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
@@ -133,13 +137,15 @@ public class RainfallMapGenerator
         //return Mathf.Min((float)PET, landEvaporation) * 12f;
         return (float)PET * evaporationCurve.Sample(y / (float)world.WorldSize.Y);
     }
-    double GetPET(int x, int y, bool winter)
+    public static double GetPET(WorldGenerator world, int x, int y, bool winter)
     {
         float latitudeFactor = y / (float)world.WorldSize.Y;
 
         double dayLength = 12.0;
         double temp = Math.Clamp(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y], 0.0, 10000.0);
         double PET;
+
+        
         /*
         if (temp > 26.5)
         {
@@ -165,6 +171,14 @@ public class RainfallMapGenerator
         if (double.IsNaN(PET))
         {
             PET = 0;
+        }
+
+        if (winter)
+        {
+            world.WinterPETMap[x,y] = (float)PET;
+        } else
+        {
+            world.SummerPETMap[x,y] = (float)PET;
         }
         return PET;
     }

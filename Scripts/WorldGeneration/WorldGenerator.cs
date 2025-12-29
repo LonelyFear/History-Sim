@@ -37,8 +37,12 @@ public class WorldGenerator
     public int[,] HeightMap { get; set; } 
     [Key(6)]
     public float[,] SummerRainfallMap { get; set; } 
+    [Key(677)]
+    public float[,] SummerPETMap { get; set; } 
     [Key(67)]
     public float[,] WinterRainfallMap { get; set; } 
+    [Key(678)]
+    public float[,] WinterPETMap { get; set; } 
 
     [Key(7)]
     public float[,] SummerTempMap { get; set; } 
@@ -111,7 +115,7 @@ public class WorldGenerator
             GD.PushError(e);
         }
         Stage = WorldGenStage.TEMPERATURE;
-        new TempmapGenerator().GenerateTempMap(1f, this, out float[,] st, out float[,] wt);
+        new TempmapGenerator().GenerateTempMap(this, out float[,] st, out float[,] wt);
         SummerTempMap = st;
         WinterTempMap = wt;
 
@@ -140,13 +144,13 @@ public class WorldGenerator
 
         try
         {
-            BiomeMap = new BiomeGenerator().GenerateBiomes(this);
+            BiomeMap = new BiomeGenerator().GenerateBiomes(this, true);
         } catch (Exception e)
         {
             GD.PushError(e);
         }
         Stage = WorldGenStage.RIVERS;
-        riverGenerator.RunRiverGeneration(this);
+        //riverGenerator.RunRiverGeneration(this);
         //GD.Print("Worldgen Started");
         Stage = WorldGenStage.FINISHING;
         // TODO: Add water flow simulations
@@ -175,6 +179,12 @@ public class WorldGenerator
         float phase = (month / 12f) * Mathf.Pi * 2f;
         float seasonal = (Mathf.Cos(phase - Mathf.Pi) + 1f) * 0.5f;
         return Mathf.Lerp(WinterRainfallMap[x,y], SummerRainfallMap[x,y], seasonal);        
+    }
+    public float GetPETForMonth(int x, int y, int month)
+    {
+        float phase = (month / 12f) * Mathf.Pi * 2f;
+        float seasonal = (Mathf.Cos(phase - Mathf.Pi) + 1f) * 0.5f;
+        return (float)Mathf.Lerp(WinterPETMap[x,y], SummerPETMap[x,y], seasonal);        
     }
     public float GetAnnualRainfall(int x, int y)
     {

@@ -8,7 +8,7 @@ public class TempmapGenerator
     Curve continentialityCurve = GD.Load<Curve>("res://Curves/ContinentialityCurve.tres");
     WorldGenerator world;
     float[,] map;
-    public float[,] GenerateTempMap(float scale, WorldGenerator world, out float[,] summerMap, out float[,] winterMap)
+    public float[,] GenerateTempMap(WorldGenerator world, out float[,] summerMap, out float[,] winterMap)
     {
         this.world = world;
         map = new float[world.WorldSize.X, world.WorldSize.Y];
@@ -17,11 +17,11 @@ public class TempmapGenerator
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
 
-        summerMap = GenerateTempMap(false, scale);
-        winterMap = GenerateTempMap(true, scale);
+        summerMap = GenerateTempMap(false);
+        winterMap = GenerateTempMap(true);
         return map;
     }
-    float[,] GenerateTempMap(bool winter, float scale)
+    float[,] GenerateTempMap(bool winter)
     {
         map = new float[world.WorldSize.X, world.WorldSize.Y];
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
@@ -34,14 +34,16 @@ public class TempmapGenerator
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
                 float latitudeFactor = y / (float)world.WorldSize.Y;
-                float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x / scale, y / scale));
+                float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x, y));
 
-                float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, 0.15f));
-                float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, 0.15f));
+                float noiseWeight = 0f;
+
+                float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
+                float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
                 if (winter)
                 {
-                    tempValue = tempCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, 0.15f));
-                    oceanValue = oceanCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, 0.15f));                    
+                    tempValue = tempCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));
+                    oceanValue = oceanCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));                    
                 }
                 
                 //map[x, y] = tempValue;

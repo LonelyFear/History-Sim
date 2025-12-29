@@ -6,9 +6,8 @@ public class Biome
     public string name { get; set; }
     public string id { get; set; }
     public string type { get; set; } = "ice";
+    public string[] plantTypes { get; set; } = [];
     public float plantDensity { get; set; } = 0.0f;
-    //public BaseResource[] resources { get; set; }
-    //public Crop[] crops { get; set; }
     public float maxElevation { get; set; } = float.PositiveInfinity;
     public float minElevation { get; set; } = float.NegativeInfinity;
     public float maxMoisture { get; set; } = float.PositiveInfinity;
@@ -19,8 +18,5 @@ public class Biome
     public float arability { get; set; } = 0.0f;
     public float survivability { get; set; } = 0.0f;
     public string color { get; set; } = "FFFFFF";
-    public int textureX { get; set; }
-    public int textureY { get; set; }
-    public bool special { get; set; } = false;
 }
 

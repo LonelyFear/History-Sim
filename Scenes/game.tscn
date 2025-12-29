@@ -299,6 +299,8 @@ theme_override_styles/panel = SubResource("StyleBoxEmpty_nnt18")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 6
 
 [node name="Name" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
