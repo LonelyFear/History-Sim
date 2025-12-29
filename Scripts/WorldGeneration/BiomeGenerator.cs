@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Godot;
 
 public class BiomeGenerator
@@ -10,57 +11,57 @@ public class BiomeGenerator
     public List<string>[,] GeneratePlantTypes()
     {
         List<string>[,] output = new List<string>[world.WorldSize.X, world.WorldSize.Y];
-        int incorrectTemp = 0;
-        int incorrectTempWarm = 0;
-        int incorrectTempA = 0;
-        int incorrectGDD = 0;
-        for (int x = 0; x < world.WorldSize.X; x++)
+        int divisions = 8;
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < world.WorldSize.Y; y++)
+            for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
             {
-                float[] tempValues = [world.GetTempForMonth(x,y,0), world.GetTempForMonth(x,y,6)];
-                float[] aValues = [CalcA(x,y,0), CalcA(x,y,6)];
-                int currentDominance = int.MaxValue;
-                float a = aValues.Sum() / aValues.Length;
-
-                foreach (var pair in AssetManager.plantTypes)
+                for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    PlantType plantType = pair.Value;
-                    bool addedPlant = true;
+                    float[] tempValues = [world.GetTempForMonth(x,y,0), world.GetTempForMonth(x,y,6)];
+                    float[] aValues = [CalcA(x,y,0), CalcA(x,y,6)];
+                    int currentDominance = int.MaxValue;
+                    float a = aValues.Sum() / aValues.Length;
 
-                    if (plantType.dominance > currentDominance)
+                    foreach (var pair in AssetManager.plantTypes)
                     {
-                        continue;
-                    }
+                        PlantType plantType = pair.Value;
+                        bool addedPlant = true;
 
-                    addedPlant = tempValues.Min() >= plantType.minColdTemp;
-                    if (!addedPlant) continue;
-                    addedPlant = tempValues.Min() <= plantType.maxColdTemp;
-                    if (!addedPlant) continue;
-                    addedPlant = GetGDD(x,y) >= plantType.minGDD;
-                    if (!addedPlant) continue;
-                    addedPlant = GetGDD(x,y,true) >= plantType.minGDDz;
-                    if (!addedPlant) continue;
-                    addedPlant = tempValues.Max() >= plantType.minWarmTemp;
-                    if (!addedPlant) continue;
-                    addedPlant = a >= plantType.minA;
-                    if (!addedPlant) continue;
-                    addedPlant = a <= plantType.maxA;
-                    if (!addedPlant) continue;
-
-                    if (addedPlant)
-                    {
-                        currentDominance = plantType.dominance;
-                        if (output[x,y] == null)
+                        if (plantType.dominance > currentDominance)
                         {
-                           output[x,y] = []; 
+                            continue;
                         }
-                        //GD.Print(plantType.id);
-                        output[x,y].Add(plantType.id);
+
+                        addedPlant = tempValues.Min() >= plantType.minColdTemp;
+                        if (!addedPlant) continue;
+                        addedPlant = tempValues.Min() <= plantType.maxColdTemp;
+                        if (!addedPlant) continue;
+                        addedPlant = GetGDD(x,y) >= plantType.minGDD;
+                        if (!addedPlant) continue;
+                        addedPlant = GetGDD(x,y,true) >= plantType.minGDDz;
+                        if (!addedPlant) continue;
+                        addedPlant = tempValues.Max() >= plantType.minWarmTemp;
+                        if (!addedPlant) continue;
+                        addedPlant = a >= plantType.minA;
+                        if (!addedPlant) continue;
+                        addedPlant = a <= plantType.maxA;
+                        if (!addedPlant) continue;
+
+                        if (addedPlant)
+                        {
+                            currentDominance = plantType.dominance;
+                            if (output[x,y] == null)
+                            {
+                            output[x,y] = []; 
+                            }
+                            //GD.Print(plantType.id);
+                            output[x,y].Add(plantType.id);
+                        }
                     }
                 }
             }
-        }        
+        });     
         return output;
     }
     public float CalcA(int x, int y, int month)

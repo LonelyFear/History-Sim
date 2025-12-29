@@ -2,8 +2,9 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Security.AccessControl;
+using System.Threading.Tasks;
 using Godot;
-
+using Vector2 = System.Numerics.Vector2;
 public class RainfallMapGenerator
 {
     float[,] moistureMap;
@@ -50,43 +51,47 @@ public class RainfallMapGenerator
         {
             float[,] newMap = new float[world.WorldSize.X, world.WorldSize.Y];
             // Moving Moisture
-            for (int x = 0; x < world.WorldSize.X; x++)
+            int divisions = 8;
+            Parallel.For(1, divisions + 1, (i) =>
             {
-                for (int y = 0; y < world.WorldSize.Y; y++)
+                for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
                 {
+                    for (int y = 0; y < world.WorldSize.Y; y++)
+                    {
 
-                    Vector2 vel = winter ? -world.WinterWindVelMap[x,y] : -world.SummerWindVelMap[x,y];
-                    
-                    float sampleX = x + vel.X;
-                    float sampleY = y + vel.Y;
+                        Vector2 vel = winter ? -world.WinterWindVelMap[x,y] : -world.SummerWindVelMap[x,y];
+                        
+                        float sampleX = x + vel.X;
+                        float sampleY = y + vel.Y;
 
-                    Vector2I bottomCorner = new(
-                        Mathf.PosMod(Mathf.FloorToInt(sampleX), world.WorldSize.X),
-                        Mathf.PosMod(Mathf.FloorToInt(sampleY), world.WorldSize.Y)
-                    );
+                        Vector2I bottomCorner = new(
+                            Mathf.PosMod(Mathf.FloorToInt(sampleX), world.WorldSize.X),
+                            Mathf.PosMod(Mathf.FloorToInt(sampleY), world.WorldSize.Y)
+                        );
 
-                    Vector2I topCorner = new(
-                        Mathf.PosMod(bottomCorner.X + 1, world.WorldSize.X),
-                        Mathf.PosMod(bottomCorner.Y + 1, world.WorldSize.Y)
-                    );
+                        Vector2I topCorner = new(
+                            Mathf.PosMod(bottomCorner.X + 1, world.WorldSize.X),
+                            Mathf.PosMod(bottomCorner.Y + 1, world.WorldSize.Y)
+                        );
 
-                    float tx = sampleX - Mathf.Floor(sampleX);
-                    float ty = sampleY - Mathf.Floor(sampleY);
+                        float tx = sampleX - Mathf.Floor(sampleX);
+                        float ty = sampleY - Mathf.Floor(sampleY);
 
-                    float bottomX = Mathf.Lerp(
-                        moistureMap[bottomCorner.X, bottomCorner.Y],
-                        moistureMap[topCorner.X, bottomCorner.Y],
-                        tx
-                    );
+                        float bottomX = Mathf.Lerp(
+                            moistureMap[bottomCorner.X, bottomCorner.Y],
+                            moistureMap[topCorner.X, bottomCorner.Y],
+                            tx
+                        );
 
-                    float topX = Mathf.Lerp(
-                        moistureMap[bottomCorner.X, topCorner.Y],
-                        moistureMap[topCorner.X, topCorner.Y],
-                        tx
-                    );
-                    newMap[x, y] = Mathf.Lerp(bottomX, topX, ty);
+                        float topX = Mathf.Lerp(
+                            moistureMap[bottomCorner.X, topCorner.Y],
+                            moistureMap[topCorner.X, topCorner.Y],
+                            tx
+                        );
+                        newMap[x, y] = Mathf.Lerp(bottomX, topX, ty);
+                    }
                 }
-            }
+            });
             moistureMap = newMap;
             float stepMoisture = 0;
             // Precipitation

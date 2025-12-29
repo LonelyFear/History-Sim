@@ -1,6 +1,5 @@
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Vector2 = System.Numerics.Vector2;
 using Godot;
 using MessagePack;
 using MessagePack.Resolvers;

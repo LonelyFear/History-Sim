@@ -1,6 +1,6 @@
 using Godot;
-using System;
-
+using System.Threading.Tasks;
+using Vector2 = System.Numerics.Vector2;
 public class TempmapGenerator
 {
     Curve tempCurve = GD.Load<Curve>("res://Curves/Climate/SeasonalTempCurve.tres");
@@ -29,34 +29,38 @@ public class TempmapGenerator
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
 
-        for (int x = 0; x < world.WorldSize.X; x++)
+        int divisions = 8;
+        Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int y = 0; y < world.WorldSize.Y; y++)
+            for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
             {
-                float latitudeFactor = y / (float)world.WorldSize.Y;
-                float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x, y));
-
-                float noiseWeight = 0f;
-
-                float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
-                float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
-                if (winter)
+                for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    tempValue = tempCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));
-                    oceanValue = oceanCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));                    
+                    float latitudeFactor = y / (float)world.WorldSize.Y;
+                    float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x, y));
+
+                    float noiseWeight = 0.1f;
+
+                    float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
+                    float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
+                    if (winter)
+                    {
+                        tempValue = tempCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));
+                        oceanValue = oceanCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));                    
+                    }
+                    
+                    //map[x, y] = tempValue;
+                    float continentiality = CalculateContinentiality(x,y, winter);
+                    map[x, y] = Mathf.Lerp(oceanValue, tempValue, continentiality);
+
+                    float heightFactor = 6.5f * (world.HeightMap[x, y]/1000f);
+                    if (world.HeightMap[x, y] > 0)
+                    {
+                        map[x, y] -= heightFactor;
+                    }                
                 }
-                
-                //map[x, y] = tempValue;
-                float continentiality = CalculateContinentiality(x,y, winter);
-                map[x, y] = Mathf.Lerp(oceanValue, tempValue, continentiality);
-
-                float heightFactor = 6.5f * (world.HeightMap[x, y]/1000f);
-                if (world.HeightMap[x, y] > 0)
-                {
-                    map[x, y] -= heightFactor;
-                }                
             }
-        }
+        });
 
         return map;
     }
@@ -115,9 +119,9 @@ public class TempmapGenerator
         float tx = sampleX - Mathf.Floor(sampleX);
         float ty = sampleY - Mathf.Floor(sampleY);
         Vector2[,] windVelMap = winter ? world.WinterWindVelMap : world.SummerWindVelMap;
-        Vector2 bottomX = windVelMap[bottomCorner.X, bottomCorner.Y].Lerp(windVelMap[topCorner.X, bottomCorner.Y], tx);
-        Vector2 topX = windVelMap[bottomCorner.X, topCorner.Y].Lerp(windVelMap[topCorner.X, topCorner.Y], tx);  
-        return bottomX.Lerp(topX, ty);      
+        Vector2 bottomX = Vector2.Lerp(windVelMap[bottomCorner.X, bottomCorner.Y], windVelMap[topCorner.X, bottomCorner.Y], tx);
+        Vector2 topX = Vector2.Lerp(windVelMap[bottomCorner.X, topCorner.Y], windVelMap[topCorner.X, topCorner.Y], tx);  
+        return Vector2.Lerp(bottomX, topX, ty);      
     }
     /*
     public float[,] GenerateTempMap(float scale, WorldGenerator world){
