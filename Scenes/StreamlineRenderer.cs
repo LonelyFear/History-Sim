@@ -22,7 +22,7 @@ public partial class StreamlineRenderer : Node2D
 					}
 				}
 				wind /= sampleDist * sampleDist;
-				wind *= 3f;
+				wind *= 5f;
 				float scale = 16f;
 				Vector2 pos = new((x + (sampleDist/2f)) * scale, (y + (sampleDist/2f)) * scale);
 				//Vector2 wind = world.WindVelMap[x,y] * 3f;

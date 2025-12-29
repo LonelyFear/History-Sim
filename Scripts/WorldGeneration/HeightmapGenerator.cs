@@ -116,7 +116,7 @@ public class HeightmapGenerator
                     if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
                     {
                         measuredTiles.Add(neighbor);
-                        neighbor.coastDist = currentTile.coastDist + 1;
+                        neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
                         world.CoastDistMap[neighbor.pos.X, neighbor.pos.Y] = neighbor.coastDist;
                         tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
                     }          
@@ -774,7 +774,7 @@ public class HeightmapGenerator
                     if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
                     {
                         measuredTiles.Add(neighbor);
-                        neighbor.coastDist = currentTile.coastDist + 1;
+                        neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
                         tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
                     }          
                 }

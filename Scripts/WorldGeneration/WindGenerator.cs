@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Runtime.InteropServices.Marshalling;
 using System.Threading.Tasks;
 using Vector2 = System.Numerics.Vector2;
@@ -38,11 +39,12 @@ public class WindGenerator()
                 for (int y = 0; y < worldSize.Y; y++)
                 {
                     float posY = y;
-
+                    float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x,y));
                     float normalizedY = posY / world.WorldSize.Y;
                     float latitudeFactor = Mathf.Abs(normalizedY - 0.5f) * 2f;
 
-                    float dir = prevailingWindCurve.Sample(latitudeFactor);
+                    float noiseStrength = 0.1f;
+                    float dir = prevailingWindCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseStrength));
 
                     windDirMap[x, y] = dir;
                     if (normalizedY < 0.5f)
@@ -50,12 +52,14 @@ public class WindGenerator()
                         windDirMap[x, y] = Mathf.PosMod(180f - dir, 360f);
                     }
                     
-                    float windMaxSpeed = 10f;
+                    float windMaxSpeed = 7f;
 
-                    windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(posY / world.WorldSize.Y);
+                    float speedSampleValue = Mathf.Lerp(normalizedY, noiseValue, noiseStrength);
+
+                    windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(speedSampleValue);
                     if (winter)
                     {
-                        windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(1f - (posY / world.WorldSize.Y));
+                        windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(1f - speedSampleValue);
                     }
 
                     if (heightMap[x, y] > world.SeaLevel * WorldGenerator.WorldHeight)
@@ -76,7 +80,7 @@ public class WindGenerator()
                         Vector2 coastGradient = Utility.GetGradient(world.CoastDistMap, x,y);
                         float windSpeed = windSpeedMap[x, y];
                         float dot = Vector2.Dot(windVector, coastGradient);
-                        if (dot > 0)
+                        if (dot < 0)
                         {
                             // Wind blowing towards coast
                             windVector = Vector2.Lerp(Vector2.Normalize(windVector), Vector2.Normalize(coastGradient), 0.5f) * windSpeed;
@@ -98,6 +102,7 @@ public class WindGenerator()
                     {
                         for (int dy = -1; dy <= 1; dy++)
                         {
+                            if (dx == 0 && dy == 0) continue;
                             Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, world.WorldSize.X), Mathf.PosMod(y + dy, world.WorldSize.Y));
                             newWindSpeedMap[x,y] = Mathf.Lerp(windSpeedMap[x,y], windSpeedMap[testPos.X, testPos.Y], 0.5f);
                             newWindDirMap[x,y] = Mathf.Lerp(windDirMap[x,y], windDirMap[testPos.X, testPos.Y], 0.5f);

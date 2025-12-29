@@ -39,7 +39,7 @@ public class TempmapGenerator
                     float latitudeFactor = y / (float)world.WorldSize.Y;
                     float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x, y));
 
-                    float noiseWeight = 0.1f;
+                    float noiseWeight = 0.05f;
 
                     float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
                     float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));

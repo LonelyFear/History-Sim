@@ -11,7 +11,7 @@ public static class AssetManager
     public static List<string> loadedModIds;
     public static List<string> foundModPaths;
     public static Dictionary<string, Biome> biomes = new Dictionary<string, Biome>();
-    public static Dictionary<string, PlantType> plantTypes = new Dictionary<string, PlantType>();
+    public static List<PlantType> plantTypes = new List<PlantType>();
     public static Dictionary<string, Building> buildings = new Dictionary<string, Building>();
     public static Dictionary<string, Crop> crops = new Dictionary<string, Crop>();
     public static Dictionary<string, BaseResource> resources = new Dictionary<string, BaseResource>();
@@ -44,7 +44,7 @@ public static class AssetManager
 
             foreach (PlantType plantType in JsonSerializer.Deserialize<PlantType[]>(plantData))
             {
-                plantTypes.Add(plantType.id, plantType);
+                plantTypes.Add(plantType);
             }
             GD.Print("Loaded " + plantTypes.Count + " plant types");
         }
@@ -93,7 +93,7 @@ public static class AssetManager
     }
     public static void LoadMods()
     {
-        plantTypes = new Dictionary<string, PlantType>();
+        plantTypes = new List<PlantType>();
         biomes = new Dictionary<string, Biome>();
         buildings = new Dictionary<string, Building>();
         crops = new Dictionary<string, Crop>();
@@ -234,7 +234,7 @@ public static class AssetManager
     }
     public static PlantType GetPlantType(string id)
     {
-        return plantTypes[id];
+        return plantTypes.Single(type => type.id == id);
     }
     public static Biome GetBiome(string id)
     {

@@ -12,6 +12,8 @@ public class BiomeGenerator
     {
         List<string>[,] output = new List<string>[world.WorldSize.X, world.WorldSize.Y];
         int divisions = 8;
+
+        PlantType[] plantTypes = [.. AssetManager.plantTypes.OrderBy(type => type.dominance)];
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
@@ -23,11 +25,9 @@ public class BiomeGenerator
                     int currentDominance = int.MaxValue;
                     float a = aValues.Sum() / aValues.Length;
 
-                    foreach (var pair in AssetManager.plantTypes)
+                    foreach (PlantType plantType in plantTypes)
                     {
-                        PlantType plantType = pair.Value;
-                        bool addedPlant = true;
-
+                        bool addedPlant = false;
                         if (plantType.dominance > currentDominance)
                         {
                             continue;
