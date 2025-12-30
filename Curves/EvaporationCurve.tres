@@ -1,7 +1,7 @@
 [gd_resource type="Curve" format=3 uid="uid://c5dvjlererout"]
 
 [resource]
-_data = [Vector2(0.02, 0.02), 0.0, -0.0068218634, 0, 0, Vector2(0.19999999, 0.79999995), 2.0954187, -4.066138, 0, 0, Vector2(0.38, 0.04), 0.05586717, -0.030178495, 0, 0, Vector2(0.5, 1), 0.0, 0.0, 0, 0, Vector2(0.59999996, 0.04), 0.0, 0.0, 0, 0, Vector2(0.79999995, 0.79999995), 4.186372, -1.8600472, 0, 0, Vector2(1, 0), 0.010254807, 0.0, 0, 0]
-point_count = 7
+_data = [Vector2(0, 1), 0.0, -4.9769373, 0, 0, Vector2(0.25, 0.02), 0.0, 0.0, 0, 0, Vector2(0.52, 0.77), 6.3693514, -0.0007802058, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
 metadata/_snap_enabled = true
-metadata/_snap_count = 50
+metadata/_snap_count = 100
