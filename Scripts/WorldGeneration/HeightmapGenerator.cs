@@ -13,7 +13,6 @@ using Mutex = System.Threading.Mutex;
 
 public class HeightmapGenerator
 {
-    int[,] map;
     float[,] heightmap;
     int gridSizeX = 16;
     int gridSizeY = 16;
@@ -40,15 +39,16 @@ public class HeightmapGenerator
 
     // Public Variables
     public float seaFloorLevel = 0.1f;
-    float landCoverage = 0.3f;
-    float shelfDepth = 0.05f;
+    float landCoverage = 0.4f;
+    float maxHillHeight = 0.2f;
+    float shelfDepth = 0.0f;
     const float slopeErosionThreshold = 0.1f;
 
     public int[,] UseEarthHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         worldSize = world.WorldSize;
-        map = new int[worldSize.X, worldSize.Y];
+        int[,] map = new int[worldSize.X, worldSize.Y];
         float pixelPerX = 4320 / (float)worldSize.X;
         float pixelPerY = 2160 / (float)worldSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
@@ -66,7 +66,7 @@ public class HeightmapGenerator
                 int px = (int)(x * pixelPerX);
                 int py = (int)(y * pixelPerY);
                 int flippedPy = (2160 - 1) - py;
-                map[x,y] = realElevation[px, flippedPy];
+                map[x,y] = realElevation[px, flippedPy] - (int)(world.SeaLevel * WorldGenerator.WorldHeight);
             }
         }    
 
@@ -151,8 +151,10 @@ public class HeightmapGenerator
         seaLevel = world.SeaLevel - shelfDepth;
         worldSize = world.WorldSize;
         worldMult = world.WorldMult;
-        map = new int[worldSize.X, worldSize.Y];
+        int[,] map = new int[worldSize.X, worldSize.Y];
+
         heightmap = new float[worldSize.X, worldSize.Y];
+
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
         GD.Print(worldSize);
         ulong startTime = Time.GetTicksMsec();
@@ -204,7 +206,7 @@ public class HeightmapGenerator
             for (int y = 0; y < worldSize.Y; y++)
             {
                 int seaElevation = (int)(WorldGenerator.WorldHeight * world.SeaLevel);
-                map[x,y] = (int)((heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation);  
+                map[x,y] = (int)(heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation;  
                 world.CoastDistMap[x,y] = tiles[x,y].coastDist;      
             }
         }
@@ -544,7 +546,7 @@ public class HeightmapGenerator
                 }
             }
         }
-        int divisions = 4;
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
@@ -556,8 +558,8 @@ public class HeightmapGenerator
                     if (tiles[x, y].region.continental)
                     {
                         // Land hills
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 30f, noiseValue)), 0f, 1f);
-                        float topDist = 1f - seaLevel - 0.1f;
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(4f, 30f, noiseValue)), 0f, 1f);
+                        float topDist = 1f - (seaLevel + maxHillHeight);
                         heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
                         heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);
                         //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
@@ -617,7 +619,7 @@ public class HeightmapGenerator
         float scale = 2;
         GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
 
-        int divisions = 18;
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (parallelIterator) =>
         {
             for (int x = worldSize.X / divisions * (parallelIterator - 1); x < worldSize.X / divisions * parallelIterator; x++)
@@ -702,7 +704,7 @@ public class HeightmapGenerator
     void GetDistances()
     {
         ulong startTime = Time.GetTicksMsec();
-        int divisions = 20;
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)

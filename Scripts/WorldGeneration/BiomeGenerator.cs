@@ -102,7 +102,8 @@ public class BiomeGenerator
             {
                 Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
                 float temp = world.GetAverageAnnualTemp(x,y);
-                float elevation = world.HeightMap[x, y];
+                int elevation = world.HeightMap[x, y];
+                float seaLevel = world.SeaLevel * WorldGenerator.WorldHeight;
                 float moist = world.GetAnnualRainfall(x,y);
                 Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
 
@@ -111,8 +112,9 @@ public class BiomeGenerator
                     if (useBIOME)
                     {
                         //if (plantTypes[x,y] != null) GD.Print(plantTypes[x,y].ToString());
-                        if (elevation < world.SeaLevel * WorldGenerator.WorldHeight)
+                        if (elevation < 0)
                         {
+                            //GD.Print(elevation);
                             selectedBiome = AssetManager.GetBiome("ocean");
                             /*
                             if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)

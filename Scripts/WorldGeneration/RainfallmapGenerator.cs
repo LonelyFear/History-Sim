@@ -132,7 +132,7 @@ public class RainfallMapGenerator
     float GetEvaporation(int x, int y, bool winter)
     {
         double PET = GetPET(world, x,y, winter);
-        if (world.HeightMap[x,y] < world.SeaLevel)
+        if (world.HeightMap[x,y] < 0)
         {
             //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
             return (float)PET;
@@ -140,7 +140,6 @@ public class RainfallMapGenerator
         float latitudeFactor = Mathf.Abs((y / (float)world.WorldSize.Y) - 0.5f) * 2f;
         float landEvaporation = 170f * evaporationCurve.Sample(latitudeFactor);
         return Mathf.Min((float)PET, landEvaporation);
-        //return (float)PET * evaporationCurve.Sample(latitudeFactor);
     }
     public static double GetPET(WorldGenerator world, int x, int y, bool winter)
     {
@@ -149,15 +148,6 @@ public class RainfallMapGenerator
         double dayLength = 12.0;
         double temp = Math.Clamp(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y], 0.0, 10000.0);
         double PET;
-
-        
-        /*
-        if (temp > 26.5)
-        {
-            PET = (dayLength/12.0) * (-415.85 + (32.24 * temp) - (0.43 * Math.Pow(temp, 2)));
-            return PET;
-        }
-        */
 
         double[] monthlyMeanTemperatures = new double[12];
         for (int i = 0; i < 12; i++)
@@ -187,41 +177,4 @@ public class RainfallMapGenerator
         }
         return PET;
     }
-    /*
-    float[,] GenerateSimpleMap(float scale)
-    {
-        map = new float[world.WorldSize.X, world.WorldSize.Y];
-        FastNoiseLite noise = new FastNoiseLite();
-        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-        noise.SetFractalOctaves(8);
-        noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-        noise.SetSeed(world.rng.Next());
-        float minValue = float.MaxValue;
-        float maxValue = float.MinValue;
-        for (int x = 0; x < world.WorldSize.X; x++)
-        {
-            for (int y = 0; y < world.WorldSize.Y; y++)
-            {
-                map[x, y] = Mathf.InverseLerp(-1f, 1f, noise.GetNoise(x / scale, y / scale));
-                if (map[x, y] < minValue)
-                {
-                    minValue = map[x, y];
-                }
-                if (map[x, y] > maxValue)
-                {
-                    maxValue = map[x, y];
-                }
-            }
-        }
-        for (int y = 0; y < world.WorldSize.Y; y++)
-        {
-            for (int x = 0; x < world.WorldSize.X; x++)
-            {
-                map[x, y] = Mathf.InverseLerp(minValue, maxValue, map[x, y]);
-                map[x, y] *= Mathf.Clamp(world.TempMap[x, y] * 1f, 0f, 1f);
-            }
-        }
-        return map;        
-    }
-    */
 }
