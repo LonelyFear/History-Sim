@@ -32,7 +32,6 @@ public class BiomeGenerator
                         {
                             continue;
                         }
-
                         addedPlant = tempValues.Min() >= plantType.minColdTemp;
                         if (!addedPlant) continue;
                         addedPlant = tempValues.Min() <= plantType.maxColdTemp;
@@ -127,8 +126,8 @@ public class BiomeGenerator
                             {
                                 selectedBiome = AssetManager.GetBiome("ocean");
                                 break;
-                            }
-                            */                            
+                            } 
+                            */                         
                         }
                         else if (plantTypes[x,y] != null && plantTypes[x,y].OrderBy(s => s).SequenceEqual(biome.plantTypes.OrderBy(s => s)))
                         {
@@ -139,11 +138,20 @@ public class BiomeGenerator
                     bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
                     bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
 
-                    if (tempInRange && moistInRange && elevation >= world.SeaLevel * WorldGenerator.WorldHeight)
+                    if (tempInRange && moistInRange && elevation >= 0)
                     {
                         candidates.Add(biome, 0);
                     }
-
+                    else if (elevation < 0)
+                    {
+                        selectedBiome = AssetManager.GetBiome("ocean");
+                        if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
+                        {
+                            selectedBiome = AssetManager.GetBiome("ice_sheet");
+                            world.HeightMap[x, y] = 0;
+                            break;
+                        }                        
+                    }
 
                 }
                 float minTRange = float.PositiveInfinity;

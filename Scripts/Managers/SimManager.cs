@@ -174,7 +174,6 @@ public class SimManager
             region.LoadFromSave();
             // Adds tiles and biomes
             region.tiles = new Tile[tilesPerRegion, tilesPerRegion];
-            region.biomes = new Biome[tilesPerRegion, tilesPerRegion];
             for (int tx = 0; tx < tilesPerRegion; tx++)
             {
                 for (int ty = 0; ty < tilesPerRegion; ty++)
@@ -182,8 +181,6 @@ public class SimManager
                     // Adds subregion to tile
                     Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
                     region.tiles[tx, ty] = tile;
-                    // Adds biomes to tile
-                    region.biomes[tx, ty] = tile.biome;
                 }
             }
             // Calc average fertility
@@ -297,8 +294,6 @@ public class SimManager
                         // Adds subregion to tile
                         Tile tile = tiles[x * tilesPerRegion + tx, y * tilesPerRegion + ty];
                         newRegion.tiles[tx, ty] = tile;
-                        // Adds biomes to tile
-                        newRegion.biomes[tx, ty] = tile.biome;
                     }
                 }
                 // Calc average fertility

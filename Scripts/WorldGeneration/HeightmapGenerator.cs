@@ -456,31 +456,6 @@ public class HeightmapGenerator
                 }
             }
         }
-        /*
-        Parallel.For(1, divisions + 1, (i) =>
-        {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
-            {
-                for (int y = 0; y < worldSize.Y; y++)
-                {
-                    TerrainTile tile = tiles[x, y];
-                    TerrainTile boundary = null;
-                    float shortestDistSquared = Mathf.Inf;
-                    foreach (var entry in tile.edgeDistancesSquared)
-                    {
-                        TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                        if (entry.Value < shortestDistSquared && nextTile.fault)
-                        {
-                            boundary = nextTile;
-                            shortestDistSquared = entry.Value;
-                        }
-                    }
-                    tile.nearestBoundary = boundary;
-                    tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
-                }
-            }
-        });  
-        */
     }
     public void GenerateContinents()
     {
@@ -616,7 +591,7 @@ public class HeightmapGenerator
         yNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         yNoise.SetFractalOctaves(8);
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        float scale = 2;
+        float scale = 0.5f;
         GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
 
         int divisions = 8;
@@ -629,8 +604,8 @@ public class HeightmapGenerator
 
                     TerrainTile tile = new TerrainTile();
                     // Domain warping
-                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.X);
-                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.Y);
+                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize, scale) * 50), worldSize.X);
+                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize, scale) * 50), worldSize.Y);
 
                     Vector2I pos = new Vector2I(fx, fy);
                     VoronoiRegion region = null;

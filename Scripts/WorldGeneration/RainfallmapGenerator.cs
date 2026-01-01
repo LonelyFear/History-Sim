@@ -11,6 +11,7 @@ public class RainfallMapGenerator
     WorldGenerator world;
     Curve precipitationCurve = GD.Load<Curve>("res://Curves/Climate/PrecipitationCurve.tres");
     Curve evaporationCurve = GD.Load<Curve>("res://Curves/EvaporationCurve.tres");
+    Curve daylightCurve = GD.Load<Curve>("res://Curves/DaylightCurve.tres");
     Curve simpleEvaporationCurve = GD.Load<Curve>("res://Curves/Climate/SimpleEvaporationCurve.tres");
     public void GenerateRainfallMap(WorldGenerator world, out float[,] summerRainfallMap, out float[,] winterRainfallMap){
         this.world = world;
@@ -29,9 +30,9 @@ public class RainfallMapGenerator
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(world.rng.Next());
         // Evaporation
-        summerRainfallMap = RunRainfallPass(50, false);
+        summerRainfallMap = RunRainfallPass(25, false);
         world.Stage = WorldGenStage.WINTER_RAINFALL;
-        winterRainfallMap = RunRainfallPass(50, true);      
+        winterRainfallMap = RunRainfallPass(25, true);      
     }
     float[,] RunRainfallPass(int stepCount, bool winter)
     {
@@ -44,7 +45,6 @@ public class RainfallMapGenerator
             {
                 moistureMap[x,y] = GetEvaporation(x,y, winter);
                 initialMoisture += moistureMap[x,y];
-
             }
         }
         for (int i = 0; i < stepCount; i++)
@@ -100,7 +100,6 @@ public class RainfallMapGenerator
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
                     float precipitation = moistureMap[x,y] * precipitationCurve.Sample(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y]);
-                    //if (world.HeightMap[x,y] < world.SeaLevel) continue;
                     moistureMap[x,y] -= precipitation;
                     map[x,y] += precipitation;
                     stepMoisture += moistureMap[x,y];
@@ -109,6 +108,7 @@ public class RainfallMapGenerator
             moistureRatio = 1f - (stepMoisture/initialMoisture);
             GD.Print($"Moisture Precipitated After Step {i}: " + moistureRatio.ToString("#0.0%"));
         }
+
         GD.Print("Total Moisture Precipitated: " + moistureRatio.ToString("#0.0%"));
         for (int i = 0; i < 3; i++)
         {
@@ -138,14 +138,18 @@ public class RainfallMapGenerator
             return (float)PET;
         }
         float latitudeFactor = Mathf.Abs((y / (float)world.WorldSize.Y) - 0.5f) * 2f;
-        float landEvaporation = 170f * evaporationCurve.Sample(latitudeFactor);
-        return Mathf.Min((float)PET, landEvaporation);
+        float landEvaporation = 168f * evaporationCurve.Sample(latitudeFactor);
+        return Mathf.Min((float)PET, landEvaporation) * 1;
     }
-    public static double GetPET(WorldGenerator world, int x, int y, bool winter)
+    public double GetPET(WorldGenerator world, int x, int y, bool winter)
     {
         float latitudeFactor = y / (float)world.WorldSize.Y;
 
-        double dayLength = 12.0;
+        double dayLength = daylightCurve.Sample(latitudeFactor);
+        if (winter)
+        {
+            dayLength = daylightCurve.Sample(1f - latitudeFactor);
+        }
         double temp = Math.Clamp(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y], 0.0, 10000.0);
         double PET;
 

@@ -8,7 +8,6 @@ using System.Text.RegularExpressions;
 public class Region : PopObject, ISaveable
 {
     [IgnoreMember] public Tile[,] tiles { get; set; }
-    [IgnoreMember] public Biome[,] biomes { get; set; }
     [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
@@ -40,6 +39,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float avgRainfall { get; set; }
     [IgnoreMember] public float[] avgMonthlyRainfall { get; set; } = new float[12];
     [IgnoreMember] public float avgElevation { get; set; }
+    [IgnoreMember] public Dictionary<Biome, int> biomes { get; set; }
     [Key(25)] public int landCount { get; set; }
     [Key(26)] public TerrainType terrainType { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
@@ -89,7 +89,10 @@ public class Region : PopObject, ISaveable
         name = NameGenerator.GenerateRegionName();
         landCount = 0;
         int waterCount = 0;
+        
         Dictionary<TerrainType, int> terrainTypes = [];
+        biomes = [];
+
         for (int x = 0; x < SimManager.tilesPerRegion; x++)
         {
             for (int y = 0; y < SimManager.tilesPerRegion; y++)
@@ -111,7 +114,13 @@ public class Region : PopObject, ISaveable
                 {
                     terrainTypes[tile.terrainType]++;
                 }
-                
+
+                if (!biomes.ContainsKey(tile.biome))
+                {
+                    biomes.Add(tile.biome, 0);
+                }
+                biomes[tile.biome]++;
+
                 if (tile.IsWater())
                 {
                     waterCount++;

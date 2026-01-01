@@ -181,12 +181,19 @@ public static class Utility
         //GD.Print(dy);
         return new Vector2I(Mathf.RoundToInt(Mathf.PosMod(pointA.X + dx / 2f, worldSize.X)), Mathf.RoundToInt(Mathf.PosMod(pointA.Y + dy / 2f, worldSize.Y)));
     }
-    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize)
+    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize, float scale = 1, float frequency = 1)
     {
-        float nx = y;
-        float ny = Mathf.Sin(x * (Mathf.Pi * 2) / worldSize.X) / (Mathf.Pi * 2) * worldSize.X;
-        float nz = Mathf.Cos(x * (Mathf.Pi * 2) / worldSize.X) / (Mathf.Pi * 2) * worldSize.X;
-        return noise.GetNoise(nx, ny, nz);
+        float noiseValue = noise.GetNoise(x, y);
+        int border = worldSize.X / 4;
+        if (x < border)
+        {
+            float ny = (y * scale) / frequency;
+            noiseValue = (noise.GetNoise((x * scale) / frequency, ny) * x / border) + 
+                (noise.GetNoise(((x * scale) + worldSize.X) / frequency, ny)
+                * (border - x)
+                / border);          
+        }
+        return noiseValue;
     }
     public static Color MultiColourLerp(Color[] colours, float t) {
 

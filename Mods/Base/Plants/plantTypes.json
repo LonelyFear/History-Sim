@@ -82,9 +82,5 @@
 		"id":"cool_shrub",
 		"minGDDz":100,
 		"dominance": 8
-	},
-	{
-		"id":"barren",
-		"dominance": 9
 	}
 ]

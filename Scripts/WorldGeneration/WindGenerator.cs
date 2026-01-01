@@ -52,7 +52,7 @@ public class WindGenerator()
                         windDirMap[x, y] = Mathf.PosMod(180f - dir, 360f);
                     }
                     
-                    float windMaxSpeed = 7f;
+                    float windMaxSpeed = 12f;
 
                     float speedSampleValue = Mathf.Lerp(normalizedY, noiseValue, noiseStrength);
 

@@ -70,7 +70,7 @@ public static class NameGenerator
 
         //string[] syllables = File.ReadAllLines("Data/Names/NameSyllables.txt");
         string[] patterns = ["CV", "CVC", "VC"];
-        string[] suffixes = ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or"];
+        string[] suffixes = ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"];
 
         bool feminine = rng.Next(2) == 0;
         string consonants = "bcdfghjklmnpqrstvwxyz";

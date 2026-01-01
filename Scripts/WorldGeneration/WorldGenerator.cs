@@ -29,7 +29,7 @@ public class WorldGenerator
     [Key(3)]
     public int Seed { get; set; } = 1;
     [Key(4)]
-    public int continents { get; set; } = 6;
+    public int continents { get; set; } = 8;
     [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
     [IgnoreMember] public TerrainTile[,] tiles;
     [Key(5)]
@@ -42,7 +42,8 @@ public class WorldGenerator
     public float[,] WinterRainfallMap { get; set; } 
     [Key(678)]
     public float[,] WinterPETMap { get; set; } 
-
+    [Key(679)]
+    public string[,] KoppenMap { get; set; }     
     [Key(7)]
     public float[,] SummerTempMap { get; set; } 
     [Key(77)] public float[,] WinterTempMap { get; set; } 
@@ -94,9 +95,9 @@ public class WorldGenerator
         ulong startTime = Time.GetTicksMsec();
         try
         {
-            //HeightMap = new HeightmapGenerator().UseEarthHeightmap(this);
-            SeaLevel = 0.6f;
-            HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
+            HeightMap = new HeightmapGenerator().UseEarthHeightmap(this);
+            //SeaLevel = 0.6f;
+            //HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
         }
         catch (Exception e)
         {
@@ -149,6 +150,7 @@ public class WorldGenerator
         {
             GD.PushError(e);
         }
+        KoppenMap = KoppenClassification.GetKoppenMap(this);
         Stage = WorldGenStage.RIVERS;
         //riverGenerator.RunRiverGeneration(this);
         //GD.Print("Worldgen Started");
@@ -188,11 +190,7 @@ public class WorldGenerator
     }
     public float GetAnnualRainfall(int x, int y)
     {
-        float annualRainfall = 0;
-        for (int i = 0; i < 12; i++)
-        {
-            annualRainfall += GetRainfallForMonth(x, y, i);
-        }
+        float annualRainfall = 12f * (SummerRainfallMap[x,y] + WinterRainfallMap[x,y]) / 2f;
         return annualRainfall;
     }
     /*
@@ -349,7 +347,10 @@ public class WorldGenerator
                                 image.SetPixel(x, y, Utility.MultiColourLerp([finalColor, new Color(0, 0, 0)], Math.Abs(slope) * 5f));  
                             }
                         }  
-                        break;    
+                        break; 
+                    case TerrainMapMode.KOPPEN:
+                        image.SetPixel(x, y, KoppenClassification.GetColor(KoppenMap[x,y]));
+                        break;   
                     case TerrainMapMode.DEBUG_PLATES:
                         Color pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0), new Color(1,0,0)], Mathf.InverseLerp(-1, 1, tiles[x, y].pressure));
                         Color baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
@@ -428,6 +429,7 @@ public enum TerrainMapMode{
     HEIGHTMAP,
     HEIGHTMAP_REALISTIC,
     REALISTIC,
+    KOPPEN,
     DEBUG_PLATES,
     DEBUG_COAST,
     DEBUG_RAINFALL,

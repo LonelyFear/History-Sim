@@ -46,7 +46,7 @@
 		"special":true
 	},
 	{
-		"Name":"Tropical Rainforest",
+		"name":"Tropical Rainforest",
 		"id":"tropical_rainforest",
 		"type":"land",
 		"color":"405960",
@@ -56,7 +56,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Tropical Seasonal Forest",
+		"name":"Tropical Seasonal Forest",
 		"id":"tropical_forest",
 		"type":"land",
 		"color":"677463",
@@ -66,7 +66,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Tropical Dry Forest",
+		"name":"Tropical Dry Forest",
 		"id":"tropical_dry_forest",
 		"type":"land",
 		"color":"af7a4e",
@@ -76,7 +76,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Warm Mixed Forest",
+		"name":"Warm Mixed Forest",
 		"id":"warm_mixed_forest",
 		"type":"land",
 		"color":"3e4b71",
@@ -86,7 +86,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Temperate Deciduous Forest",
+		"name":"Temperate Deciduous Forest",
 		"id":"temperate_deciduous_forest",
 		"type":"land",
 		"color":"4c825b",
@@ -96,7 +96,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Cool Mixed Forest",
+		"name":"Cool Mixed Forest",
 		"id":"cool_mixed_forest",
 		"type":"land",
 		"color":"407986",
@@ -106,7 +106,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Cool Conifer Forest",
+		"name":"Cool Conifer Forest",
 		"id":"cool_conifer_forest",
 		"type":"land",
 		"color":"a6c4c8",
@@ -116,7 +116,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Taiga",
+		"name":"Taiga",
 		"id":"taiga",
 		"type":"land",
 		"color":"3f5b78",
@@ -126,7 +126,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Cold Mixed Forest",
+		"name":"Cold Mixed Forest",
 		"id":"cold_mixed_forest",
 		"type":"land",
 		"color":"de7e4d",
@@ -136,7 +136,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Cold Deciduous Forest",
+		"name":"Cold Deciduous Forest",
 		"id":"cold_deciduous_forest",
 		"type":"land",
 		"color":"4073ab",
@@ -146,7 +146,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Scrubland",
+		"name":"Scrubland",
 		"id":"scrub",
 		"type":"land",
 		"color":"bc5d46",
@@ -156,7 +156,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Warm Grassland",
+		"name":"Warm Grassland",
 		"id":"warm_grassland",
 		"type":"land",
 		"color":"dea750",
@@ -166,7 +166,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Cool Grassland",
+		"name":"Cool Grassland",
 		"id":"cool_grassland",
 		"type":"land",
 		"color":"aab869",
@@ -176,7 +176,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Tundra",
+		"name":"Tundra",
 		"id":"tundra",
 		"type":"land",
 		"color":"8f8dbe",
@@ -186,7 +186,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Hot Desert",
+		"name":"Hot Desert",
 		"id":"hot_desert",
 		"type":"land",
 		"color":"fbfdc9",
@@ -196,7 +196,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Cool Desert",
+		"name":"Cool Desert",
 		"id":"cool_desert",
 		"type":"land",
 		"color":"e3ebe8",
@@ -206,7 +206,7 @@
 		"survivability":0
 	},
 	{
-		"Name":"Ice Sheet",
+		"name":"Ice Sheet",
 		"id":"ice_sheet",
 		"type":"ice",
 		"color":"bbcff2",
