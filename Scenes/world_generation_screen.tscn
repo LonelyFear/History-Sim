@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://imk426fj4x3a"]
 
-[ext_resource type="Script" uid="uid://dswesovn1w4te" path="res://Scripts/UI/world_settings_panel.gd" id="2_8327h"]
+[ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scenes/WorldSettingsPanel.cs" id="2_4g6c4"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_ktv3r"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="4_4g6c4"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_8327h"]
@@ -16,7 +16,7 @@ grow_vertical = 2
 [node name="TextureRect2" parent="." instance=ExtResource("4_4g6c4")]
 layout_mode = 1
 
-[node name="WorldSettingsPanel" type="Panel" parent="."]
+[node name="WorldSettingsPanel" type="Panel" parent="." node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "generateWorldButton")]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -29,7 +29,11 @@ offset_right = 319.0
 offset_bottom = 324.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("2_8327h")
+script = ExtResource("2_4g6c4")
+seedEdit = NodePath("VBoxContainer/SeedContainer/Seed")
+sizeDropdown = NodePath("VBoxContainer/WorldSizeContainer/WorldSize")
+heightmapCheckbox = NodePath("VBoxContainer/CheckBox")
+generateWorldButton = NodePath("HBoxContainer/Start")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="WorldSettingsPanel"]
 layout_mode = 1
@@ -98,6 +102,14 @@ popup/item_2/text = "Medium"
 popup/item_2/id = 2
 popup/item_3/text = "Small"
 popup/item_3/id = 1
+
+[node name="CheckBox" type="CheckBox" parent="WorldSettingsPanel/VBoxContainer"]
+layout_mode = 2
+focus_mode = 0
+theme = ExtResource("2_ktv3r")
+theme_override_constants/h_separation = 7
+theme_override_font_sizes/font_size = 40
+text = "Use Earth Heightmap?"
 
 [node name="Game Title" type="Label" parent="WorldSettingsPanel"]
 layout_mode = 1

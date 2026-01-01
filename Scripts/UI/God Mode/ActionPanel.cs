@@ -41,7 +41,6 @@ public partial class ActionPanel : Panel
     public void OnMainMenu()
     {
         SimManager sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
-        LoadingScreen.generator.worldgenFinishedEvent -= sim.OnWorldgenFinished;
         GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
         GetNode<Game>("/root/Game").QueueFree();        
     }
@@ -114,7 +113,7 @@ public partial class ActionPanel : Panel
         
 
         SimManager sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
-        WorldGenerator world = LoadingScreen.generator;
+        WorldGenerator world = sim.worldGenerator;
 
         world.SaveTerrainToFile(saveDir);
         FileAccess save = FileAccess.Open($"{saveDir}/save_data.json", FileAccess.ModeFlags.Write);

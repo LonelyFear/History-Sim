@@ -2,6 +2,7 @@ extends Panel
 
 @onready var lineEdit : LineEdit = $"VBoxContainer/SeedContainer/Seed"
 @onready var worldSizeDropdown : OptionButton = $VBoxContainer/WorldSizeContainer/WorldSize
+@onready var useEarthHeightmap : CheckBox = $VBoxContainer/CheckBox
 var old_text := ""
 
 func _on_seed_text_changed(new_text: String) -> void:
@@ -20,6 +21,7 @@ func _on_start_pressed() -> void:
 	var game : Node2D = load("res://Scenes/game.tscn").instantiate()
 	game.get_node("Loading/Loading Screen").seed = worldSeed
 	game.get_node("Loading/Loading Screen").worldMult = worldSizeDropdown.get_selected_id()
+	game.get_node("Loading/Loading Screen").useEarthHeightmap = useEarthHeightmap.button_pressed
 	get_tree().root.add_child(game)
 	get_parent().queue_free()
 

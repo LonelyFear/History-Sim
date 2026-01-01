@@ -15,15 +15,15 @@ public partial class LoadingScreen : Control
 
     public int seed;
     public int worldMult;
+    public bool useEarthHeightmap;
     bool textureGenerated;
     bool firstFrame = false;
     public string savePath = null;
     TerrainMap map;
-
-    public static WorldGenerator generator;
+    
+    public WorldGenerator generator;
     public override void _Ready()
     {
-        generator = new WorldGenerator();
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
         time = GetNode<TimeManager>("/root/Game/Time Manager");
         simNodeManager = GetNode<SimNodeManager>("/root/Game/Simulation");
@@ -37,87 +37,89 @@ public partial class LoadingScreen : Control
 	}
     public override void _Process(double delta)
     {
-        if (!firstFrame)
+        try
         {
-
-            if (savePath != null && DirAccess.Open(savePath) != null)
+            if (!firstFrame)
             {
-                WorldGenerator loadedWorld = WorldGenerator.LoadFromSave(savePath);
-                SimManager loadedSim = SimManager.LoadSimFromFile(savePath);
-
-                if (loadedWorld != null)
+                if (savePath != null && DirAccess.Open(savePath) != null)
                 {
-                    generator = loadedWorld;
-                    if (loadedSim != null)
+                    WorldGenerator loadedWorld = WorldGenerator.LoadFromSave(savePath);
+                    SimManager loadedSim = SimManager.LoadSimFromFile(savePath);
+
+                    if (loadedWorld != null)
                     {
-                        sim = loadedSim;
-                    }                    
+                        generator = loadedWorld;
+                        if (loadedSim != null)
+                        {
+                            sim = loadedSim;
+                        }                    
+                    }
                 }
+                firstFrame = true;
+
+                simNodeManager.simManager = sim;
+                sim.node = simNodeManager;
+                sim.terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
+                sim.timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
+                // Connection
+                //giveGeneratorEvent.Invoke(this, null);
+
+                generator.worldgenFinishedEvent += sim.OnWorldgenFinished;
+                sim.worldGenerator = generator;
+                map.world = generator;            
             }
-            firstFrame = true;
 
-            simNodeManager.simManager = sim;
-            sim.node = simNodeManager;
-            sim.terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
-            sim.timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
-            // Connection
-            generator.worldgenFinishedEvent += sim.OnWorldgenFinished;
-            sim.worldGenerator = generator;
-            time.worldGenerator = generator;
-            map.world = generator;            
-        }
-
-        if (task == null && generator.WorldExists == false)
-        {
-            generator.WorldMult = worldMult;
-            generator.Seed = seed;
-            //sim.tilesPerRegion *= tilesPerRegionFactor;
-
-            task = Task.Run(generator.GenerateWorld);
-        }
-
-        float tileCount = generator.WorldSize.X * generator.WorldSize.Y;
-        GetNode<TextureProgressBar>("ProgressBar").Value = (int)generator.Stage/10f * 100;
-        splash.Text = generator.Stage switch
-        {
-            WorldGenStage.CONTINENTS => "Forming Continents...",
-            WorldGenStage.MEASURING => "Measuring Terrain...",
-            WorldGenStage.TECTONICS => "Raising Mountains...",
-            WorldGenStage.EROSION => "Eroding Continents...",
-            WorldGenStage.WIND => "Blowing Winds...",
-            WorldGenStage.TEMPERATURE => "Heating Planet...",
-            WorldGenStage.SUMMER_RAINFALL => "Forming Clouds...",
-            WorldGenStage.WINTER_RAINFALL => "Snowing Snow...",
-            WorldGenStage.BIOMES => "Seeding Biomes...",
-            WorldGenStage.RIVERS => "Carving Rivers...",
-            _ => "Settling World...",
-        };
-        //splash.Text = "Generating World";
-
-
-        if ((task == null || task.IsCompleted) && generator.WorldExists && !textureGenerated)
-        {
-            textureGenerated = true;
-            splash.Text = "Finishing Up...";
-            map.Init();
-            try
+            if (task == null && generator.WorldExists == false)
             {
-                map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.KOPPEN));
-                streamlineRenderer.world = generator;
-                streamlineRenderer.QueueRedraw();
-            } catch (Exception e)
-            {
-                GD.PushError(e);
+                task = Task.Run(generator.GenerateWorld);
             }
-            
-        }
-        else if (task == null || task.IsCompleted)
+
+            float tileCount = generator.WorldSize.X * generator.WorldSize.Y;
+            GetNode<TextureProgressBar>("ProgressBar").Value = (int)generator.Stage/10f * 100;
+            splash.Text = generator.Stage switch
+            {
+                WorldGenStage.CONTINENTS => "Forming Continents...",
+                WorldGenStage.MEASURING => "Measuring Terrain...",
+                WorldGenStage.TECTONICS => "Raising Mountains...",
+                WorldGenStage.EROSION => "Eroding Continents...",
+                WorldGenStage.WIND => "Blowing Winds...",
+                WorldGenStage.TEMPERATURE => "Heating Planet...",
+                WorldGenStage.SUMMER_RAINFALL => "Forming Clouds...",
+                WorldGenStage.WINTER_RAINFALL => "Snowing Snow...",
+                WorldGenStage.BIOMES => "Seeding Biomes...",
+                WorldGenStage.RIVERS => "Carving Rivers...",
+                _ => "Settling World...",
+            };
+            //splash.Text = "Generating World";
+
+
+            if ((task == null || task.IsCompleted) && generator.WorldExists && !textureGenerated)
+            {
+                textureGenerated = true;
+                splash.Text = "Finishing Up...";
+                map.Init();
+                try
+                {
+                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.KOPPEN));
+                    streamlineRenderer.world = generator;
+                    streamlineRenderer.QueueRedraw();
+                } catch (Exception e)
+                {
+                    GD.PushError(e);
+                }
+                
+            }
+            else if (task == null || task.IsCompleted)
+            {
+                generator.FinishWorldgen();
+                camera.controlEnabled = true;
+                ui.forceHide = false;
+                QueueFree();
+                //GD.Print("I shouldnt show up");
+            }            
+        } catch (Exception e)
         {
-            generator.FinishWorldgen();
-            camera.controlEnabled = true;
-            ui.forceHide = false;
-            QueueFree();
-            //GD.Print("I shouldnt show up");
+            GD.PushError(e);
         }
     }
 }

@@ -68,7 +68,7 @@ public class WorldGenerator
     public bool WorldExists = false;
     [IgnoreMember]
     public WorldGenStage Stage;
-
+    [IgnoreMember] public bool generateRandomMap = false;
     public void GenerateWorld()
     {
         Init();
@@ -95,9 +95,14 @@ public class WorldGenerator
         ulong startTime = Time.GetTicksMsec();
         try
         {
-            HeightMap = new HeightmapGenerator().UseEarthHeightmap(this);
-            //SeaLevel = 0.6f;
-            //HeightMap = new HeightmapGenerator().GenerateHeightmap(this);
+            if (generateRandomMap)
+            {
+                SeaLevel = 0.6f;
+                HeightMap = new HeightmapGenerator().GenerateHeightmap(this);                
+            } else
+            {
+                HeightMap = new HeightmapGenerator().UseEarthHeightmap(this); 
+            }
         }
         catch (Exception e)
         {

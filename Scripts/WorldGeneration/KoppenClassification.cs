@@ -10,19 +10,19 @@ public class KoppenClassification
         {
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
-                if (world.HeightMap[x,y] < 0)
+                if (world.HeightMap[x, y] < 0)
                 {
-                    koppenMap[x,y] = "W";
+                    koppenMap[x, y] = "W";
                     continue;
                 }
-                double januaryTemperature = world.WinterTempMap[x,y];
-                double julyTemperature = world.SummerTempMap[x,y];
+                double januaryTemperature = world.WinterTempMap[x, y];
+                double julyTemperature = world.SummerTempMap[x, y];
 
-                double januaryRainfall = world.WinterRainfallMap[x,y];
-                double julyRainfall = world.SummerRainfallMap[x,y];       
+                double januaryRainfall = world.WinterRainfallMap[x, y];
+                double julyRainfall = world.SummerRainfallMap[x, y];
 
-                double averageTemp = world.GetAverageAnnualTemp(x,y);
-                double averagePrecipitationTotal = world.GetAnnualRainfall(x,y);
+                double averageTemp = world.GetAverageAnnualTemp(x, y);
+                double averagePrecipitationTotal = world.GetAnnualRainfall(x, y);
 
                 double minTemp = Math.Min(januaryTemperature, julyTemperature);
                 double maxTemp = Math.Max(januaryTemperature, julyTemperature);
@@ -46,56 +46,56 @@ public class KoppenClassification
                     seasonsFactor = julyRainfall / (julyRainfall + januaryRainfall);
                 else
                     seasonsFactor = januaryRainfall / (julyRainfall + januaryRainfall);
-                
+
                 double thresholdB = averageTemp * 20.0;
 
                 if (seasonsFactor >= 0.7)
                     thresholdB += 280.0;
                 else if (seasonsFactor >= 0.3)
                     thresholdB += 140.0;
-                
+
                 if (averagePrecipitationTotal < thresholdB)
                 {
                     if (averagePrecipitationTotal < 0.5 * thresholdB)
-                        koppenMap[x,y] = averageTemp > 18.0 ? "BWh" : "BWk";
+                        koppenMap[x, y] = averageTemp > 18.0 ? "BWh" : "BWk";
                     else
-                        koppenMap[x,y] =  averageTemp > 18.0 ? "BSh" : "BSk";
+                        koppenMap[x, y] = averageTemp > 18.0 ? "BSh" : "BSk";
                 }
                 else if (minTemp >= 18.0)
                 {
                     if (driestPrecipitation >= 60.0)
-                        koppenMap[x,y] =  "Af";
+                        koppenMap[x, y] = "Af";
                     else if (driestPrecipitation >= 100.0 - averagePrecipitationTotal / 25.0)
-                        koppenMap[x,y] =  "Am";
+                        koppenMap[x, y] = "Am";
                     else
-                        koppenMap[x,y] =  "Aw";
+                        koppenMap[x, y] = "Aw";
                 }
                 else if (maxTemp > 10.0)
                 {
                     if (minTemp >= -3.0)
                     {
                         if (winterPrecipitation > 0.7 * (winterPrecipitation + summerPrecipitation))
-                            koppenMap[x,y] =  maxTemp > 22.0 ? "Csa" : maxTemp > 18.0 ? "Csb" : "Csc";
+                            koppenMap[x, y] = maxTemp > 22.0 ? "Csa" : maxTemp > 18.0 ? "Csb" : "Csc";
                         else if (summerPrecipitation > 0.7 * (winterPrecipitation + summerPrecipitation))
-                            koppenMap[x,y] =  maxTemp > 22.0 ? "Cwa" : maxTemp > 18.0 ? "Cwb" : "Cwc";
+                            koppenMap[x, y] = maxTemp > 22.0 ? "Cwa" : maxTemp > 18.0 ? "Cwb" : "Cwc";
                         else
-                            koppenMap[x,y] =  maxTemp > 22.0 ? "Cfa" : maxTemp > 18.0 ? "Cfb" : "Cfc";
+                            koppenMap[x, y] = maxTemp > 22.0 ? "Cfa" : maxTemp > 18.0 ? "Cfb" : "Cfc";
                     }
                     else
                     {
                         if (winterPrecipitation > 0.7 * (winterPrecipitation + summerPrecipitation))
-                            koppenMap[x,y] =  maxTemp > 22.0 ? "Dsa" : maxTemp > 18.0 ? "Dsb" : "Dsc";
+                            koppenMap[x, y] = maxTemp > 22.0 ? "Dsa" : maxTemp > 18.0 ? "Dsb" : "Dsc";
                         else if (summerPrecipitation > 0.7 * (winterPrecipitation + summerPrecipitation))
-                            koppenMap[x,y] =  maxTemp > 22.0 ? "Dwa" : maxTemp > 18.0 ? "Dwb" : "Dwc";
+                            koppenMap[x, y] = maxTemp > 22.0 ? "Dwa" : maxTemp > 18.0 ? "Dwb" : "Dwc";
                         else
-                            koppenMap[x,y] =  maxTemp > 22.0 ? "Dfa" : maxTemp > 18.0 ? "Dfb" : "Dfc";
+                            koppenMap[x, y] = maxTemp > 22.0 ? "Dfa" : maxTemp > 18.0 ? "Dfb" : "Dfc";
                     }
                 }
                 else
                 {
-                    koppenMap[x,y] =  maxTemp >= 0.0 ? "ET" : "EF";
-                }                
-            }            
+                    koppenMap[x, y] = maxTemp >= 0.0 ? "ET" : "EF";
+                }
+            }
         }
         return koppenMap;
     }
