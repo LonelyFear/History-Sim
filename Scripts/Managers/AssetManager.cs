@@ -11,12 +11,13 @@ public static class AssetManager
     public static List<string> loadedModIds;
     public static List<string> foundModPaths;
     public static Dictionary<string, Biome> biomes = new Dictionary<string, Biome>();
+    public static List<PlantType> plantTypes = new List<PlantType>();
     public static Dictionary<string, Building> buildings = new Dictionary<string, Building>();
     public static Dictionary<string, Crop> crops = new Dictionary<string, Crop>();
     public static Dictionary<string, BaseResource> resources = new Dictionary<string, BaseResource>();
     public static void LoadBiomes(string modPath)
     {
-        string biomesPath = modPath + "/Biomes/biomes.json";
+        string biomesPath = modPath + "/Biomes/BIOME1biomes.json";
         FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
         if (bio != null)
         {
@@ -31,6 +32,25 @@ public static class AssetManager
         else
         {
             GD.PushError("biomes.json not found at path '" + biomesPath + "'");
+        }
+    }
+    public static void LoadPlantTypes(string modPath)
+    {
+        string plantTypePath = modPath + "/Plants/plantTypes.json";
+        FileAccess bio = FileAccess.Open(plantTypePath, FileAccess.ModeFlags.Read);
+        if (bio != null)
+        {
+            string plantData = bio.GetAsText();
+
+            foreach (PlantType plantType in JsonSerializer.Deserialize<PlantType[]>(plantData))
+            {
+                plantTypes.Add(plantType);
+            }
+            GD.Print("Loaded " + plantTypes.Count + " plant types");
+        }
+        else
+        {
+            GD.PushError("biomes.json not found at path '" + plantTypePath + "'");
         }
     }
     public static void GetLoadedMods()
@@ -73,6 +93,7 @@ public static class AssetManager
     }
     public static void LoadMods()
     {
+        plantTypes = new List<PlantType>();
         biomes = new Dictionary<string, Biome>();
         buildings = new Dictionary<string, Building>();
         crops = new Dictionary<string, Crop>();
@@ -86,6 +107,7 @@ public static class AssetManager
         }
         foreach (string modPath in foundModPaths)
         {
+            LoadPlantTypes(modPath);
             LoadCrops(modPath);
             LoadBiomes(modPath);
             LoadBuildings(modPath);
@@ -104,10 +126,6 @@ public static class AssetManager
                 buildings.Add(building.id, building);
             }
             GD.Print("Loaded " + buildings.Count+ " buildings");
-        }
-        else
-        {
-            GD.PushError("buildings.json not found at path '" + buildingsPath + "'");
         }
     }
     public static void LoadFood(string modPath)
@@ -213,6 +231,10 @@ public static class AssetManager
             GD.PushError("Resource not found with ID '" + id + "'");
             return null;
         }
+    }
+    public static PlantType GetPlantType(string id)
+    {
+        return plantTypes.Single(type => type.id == id);
     }
     public static Biome GetBiome(string id)
     {

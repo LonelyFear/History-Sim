@@ -2,13 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 using Godot;
-using MessagePack.Formatters;
 using Vector2 = System.Numerics.Vector2;
-
 public static class Utility
 {
     private static Random rng = new Random();
@@ -186,12 +181,19 @@ public static class Utility
         //GD.Print(dy);
         return new Vector2I(Mathf.RoundToInt(Mathf.PosMod(pointA.X + dx / 2f, worldSize.X)), Mathf.RoundToInt(Mathf.PosMod(pointA.Y + dy / 2f, worldSize.Y)));
     }
-    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize)
+    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize, float scale = 1, float frequency = 1)
     {
-        float nx = y;
-        float ny = Mathf.Sin(x * (Mathf.Pi * 2) / worldSize.X) / (Mathf.Pi * 2) * worldSize.X;
-        float nz = Mathf.Cos(x * (Mathf.Pi * 2) / worldSize.X) / (Mathf.Pi * 2) * worldSize.X;
-        return noise.GetNoise(nx, ny, nz);
+        float noiseValue = noise.GetNoise(x, y);
+        int border = worldSize.X / 4;
+        if (x < border)
+        {
+            float ny = (y * scale) / frequency;
+            noiseValue = (noise.GetNoise((x * scale) / frequency, ny) * x / border) + 
+                (noise.GetNoise(((x * scale) + worldSize.X) / frequency, ny)
+                * (border - x)
+                / border);          
+        }
+        return noiseValue;
     }
     public static Color MultiColourLerp(Color[] colours, float t) {
 
@@ -207,5 +209,29 @@ public static class Utility
         float localT = (t % delta) / delta;
 
         return (colours[startIndex] * (1f - localT)) + (colours[startIndex + 1] * localT);
+    }
+    public static Vector2 GetGradient(float[,] grid, int x, int y)
+    {
+        int x0 = Mathf.PosMod(x - 1, grid.GetLength(0));
+        int x1 = Mathf.PosMod(x + 1, grid.GetLength(0));
+        int y0 = Mathf.PosMod(y - 1, grid.GetLength(1));
+        int y1 = Mathf.PosMod(y + 1, grid.GetLength(1));
+
+        float dx = (grid[x1, y] - grid[x0, y]) * 0.5f;
+        float dy = (grid[x, y1] - grid[x, y0]) * 0.5f;
+
+        return new Vector2(dx, dy);       
+    }
+    public static Vector2 GetGradient(int[,] grid, int x, int y)
+    {
+        int x0 = Mathf.PosMod(x - 1, grid.GetLength(0));
+        int x1 = Mathf.PosMod(x + 1, grid.GetLength(0));
+        int y0 = Mathf.PosMod(y - 1, grid.GetLength(1));
+        int y1 = Mathf.PosMod(y + 1, grid.GetLength(1));
+
+        float dx = (grid[x1, y] - grid[x0, y]) * 0.5f;
+        float dy = (grid[x, y1] - grid[x, y0]) * 0.5f;
+
+        return new Vector2(dx, dy);       
     }
 }

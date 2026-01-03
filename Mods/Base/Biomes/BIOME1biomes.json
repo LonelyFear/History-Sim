@@ -1,0 +1,218 @@
+[
+	{
+		"name":"River",
+		"type":"water",
+		"id":"river",
+		"color":"3CA9E2",
+		"textureX": 3,
+		"textureY": 2,
+		"navigability":0,
+		"arability":0,
+		"survivability":0,
+		"special":true
+	},	
+	{
+		"name":"Ocean",
+		"id":"ocean",
+		"type":"water",
+		"color":"1B3B6F",
+		"textureX": 3,
+		"textureY": 2,
+		"navigability":0,
+		"arability":0,
+		"survivability":0,
+		"special":true
+	},
+	{
+		"name":"Shallow Ocean",
+		"id":"shallow_ocean",
+		"type":"water",
+		"color":"0078F0",
+		"textureX": 3,
+		"textureY": 2,
+		"navigability":0,
+		"arability":0,
+		"survivability":0,
+		"special":true
+	},
+	{
+		"name":"Rock",
+		"id":"rock",
+		"type":"land",
+		"color":"797979",
+		"navigability":0,
+		"arability":0,
+		"survivability":0,
+		"special":true
+	},
+	{
+		"name":"Tropical Rainforest",
+		"id":"tropical_rainforest",
+		"type":"land",
+		"color":"405960",
+		"plantTypes":["tropical_evergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Tropical Seasonal Forest",
+		"id":"tropical_forest",
+		"type":"land",
+		"color":"677463",
+		"plantTypes":["tropical_evergreen", "tropical_raingreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Tropical Dry Forest",
+		"id":"tropical_dry_forest",
+		"type":"land",
+		"color":"af7a4e",
+		"plantTypes":["tropical_raingreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Warm Mixed Forest",
+		"id":"warm_mixed_forest",
+		"type":"land",
+		"color":"3e4b71",
+		"plantTypes":["warm_evergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Temperate Deciduous Forest",
+		"id":"temperate_deciduous_forest",
+		"type":"land",
+		"color":"4c825b",
+		"plantTypes":["temperate_summergreen", "temperate_conifer", "boreal_summergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Cool Mixed Forest",
+		"id":"cool_mixed_forest",
+		"type":"land",
+		"color":"407986",
+		"plantTypes":["temperate_summergreen", "temperate_conifer", "boreal_evergreen_conifer", "boreal_summergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Cool Conifer Forest",
+		"id":"cool_conifer_forest",
+		"type":"land",
+		"color":"a6c4c8",
+		"plantTypes":["temperate_conifer", "boreal_evergreen_conifer", "boreal_summergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Taiga",
+		"id":"taiga",
+		"type":"land",
+		"color":"3f5b78",
+		"plantTypes":["boreal_evergreen_conifer", "boreal_summergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Cold Mixed Forest",
+		"id":"cold_mixed_forest",
+		"type":"land",
+		"color":"de7e4d",
+		"plantTypes":["temperate_conifer", "boreal_summergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Cold Deciduous Forest",
+		"id":"cold_deciduous_forest",
+		"type":"land",
+		"color":"4073ab",
+		"plantTypes":["boreal_summergreen"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Scrubland",
+		"id":"scrub",
+		"type":"land",
+		"color":"bc5d46",
+		"plantTypes":["succulent"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Warm Grassland",
+		"id":"warm_grassland",
+		"type":"land",
+		"color":"dea750",
+		"plantTypes":["warm_grass"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Cool Grassland",
+		"id":"cool_grassland",
+		"type":"land",
+		"color":"aab869",
+		"plantTypes":["cool_grass", "cold_grass"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Tundra",
+		"id":"tundra",
+		"type":"land",
+		"color":"8f8dbe",
+		"plantTypes":["cold_grass"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Hot Desert",
+		"id":"hot_desert",
+		"type":"land",
+		"color":"fbfdc9",
+		"plantTypes":["hot_shrub"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Cool Desert",
+		"id":"cool_desert",
+		"type":"land",
+		"color":"e3ebe8",
+		"plantTypes":["cool_shrub"],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	},
+	{
+		"name":"Ice Sheet",
+		"id":"ice_sheet",
+		"type":"ice",
+		"color":"bbcff2",
+		"plantTypes":[],
+		"navigability":0,
+		"ariability":0,
+		"survivability":0
+	}
+]

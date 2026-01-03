@@ -7,8 +7,7 @@ using System.Text.RegularExpressions;
 [MessagePackObject]
 public class Region : PopObject, ISaveable
 {
-    [IgnoreMember] public Tile[,] tiles { get; set; }
-    [IgnoreMember] public Biome[,] biomes { get; set; }
+    [IgnoreMember] public List<Tile> tiles { get; set; }
     [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
@@ -36,8 +35,11 @@ public class Region : PopObject, ISaveable
     [Key(20)] public Vector2I pos { get; set; }
     [IgnoreMember] public float navigability { get; set; }
     [IgnoreMember] public float avgTemperature { get; set; }
+    [IgnoreMember] public float[] avgMonthlyTemps { get; set; } = new float[12];
     [IgnoreMember] public float avgRainfall { get; set; }
+    [IgnoreMember] public float[] avgMonthlyRainfall { get; set; } = new float[12];
     [IgnoreMember] public float avgElevation { get; set; }
+    [IgnoreMember] public Dictionary<Biome, int> biomes { get; set; }
     [Key(25)] public int landCount { get; set; }
     [Key(26)] public TerrainType terrainType { get; set; }
     [IgnoreMember] public State occupier { get; set; } = null;
@@ -87,37 +89,46 @@ public class Region : PopObject, ISaveable
         name = NameGenerator.GenerateRegionName();
         landCount = 0;
         int waterCount = 0;
+        
         Dictionary<TerrainType, int> terrainTypes = [];
-        for (int x = 0; x < SimManager.tilesPerRegion; x++)
+        biomes = [];
+        foreach (Tile tile in tiles)
         {
-            for (int y = 0; y < SimManager.tilesPerRegion; y++)
+            avgTemperature += simManager.worldGenerator.GetAverageAnnualTemp(tile.pos.X, tile.pos.Y);
+            avgRainfall += simManager.worldGenerator.GetAnnualRainfall(tile.pos.X, tile.pos.Y);
+            avgElevation += simManager.worldGenerator.HeightMap[tile.pos.X, tile.pos.Y];
+
+            for (int month = 0; month < 12; month++)
             {
-                Tile tile = tiles[x, y];
-
-                avgTemperature += tile.temperature;
-                avgRainfall += tile.moisture;
-                avgElevation += tile.elevation;
-
-                if (!terrainTypes.TryAdd(tile.terrainType, 1))
-                {
-                    terrainTypes[tile.terrainType]++;
-                }
-                
-                if (tile.IsWater())
-                {
-                    waterCount++;
-                }
-                if (tile.IsLand())
-                {
-                    landCount++;
-                    arableLand += tile.arability;
-                    navigability += tile.navigability;
-                }
-                if (tile.coastal)
-                {
-                    coastal = true;
-                }
+                avgMonthlyTemps[month] += simManager.worldGenerator.GetTempForMonth(tile.pos.X, tile.pos.Y, month);
+                avgMonthlyRainfall[month] += simManager.worldGenerator.GetRainfallForMonth(tile.pos.X, tile.pos.Y, month);
             }
+
+            if (!terrainTypes.TryAdd(tile.terrainType, 1))
+            {
+                terrainTypes[tile.terrainType]++;
+            }
+
+            if (!biomes.ContainsKey(tile.biome))
+            {
+                biomes.Add(tile.biome, 0);
+            }
+            biomes[tile.biome]++;
+
+            if (tile.IsWater())
+            {
+                waterCount++;
+            }
+            if (tile.IsLand())
+            {
+                landCount++;
+                arableLand += tile.arability;
+                navigability += tile.navigability;
+            }
+            if (tile.coastal)
+            {
+                coastal = true;
+            }            
         }
         terrainType = TerrainType.LAND;
         if (waterCount == 16)
@@ -142,9 +153,14 @@ public class Region : PopObject, ISaveable
             terrainType = TerrainType.MOUNTAINS;
         }
         navigability /= landCount;
-        avgTemperature /= tiles.Length;
-        avgRainfall /= tiles.Length;
-        avgElevation /= tiles.Length;
+        avgTemperature /= tiles.Count;
+        avgRainfall /= tiles.Count;
+        avgElevation /= tiles.Count;
+        for (int month = 0; month < 12; month++)
+        {
+            avgMonthlyTemps[month] /= tiles.Count;
+            avgMonthlyRainfall[month] /= tiles.Count;
+        }
     }
 
     public void CheckHabitability()

@@ -39,34 +39,93 @@ public class HeightmapGenerator
 
     // Public Variables
     public float seaFloorLevel = 0.1f;
-    float landCoverage = 0.3f;
-    float shelfDepth = 0.05f;
+    float landCoverage = 0.4f;
+    float maxHillHeight = 0.2f;
+    float shelfDepth = 0.0f;
     const float slopeErosionThreshold = 0.1f;
 
-    public float[,] GetHeightMapFromImage(WorldGenerator worldAssigned, Image image)
+    public int[,] UseEarthHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         worldSize = world.WorldSize;
-        heightmap = new float[worldSize.X, worldSize.Y];
+        int[,] map = new int[worldSize.X, worldSize.Y];
         float pixelPerX = 4320 / (float)worldSize.X;
         float pixelPerY = 2160 / (float)worldSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
         int[,] realElevation = ReadBinaryHeightModel("Sprites/Earth2014.SUR2014.5min.geod.bin", 4320, 2160);
-        
+        tiles = new TerrainTile[worldSize.X, worldSize.Y];
+
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
+                tiles[x,y] = new TerrainTile()
+                {
+                    pos = new Vector2I(x,y)
+                };
                 int px = (int)(x * pixelPerX);
                 int py = (int)(y * pixelPerY);
                 int flippedPy = (2160 - 1) - py;
-
-                heightmap[x,y] = realElevation[px, flippedPy]/(float)WorldGenerator.WorldHeight;
+                map[x,y] = realElevation[px, flippedPy] - (int)(world.SeaLevel * WorldGenerator.WorldHeight);
             }
-        }       
-        return heightmap;
+        }    
+
+        PriorityQueue<TerrainTile, int> tilesToCheck = new();
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                        {
+                            continue;
+                        }
+                        Vector2I next = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                        if (map[x,y] < world.SeaLevel * WorldGenerator.WorldHeight)
+                        {
+                            tiles[x,y].coastal = true;
+                            tiles[x,y].coastDist = 0;
+                            tilesToCheck.Enqueue(tiles[x,y], 0);
+                        }
+                    }
+                }
+            }
+        }  
+       
+        HashSet<TerrainTile> measuredTiles = new(worldSize.X * worldSize.Y);
+        world.CoastDistMap = new float[worldSize.X, worldSize.Y];
+        
+        bool fullQueue = true;
+        while (fullQueue)
+        {
+            fullQueue = tilesToCheck.TryDequeue(out TerrainTile currentTile, out int priority);
+            if (!fullQueue) break;
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
+                    TerrainTile neighbor = tiles[next.X, next.Y];              
+                    if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
+                    {
+                        measuredTiles.Add(neighbor);
+                        neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
+                        world.CoastDistMap[neighbor.pos.X, neighbor.pos.Y] = neighbor.coastDist;
+                        tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
+                    }          
+                }
+            }
+        }             
+        return map;
     }
-    public int[,] ReadBinaryHeightModel(string path, int width, int height)
+    public static int[,] ReadBinaryHeightModel(string path, int width, int height)
     {
         int[,] heightData = new int[width,height];
 
@@ -80,19 +139,21 @@ public class HeightmapGenerator
                     
                     Array.Reverse(bytes);
                     short value = BitConverter.ToInt16(bytes, 0);
-
                     heightData[x, y] = value;                
             }
         }
         return heightData;
     }
-    public float[,] GenerateHeightmap(WorldGenerator worldAssigned)
+    public int[,] GenerateHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         seaLevel = world.SeaLevel - shelfDepth;
         worldSize = world.WorldSize;
         worldMult = world.WorldMult;
+        int[,] map = new int[worldSize.X, worldSize.Y];
+
         heightmap = new float[worldSize.X, worldSize.Y];
+
         tiles = new TerrainTile[worldSize.X, worldSize.Y];
         GD.Print(worldSize);
         ulong startTime = Time.GetTicksMsec();
@@ -137,17 +198,18 @@ public class HeightmapGenerator
         }
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.tiles = tiles;
-        /*
+
+        world.CoastDistMap = new float[worldSize.X, worldSize.Y];
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                float seaElevation = WorldGenerator.WorldHeight * world.SeaLevel;
-                heightmap[x,y] = (heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation;        
+                int seaElevation = (int)(WorldGenerator.WorldHeight * world.SeaLevel);
+                map[x,y] = (int)(heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation;  
+                world.CoastDistMap[x,y] = tiles[x,y].coastDist;      
             }
         }
-        */
-        return heightmap;
+        return map;
     }
 
     public void ThermalErosion()
@@ -393,31 +455,6 @@ public class HeightmapGenerator
                 }
             }
         }
-        /*
-        Parallel.For(1, divisions + 1, (i) =>
-        {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
-            {
-                for (int y = 0; y < worldSize.Y; y++)
-                {
-                    TerrainTile tile = tiles[x, y];
-                    TerrainTile boundary = null;
-                    float shortestDistSquared = Mathf.Inf;
-                    foreach (var entry in tile.edgeDistancesSquared)
-                    {
-                        TerrainTile nextTile = tiles[entry.Key.X, entry.Key.Y];
-                        if (entry.Value < shortestDistSquared && nextTile.fault)
-                        {
-                            boundary = nextTile;
-                            shortestDistSquared = entry.Value;
-                        }
-                    }
-                    tile.nearestBoundary = boundary;
-                    tile.boundaryDist = Mathf.Sqrt(shortestDistSquared);
-                }
-            }
-        });  
-        */
     }
     public void GenerateContinents()
     {
@@ -483,7 +520,7 @@ public class HeightmapGenerator
                 }
             }
         }
-        int divisions = 4;
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
@@ -495,8 +532,8 @@ public class HeightmapGenerator
                     if (tiles[x, y].region.continental)
                     {
                         // Land hills
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 30f, noiseValue)), 0f, 1f);
-                        float topDist = 1f - seaLevel - 0.1f;
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(4f, 30f, noiseValue)), 0f, 1f);
+                        float topDist = 1f - (seaLevel + maxHillHeight);
                         heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
                         heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);
                         //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
@@ -553,10 +590,10 @@ public class HeightmapGenerator
         yNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         yNoise.SetFractalOctaves(8);
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        float scale = 2;
+        float scale = 0.5f;
         GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
 
-        int divisions = 18;
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (parallelIterator) =>
         {
             for (int x = worldSize.X / divisions * (parallelIterator - 1); x < worldSize.X / divisions * parallelIterator; x++)
@@ -566,8 +603,8 @@ public class HeightmapGenerator
 
                     TerrainTile tile = new TerrainTile();
                     // Domain warping
-                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.X);
-                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x / scale, y / scale, worldSize) * 50), worldSize.Y);
+                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize, scale) * 50), worldSize.X);
+                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize, scale) * 50), worldSize.Y);
 
                     Vector2I pos = new Vector2I(fx, fy);
                     VoronoiRegion region = null;
@@ -641,7 +678,7 @@ public class HeightmapGenerator
     void GetDistances()
     {
         ulong startTime = Time.GetTicksMsec();
-        int divisions = 20;
+        int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
@@ -713,7 +750,7 @@ public class HeightmapGenerator
                     if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
                     {
                         measuredTiles.Add(neighbor);
-                        neighbor.coastDist = currentTile.coastDist + 1;
+                        neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
                         tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
                     }          
                 }

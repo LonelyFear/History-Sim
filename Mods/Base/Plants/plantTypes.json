@@ -1,0 +1,86 @@
+[
+	{
+		"id":"tropical_evergreen",
+		"minColdTemp":15.5,
+		"dominance": 1,
+		"minA": 0.80
+	},
+	{
+		"id":"tropical_raingreen",
+		"minColdTemp":15.5,
+		"dominance": 1,
+		"minA": 0.45,
+		"maxA": 0.85
+	},
+	{
+		"id":"warm_evergreen",
+		"minColdTemp":5,
+		"dominance": 2,
+		"minA": 0.65
+	},
+	{
+		"id":"temperate_summergreen",
+		"minColdTemp":-15,
+		"maxColdTemp":15.5,
+		"minGDD":1200,
+		"minA": 0.65,
+		"dominance": 3
+	},
+	{
+		"id":"temperate_conifer",
+		"minColdTemp":-19,
+		"maxColdTemp":5,
+		"minGDD":900,
+		"minA": 0.65,
+		"dominance": 3
+	},
+	{
+		"id":"boreal_evergreen_conifer",
+		"minColdTemp":-35,
+		"maxColdTemp":-2,
+		"minGDD":350,
+		"minA": 0.75,
+		"dominance": 3
+	},
+	{
+		"id":"boreal_summergreen",
+		"maxColdTemp":5,
+		"minGDD":350,
+		"minA": 0.65,
+		"dominance": 3
+	},
+	{
+		"id":"succulent",
+		"minColdTemp":5,
+		"minA": 0.28,
+		"dominance": 4
+	},
+	{
+		"id":"warm_grass",
+		"minWarmTemp":22,
+		"minA": 0.18,
+		"dominance": 5
+	},
+	{
+		"id":"cool_grass",
+		"minGDD":500,
+		"minA": 0.33,
+		"dominance": 6
+	},
+	{
+		"id":"cold_grass",
+		"minGDDz":100,
+		"minA": 0.33,
+		"dominance": 6
+	},
+	{
+		"id":"hot_shrub",
+		"minWarmTemp":22,
+		"dominance": 7
+	},
+	{
+		"id":"cool_shrub",
+		"minGDDz":100,
+		"dominance": 8
+	}
+]

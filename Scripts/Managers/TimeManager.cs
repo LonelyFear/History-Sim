@@ -39,7 +39,6 @@ public partial class TimeManager : Node
     double currentTime;
     [Export] public GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
     OptionButton gameSpeedUI;
-    public WorldGenerator worldGenerator = LoadingScreen.generator;
     public bool forcePause = false;
     public override void _Ready()
     {

@@ -173,27 +173,7 @@ public class SimManager
             Region region = pair.Value;
             region.LoadFromSave();
             // Adds tiles and biomes
-            region.tiles = new Tile[tilesPerRegion, tilesPerRegion];
-            region.biomes = new Biome[tilesPerRegion, tilesPerRegion];
-            for (int tx = 0; tx < tilesPerRegion; tx++)
-            {
-                for (int ty = 0; ty < tilesPerRegion; ty++)
-                {
-                    // Adds subregion to tile
-                    Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
-                    region.tiles[tx, ty] = tile;
-                    // Adds biomes to tile
-                    region.biomes[tx, ty] = tile.biome;
-                }
-            }
-            // Calc average fertility
-            region.CalcAverages();
-            // Checks habitability
-            region.CheckHabitability();
-            if (region.habitable)
-            {
-                habitableRegions.Add(region);
-            }
+            InitRegion(region);
         }
         BorderingRegions();
 
@@ -202,6 +182,7 @@ public class SimManager
         statesIds.Values.ToList().ForEach(r => r.LoadFromSave());
         cultureIds.Values.ToList().ForEach(r => r.LoadPopObjectFromSave());   
     }
+
     public void InitTerrainTiles()
     {
         tiles = new Tile[terrainSize.X, terrainSize.Y];
@@ -212,13 +193,11 @@ public class SimManager
             {
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
+                newTile.pos = new Vector2I(x,y);
                 
                 Biome biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
                 newTile.biome = biome != null ? biome : AssetManager.GetBiome("rock");
                 
-                newTile.temperature = worldGenerator.GetUnitTemp(worldGenerator.TempMap[x, y]);
-                newTile.moisture = worldGenerator.GetUnitRainfall(worldGenerator.RainfallMap[x, y]);
-                newTile.elevation = worldGenerator.GetUnitElevation(worldGenerator.HeightMap[x, y]);
                 newTile.arability = newTile.biome.arability;
                 newTile.navigability = newTile.biome.navigability;
                 newTile.survivalbility = newTile.biome.survivability;
@@ -237,7 +216,7 @@ public class SimManager
 
                         newTile.renderOverlay = false;
                         newTile.terrainType = TerrainType.DEEP_WATER;
-                        if (newTile.elevation > -800f)
+                        if (worldGenerator.HeightMap[x,y] > -800f)
                         {
                             newTile.terrainType = TerrainType.SHALLOW_WATER;
                         }
@@ -293,31 +272,30 @@ public class SimManager
             {
                 // Creates a region
                 Region newRegion = objectManager.CreateRegion(x, y);
-                for (int tx = 0; tx < tilesPerRegion; tx++)
-                {
-                    for (int ty = 0; ty < tilesPerRegion; ty++)
-                    {
-                        // Adds subregion to tile
-                        Tile tile = tiles[x * tilesPerRegion + tx, y * tilesPerRegion + ty];
-                        newRegion.tiles[tx, ty] = tile;
-                        // Adds biomes to tile
-                        newRegion.biomes[tx, ty] = tile.biome;
-                    }
-                }
-                // Calc average fertility
-                newRegion.CalcAverages();
-                // Checks habitability
-                newRegion.CheckHabitability();
-                if (newRegion.habitable)
-                {
-                    habitableRegions.Add(newRegion);
-                }
+                InitRegion(newRegion);
             }
         }
     }
-    public void GenerateSeaZones()
+    public void InitRegion(Region region)
     {
-        
+        region.tiles = new();
+        for (int tx = 0; tx < tilesPerRegion; tx++)
+        {
+            for (int ty = 0; ty < tilesPerRegion; ty++)
+            {
+                // Adds subregion to tile
+                Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
+                region.tiles.Add(tile);
+            }
+        }
+        // Calc average fertility
+        region.CalcAverages();
+        // Checks habitability
+        region.CheckHabitability();
+        if (region.habitable)
+        {
+            habitableRegions.Add(region);
+        }        
     }
     void AssignSimManager()
     {

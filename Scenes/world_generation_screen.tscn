@@ -1,9 +1,13 @@
-[gd_scene load_steps=5 format=3 uid="uid://imk426fj4x3a"]
+[gd_scene load_steps=6 format=3 uid="uid://imk426fj4x3a"]
 
-[ext_resource type="Script" uid="uid://dswesovn1w4te" path="res://Scripts/UI/world_settings_panel.gd" id="2_8327h"]
+[ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scenes/WorldSettingsPanel.cs" id="2_4g6c4"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_ktv3r"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="4_4g6c4"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_8327h"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4g6c4"]
+content_margin_left = 10.0
+content_margin_right = 10.0
 
 [node name="World Generation Screen" type="Control"]
 layout_mode = 3
@@ -16,7 +20,7 @@ grow_vertical = 2
 [node name="TextureRect2" parent="." instance=ExtResource("4_4g6c4")]
 layout_mode = 1
 
-[node name="WorldSettingsPanel" type="Panel" parent="."]
+[node name="WorldSettingsPanel" type="Panel" parent="." node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "generateWorldButton")]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -29,27 +33,29 @@ offset_right = 319.0
 offset_bottom = 324.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("2_8327h")
+script = ExtResource("2_4g6c4")
+seedEdit = NodePath("WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer/Seed")
+sizeDropdown = NodePath("WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer/WorldSize")
+heightmapCheckbox = NodePath("WorldSettingsScrollContainer/WorldSettingsContainer/EarthHeightmapButton")
+generateWorldButton = NodePath("ButtonsContainer/Start")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="WorldSettingsPanel"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -297.0
-offset_top = -228.0
-offset_right = 298.0
-offset_bottom = 157.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="WorldSettingsScrollContainer" type="ScrollContainer" parent="WorldSettingsPanel"]
+layout_mode = 0
+offset_top = 82.0
+offset_right = 637.0
+offset_bottom = 581.0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_4g6c4")
+
+[node name="WorldSettingsContainer" type="VBoxContainer" parent="WorldSettingsPanel/WorldSettingsScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 30
 
-[node name="SeedContainer" type="VBoxContainer" parent="WorldSettingsPanel/VBoxContainer"]
+[node name="SeedContainer" type="VBoxContainer" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer"]
 layout_mode = 2
 
-[node name="SeedLabel" type="Label" parent="WorldSettingsPanel/VBoxContainer/SeedContainer"]
+[node name="SeedLabel" type="Label" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer"]
 layout_mode = 2
 tooltip_text = "The seed of the world. Must be in numbers only."
 mouse_filter = 0
@@ -58,7 +64,7 @@ theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 text = "Seed"
 
-[node name="Seed" type="LineEdit" parent="WorldSettingsPanel/VBoxContainer/SeedContainer"]
+[node name="Seed" type="LineEdit" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer"]
 layout_mode = 2
 tooltip_text = "The seed of the world. Must be in numbers only."
 focus_mode = 1
@@ -71,10 +77,10 @@ context_menu_enabled = false
 emoji_menu_enabled = false
 virtual_keyboard_type = 2
 
-[node name="WorldSizeContainer" type="VBoxContainer" parent="WorldSettingsPanel/VBoxContainer"]
+[node name="WorldSizeContainer" type="VBoxContainer" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer"]
 layout_mode = 2
 
-[node name="WorldSizeLabel" type="Label" parent="WorldSettingsPanel/VBoxContainer/WorldSizeContainer"]
+[node name="WorldSizeLabel" type="Label" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer"]
 layout_mode = 2
 tooltip_text = "The size of the simulated regions in the world. Larger simulation means more regions."
 mouse_filter = 0
@@ -83,7 +89,7 @@ theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 text = "Simulation Size"
 
-[node name="WorldSize" type="OptionButton" parent="WorldSettingsPanel/VBoxContainer/WorldSizeContainer"]
+[node name="WorldSize" type="OptionButton" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer"]
 layout_mode = 2
 tooltip_text = "The size of the simulated regions in the world. Larger simulation means more regions."
 theme = ExtResource("2_ktv3r")
@@ -98,6 +104,20 @@ popup/item_2/text = "Medium"
 popup/item_2/id = 2
 popup/item_3/text = "Small"
 popup/item_3/id = 1
+
+[node name="EarthHeightmapButton" type="CheckBox" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer"]
+layout_mode = 2
+focus_mode = 0
+theme = ExtResource("2_ktv3r")
+theme_override_constants/h_separation = 7
+theme_override_font_sizes/font_size = 40
+text = "Use Earth Heightmap?"
+
+[node name="AdvancedCheckbox" type="CheckButton" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer"]
+layout_mode = 2
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 40
+text = "Show Advanced Options"
 
 [node name="Game Title" type="Label" parent="WorldSettingsPanel"]
 layout_mode = 1
@@ -115,7 +135,7 @@ theme_override_font_sizes/font_size = 63
 text = "World Generation Settings"
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="WorldSettingsPanel"]
+[node name="ButtonsContainer" type="HBoxContainer" parent="WorldSettingsPanel"]
 layout_mode = 0
 offset_top = 588.0
 offset_right = 637.0
@@ -123,20 +143,20 @@ offset_bottom = 635.0
 theme_override_constants/separation = 18
 alignment = 1
 
-[node name="Back" type="Button" parent="WorldSettingsPanel/HBoxContainer"]
+[node name="Back" type="Button" parent="WorldSettingsPanel/ButtonsContainer"]
 layout_mode = 2
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Back"
 
-[node name="Start" type="Button" parent="WorldSettingsPanel/HBoxContainer"]
+[node name="Start" type="Button" parent="WorldSettingsPanel/ButtonsContainer"]
 layout_mode = 2
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Start Simulation"
 
-[connection signal="text_changed" from="WorldSettingsPanel/VBoxContainer/SeedContainer/Seed" to="WorldSettingsPanel" method="_on_seed_text_changed"]
-[connection signal="pressed" from="WorldSettingsPanel/HBoxContainer/Back" to="WorldSettingsPanel" method="_on_back_pressed"]
-[connection signal="pressed" from="WorldSettingsPanel/HBoxContainer/Start" to="WorldSettingsPanel" method="_on_start_pressed"]
+[connection signal="text_changed" from="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer/Seed" to="WorldSettingsPanel" method="_on_seed_text_changed"]
+[connection signal="pressed" from="WorldSettingsPanel/ButtonsContainer/Back" to="WorldSettingsPanel" method="_on_back_pressed"]
+[connection signal="pressed" from="WorldSettingsPanel/ButtonsContainer/Start" to="WorldSettingsPanel" method="_on_start_pressed"]
