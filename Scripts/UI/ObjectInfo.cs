@@ -113,7 +113,7 @@ public partial class ObjectInfo : Control
                         specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand / region.landCount).ToString("0.0%") + "\n";
                         specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");
                         specialLabel.Text = "Average Temperature: " + region.avgMonthlyTemps[timeManager.GetMonth() - 1].ToString("0.0C") + "\n";
-                        specialLabel.Text += "Average Rainfall: " + region.avgRainfall.ToString("#,###0 mm") + "\n";
+                        specialLabel.Text += "Average Rainfall: " + region.avgMonthlyRainfall[timeManager.GetMonth() - 1].ToString("#,###0 mm") + "\n";
                         specialLabel.Text += "Average Elevation: " + region.avgElevation.ToString("#,###0 meters") + "\n";
                         specialLabel.Text += "Biomes: \n";
                         foreach (var pair in region.biomes.OrderByDescending(bp => bp.Value))

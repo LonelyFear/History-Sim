@@ -13,9 +13,6 @@ public partial class LoadingScreen : Control
     Label splash;
     PlayerCamera camera;
 
-    public int seed;
-    public int worldMult;
-    public bool useEarthHeightmap;
     bool textureGenerated;
     bool firstFrame = false;
     public string savePath = null;
@@ -100,7 +97,7 @@ public partial class LoadingScreen : Control
                 map.Init();
                 try
                 {
-                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.KOPPEN));
+                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
                     streamlineRenderer.world = generator;
                     streamlineRenderer.QueueRedraw();
                 } catch (Exception e)

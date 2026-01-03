@@ -30,9 +30,9 @@ public class RainfallMapGenerator
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(world.rng.Next());
         // Evaporation
-        summerRainfallMap = RunRainfallPass(25, false);
+        summerRainfallMap = RunRainfallPass(30, false);
         world.Stage = WorldGenStage.WINTER_RAINFALL;
-        winterRainfallMap = RunRainfallPass(25, true);      
+        winterRainfallMap = RunRainfallPass(30, true);      
     }
     float[,] RunRainfallPass(int stepCount, bool winter)
     {
@@ -51,7 +51,7 @@ public class RainfallMapGenerator
         {
             float[,] newMap = new float[world.WorldSize.X, world.WorldSize.Y];
             // Moving Moisture
-            int divisions = 8;
+            int divisions = 10;
             Parallel.For(1, divisions + 1, (i) =>
             {
                 for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)

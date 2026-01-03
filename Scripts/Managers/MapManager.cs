@@ -460,30 +460,24 @@ public partial class MapManager : Node2D
 
         Color noneColor = GetRegionColor(r, false);
         Color color = GetRegionColor(r);
-
-        for (int rx = 0; rx < regionResolution; rx++)
+        foreach (Tile tile in r.tiles)
         {
-            for (int ry = 0; ry < regionResolution; ry++)
-            {
-                Color finalColor = color;
-                int posX = (x * regionResolution) + rx;
-                int posY = (y * regionResolution) + ry;
+            Color finalColor = color;
 
-                // Carved Borders
-                if (!r.tiles[rx, ry].renderOverlay && !IsMapModeCarved())
-                {
-                    finalColor = noneColor;
-                }
-                if (r.isWater && r.pops.Count > 0)
-                {
-                    //finalColor = new Color(1, 0.5f, 0);
-                }
-                if (regionImage.GetPixel(posX, posY) != finalColor * 0.9f)
-                {
-                    regionImage.SetPixel(posX, posY, finalColor * 0.9f);
-                    mapUpdate = true;
-                }                
+            // Carved Borders
+            if (tile.renderOverlay && !IsMapModeCarved())
+            {
+                finalColor = noneColor;
             }
+            if (r.isWater && r.pops.Count > 0)
+            {
+                //finalColor = new Color(1, 0.5f, 0);
+            }
+            if (regionImage.GetPixel(tile.pos.X, tile.pos.Y) != finalColor * 0.9f)
+            {
+                regionImage.SetPixel(tile.pos.X, tile.pos.Y, finalColor * 0.9f);
+                mapUpdate = true;
+            }               
         }
     }
     public bool IsMapModeCarved()

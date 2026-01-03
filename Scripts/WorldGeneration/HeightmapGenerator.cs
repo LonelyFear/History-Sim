@@ -139,7 +139,6 @@ public class HeightmapGenerator
                     
                     Array.Reverse(bytes);
                     short value = BitConverter.ToInt16(bytes, 0);
-
                     heightData[x, y] = value;                
             }
         }

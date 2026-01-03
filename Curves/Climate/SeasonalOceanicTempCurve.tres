@@ -2,7 +2,7 @@
 
 [resource]
 _limits = [-50.0, 50.0, 0.0, 1.0]
-_data = [Vector2(0, -20), 0.0, 248.67044, 0, 0, Vector2(0.16, 5), 133.89902, 133.89902, 0, 0, Vector2(0.45, 24), 0.0, 0.0, 0, 0, Vector2(0.55, 24), 0.0, 0.0, 0, 0, Vector2(1, -25), -159.99684, 0.0, 0, 0]
-point_count = 5
+_data = [Vector2(0, -10), 0.0, 163.66107, 0, 0, Vector2(0.45, 27), 0.0, 0.0, 0, 0, Vector2(1, -30), -219.53844, 0.0, 0, 0]
+point_count = 3
 metadata/_snap_enabled = true
 metadata/_snap_count = 100

@@ -70,7 +70,6 @@ public class ObjectManager
         {
             id = GetId(),
             pos = new Vector2I(x, y),
-            tiles = new Tile[SimManager.tilesPerRegion, SimManager.tilesPerRegion],
             linkUpdateCountdown = simManager.rng.Next(0, 13)
         };
         //region.settlement = new Settlement(region);

@@ -5,10 +5,9 @@ public partial class WorldSettingsPanel : Panel
 {
 	[Export] LineEdit seedEdit;
 	[Export] OptionButton sizeDropdown;
-	[Export] CheckBox heightmapCheckbox;
+	[Export] Button heightmapCheckbox;
 	[Export] Button generateWorldButton;
 	Random rng = new Random();
-	WorldGenerator generator;
 	LoadingScreen loadingScreen;
 	string oldText = "";
 	// Called when the node enters the scene tree for the first time.
@@ -17,7 +16,6 @@ public partial class WorldSettingsPanel : Panel
 		seedEdit.TextChanged += OnSeedChanged;
 		generateWorldButton.Pressed += OnStartPressed;
 	}
-
 	public void OnSeedChanged(string newText)
 	{
 		if (string.IsNullOrEmpty(newText) || !int.TryParse(newText, out _))
@@ -37,12 +35,14 @@ public partial class WorldSettingsPanel : Panel
         }
 		GetTree().Root.AddChild(GD.Load<PackedScene>("res://Scenes/game.tscn").Instantiate());
 		loadingScreen = GetNode<LoadingScreen>("/root/Game/Loading/Loading Screen");
+		
 
 		loadingScreen.generator = new WorldGenerator()
 		{
 			Seed = seed,
-			generateRandomMap = !generateWorldButton.ButtonPressed,
+			generateRandomMap = !heightmapCheckbox.ButtonPressed,
 			WorldMult = sizeDropdown.GetSelectedId()
 		};
+		GetParent().QueueFree();
 	}
 }

@@ -68,7 +68,7 @@ public class WorldGenerator
     public bool WorldExists = false;
     [IgnoreMember]
     public WorldGenStage Stage;
-    [IgnoreMember] public bool generateRandomMap = false;
+    [IgnoreMember] public bool generateRandomMap;
     public void GenerateWorld()
     {
         Init();

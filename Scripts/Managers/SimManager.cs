@@ -173,24 +173,7 @@ public class SimManager
             Region region = pair.Value;
             region.LoadFromSave();
             // Adds tiles and biomes
-            region.tiles = new Tile[tilesPerRegion, tilesPerRegion];
-            for (int tx = 0; tx < tilesPerRegion; tx++)
-            {
-                for (int ty = 0; ty < tilesPerRegion; ty++)
-                {
-                    // Adds subregion to tile
-                    Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
-                    region.tiles[tx, ty] = tile;
-                }
-            }
-            // Calc average fertility
-            region.CalcAverages();
-            // Checks habitability
-            region.CheckHabitability();
-            if (region.habitable)
-            {
-                habitableRegions.Add(region);
-            }
+            InitRegion(region);
         }
         BorderingRegions();
 
@@ -199,6 +182,7 @@ public class SimManager
         statesIds.Values.ToList().ForEach(r => r.LoadFromSave());
         cultureIds.Values.ToList().ForEach(r => r.LoadPopObjectFromSave());   
     }
+
     public void InitTerrainTiles()
     {
         tiles = new Tile[terrainSize.X, terrainSize.Y];
@@ -209,6 +193,7 @@ public class SimManager
             {
                 Tile newTile = new Tile();
                 tiles[x, y] = newTile;
+                newTile.pos = new Vector2I(x,y);
                 
                 Biome biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
                 newTile.biome = biome != null ? biome : AssetManager.GetBiome("rock");
@@ -287,29 +272,30 @@ public class SimManager
             {
                 // Creates a region
                 Region newRegion = objectManager.CreateRegion(x, y);
-                for (int tx = 0; tx < tilesPerRegion; tx++)
-                {
-                    for (int ty = 0; ty < tilesPerRegion; ty++)
-                    {
-                        // Adds subregion to tile
-                        Tile tile = tiles[x * tilesPerRegion + tx, y * tilesPerRegion + ty];
-                        newRegion.tiles[tx, ty] = tile;
-                    }
-                }
-                // Calc average fertility
-                newRegion.CalcAverages();
-                // Checks habitability
-                newRegion.CheckHabitability();
-                if (newRegion.habitable)
-                {
-                    habitableRegions.Add(newRegion);
-                }
+                InitRegion(newRegion);
             }
         }
     }
-    public void GenerateSeaZones()
+    public void InitRegion(Region region)
     {
-        
+        region.tiles = new();
+        for (int tx = 0; tx < tilesPerRegion; tx++)
+        {
+            for (int ty = 0; ty < tilesPerRegion; ty++)
+            {
+                // Adds subregion to tile
+                Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
+                region.tiles.Add(tile);
+            }
+        }
+        // Calc average fertility
+        region.CalcAverages();
+        // Checks habitability
+        region.CheckHabitability();
+        if (region.habitable)
+        {
+            habitableRegions.Add(region);
+        }        
     }
     void AssignSimManager()
     {

@@ -95,7 +95,6 @@ public partial class SavesPanel : Panel
 		{
 			Node2D game = GD.Load<PackedScene>("res://Scenes/game.tscn").Instantiate<Node2D>();
 			LoadingScreen loadingScreen = game.GetNode<LoadingScreen>("Loading/Loading Screen");
-			loadingScreen.seed = 0;
 			loadingScreen.savePath = selectedSave;
 			GetTree().Root.AddChild(game);
 			GetParent().QueueFree();
