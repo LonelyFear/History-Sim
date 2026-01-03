@@ -1,31 +1,38 @@
 using Godot;
-using System;
-using System.Runtime.InteropServices.Marshalling;
+using System.Linq;
 using System.Threading.Tasks;
 using Vector2 = System.Numerics.Vector2;
 public class WindGenerator()
 {
     Vector2I worldSize;
-    int[,] heightMap;
     Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/PrevailingWindCurve.tres");
     Curve windSpeedCurve = GD.Load<Curve>("res://Curves/WindSpeedCurve.tres");
     WorldGenerator world;
     
-    public void GeneratePrevailingWinds(WorldGenerator world, out Vector2[,] summerMap, out Vector2[,] winterMap)
+    public void GeneratePrevailingWinds(WorldGenerator world)
     {
         this.world = world;
-        worldSize = world.WorldSize;
-        heightMap = world.HeightMap;       
-        summerMap = GeneratePrevailingWinds(false);
-        winterMap = GeneratePrevailingWinds(true);
-
+        worldSize = world.WorldSize;      
+        GeneratePrevailingWinds(false);
+        GeneratePrevailingWinds(true);
     }
-    Vector2[,] GeneratePrevailingWinds(bool winter)
+    void GeneratePrevailingWinds(bool winter)
     {
         Vector2[,] windVectorMap = new Vector2[worldSize.X, worldSize.Y];
         float[,] windDirMap = new float[worldSize.X, worldSize.Y];
         float[,] windSpeedMap = new float[worldSize.X, worldSize.Y];
 
+        int[,] heightMap = new int[worldSize.X, worldSize.Y];
+        float[,] coastDistMap = new float[worldSize.X, worldSize.Y];
+
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                heightMap[x,y] = world.cells[x,y].elevation;
+                coastDistMap[x,y] = world.cells[x,y].coastDist;
+            }
+        }
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
@@ -67,7 +74,7 @@ public class WindGenerator()
                         // Land Winds
                         windSpeedMap[x, y] *= 0.5f;
                         Vector2 windVector = GetVector(windSpeedMap[x,y], windDirMap[x,y]);
-                        Vector2 terrainGradient = -Utility.GetGradient(world.HeightMap, x,y) * 0.01f;
+                        Vector2 terrainGradient = -Utility.GetGradient(heightMap, x,y) * 0.01f;
 
                         windVector += terrainGradient;    
 
@@ -77,7 +84,7 @@ public class WindGenerator()
                     {
                         // Ocean Winds
                         Vector2 windVector = GetVector(windSpeedMap[x,y], windDirMap[x,y]);
-                        Vector2 coastGradient = Utility.GetGradient(world.CoastDistMap, x,y);
+                        Vector2 coastGradient = Utility.GetGradient(coastDistMap, x,y);
                         float windSpeed = windSpeedMap[x, y];
                         float dot = Vector2.Dot(windVector, coastGradient);
                         if (dot < 0)
@@ -120,11 +127,16 @@ public class WindGenerator()
             {
                 float bearing = windDirMap[x,y];
                 float speed = windSpeedMap[x,y];
-                windVectorMap[x,y] = GetVector(speed, bearing);
-                //windVectorMap[x,y] = new Vector2(speed, 0);
+
+                if (winter)
+                {
+                    world.cells[x,y].januaryWindVel = GetVector(speed, bearing);
+                } else
+                {
+                    world.cells[x,y].julyWindVel = GetVector(speed, bearing);
+                }
             }
         }
-        return windVectorMap;
     }
     public Vector2 GetVector(float speed, float bearing)
     {

@@ -22,7 +22,7 @@ public class RiverGenerator
         {
             bool posGood = true;
             Vector2I pos = new Vector2I(rng.Next(0, world.WorldSize.X), rng.Next(0, world.WorldSize.Y));
-            if (!validPositions.Contains(pos) && world.HeightMap[pos.X, pos.Y] > minRiverHeight && rng.NextSingle() < world.GetAnnualRainfall(pos.X, pos.Y)/3500f && AssetManager.GetBiome(world.BiomeMap[pos.X, pos.Y]).type == "land")
+            if (!validPositions.Contains(pos) && world.cells[pos.X, pos.Y].elevation > minRiverHeight && rng.NextSingle() < world.cells[pos.X,pos.Y].GetAnnualRainfall()/3500f && AssetManager.GetBiome(world.cells[pos.X, pos.Y].biomeId).type == "land")
             {
                 foreach (Vector2I oPos in validPositions)
                 {
@@ -61,7 +61,6 @@ public class RiverGenerator
 
     void GenerateRivers(WorldGenerator world)
     {
-        int[,] heightmap = world.HeightMap;
         int maxAttempts = 10000;
         foreach (Vector2I riverStart in validPositions)
         {
@@ -70,14 +69,13 @@ public class RiverGenerator
             List<Vector2I> currentRiver = new List<Vector2I>();
             bool endFound = false;
             bool waterEnd = false;
-
             int attempts = 0;
             currentRiver.Add(pos);
             while (!endFound && currentRiver.Count <= maxRiverLength && attempts < maxAttempts)
             {
                 attempts++;
                 Vector2I lowestPos = pos;
-                float lowestElevation = heightmap[pos.X, pos.Y] * 20;
+                float lowestElevation = world.cells[pos.X, pos.Y].elevation * 20;
                 for (int dx = -1; dx < 2; dx++)
                 {
                     for (int dy = -1; dy < 2; dy++)
@@ -87,15 +85,15 @@ public class RiverGenerator
                             continue;
                         }
                         Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, world.WorldSize.X), Mathf.PosMod(pos.Y + dy, world.WorldSize.Y));
-                        if (heightmap[next.X, next.Y] <= lowestElevation && !currentRiver.Contains(next))
+                        if (world.cells[next.X, next.Y].elevation <= lowestElevation && !currentRiver.Contains(next))
                         {
-                            lowestElevation = heightmap[next.X, next.Y];
+                            lowestElevation = world.cells[next.X, next.Y].elevation;
                             lowestPos = next;
                         }
                     }
                 }
                 currentRiver.Add(lowestPos);
-                if (heightmap[lowestPos.X, lowestPos.Y] < world.SeaLevel)
+                if (world.cells[lowestPos.X, lowestPos.Y].elevation < world.SeaLevel)
                 {
                     endFound = true;
                     waterEnd = true;
@@ -144,7 +142,7 @@ public class RiverGenerator
             {
                 if (rivers[x, y])
                 {
-                    world.BiomeMap[x,y] = "river";
+                    world.cells[x,y].biomeId = "river";
                 }
             }
         }

@@ -44,7 +44,7 @@ public class HeightmapGenerator
     float shelfDepth = 0.0f;
     const float slopeErosionThreshold = 0.1f;
 
-    public int[,] UseEarthHeightmap(WorldGenerator worldAssigned)
+    public void UseEarthHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         worldSize = world.WorldSize;
@@ -96,7 +96,6 @@ public class HeightmapGenerator
         }  
        
         HashSet<TerrainTile> measuredTiles = new(worldSize.X * worldSize.Y);
-        world.CoastDistMap = new float[worldSize.X, worldSize.Y];
         
         bool fullQueue = true;
         while (fullQueue)
@@ -117,13 +116,23 @@ public class HeightmapGenerator
                     {
                         measuredTiles.Add(neighbor);
                         neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
-                        world.CoastDistMap[neighbor.pos.X, neighbor.pos.Y] = neighbor.coastDist;
+                        world.cells[neighbor.pos.X, neighbor.pos.Y].coastDist = neighbor.coastDist;
                         tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
                     }          
                 }
             }
-        }             
-        return map;
+        } 
+        DeliverHeightData(map);            
+    }
+    public void DeliverHeightData(int[,] heightData)
+    {
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                world.cells[x,y].elevation = heightData[x,y];
+            }
+        }
     }
     public static int[,] ReadBinaryHeightModel(string path, int width, int height)
     {
@@ -144,7 +153,7 @@ public class HeightmapGenerator
         }
         return heightData;
     }
-    public int[,] GenerateHeightmap(WorldGenerator worldAssigned)
+    public void GenerateHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
         seaLevel = world.SeaLevel - shelfDepth;
@@ -199,17 +208,16 @@ public class HeightmapGenerator
         GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.tiles = tiles;
 
-        world.CoastDistMap = new float[worldSize.X, worldSize.Y];
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
                 int seaElevation = (int)(WorldGenerator.WorldHeight * world.SeaLevel);
                 map[x,y] = (int)(heightmap[x,y] * WorldGenerator.WorldHeight) - seaElevation;  
-                world.CoastDistMap[x,y] = tiles[x,y].coastDist;      
+                world.cells[x,y].coastDist = tiles[x,y].coastDist;      
             }
         }
-        return map;
+        DeliverHeightData(map);  
     }
 
     public void ThermalErosion()

@@ -94,14 +94,14 @@ public class Region : PopObject, ISaveable
         biomes = [];
         foreach (Tile tile in tiles)
         {
-            avgTemperature += simManager.worldGenerator.GetAverageAnnualTemp(tile.pos.X, tile.pos.Y);
-            avgRainfall += simManager.worldGenerator.GetAnnualRainfall(tile.pos.X, tile.pos.Y);
-            avgElevation += simManager.worldGenerator.HeightMap[tile.pos.X, tile.pos.Y];
+            avgTemperature += tile.GetAverageTemp();
+            avgRainfall += tile.GetAnnualRainfall();
+            avgElevation += tile.elevation;
 
             for (int month = 0; month < 12; month++)
             {
-                avgMonthlyTemps[month] += simManager.worldGenerator.GetTempForMonth(tile.pos.X, tile.pos.Y, month);
-                avgMonthlyRainfall[month] += simManager.worldGenerator.GetRainfallForMonth(tile.pos.X, tile.pos.Y, month);
+                avgMonthlyTemps[month] += tile.GetTempForMonth(month);
+                avgMonthlyRainfall[month] +=tile.GetRainfallForMonth(month);
             }
 
             if (!terrainTypes.TryAdd(tile.terrainType, 1))

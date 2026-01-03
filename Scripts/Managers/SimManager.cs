@@ -191,56 +191,10 @@ public class SimManager
         {
             for (int y = 0; y < terrainSize.Y; y++)
             {
-                Tile newTile = new Tile();
+                Tile newTile = new(worldGenerator.cells[x,y]);
                 tiles[x, y] = newTile;
                 newTile.pos = new Vector2I(x,y);
                 
-                Biome biome = AssetManager.GetBiome(worldGenerator.BiomeMap[x, y]);
-                newTile.biome = biome != null ? biome : AssetManager.GetBiome("rock");
-                
-                newTile.arability = newTile.biome.arability;
-                newTile.navigability = newTile.biome.navigability;
-                newTile.survivalbility = newTile.biome.survivability;
-
-                switch (newTile.biome.type)
-                {
-                    case "land":
-                        newTile.terrainType = TerrainType.LAND;
-                        break;
-                    case "water":
-                        if (newTile.biome.id == "river")
-                        {
-                            newTile.terrainType = TerrainType.RIVER;
-                            break;
-                        }
-
-                        newTile.renderOverlay = false;
-                        newTile.terrainType = TerrainType.DEEP_WATER;
-                        if (worldGenerator.HeightMap[x,y] > -800f)
-                        {
-                            newTile.terrainType = TerrainType.SHALLOW_WATER;
-                        }
-                        break;
-                    default:
-                        newTile.terrainType = TerrainType.ICE;
-                        break;
-                }
-                if (newTile.terrainType == TerrainType.LAND)
-                {
-                    if (worldGenerator.HeightMap[x, y] > WorldGenerator.MountainThreshold)
-                    {
-                        newTile.navigability *= 0.1f;
-                        newTile.arability *= 0.25f;
-                        newTile.survivalbility *= 0.8f;
-                        newTile.terrainType = TerrainType.MOUNTAINS;
-                    }
-                    else if (worldGenerator.HeightMap[x, y] > WorldGenerator.HillThreshold)
-                    {
-                        newTile.navigability *= 0.25f;
-                        newTile.arability *= 0.5f;
-                        newTile.terrainType = TerrainType.HILLS;
-                    }
-                }
                 // checks for coasts
                 for (int dx = -1; dx < 2; dx++)
                 {

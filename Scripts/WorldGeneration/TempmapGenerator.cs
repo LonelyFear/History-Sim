@@ -8,20 +8,18 @@ public class TempmapGenerator
     Curve continentialityCurve = GD.Load<Curve>("res://Curves/ContinentialityCurve.tres");
     WorldGenerator world;
     float[,] map;
-    public float[,] GenerateTempMap(WorldGenerator world, out float[,] summerMap, out float[,] winterMap)
+    public void GenerateTempMap(WorldGenerator world)
     {
         this.world = world;
-        map = new float[world.WorldSize.X, world.WorldSize.Y];
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
 
-        summerMap = GenerateTempMap(false);
-        winterMap = GenerateTempMap(true);
-        return map;
+        GenerateTempMap(false);
+        GenerateTempMap(true);
     }
-    float[,] GenerateTempMap(bool winter)
+    void GenerateTempMap(bool winter)
     {
         map = new float[world.WorldSize.X, world.WorldSize.Y];
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
@@ -53,16 +51,27 @@ public class TempmapGenerator
                     float continentiality = CalculateContinentiality(x,y, winter);
                     map[x, y] = Mathf.Lerp(oceanValue, tempValue, continentiality);
 
-                    float heightFactor = 6.5f * (world.HeightMap[x, y]/1000f);
-                    if (world.HeightMap[x, y] > 0)
+                    float heightFactor = 6.5f * (world.cells[x,y].elevation/1000f);
+                    if (world.cells[x,y].elevation > 0)
                     {
                         map[x, y] -= heightFactor;
                     }                
                 }
             }
         });
-
-        return map;
+        for (int x = 0; x < world.WorldSize.X; x++)
+        {
+            for (int y = 0; y < world.WorldSize.Y; y++)
+            {
+                if (winter)
+                {
+                    world.cells[x,y].januaryTemp = (int)map[x,y];
+                } else
+                {
+                    world.cells[x,y].julyTemp = (int)map[x,y];
+                }
+            }
+        } 
     }
     public float CalculateContinentiality(int x, int y, bool winter)
     {
@@ -90,8 +99,8 @@ public class TempmapGenerator
             float tx = sampleX - Mathf.Floor(sampleX);
             float ty = sampleY - Mathf.Floor(sampleY);
 
-            float bottomX = Mathf.Lerp(world.HeightMap[bottomCorner.X, bottomCorner.Y], world.HeightMap[topCorner.X, bottomCorner.Y], tx);
-            float topX = Mathf.Lerp(world.HeightMap[bottomCorner.X, topCorner.Y], world.HeightMap[topCorner.X, topCorner.Y],tx);
+            float bottomX = Mathf.Lerp(world.cells[bottomCorner.X, bottomCorner.Y].elevation, world.cells[topCorner.X, bottomCorner.Y].elevation, tx);
+            float topX = Mathf.Lerp(world.cells[bottomCorner.X, topCorner.Y].elevation, world.cells[topCorner.X, topCorner.Y].elevation,tx);
             float elevation = Mathf.Lerp(bottomX, topX, ty);
 
             if (elevation < world.SeaLevel * WorldGenerator.WorldHeight)
@@ -118,10 +127,19 @@ public class TempmapGenerator
 
         float tx = sampleX - Mathf.Floor(sampleX);
         float ty = sampleY - Mathf.Floor(sampleY);
-        Vector2[,] windVelMap = winter ? world.WinterWindVelMap : world.SummerWindVelMap;
-        Vector2 bottomX = Vector2.Lerp(windVelMap[bottomCorner.X, bottomCorner.Y], windVelMap[topCorner.X, bottomCorner.Y], tx);
-        Vector2 topX = Vector2.Lerp(windVelMap[bottomCorner.X, topCorner.Y], windVelMap[topCorner.X, topCorner.Y], tx);  
+        Vector2 bottomX = Vector2.Lerp(GetWindVel(bottomCorner.X, bottomCorner.Y, winter), GetWindVel(topCorner.X, bottomCorner.Y, winter), tx);
+        Vector2 topX = Vector2.Lerp(GetWindVel(bottomCorner.X, topCorner.Y, winter), GetWindVel(topCorner.X, topCorner.Y, winter), tx);  
         return Vector2.Lerp(bottomX, topX, ty);      
+    }
+    Vector2 GetWindVel(int x, int y, bool winter)
+    {
+        if (winter)
+        {
+            return world.cells[x,y].januaryWindVel;
+        } else
+        {
+            return world.cells[x,y].julyWindVel;
+        }
     }
     /*
     public float[,] GenerateTempMap(float scale, WorldGenerator world){

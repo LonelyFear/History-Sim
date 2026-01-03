@@ -5,38 +5,37 @@ using Godot;
 
 public class KoppenClassification
 {
-    public static string[,] GetKoppenMap(WorldGenerator world)
+    public static void GetKoppenMap(WorldGenerator world)
     {
-        string[,] koppenMap = new string[world.WorldSize.X, world.WorldSize.Y];
         for (int x = 0; x < world.WorldSize.X; x++)
         {
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
-                if (world.HeightMap[x, y] < 0)
+                if (world.cells[x, y].elevation < 0)
                 {
-                    koppenMap[x, y] = "W";
+                    world.cells[x,y].classification = "W";
                     continue;
                 }
 
                 int monthsAbove10 = 0;
-                int warmestMonth = world.GetTempForMonth(x,y,0) > world.GetTempForMonth(x,y,6) ? 0 : 6;
-                bool warmestMonthsAbove10C = world.GetTempForMonth(x,y,warmestMonth - 1) > 10 && world.GetTempForMonth(x,y,warmestMonth) > 10
-                && world.GetTempForMonth(x,y,warmestMonth + 1) > 10 && world.GetTempForMonth(x,y,warmestMonth + 2) > 10;
+                int warmestMonth = world.cells[x,y].GetTempForMonth(0) > world.cells[x,y].GetTempForMonth(6) ? 0 : 6;
+                bool warmestMonthsAbove10C = world.cells[x,y].GetTempForMonth(warmestMonth - 1) > 10 && world.cells[x,y].GetTempForMonth(warmestMonth) > 10
+                && world.cells[x,y].GetTempForMonth(warmestMonth + 1) > 10 && world.cells[x,y].GetTempForMonth(warmestMonth + 2) > 10;
                 for (int i = 0; i < 12; i++)
                 {
-                    if (world.GetTempForMonth(x,y,i) >= 10)
+                    if (world.cells[x,y].GetTempForMonth(i) >= 10)
                     {
                         monthsAbove10++;
                     }
                 }
-                double januaryTemperature = world.WinterTempMap[x, y];
-                double julyTemperature = world.SummerTempMap[x, y];
+                double januaryTemperature = world.cells[x, y].januaryTemp;
+                double julyTemperature = world.cells[x, y].julyTemp;
 
-                double januaryRainfall = world.WinterRainfallMap[x, y];
-                double julyRainfall = world.SummerRainfallMap[x, y];
+                double januaryRainfall = world.cells[x, y].januaryRainfall;
+                double julyRainfall = world.cells[x, y].julyRainfall;
 
-                double averageTemp = world.GetAverageAnnualTemp(x, y);
-                double averagePrecipitationTotal = world.GetAnnualRainfall(x, y);
+                double averageTemp = world.cells[x,y].GetAverageTemp();
+                double averagePrecipitationTotal = world.cells[x,y].GetAnnualRainfall();
 
                 double minTemp = Math.Min(januaryTemperature, julyTemperature);
                 double maxTemp = Math.Max(januaryTemperature, julyTemperature);
@@ -80,22 +79,22 @@ public class KoppenClassification
                     {
                         classification += 'k';
                     }
-                    koppenMap[x,y] = classification;
+                    world.cells[x,y].classification = classification;
                 }
                 else if (minTemp > 18f)
                 {
                     // Tropical
                     if (driestPrecipitation >= 60f)
                     {
-                        koppenMap[x,y] = "Af";
+                        world.cells[x,y].classification = "Af";
                     }
                     else if (driestPrecipitation > 100f - (averagePrecipitationTotal/25f))
                     {
-                        koppenMap[x,y] = "Am";
+                        world.cells[x,y].classification = "Am";
                     }
                     else if (driestPrecipitation <= 100f - (averagePrecipitationTotal/25f))
                     {
-                        koppenMap[x,y] = "Aw";
+                        world.cells[x,y].classification = "Aw";
                     }
                 }
                 else if (maxTemp >= 10f)
@@ -136,15 +135,14 @@ public class KoppenClassification
                     {
                         classification += "d";
                     }
-                    koppenMap[x,y] = classification;
+                    world.cells[x,y].classification = classification;
                 }
                 else if (maxTemp < 10f)
                 {
-                    koppenMap[x, y] = maxTemp >= 0.0 ? "ET" : "EF";
+                    world.cells[x,y].classification = maxTemp >= 0.0 ? "ET" : "EF";
                 }
             }
         }
-        return koppenMap;
     }
     public static Color GetColor(string classification)
     {

@@ -7,22 +7,13 @@ using Godot;
 using Vector2 = System.Numerics.Vector2;
 public class RainfallMapGenerator
 {
-    float[,] moistureMap;
     WorldGenerator world;
     Curve precipitationCurve = GD.Load<Curve>("res://Curves/Climate/PrecipitationCurve.tres");
     Curve evaporationCurve = GD.Load<Curve>("res://Curves/EvaporationCurve.tres");
     Curve daylightCurve = GD.Load<Curve>("res://Curves/DaylightCurve.tres");
     Curve simpleEvaporationCurve = GD.Load<Curve>("res://Curves/Climate/SimpleEvaporationCurve.tres");
-    public void GenerateRainfallMap(WorldGenerator world, out float[,] summerRainfallMap, out float[,] winterRainfallMap){
+    public void GenerateRainfallMap(WorldGenerator world){
         this.world = world;
-        GenerateComplexMap(out summerRainfallMap, out winterRainfallMap);
-    }
-    void GenerateComplexMap(out float[,] summerRainfallMap, out float[,] winterRainfallMap)
-    {
-        moistureMap = new float[world.WorldSize.X, world.WorldSize.Y];
-
-        world.SummerPETMap = new float[world.WorldSize.X, world.WorldSize.Y];
-        world.WinterPETMap = new float[world.WorldSize.X, world.WorldSize.Y];
 
         FastNoiseLite noise = new FastNoiseLite();
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
@@ -30,12 +21,13 @@ public class RainfallMapGenerator
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(world.rng.Next());
         // Evaporation
-        summerRainfallMap = RunRainfallPass(30, false);
+        RunRainfallPass(30, false);
         world.Stage = WorldGenStage.WINTER_RAINFALL;
-        winterRainfallMap = RunRainfallPass(30, true);      
+        RunRainfallPass(30, true);    
     }
-    float[,] RunRainfallPass(int stepCount, bool winter)
+    void RunRainfallPass(int stepCount, bool winter)
     {
+        float[,] moistureMap = new float[world.WorldSize.X, world.WorldSize.Y];
         float[,] map = new float[world.WorldSize.X, world.WorldSize.Y];
         float initialMoisture = 0;
         float moistureRatio = 0;
@@ -59,7 +51,7 @@ public class RainfallMapGenerator
                     for (int y = 0; y < world.WorldSize.Y; y++)
                     {
 
-                        Vector2 vel = winter ? -world.WinterWindVelMap[x,y] : -world.SummerWindVelMap[x,y];
+                        Vector2 vel = winter ? -world.cells[x,y].januaryWindVel : -world.cells[x,y].julyWindVel;
                         
                         float sampleX = x + vel.X;
                         float sampleY = y + vel.Y;
@@ -99,7 +91,7 @@ public class RainfallMapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y]);
+                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(winter ? world.cells[x,y].januaryTemp : world.cells[x,y].julyTemp);
                     moistureMap[x,y] -= precipitation;
                     map[x,y] += precipitation;
                     stepMoisture += moistureMap[x,y];
@@ -127,12 +119,24 @@ public class RainfallMapGenerator
                 }
             }
         }     
-        return map;   
+        for (int x = 0; x < world.WorldSize.X; x++)
+        {
+            for (int y = 0; y < world.WorldSize.Y; y++)
+            {
+                if (winter)
+                {
+                    world.cells[x,y].januaryRainfall = (int)map[x,y];
+                } else
+                {
+                    world.cells[x,y].julyRainfall = (int)map[x,y];
+                }
+            }
+        }  
     }
     float GetEvaporation(int x, int y, bool winter)
     {
         double PET = GetPET(world, x,y, winter);
-        if (world.HeightMap[x,y] < 0)
+        if (world.cells[x,y].elevation < 0)
         {
             //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
             return (float)PET;
@@ -150,13 +154,13 @@ public class RainfallMapGenerator
         {
             dayLength = daylightCurve.Sample(1f - latitudeFactor);
         }
-        double temp = Math.Clamp(winter ? world.WinterTempMap[x,y] : world.SummerTempMap[x,y], 0.0, 10000.0);
+        double temp = Math.Clamp(winter ? world.cells[x,y].januaryTemp : world.cells[x,y].julyTemp, 0.0, 10000.0);
         double PET;
 
         double[] monthlyMeanTemperatures = new double[12];
         for (int i = 0; i < 12; i++)
         {
-            double monthTemp = world.GetTempForMonth(x, y, i);
+            double monthTemp = world.cells[x,y].GetTempForMonth(i);
             monthlyMeanTemperatures[i] = Math.Pow(monthTemp/5.0, 1.514);
         }
         double heatIndex = monthlyMeanTemperatures.Sum();
@@ -174,10 +178,10 @@ public class RainfallMapGenerator
 
         if (winter)
         {
-            world.WinterPETMap[x,y] = (float)PET;
+            world.cells[x,y].januaryPET = (float)PET;
         } else
         {
-            world.SummerPETMap[x,y] = (float)PET;
+            world.cells[x,y].julyPET = (float)PET;
         }
         return PET;
     }

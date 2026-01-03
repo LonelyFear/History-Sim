@@ -20,7 +20,7 @@ public class BiomeGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float[] tempValues = [world.GetTempForMonth(x,y,0), world.GetTempForMonth(x,y,6)];
+                    float[] tempValues = [world.cells[x,y].GetTempForMonth(0), world.cells[x,y].GetTempForMonth(6)];
                     float[] aValues = [CalcA(x,y,0), CalcA(x,y,6)];
                     int currentDominance = int.MaxValue;
                     float a = aValues.Sum() / aValues.Length;
@@ -65,12 +65,12 @@ public class BiomeGenerator
     }
     public float CalcA(int x, int y, int month)
     {
-        float PET = world.GetPETForMonth(x, y, month);
+        float PET = world.cells[x,y].GetPETForMonth(month);
         if (PET <= 0)
         {
             return 10;
         }
-        float a = world.GetRainfallForMonth(x,y, month) / PET;
+        float a = world.cells[x,y].GetRainfallForMonth(month) / PET;
         return a;
     }
     public int GetGDD(int x, int y, bool zero = false)
@@ -79,12 +79,12 @@ public class BiomeGenerator
         int GDD = 0;
         for (int i = 0; i < 12; i++)
         {
-            float temp = world.GetTempForMonth(x,y,i);
+            float temp = world.cells[x,y].GetTempForMonth(i);
             GDD += (int)(Mathf.Max(temp - baseTemp, 0) * 30) ;
         }
         return GDD; 
     }
-    public string[,] GenerateBiomes(WorldGenerator world, bool useBIOME = false)
+    public void GenerateBiomes(WorldGenerator world, bool useBIOME = false)
     {
         this.world = world;
 
@@ -100,10 +100,10 @@ public class BiomeGenerator
             for (int y = 0; y < world.WorldSize.Y; y++)
             {
                 Biome selectedBiome = AssetManager.GetBiome("ice_sheet");
-                float temp = world.GetAverageAnnualTemp(x,y);
-                int elevation = world.HeightMap[x, y];
+                float temp = world.cells[x,y].GetAverageTemp();
+                int elevation = world.cells[x, y].elevation;
                 float seaLevel = world.SeaLevel * WorldGenerator.WorldHeight;
-                float moist = world.GetAnnualRainfall(x,y);
+                float moist = world.cells[x,y].GetAnnualRainfall();
                 Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
 
                 foreach (Biome biome in AssetManager.biomes.Values)
@@ -148,7 +148,7 @@ public class BiomeGenerator
                         if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
                         {
                             selectedBiome = AssetManager.GetBiome("ice_sheet");
-                            world.HeightMap[x, y] = 0;
+                            world.cells[x, y].elevation = 0;
                             break;
                         }                        
                     }
@@ -182,9 +182,8 @@ public class BiomeGenerator
                     selectedBiome = AssetManager.GetBiome("ice_sheet");
                 }
                 
-                map[x, y] = selectedBiome.id;
+                world.cells[x,y].biomeId = selectedBiome.id;
             }
         }
-        return map;
     }
 }
