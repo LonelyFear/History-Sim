@@ -28,10 +28,7 @@ public class WorldGenerator
     public float SeaLevel { get; set; } = 0.0001f;
     [Key(3)]
     public int Seed { get; set; } = 1;
-    [Key(4)]
-    public int continents { get; set; } = 8;
     [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
-    [IgnoreMember] public TerrainTile[,] tiles;
     [Key(5)] public Cell[,] cells;
     [IgnoreMember] public Random rng;
     [IgnoreMember]
@@ -304,19 +301,13 @@ public class WorldGenerator
                         break; 
                     case TerrainMapMode.KOPPEN:
                         image.SetPixel(x, y, KoppenClassification.GetColor(cells[x, y].classification));
-                        break;   
-                    case TerrainMapMode.DEBUG_PLATES:
-                        Color pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0), new Color(1,0,0)], Mathf.InverseLerp(-1, 1, tiles[x, y].pressure));
-                        Color baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == "water")
-                        {
-                            baseColor = waterColor;
-                        }
-                        image.SetPixel(x, y, Utility.MultiColourLerp([pressureColor, baseColor], 0.5f));
+                        break;  
+                    case TerrainMapMode.DEBUG_REGIONS:
+                        image.SetPixel(x, y, cells[x, y].heightmapRegionColor);
                         break;     
                     case TerrainMapMode.DEBUG_COAST:
-                        pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0)], Mathf.Clamp(cells[x, y].coastDist / 30f, 0, 1));
-                        baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
+                        Color pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0)], Mathf.Clamp(cells[x, y].coastDist / 30f, 0, 1));
+                        Color baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
                         if (AssetManager.GetBiome(cells[x, y].biomeId).type == "water")
                         {
                             baseColor = waterColor;
@@ -380,6 +371,7 @@ public class Cell
     [Key(10)] public float coastDist;
     [Key(11)] public string biomeId;
     [Key(12)] public string classification;
+    [Key(13)] public Color heightmapRegionColor;
     public float GetTempForMonth(int month)
     {
         float phase = (month / 12f) * Mathf.Pi * 2f;
@@ -429,6 +421,7 @@ public enum TerrainMapMode{
     REALISTIC,
     KOPPEN,
     DEBUG_PLATES,
+    DEBUG_REGIONS,
     DEBUG_COAST,
     DEBUG_RAINFALL,
     DEBUG_WIND,
