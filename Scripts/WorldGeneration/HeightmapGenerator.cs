@@ -41,7 +41,7 @@ public class HeightmapGenerator
     // Public Variables
     public float seaFloorLevel = 0.1f;
     public float landCoverage = 0.3f;
-    public float maxHillHeight = 0.2f;
+    public float maxHillHeight = 0.25f;
     float shelfDepth = 0.0f;
     const float slopeErosionThreshold = 0.1f;
     public int largePlates = 7;
@@ -75,7 +75,7 @@ public class HeightmapGenerator
             }
         }    
 
-        PriorityQueue<TerrainCell, int> tilesToCheck = new();
+        Queue<TerrainCell> tilesToCheck = new();
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
@@ -93,40 +93,14 @@ public class HeightmapGenerator
                         {
                             tiles[x,y].coastal = true;
                             tiles[x,y].coastDist = 0;
-                            tilesToCheck.Enqueue(tiles[x,y], 0);
+                            tilesToCheck.Enqueue(tiles[x,y]);
                         }
                     }
                 }
             }
         }  
        
-        HashSet<TerrainCell> measuredTiles = new(worldSize.X * worldSize.Y);
-        
-        bool fullQueue = true;
-        while (fullQueue)
-        {
-            fullQueue = tilesToCheck.TryDequeue(out TerrainCell currentTile, out int priority);
-            if (!fullQueue) break;
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if (dx == 0 && dy == 0)
-                    {
-                        continue;
-                    }
-                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
-                    TerrainCell neighbor = tiles[next.X, next.Y];              
-                    if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
-                    {
-                        measuredTiles.Add(neighbor);
-                        neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
-                        world.cells[neighbor.pos.X, neighbor.pos.Y].coastDist = neighbor.coastDist;
-                        tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
-                    }          
-                }
-            }
-        } 
+        GetDists(tilesToCheck, true);
         DeliverHeightData(map);            
     }
     public void DeliverHeightData(int[,] heightData)
@@ -170,32 +144,16 @@ public class HeightmapGenerator
 
         tiles = new TerrainCell[worldSize.X, worldSize.Y];
         GD.Print(worldSize);
-        ulong startTime = Time.GetTicksMsec();
         points = GeneratePoints();
-        GD.Print("Point Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
         GenerateRegions();
         PlaceContinentSeeds();
-        GD.Print("Voronoi Region Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         world.Stage = WorldGenStage.CONTINENTS;
-        startTime = Time.GetTicksMsec();
         GenerateContinents();
-        GD.Print("Continent Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
         GetDistances();
-        GD.Print("Distance Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
         world.Stage = WorldGenStage.MEASURING;
         GeneratePlates();
-        GD.Print("Plate Gen Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
         GetTectonicPressure();
-        GD.Print("Pressure Calc Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
         AdjustHeightMap();
-        GD.Print("Heightmap Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
-        startTime = Time.GetTicksMsec();
-        
         world.Stage = WorldGenStage.TECTONICS;
         TectonicEffects();
 
@@ -204,7 +162,6 @@ public class HeightmapGenerator
         {
             ThermalErosion();
         }
-        GD.Print("Collision Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
 
         for (int x = 0; x < worldSize.X; x++)
         {
@@ -321,7 +278,7 @@ public class HeightmapGenerator
                         if (!convergent)
                         {
                             // Divergence
-                            minWidth = 15f * Mathf.Lerp(0.2f, 1f, widthNoiseValue);
+                            minWidth = 15f * Mathf.Lerp(0.8f, 1f, widthNoiseValue);
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
@@ -427,7 +384,6 @@ public class HeightmapGenerator
             CreatePlate(Mathf.Lerp(0.75f, 1f, world.rng.NextSingle()));
             nonPlateRegions--;                 
         }
-        GD.Print("Plates generated");
 
         attempts = 5000;
         // Grows plates
@@ -436,7 +392,7 @@ public class HeightmapGenerator
             attempts--;
             foreach (VoronoiRegion region in voronoiRegions)
             {
-                if (region.plate == null)
+                if (region.plate == null || region.borderingRegions.Count() < 1)
                 {
                     continue;
                 }
@@ -448,7 +404,6 @@ public class HeightmapGenerator
                 }
             }
         }
-        GD.Print("Plates grown");
         // Checks if tiles are on a plate border
         int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
@@ -480,13 +435,13 @@ public class HeightmapGenerator
             }
         });
         // Gets Distance From Nearest Boundary
-        PriorityQueue<TerrainCell, int> tilesToCheck = new();
+        Queue<TerrainCell> tilesToCheck = new();
         foreach (VoronoiRegion region in voronoiRegions)
         {
             foreach (Vector2I boundaryTilePos in region.boundaryTiles)
             {
                 TerrainCell boundaryTile = tiles[boundaryTilePos.X, boundaryTilePos.Y];
-                tilesToCheck.Enqueue(boundaryTile, 0);
+                tilesToCheck.Enqueue(boundaryTile);
                 boundaryTile.boundaryDist = 0;
                 boundaryTile.nearestBoundary = boundaryTile;
             }
@@ -494,36 +449,11 @@ public class HeightmapGenerator
 
         HashSet<TerrainCell> measuredTiles = new(worldSize.X * worldSize.Y);
 
-        bool fullQueue = true;
-        while (fullQueue)
-        {
-            fullQueue = tilesToCheck.TryDequeue(out TerrainCell currentTile, out int priority);
-            if (!fullQueue) break;
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if (dx == 0 && dy == 0)
-                    {
-                        continue;
-                    }
-                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
-                    TerrainCell neighbor = tiles[next.X, next.Y];              
-                    if (!neighbor.fault && !measuredTiles.Contains(neighbor))
-                    {
-                        measuredTiles.Add(neighbor);
-                        neighbor.boundaryDist = currentTile.boundaryDist + 1;
-                        neighbor.nearestBoundary = currentTile.nearestBoundary;
-                        tilesToCheck.Enqueue(neighbor, (int)neighbor.boundaryDist);
-                    }          
-                }
-            }
-        }
+        GetDists(tilesToCheck, false);
     }
     public void GenerateContinents()
     {
         int attempts = 4000;
-        GD.Print(Mathf.RoundToInt(voronoiRegions.Count * landCoverage));
         int maxContinentalRegions = Mathf.RoundToInt(voronoiRegions.Count * landCoverage);
 
         while (continentalRegions.Count != Math.Max(maxContinentalRegions, 1) && attempts > 0)
@@ -555,7 +485,6 @@ public class HeightmapGenerator
                 }
             }
         }
-        GD.Print(continentalRegions.Count);
     }
 
     public void AdjustHeightMap()
@@ -564,12 +493,12 @@ public class HeightmapGenerator
         heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-
         FastNoiseLite erosion = new FastNoiseLite(world.rng.Next(-99999, 99999));
         erosion.SetFractalType(FastNoiseLite.FractalType.Ridged);
-        erosion.SetFractalOctaves(4);
+        erosion.SetFractalOctaves(8);
         erosion.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        float scale = 1f;
+        
+        float scale = 0.5f;
         float erosionScale = 0.5f;
         float maxNoiseValue = float.MinValue;
         float minNoiseValue = float.MaxValue;
@@ -613,7 +542,7 @@ public class HeightmapGenerator
                         // Land hills
                         coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(4f, 30f, noiseValue)), 0f, 1f);
                         float topDist = 1f - (seaLevel + maxHillHeight);
-                        heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
+                        heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x * scale, y * scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
                         heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);
                         //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
                     }
@@ -693,7 +622,7 @@ public class HeightmapGenerator
         }
         foreach (VoronoiRegion otherSeed in continentSeeds)
         {
-            if (Utility.WrappedDistanceTo(region.seed, otherSeed.seed, worldSize) < worldSize.X / 6f)
+            if (Utility.WrappedDistance(region.seed, otherSeed.seed, worldSize) < worldSize.X / 6f)
             {
                 return false;
             }
@@ -741,7 +670,7 @@ public class HeightmapGenerator
                         {
                             int gridX = Mathf.PosMod(gx - i, gridSizeX);
                             int gridY = Mathf.PosMod(gy - j, gridSizeY);
-                            float dist = pos.WrappedDistanceSquaredTo(points[new Vector2I(gridX, gridY)].seed, worldSize);
+                            float dist = pos.WrappedDistanceSquared(points[new Vector2I(gridX, gridY)].seed, worldSize);
                             distances.Enqueue(points[new Vector2I(gridX, gridY)], dist);
                         }
                     }
@@ -925,44 +854,61 @@ public class HeightmapGenerator
         });
         GD.Print("  Neighbor Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s"));
         startTime = Time.GetTicksMsec();
-        PriorityQueue<TerrainCell, int> tilesToCheck = new();
+        Queue<TerrainCell> tilesToCheck = new();
         foreach (VoronoiRegion region in voronoiRegions)
         {
             foreach (Vector2I coastalTilePos in region.coastalTiles)
             {
                 TerrainCell coastalTile = tiles[coastalTilePos.X, coastalTilePos.Y];
-                tilesToCheck.Enqueue(coastalTile, 0);
+                tilesToCheck.Enqueue(coastalTile);
                 coastalTile.coastDist = 0;
+                coastalTile.nearestCoast = coastalTile;
             }
         }
-
+        GetDists(tilesToCheck, true);
+        GD.Print("  Coast Dist Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s")); 
+    }
+    void GetDists(Queue<TerrainCell> tilesToCheck, bool coast)
+    {
         HashSet<TerrainCell> measuredTiles = new(worldSize.X * worldSize.Y);
 
-        bool fullQueue = true;
-        while (fullQueue)
+        while (tilesToCheck.Count > 0)
         {
-            fullQueue = tilesToCheck.TryDequeue(out TerrainCell currentTile, out int priority);
-            if (!fullQueue) break;
+            TerrainCell currentTile = tilesToCheck.Dequeue();
             for (int dx = -1; dx < 2; dx++)
             {
                 for (int dy = -1; dy < 2; dy++)
                 {
-                    if (dx == 0 && dy == 0)
+                    if ((dx == 0 && dy == 0)/* || (dx != 0 && dy != 0)*/)
                     {
                         continue;
                     }
                     Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
-                    TerrainCell neighbor = tiles[next.X, next.Y];              
-                    if (!neighbor.coastal && !measuredTiles.Contains(neighbor))
+                    TerrainCell neighbor = tiles[next.X, next.Y];  
+                    if (coast)
                     {
-                        measuredTiles.Add(neighbor);
-                        neighbor.coastDist = currentTile.coastDist + Utility.WrappedDistanceTo(currentTile.pos, neighbor.pos, world.WorldSize);
-                        tilesToCheck.Enqueue(neighbor, (int)neighbor.coastDist);
-                    }          
+                        if (((coast && !neighbor.coastal) || (!coast && !neighbor.fault)) && !measuredTiles.Contains(neighbor))
+                        {
+                            float additionalDistance = Utility.WrappedDistance(currentTile.pos, neighbor.pos, world.WorldSize);
+                            measuredTiles.Add(neighbor);
+                            if (coast)
+                            {
+                                neighbor.nearestCoast = currentTile.nearestCoast;
+                                neighbor.coastDist = currentTile.coastDist + additionalDistance;                            
+                            } else
+                            {
+                                neighbor.nearestBoundary = currentTile.nearestBoundary;
+                                neighbor.boundaryDist = currentTile.boundaryDist + additionalDistance;
+                            }
+                            tilesToCheck.Enqueue(neighbor);
+
+                            
+                        }                         
+                    }            
+    
                 }
             }
-        }
-        GD.Print("  Coast Dist Time " + ((Time.GetTicksMsec() - startTime) / 1000f).ToString("0.0s")); 
+        }        
     }
 
     void SetRegionContinental(VoronoiRegion region, TerrainContinent continent) {
@@ -1026,6 +972,7 @@ public class TerrainCell
     public float coastDist = Mathf.Inf;
     public float boundaryDist = Mathf.Inf;
     public TerrainCell nearestBoundary = null;
+    public TerrainCell nearestCoast = null;
     public Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
     public float pressure = 0f;
     public bool collisionContinental = false;

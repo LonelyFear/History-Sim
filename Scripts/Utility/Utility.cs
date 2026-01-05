@@ -123,7 +123,7 @@ public static class Utility
     {
         return Mathf.Lerp(rng.NextSingle(), minValue, maxValue);
     }
-    public static float WrappedDistanceTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
+    public static float WrappedDistance(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
     {
         float dx = Mathf.Abs(pointB.X - pointA.X);
         float dy = Mathf.Abs(pointB.Y - pointA.Y);
@@ -137,7 +137,7 @@ public static class Utility
         }
         return Mathf.Sqrt(Mathf.Pow(dx, 2) + Mathf.Pow(dy, 2));
     }
-    public static float WrappedDistanceSquaredTo(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
+    public static float WrappedDistanceSquared(this Vector2I pointA, Vector2I pointB, Vector2I worldSize)
     {
         float dx = Mathf.Abs(pointB.X - pointA.X);
         float dy = Mathf.Abs(pointB.Y - pointA.Y);

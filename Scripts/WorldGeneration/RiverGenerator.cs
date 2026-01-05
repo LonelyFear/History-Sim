@@ -26,7 +26,7 @@ public class RiverGenerator
             {
                 foreach (Vector2I oPos in validPositions)
                 {
-                    if (Utility.WrappedDistanceSquaredTo(pos, oPos, world.WorldSize) <= minRiverDist * minRiverDist)
+                    if (Utility.WrappedDistanceSquared(pos, oPos, world.WorldSize) <= minRiverDist * minRiverDist)
                     {
                         posGood = false;
                         break;
