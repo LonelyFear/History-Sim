@@ -8,6 +8,7 @@ public class TempmapGenerator
     Curve continentialityCurve = GD.Load<Curve>("res://Curves/ContinentialityCurve.tres");
     WorldGenerator world;
     float[,] map;
+    float[,] heightmap;
     public void GenerateTempMap(WorldGenerator world)
     {
         this.world = world;
@@ -22,12 +23,21 @@ public class TempmapGenerator
     void GenerateTempMap(bool winter)
     {
         map = new float[world.WorldSize.X, world.WorldSize.Y];
+        heightmap = new float[world.WorldSize.X, world.WorldSize.Y];
+
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next());
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(8);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
 
         int divisions = 8;
+        for (int x = 0; x < world.WorldSize.X; x++)
+        {
+            for (int y = 0; y < world.WorldSize.Y; y++)
+            {
+                heightmap[x,y] = world.cells[x,y].elevation;
+            }
+        }
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
@@ -83,25 +93,7 @@ public class TempmapGenerator
             stepsTaken++;
             Vector2 windVel = GetWindVelocity(x, y, winter);
             currentPos -= windVel;
-            float sampleX = currentPos.X;
-            float sampleY = currentPos.Y;
-
-            Vector2I bottomCorner = new(
-                Mathf.PosMod(Mathf.FloorToInt(sampleX), world.WorldSize.X),
-                Mathf.PosMod(Mathf.FloorToInt(sampleY), world.WorldSize.Y)
-            );
-
-            Vector2I topCorner = new(
-                Mathf.PosMod(bottomCorner.X + 1, world.WorldSize.X),
-                Mathf.PosMod(bottomCorner.Y + 1, world.WorldSize.Y)
-            );
-
-            float tx = sampleX - Mathf.Floor(sampleX);
-            float ty = sampleY - Mathf.Floor(sampleY);
-
-            float bottomX = Mathf.Lerp(world.cells[bottomCorner.X, bottomCorner.Y].elevation, world.cells[topCorner.X, bottomCorner.Y].elevation, tx);
-            float topX = Mathf.Lerp(world.cells[bottomCorner.X, topCorner.Y].elevation, world.cells[topCorner.X, topCorner.Y].elevation,tx);
-            float elevation = Mathf.Lerp(bottomX, topX, ty);
+            float elevation = Utility.BilinearInterpolation(heightmap, Mathf.PosMod(currentPos.X, world.WorldSize.X), Mathf.PosMod(currentPos.Y, world.WorldSize.Y));
 
             if (elevation < world.SeaLevel * WorldGenerator.WorldHeight)
             {
@@ -115,20 +107,16 @@ public class TempmapGenerator
         float sampleX = x;
         float sampleY = y;
 
-        Vector2I bottomCorner = new(
-            Mathf.PosMod(Mathf.FloorToInt(sampleX), world.WorldSize.X),
-            Mathf.PosMod(Mathf.FloorToInt(sampleY), world.WorldSize.Y)
-        );
-
-        Vector2I topCorner = new(
-            Mathf.PosMod(bottomCorner.X + 1, world.WorldSize.X),
-            Mathf.PosMod(bottomCorner.Y + 1, world.WorldSize.Y)
-        );
-
         float tx = sampleX - Mathf.Floor(sampleX);
         float ty = sampleY - Mathf.Floor(sampleY);
-        Vector2 bottomX = Vector2.Lerp(GetWindVel(bottomCorner.X, bottomCorner.Y, winter), GetWindVel(topCorner.X, bottomCorner.Y, winter), tx);
-        Vector2 topX = Vector2.Lerp(GetWindVel(bottomCorner.X, topCorner.Y, winter), GetWindVel(topCorner.X, topCorner.Y, winter), tx);  
+
+        int x0 = (int)x;
+        int x1 = Mathf.PosMod(x0 + 1, world.WorldSize.X);
+        int y0 = (int)y;
+        int y1 = Mathf.PosMod(y0 + 1, world.WorldSize.Y);    
+
+        Vector2 bottomX = Vector2.Lerp(GetWindVel(x0, y0, winter), GetWindVel(x1, y0, winter), tx);
+        Vector2 topX = Vector2.Lerp(GetWindVel(x0, y1, winter), GetWindVel(x1, y1, winter), tx);  
         return Vector2.Lerp(bottomX, topX, ty);      
     }
     Vector2 GetWindVel(int x, int y, bool winter)

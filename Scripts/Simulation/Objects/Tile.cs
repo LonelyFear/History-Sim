@@ -28,7 +28,6 @@ public class Tile : Cell
 		elevation = cell.elevation;
 
 		biome = AssetManager.GetBiome(cell.biomeId);
-		biome = biome != null ? biome : AssetManager.GetBiome("rock");
 		
 		arability = biome.arability;
 		navigability = biome.navigability;

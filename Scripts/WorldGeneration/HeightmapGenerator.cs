@@ -1,14 +1,8 @@
 using Godot;
-using MessagePack;
-using MessagePack.Resolvers;
 using System;
-using System.Buffers.Binary;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Mutex = System.Threading.Mutex;
 
@@ -31,19 +25,16 @@ public class HeightmapGenerator
     Mutex m = new Mutex();
     WorldGenerator world;
     Dictionary<Vector2I, VoronoiRegion> points;
-    Curve riftValleyCurve = GD.Load<Curve>("res://Curves/Landforms/RiftValley.tres");
-    Curve islandArcCurve = GD.Load<Curve>("res://Curves/Landforms/IslandArc.tres");
-    Curve volcanicRangeCurve = GD.Load<Curve>("res://Curves/Landforms/VolcanicRange.tres");
-    Curve coastalErosionCurve = GD.Load<Curve>("res://Curves/CoastalCurve.tres");
+    Curve amplitudeCurve = GD.Load<Curve>("res://Curves/Landforms/AmplitudeCurve.tres");
     Curve mountainCurve = GD.Load<Curve>("res://Curves/Landforms/MountainCurve.tres");
-    Curve plateauCurve = GD.Load<Curve>("res://Curves/Landforms/PlateauCurve.tres");
+    Curve oceanRidgeCurve = GD.Load<Curve>("res://Curves/Landforms/OceanRidgeCurve.tres");
 
     // Public Variables
     public float seaFloorLevel = 0.1f;
     public float landCoverage = 0.3f;
     public float maxHillHeight = 0.25f;
     float shelfDepth = 0.0f;
-    const float slopeErosionThreshold = 0.1f;
+    const float slopeErosionThreshold = 0.3f;
     public int largePlates = 7;
     public int smallPlates = 4;
     public int largeContinents = 4;
@@ -259,7 +250,7 @@ public class HeightmapGenerator
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                heightmap[x, y] += 0.5f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.5f, 1f, noiseValue);
+                                heightmap[x, y] += 0.4f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
                             }                                
                         } else
                         {
@@ -278,11 +269,11 @@ public class HeightmapGenerator
                         if (!convergent)
                         {
                             // Divergence
-                            minWidth = 15f * Mathf.Lerp(0.8f, 1f, widthNoiseValue);
+                            minWidth = 10f * Mathf.Lerp(0.8f, 1f, widthNoiseValue);
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                newElevation += seaFloorLevel + (0.5f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.5f, 1f, noiseValue));
+                                newElevation += 0.5f * oceanRidgeCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.5f, 1f, noiseValue);
                             }
                         } else
                         {
@@ -290,7 +281,7 @@ public class HeightmapGenerator
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                newElevation = seaFloorLevel + (0.7f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.1f, 1f, noiseValue));
+                                newElevation = 0.7f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
                             }                            
                         }     
                         heightmap[x,y] = Mathf.Max(heightmap[x,y], newElevation);                   
@@ -493,13 +484,16 @@ public class HeightmapGenerator
         heightNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         heightNoise.SetFractalOctaves(8);
         heightNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        heightNoise.SetDomainWarpAmp(3f);
+        heightNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
+
         FastNoiseLite erosion = new FastNoiseLite(world.rng.Next(-99999, 99999));
         erosion.SetFractalType(FastNoiseLite.FractalType.Ridged);
         erosion.SetFractalOctaves(8);
         erosion.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        
-        float scale = 0.5f;
-        float erosionScale = 0.5f;
+        erosion.SetFrequency(0.001f);
+        float scale = 4f;
+
         float maxNoiseValue = float.MinValue;
         float minNoiseValue = float.MaxValue;
         float maxErosionValue= float.MinValue;
@@ -508,8 +502,8 @@ public class HeightmapGenerator
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                float value = heightNoise.GetNoise(x / scale, y / scale);
-                float er = erosion.GetNoise(x / erosionScale, y / erosionScale);
+                float value = heightNoise.GetNoise(x, y);
+                float er = erosion.GetNoise(x * scale, y * scale);
                 if (value > maxNoiseValue)
                 {
                     maxNoiseValue = value;
@@ -535,27 +529,83 @@ public class HeightmapGenerator
             {
                 for (int y = 0; y < worldSize.Y; y++)
                 {
-                    float noiseValue = Mathf.InverseLerp(minErosionValue, maxErosionValue, erosion.GetNoise(x / erosionScale, y / erosionScale));
+                    TerrainCell cell = tiles[x,y];
+                    float noiseValue = Mathf.InverseLerp(minErosionValue, maxErosionValue, erosion.GetNoise(x * scale, y * scale));
+                    //noiseValue = 0.5f;
                     float coastMultiplier;
-                    if (tiles[x, y].region.IsContinental())
+                    if (cell.region.IsContinental())
                     {
                         // Land hills
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(4f, 30f, noiseValue)), 0f, 1f);
-                        float topDist = 1f - (seaLevel + maxHillHeight);
-                        heightmap[x, y] = seaLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x * scale, y * scale)) * topDist * Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
-                        heightmap[x, y] = Mathf.Clamp(heightmap[x, y], seaLevel, 1f);
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 80f, noiseValue)), 0f, 1f);
+                        //float topDist = 1f - (seaLevel + 0.1f);
+                        heightmap[x, y] = 0.25f * coastMultiplier;
+                        heightmap[x, y] += seaLevel;
                         //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
-                    }
-                    else
+                    } else
                     {
-                        // Sea Floor
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(2f, 5f, noiseValue)), 0f, 1f);
-                        float seaFloorHeight = seaFloorLevel + (Mathf.InverseLerp(minNoiseValue, maxNoiseValue, heightNoise.GetNoise(x / scale, y / scale)) * (seaLevel / 2f));
-                        heightmap[x, y] = Mathf.Lerp(seaLevel, seaFloorHeight, Mathf.Clamp(coastalErosionCurve.Sample(coastMultiplier), 0, 1));
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 10f, noiseValue)), 0f, 1f);
+                        heightmap[x, y] = Mathf.Lerp(0f, seaLevel, (1f - coastMultiplier));
+                        //heightmap[x, y] += seaLevel;                     
                     }
                 }
             }
         });
+
+        FastNoiseLite noise = new FastNoiseLite(world.rng.Next(-99999, 99999));
+        heightNoise.SetFractalType(FastNoiseLite.FractalType.None);
+        noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        float minNoise = float.MaxValue;
+        float maxNoise = float.MinValue;
+        Parallel.For(1, divisions + 1, (i) =>
+        {
+            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            {
+                for (int y = 0; y < worldSize.Y; y++)
+                {
+                    TerrainCell cell = tiles[x,y];
+                    float n = GetSlopeDependentNoise(x, y, noise, 8, 0.004f, 1f, 2.0f, 0.5f);
+                    float noiseValue = Mathf.InverseLerp(-1, 1, n);
+                    if (n < minNoise)
+                    {
+                        minNoise = n;
+                    }
+                    if (n > maxNoise)
+                    {
+                        maxNoise = n;
+                    }
+                    heightmap[x, y] += Mathf.Lerp(-0.2f, 0.2f, noiseValue);
+                }
+            }
+        });
+        GD.Print("Min erosion noise: " + minNoise);
+        GD.Print("Max erosion noise: " + maxNoise);
+    }
+    public float GetSlopeDependentNoise(float x, float y, FastNoiseLite noise, int octaves, float frequency, float amplitude, float lacunarity, float persistence)
+    {
+        float amp = amplitude;
+        float eps = 1f;
+        float value = 0f;
+        Vector2 p = new(x, y);
+        Vector2 d = Vector2.Zero;
+
+        noise.SetFrequency(frequency);
+        for (int i = 0; i < octaves; i++)
+        {
+            float n = noise.GetNoise(p.X, p.Y);
+            float dx = (noise.GetNoise(p.X + eps, p.Y) - noise.GetNoise(p.X - eps, p.Y))/(2 * eps);
+            float dy = (noise.GetNoise(p.X, p.Y + eps) - noise.GetNoise(p.X, p.Y - eps))/(2 * eps);
+            d += new Vector2(dx, dy);
+            //GD.Print(d.Length());
+            float w = amplitudeCurve.Sample(d.Length());
+            w = Mathf.Clamp(w, 0, 3);
+            //GD.Print(w);
+            value += amp * n * w;
+
+            p *= lacunarity;
+            amp *= persistence;  
+        }
+        //noise.SetFrequency(frequency);
+        return value /= 3f;  
     }
     Dictionary<Vector2I, VoronoiRegion> GeneratePoints()
     {
@@ -641,7 +691,6 @@ public class HeightmapGenerator
         yNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         yNoise.SetFractalOctaves(8);
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        float scale = 0.5f;
         GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
 
         int divisions = 8;
@@ -654,8 +703,8 @@ public class HeightmapGenerator
 
                     TerrainCell tile = new TerrainCell();
                     // Domain warping
-                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize, scale) * 40), worldSize.X);
-                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize, scale) * 40), worldSize.Y);
+                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize) * 40), worldSize.X);
+                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize) * 40), worldSize.Y);
 
                     Vector2I pos = new Vector2I(fx, fy);
                     VoronoiRegion region = null;
@@ -879,33 +928,29 @@ public class HeightmapGenerator
             {
                 for (int dy = -1; dy < 2; dy++)
                 {
-                    if ((dx == 0 && dy == 0)/* || (dx != 0 && dy != 0)*/)
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
                     {
                         continue;
                     }
                     Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
                     TerrainCell neighbor = tiles[next.X, next.Y];  
-                    if (coast)
+                    if (((coast && !neighbor.coastal) || (!coast && !neighbor.fault)) && !measuredTiles.Contains(neighbor))
                     {
-                        if (((coast && !neighbor.coastal) || (!coast && !neighbor.fault)) && !measuredTiles.Contains(neighbor))
+                        float additionalDistance = 1;
+                        measuredTiles.Add(neighbor);
+                        if (coast)
                         {
-                            float additionalDistance = Utility.WrappedDistance(currentTile.pos, neighbor.pos, world.WorldSize);
-                            measuredTiles.Add(neighbor);
-                            if (coast)
-                            {
-                                neighbor.nearestCoast = currentTile.nearestCoast;
-                                neighbor.coastDist = currentTile.coastDist + additionalDistance;                            
-                            } else
-                            {
-                                neighbor.nearestBoundary = currentTile.nearestBoundary;
-                                neighbor.boundaryDist = currentTile.boundaryDist + additionalDistance;
-                            }
-                            tilesToCheck.Enqueue(neighbor);
+                            neighbor.nearestCoast = currentTile.nearestCoast;
+                            neighbor.coastDist = currentTile.coastDist + additionalDistance;                            
+                        } else
+                        {
+                            neighbor.nearestBoundary = currentTile.nearestBoundary;
+                            neighbor.boundaryDist = currentTile.boundaryDist + additionalDistance;
+                        }
+                        tilesToCheck.Enqueue(neighbor);
 
-                            
-                        }                         
-                    }            
-    
+                        
+                    }                                   
                 }
             }
         }        
@@ -925,7 +970,7 @@ public class VoronoiRegion
 
     public Color color;
     public Vector2I seed;
-    public TerrainContinent continent;
+    public TerrainContinent continent = null;
     public bool coastal = false;
     public Plate plate;
     public List<Vector2I> cells = new List<Vector2I>();

@@ -181,19 +181,14 @@ public static class Utility
         //GD.Print(dy);
         return new Vector2I(Mathf.RoundToInt(Mathf.PosMod(pointA.X + dx / 2f, worldSize.X)), Mathf.RoundToInt(Mathf.PosMod(pointA.Y + dy / 2f, worldSize.Y)));
     }
-    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize, float scale = 1, float frequency = 1)
+    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize)
     {
-        float noiseValue = noise.GetNoise(x, y);
-        int border = worldSize.X / 4;
-        if (x < border)
-        {
-            float ny = (y * scale) / frequency;
-            noiseValue = (noise.GetNoise((x * scale) / frequency, ny) * x / border) + 
-                (noise.GetNoise(((x * scale) + worldSize.X) / frequency, ny)
-                * (border - x)
-                / border);          
-        }
-        return noiseValue;
+        float noiseValue = noise.GetNoise(
+        Mathf.Sin(x * (worldSize.X / (2 * float.Pi))),
+        Mathf.Cos(x * (worldSize.X / (2 * float.Pi))), 
+        y);
+        
+        return noise.GetNoise(x,y);
     }
     public static Color MultiColourLerp(Color[] colours, float t) {
 
@@ -217,8 +212,8 @@ public static class Utility
         int y0 = Mathf.PosMod(y - 1, grid.GetLength(1));
         int y1 = Mathf.PosMod(y + 1, grid.GetLength(1));
 
-        float dx = (grid[x1, y] - grid[x0, y]) * 0.5f;
-        float dy = (grid[x, y1] - grid[x, y0]) * 0.5f;
+        float dx = (grid[x1, y] - grid[x0, y0])/2f;
+        float dy = (grid[x0, y1] - grid[x0, y0])/2f;
 
         return new Vector2(dx, dy);       
     }
@@ -229,9 +224,23 @@ public static class Utility
         int y0 = Mathf.PosMod(y - 1, grid.GetLength(1));
         int y1 = Mathf.PosMod(y + 1, grid.GetLength(1));
 
-        float dx = (grid[x1, y] - grid[x0, y]) * 0.5f;
-        float dy = (grid[x, y1] - grid[x, y0]) * 0.5f;
+        float dx = (grid[x1, y] - grid[x0, y0])/2f;
+        float dy = (grid[x0, y1] - grid[x0, y0])/2f;
 
-        return new Vector2(dx, dy);       
+        return new Vector2(dx, dy);      
+    }
+    public static float BilinearInterpolation(float[,] grid, float x, float y)
+    {
+        float sx = x - (int)x;
+        float sy = y - (int)y;
+
+        int x0 = (int)x;
+        int x1 = Mathf.PosMod(x0 + 1, grid.GetLength(0));
+        int y0 = (int)y;
+        int y1 = Mathf.PosMod(y0 + 1, grid.GetLength(1));
+
+        float bottomX = Mathf.Lerp(grid[x0, y0], grid[x1, y0], sx);
+        float topX = Mathf.Lerp(grid[x0, y1], grid[x1, y1], sx);
+        return Mathf.Lerp(bottomX, topX, sy);
     }
 }

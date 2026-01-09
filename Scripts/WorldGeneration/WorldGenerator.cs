@@ -80,7 +80,7 @@ public class WorldGenerator
         {
             if (generateRandomMap)
             {
-                SeaLevel = 0.6f;
+                SeaLevel = 0.5f;
                 new HeightmapGenerator().GenerateHeightmap(this);                
             } else
             {
@@ -101,12 +101,13 @@ public class WorldGenerator
         {
             GD.PushError(e);
         }
-        Stage = WorldGenStage.TEMPERATURE;
-        new TempmapGenerator().GenerateTempMap(this);
-
-        Stage = WorldGenStage.SUMMER_RAINFALL;
         try
-        {
+        {        
+            Stage = WorldGenStage.TEMPERATURE;
+            new TempmapGenerator().GenerateTempMap(this);
+
+            Stage = WorldGenStage.SUMMER_RAINFALL;
+
             new RainfallMapGenerator().GenerateRainfallMap(this);
         } catch (Exception e)
         {
@@ -237,6 +238,7 @@ public class WorldGenerator
                 Color lowFlatColor = Color.Color8(31, 126, 52);
                 Color lowHillColor = Color.Color8(198, 187, 114);
                 Color highHillColor = Color.Color8(95, 42, 22);
+                Color mountainColor = Color.Color8(55, 55, 55);
                 Color shallowWatersColor = Color.Color8(71, 149, 197);
                 Color deepWatersColor = Color.Color8(27, 59, 111);
 
@@ -250,15 +252,17 @@ public class WorldGenerator
                 switch (mapMode)
                 {
                     case TerrainMapMode.HEIGHTMAP:
-                        image.SetPixel(x, y, Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf));
+                        image.SetPixel(x, y, Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor, mountainColor], hf));
                         if (AssetManager.GetBiome(cells[x, y].biomeId).type == "water")
                         {
                             image.SetPixel(x, y, waterColor);
                         }      
                         if (AssetManager.GetBiome(cells[x, y].biomeId).type == "ice")
                         {
-                            image.SetPixel(x, y, Color.FromHtml(AssetManager.GetBiome(cells[x, y].biomeId).color));
+                            //image.SetPixel(x, y, Color.FromHtml(AssetManager.GetBiome(cells[x, y].biomeId).color));
                         }
+                        float heightNorm = cells[x, y].elevation/(float)WorldHeight;
+                        //image.SetPixel(x, y, new Color(heightNorm, heightNorm, heightNorm));
                         break;  
                     case TerrainMapMode.HEIGHTMAP_REALISTIC:
                         if (AssetManager.GetBiome(cells[x, y].biomeId).type == "water")
@@ -369,7 +373,7 @@ public class Cell
     [Key(8)] public Vector2 januaryWindVel;
     [Key(9)] public Vector2 julyWindVel;
     [Key(10)] public float coastDist;
-    [Key(11)] public string biomeId;
+    [Key(11)] public string biomeId = "rock";
     [Key(12)] public string classification;
     [Key(13)] public Color heightmapRegionColor;
     public float GetTempForMonth(int month)

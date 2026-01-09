@@ -13,7 +13,7 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
     string[] months = { "January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
-    public const uint daysPerTick = 14;
+    public const uint ticksPerDay = 14;
     public const uint ticksPerMonth = 28;
     public const uint ticksPerYear = ticksPerMonth*12;
     uint monthCounter = 0;
@@ -109,7 +109,7 @@ public partial class TimeManager : Node
 
     void GetWaitTime()
     {
-        double monthTime = (double)ticksPerMonth / daysPerTick;
+        double monthTime = (double)ticksPerMonth / ticksPerDay;
         switch (gameSpeed)
         {
             case GameSpeed.ONE_WEEK_PER_SECOND:
@@ -139,9 +139,9 @@ public partial class TimeManager : Node
     private void TickGame(){
         tickStartTime = Time.GetTicksMsec();   
 
-        ticks += daysPerTick;
-        monthCounter += daysPerTick;
-        yearCounter += daysPerTick; 
+        ticks += ticksPerDay;
+        monthCounter += ticksPerDay;
+        yearCounter += ticksPerDay; 
         if (monthCounter >= ticksPerMonth)
         {
             monthCounter = 0;
