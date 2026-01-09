@@ -34,7 +34,7 @@ public class HeightmapGenerator
     public float landCoverage = 0.3f;
     public float maxHillHeight = 0.25f;
     float shelfDepth = 0.0f;
-    const float slopeErosionThreshold = 0.3f;
+    const float slopeErosionThreshold = 0.1f;
     public int largePlates = 7;
     public int smallPlates = 4;
     public int largeContinents = 4;
@@ -149,7 +149,7 @@ public class HeightmapGenerator
         TectonicEffects();
 
         world.Stage = WorldGenStage.EROSION;
-        for (int i = 0; i <= 10; i++)
+        for (int i = 0; i <= 3; i++)
         {
             ThermalErosion();
         }
@@ -175,6 +175,7 @@ public class HeightmapGenerator
 
     public void ThermalErosion()
     {
+        float[,] newHeights = new float[worldSize.X, worldSize.Y];
         int divisions = 1;
         Parallel.For(1, divisions + 1, (i) =>
         {
@@ -197,12 +198,22 @@ public class HeightmapGenerator
                                 float testElevation = heightmap[testPos.X, testPos.Y];
 
                                 heightmap[x,y] = Mathf.Lerp(elevation, testElevation, 0.5f);
+                            } else
+                            {
+                                newHeights[x,y] = heightmap[x,y];
                             }
                         }
                     }
                 }
             }
-        });          
+        });
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                heightmap[x,y] = newHeights[x,y];
+            }
+        }        
     }
 
     public void TectonicEffects()
