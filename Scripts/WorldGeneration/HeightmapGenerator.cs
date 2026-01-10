@@ -250,7 +250,7 @@ public class HeightmapGenerator
                 {
                     for (int y = 0; y < worldSize.Y; y++)
                     {
-                        if (gridDroplets[x,y].Count > 1) continue;
+                        if (gridDroplets[x,y].Count > 0) continue;
                         Droplet droplet = new Droplet()
                         {
                             pos = new Vector2(x + world.rng.NextSingle(), y + world.rng.NextSingle()),
@@ -267,7 +267,7 @@ public class HeightmapGenerator
                 }
             });
             // Droplet processing
-            divisions = 8;
+            divisions = 4;
             Parallel.For(1, divisions + 1, (i) => 
             {
                 for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
@@ -277,7 +277,6 @@ public class HeightmapGenerator
                         if (heightmap[x,y] < seaLevel) continue;
                         Droplet droplet = gridDroplets[x, y][0];
 
-                        Vector2I cellPos = new Vector2I(x, y);
                         float cellOffsetX = droplet.pos.X - x;
                         float cellOffsetY = droplet.pos.Y - y;
                         // Gets latitude for erosion strength modulation
@@ -285,7 +284,7 @@ public class HeightmapGenerator
                         // Strength of erosion at position
                         float erosionStrength = Mathf.Lerp(0.05f, 0.3f, erosionStrengthCurve.Sample(latitudeFactor));
                         // Speed of deposition at position
-                        float depositSpeed = Mathf.Lerp(0.05f, 0.3f, erosionStrengthCurve.Sample(latitudeFactor));
+                        float depositSpeed = 0.2f;
 
                         // Bilinear interpolates to get the height at droplets position
                         float currentHeight = Utility.BilinearInterpolation(heightmap, droplet.pos.X, droplet.pos.Y);
@@ -331,9 +330,9 @@ public class HeightmapGenerator
                         gridDroplets[x,y].Remove(droplet);
                         // Adds droplet to new cell
 
-                        lock (gridDroplets[(int)newPos.X, (int)newPos.Y])
+                        lock (gridDroplets[Mathf.PosMod((int)newPos.X, worldSize.X), Mathf.PosMod((int)newPos.Y, worldSize.Y)])
                         {
-                            gridDroplets[(int)newPos.X, (int)newPos.Y].Add(droplet);
+                            gridDroplets[Mathf.PosMod((int)newPos.X, worldSize.X), Mathf.PosMod((int)newPos.Y, worldSize.Y)].Add(droplet);
                         }
                         
                         droplet.pos = newPos;

@@ -115,19 +115,11 @@ public class BiomeGenerator
                         {
                             //GD.Print(elevation);
                             selectedBiome = AssetManager.GetBiome("ocean");
-                            /*
-                            if (temp <= AssetManager.GetBiome("ice_sheet").maxTemperature)
+                            if (temp < -5)
                             {
                                 selectedBiome = AssetManager.GetBiome("ice_sheet");
-                                world.HeightMap[x, y] = (int)(world.SeaLevel * WorldGenerator.WorldHeight);
-                                break;
-                            }
-                            else
-                            {
-                                selectedBiome = AssetManager.GetBiome("ocean");
-                                break;
-                            } 
-                            */                         
+                                world.cells[x, y].elevation = 0;
+                            }                       
                         }
                         else if (plantTypes[x,y] != null && plantTypes[x,y].OrderBy(s => s).SequenceEqual(biome.plantTypes.OrderBy(s => s)))
                         {

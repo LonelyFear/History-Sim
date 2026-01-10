@@ -278,7 +278,7 @@ public class WorldGenerator
                         break;     
                     case TerrainMapMode.REALISTIC:
                         int sampleElevation = cells[Mathf.PosMod(x + 1, WorldSize.X), Mathf.PosMod(y + 1, WorldSize.Y)].elevation;
-                        float slope = (sampleElevation - cells[x, y].elevation)/(float)WorldHeight;
+                        float slope = (Mathf.Max(sampleElevation, 0) - Mathf.Max(cells[x, y].elevation, 0))/(float)WorldHeight;
 
                         Color finalColor = Color.FromHtml(AssetManager.GetBiome(cells[x, y].biomeId).color);
                         if (isWater)

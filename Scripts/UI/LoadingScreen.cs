@@ -97,7 +97,7 @@ public partial class LoadingScreen : Control
                 map.Init();
                 try
                 {
-                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.HEIGHTMAP));
+                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
                     streamlineRenderer.world = generator;
                     streamlineRenderer.QueueRedraw();
                 } catch (Exception e)
