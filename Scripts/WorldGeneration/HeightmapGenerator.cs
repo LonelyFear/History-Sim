@@ -284,7 +284,7 @@ public class HeightmapGenerator
                         // Strength of erosion at position
                         float erosionStrength = Mathf.Lerp(0.05f, 0.3f, erosionStrengthCurve.Sample(latitudeFactor));
                         // Speed of deposition at position
-                        float depositSpeed = 0.2f;
+                        float depositSpeed = 0.1f;
 
                         // Bilinear interpolates to get the height at droplets position
                         float currentHeight = Utility.BilinearInterpolation(heightmap, droplet.pos.X, droplet.pos.Y);
@@ -747,7 +747,7 @@ public class HeightmapGenerator
                     {
                         maxNoise = n;
                     }
-                    heightmap[x, y] += Mathf.Lerp(-0.2f, 0.2f, noiseValue);
+                    heightmap[x, y] += Mathf.Lerp(-0.15f, 0.15f, noiseValue);
                 }
             }
         });
