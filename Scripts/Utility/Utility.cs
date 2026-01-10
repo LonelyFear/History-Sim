@@ -217,6 +217,18 @@ public static class Utility
 
         return new Vector2(dx, dy);       
     }
+    public static Vector2 GetGradient(float[,] grid, float x, float y)
+    {
+        float x0 = Mathf.PosMod(x - 1, grid.GetLength(0));
+        float x1 = Mathf.PosMod(x + 1, grid.GetLength(0));
+        float y0 = Mathf.PosMod(y - 1, grid.GetLength(1));
+        float y1 = Mathf.PosMod(y + 1, grid.GetLength(1));
+
+        float dx = (BilinearInterpolation(grid, x1, y) - BilinearInterpolation(grid, x0, y))/2f;
+        float dy = (BilinearInterpolation(grid, x, y1) - BilinearInterpolation(grid, x, y0))/2f;
+
+        return new Vector2(dx, dy);       
+    }
     public static Vector2 GetGradient(int[,] grid, int x, int y)
     {
         int x0 = Mathf.PosMod(x - 1, grid.GetLength(0));
@@ -224,8 +236,8 @@ public static class Utility
         int y0 = Mathf.PosMod(y - 1, grid.GetLength(1));
         int y1 = Mathf.PosMod(y + 1, grid.GetLength(1));
 
-        float dx = (grid[x1, y] - grid[x0, y0])/2f;
-        float dy = (grid[x0, y1] - grid[x0, y0])/2f;
+        float dx = (grid[x1, y] - grid[x0, y])/2f;
+        float dy = (grid[x, y1] - grid[x, y0])/2f;
 
         return new Vector2(dx, dy);      
     }
@@ -234,9 +246,9 @@ public static class Utility
         float sx = x - (int)x;
         float sy = y - (int)y;
 
-        int x0 = (int)x;
+        int x0 = Mathf.PosMod((int)x, grid.GetLength(0));
         int x1 = Mathf.PosMod(x0 + 1, grid.GetLength(0));
-        int y0 = (int)y;
+        int y0 = Mathf.PosMod((int)y, grid.GetLength(1));
         int y1 = Mathf.PosMod(y0 + 1, grid.GetLength(1));
 
         float bottomX = Mathf.Lerp(grid[x0, y0], grid[x1, y0], sx);

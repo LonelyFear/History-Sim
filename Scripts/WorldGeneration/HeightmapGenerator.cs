@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mutex = System.Threading.Mutex;
-
+using Vector2 = System.Numerics.Vector2;
 public class HeightmapGenerator
 {
     float[,] heightmap;
@@ -26,6 +26,7 @@ public class HeightmapGenerator
     WorldGenerator world;
     Dictionary<Vector2I, VoronoiRegion> points;
     Curve amplitudeCurve = GD.Load<Curve>("res://Curves/Landforms/AmplitudeCurve.tres");
+    Curve erosionStrengthCurve = GD.Load<Curve>("res://Curves/Landforms/ErosionStrengthCurve.tres");
     Curve mountainCurve = GD.Load<Curve>("res://Curves/Landforms/MountainCurve.tres");
     Curve oceanRidgeCurve = GD.Load<Curve>("res://Curves/Landforms/OceanRidgeCurve.tres");
 
@@ -153,7 +154,14 @@ public class HeightmapGenerator
         {
             ThermalErosion();
         }
-
+        try
+        {
+            HydraulicErosion(20);
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+        
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
@@ -214,6 +222,162 @@ public class HeightmapGenerator
                 heightmap[x,y] = newHeights[x,y];
             }
         }        
+    }
+    public void HydraulicErosion(int steps)
+    {
+        float sedimentCapacityFactor = 4; // Multiplier for how much sediment a droplet can carry
+        float minSedimentCapacity = .01f; // Minimum sediment capacity a droplet can have
+        // Uses an array to handle mergers later
+        List<Droplet>[,] gridDroplets = new List<Droplet>[worldSize.X, worldSize.Y];
+
+        // Initializes droplet lists
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                gridDroplets[x,y] = [];
+            }
+        }
+
+        for (int step = 0; step < steps; step++)
+        {
+            // Spawns droplets
+            // Spawns initial droplets if the step is 1
+            int divisions = 1;
+            Parallel.For(1, divisions + 1, (i) => 
+            {
+                for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
+                {
+                    for (int y = 0; y < worldSize.Y; y++)
+                    {
+                        if (gridDroplets[x,y].Count > 1) continue;
+                        Droplet droplet = new Droplet()
+                        {
+                            pos = new Vector2(x + world.rng.NextSingle(), y + world.rng.NextSingle()),
+                            size = 0.1f,
+                            speed = 1,
+                            sediment = 0
+                        };
+                        if (step == 0)
+                        {
+                            droplet.size = 1;
+                        }
+                        gridDroplets[x,y].Add(droplet);
+                    }
+                }
+            });
+            // Droplet processing
+            divisions = 8;
+            Parallel.For(1, divisions + 1, (i) => 
+            {
+                for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
+                {
+                    for (int y = 0; y < worldSize.Y; y++)
+                    {
+                        if (heightmap[x,y] < seaLevel) continue;
+                        Droplet droplet = gridDroplets[x, y][0];
+
+                        Vector2I cellPos = new Vector2I(x, y);
+                        float cellOffsetX = droplet.pos.X - x;
+                        float cellOffsetY = droplet.pos.Y - y;
+                        // Gets latitude for erosion strength modulation
+                        float latitudeFactor = Mathf.Abs((y / (float)world.WorldSize.Y) - 0.5f) * 2f;
+                        // Strength of erosion at position
+                        float erosionStrength = Mathf.Lerp(0.05f, 0.3f, erosionStrengthCurve.Sample(latitudeFactor));
+                        // Speed of deposition at position
+                        float depositSpeed = Mathf.Lerp(0.05f, 0.3f, erosionStrengthCurve.Sample(latitudeFactor));
+
+                        // Bilinear interpolates to get the height at droplets position
+                        float currentHeight = Utility.BilinearInterpolation(heightmap, droplet.pos.X, droplet.pos.Y);
+                        // Gets vector pointing uphill.
+                        Vector2 gradient = Utility.GetGradient(heightmap, droplet.pos.X, droplet.pos.Y);
+
+                        // Gets new droplet position going downhill
+                        Vector2 newPos = droplet.pos - Vector2.Normalize(gradient);
+                        // Wraps new pos
+                        newPos = new Vector2(Mathf.PosMod(newPos.X, worldSize.X), Mathf.PosMod(newPos.Y, worldSize.Y));
+                        // Gets height at new position
+                        float newHeight = Utility.BilinearInterpolation(heightmap, newPos.X, newPos.Y);
+                        // Gets change in height
+                        float heightChange = newHeight - currentHeight;
+                        // Gets the maximum amount of sediment for our droplet
+                        float sedimentLimit = Mathf.Max(-heightChange * droplet.speed * droplet.size * sedimentCapacityFactor, minSedimentCapacity);
+
+                        // If carrying more sediment than capacity, or if flowing uphill:
+                        if (droplet.sediment > sedimentLimit || heightChange > 0)
+                        {
+                            // Gets amount to deposit
+                            float amountToDeposit = (heightChange > 0) ? Mathf.Min (heightChange, droplet.sediment) : (droplet.sediment - sedimentLimit) * depositSpeed;
+                            droplet.sediment -= amountToDeposit;  
+
+                            // Deposits sediment with bilerp
+                            heightmap[x, y] += amountToDeposit * (1 - cellOffsetX) * (1 - cellOffsetY);
+                            heightmap[Mathf.PosMod(x + 1, worldSize.X), y] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
+                            heightmap[x, Mathf.PosMod(y + 1, worldSize.Y)] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
+                            heightmap[Mathf.PosMod(x + 1, worldSize.X), Mathf.PosMod(y + 1, worldSize.Y)] += amountToDeposit * cellOffsetX * cellOffsetY;                         
+                        } else
+                        {
+                            // Erode a fraction of the droplet's current carry capacity.
+                            float amountToErode = Mathf.Min ((sedimentLimit - droplet.sediment) * erosionStrength, -heightChange);
+                            droplet.sediment += amountToErode;
+                            // Erodes using bilerp
+                            heightmap[x, y] -= amountToErode * (1 - cellOffsetX) * (1 - cellOffsetY);
+                            heightmap[Mathf.PosMod(x + 1, worldSize.X), y] -= amountToErode * cellOffsetX * (1 - cellOffsetY);
+                            heightmap[x, Mathf.PosMod(y + 1, worldSize.Y)] -= amountToErode * (1 - cellOffsetX) * cellOffsetY;
+                            heightmap[Mathf.PosMod(x + 1, worldSize.X), Mathf.PosMod(y + 1, worldSize.Y)] -= amountToErode * cellOffsetX * cellOffsetY; 
+                        }
+
+                        // Removes droplet from current cell
+                        gridDroplets[x,y].Remove(droplet);
+                        // Adds droplet to new cell
+
+                        lock (gridDroplets[(int)newPos.X, (int)newPos.Y])
+                        {
+                            gridDroplets[(int)newPos.X, (int)newPos.Y].Add(droplet);
+                        }
+                        
+                        droplet.pos = newPos;
+                        // Adjusts droplet speed
+                        droplet.speed = Mathf.Sqrt (droplet.speed * droplet.speed - heightChange * 4f);
+                        // Evaporates droplet
+                        droplet.size *= 0.95f;                        
+                    }
+                }
+            });
+            // Merges droplets
+            divisions = 4;
+            Parallel.For(1, divisions + 1, (i) => 
+            {
+                for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
+                {
+                    for (int y = 0; y < worldSize.Y; y++)
+                    {
+                        int dropletCount = gridDroplets[x,y].Count;
+                        if (dropletCount <= 1) continue;
+
+                        Droplet mergedDroplet = new Droplet();
+
+                        foreach (Droplet droplet in gridDroplets[x, y].ToArray())
+                        {
+                            // Sums up variables
+                            mergedDroplet.pos += droplet.pos;
+                            mergedDroplet.speed += droplet.speed;
+                            mergedDroplet.size += droplet.size;
+                            mergedDroplet.sediment += droplet.sediment;
+
+                            // Removes droplet from cell
+                            gridDroplets[x, y].Remove(droplet);
+                        };
+
+                        // Averages speed and position
+                        mergedDroplet.pos /= dropletCount;
+                        mergedDroplet.speed /= dropletCount;
+                        gridDroplets[x, y].Add(mergedDroplet);
+                    }
+                }
+            });
+            GD.Print("Hydraulic Erosion Step " + (step + 1) + " Done!");
+        }
     }
 
     public void TectonicEffects()
@@ -319,14 +483,14 @@ public class HeightmapGenerator
                 {
                     for (int dy = -10; dy <= 10; dy++)
                     {
-                        Vector2I testPos = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
-                        TerrainCell next = tiles[testPos.X, testPos.Y];
+                        Vector2 testPos = new Vector2(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                        TerrainCell next = tiles[(int)testPos.X, (int)testPos.Y];
                         if (next.region.plate != tile.region.plate)
                         {
                             otherTiles++;
                             Vector2 relativeVel = tile.region.plate.dir - next.region.plate.dir;
                             float relativeSpeed = relativeVel.Length();
-                            if (relativeVel.Length() * relativeVel.Normalized().Dot(testPos - new Vector2I(x, y)) < 0)
+                            if (relativeVel.Length() * Vector2.Dot(Vector2.Normalize(relativeVel), testPos - new Vector2(x, y)) < 0)
                             {
                                 tile.pressure += 1f * relativeSpeed;
                             }
@@ -1020,6 +1184,13 @@ public class TerrainContinent
     public Color color;
     public float growthChance = 0.0f;
 
+}
+public class Droplet
+{
+    public Vector2 pos;
+    public float size;
+    public float speed;
+    public float sediment;
 }
 public class TerrainCell
 {

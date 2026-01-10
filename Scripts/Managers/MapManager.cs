@@ -168,7 +168,7 @@ public partial class MapManager : Node2D
                     }
                     else
                     {
-                        newSelected = null;
+                        newSelected = hoveredRegion;
                     }
                     break;
                 case MapModes.POLITIY:
