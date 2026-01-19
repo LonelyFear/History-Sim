@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://imk426fj4x3a"]
+[gd_scene load_steps=7 format=3 uid="uid://imk426fj4x3a"]
 
-[ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scenes/WorldSettingsPanel.cs" id="2_4g6c4"]
+[ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scripts/UI/World Creation/WorldSettingsPanel.cs" id="2_4g6c4"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_ktv3r"]
+[ext_resource type="Script" uid="uid://dx4r6k23011pi" path="res://Scripts/UI/World Creation/SizeWarningLabel.cs" id="4_04eni"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="4_4g6c4"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_8327h"]
 
@@ -20,7 +21,7 @@ grow_vertical = 2
 [node name="TextureRect2" parent="." instance=ExtResource("4_4g6c4")]
 layout_mode = 1
 
-[node name="WorldSettingsPanel" type="Panel" parent="." node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "generateWorldButton")]
+[node name="WorldSettingsPanel" type="Panel" parent="." node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "backButton", "generateWorldButton")]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -37,6 +38,7 @@ script = ExtResource("2_4g6c4")
 seedEdit = NodePath("WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer/Seed")
 sizeDropdown = NodePath("WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer/WorldSize")
 heightmapCheckbox = NodePath("WorldSettingsScrollContainer/WorldSettingsContainer/EarthHeightmapButton")
+backButton = NodePath("ButtonsContainer/Back")
 generateWorldButton = NodePath("ButtonsContainer/Start")
 
 [node name="WorldSettingsScrollContainer" type="ScrollContainer" parent="WorldSettingsPanel"]
@@ -104,6 +106,16 @@ popup/item_2/text = "Medium"
 popup/item_2/id = 2
 popup/item_3/text = "Small"
 popup/item_3/id = 1
+
+[node name="WorldSizeWarning" type="Label" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer" node_paths=PackedStringArray("worldSizeDropdown")]
+layout_mode = 2
+theme = ExtResource("2_ktv3r")
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "Large & Huge Worlds May Cause Performance Issues on Low-End Devices!"
+autowrap_mode = 2
+script = ExtResource("4_04eni")
+worldSizeDropdown = NodePath("../WorldSizeContainer/WorldSize")
 
 [node name="EarthHeightmapButton" type="CheckBox" parent="WorldSettingsPanel/WorldSettingsScrollContainer/WorldSettingsContainer"]
 layout_mode = 2

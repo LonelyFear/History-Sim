@@ -5,7 +5,8 @@ public partial class WorldSettingsPanel : Panel
 {
 	[Export] LineEdit seedEdit;
 	[Export] OptionButton sizeDropdown;
-	[Export] Button heightmapCheckbox;
+	[Export] CheckBox heightmapCheckbox;
+	[Export] Button backButton;
 	[Export] Button generateWorldButton;
 	Random rng = new Random();
 	LoadingScreen loadingScreen;
@@ -13,6 +14,7 @@ public partial class WorldSettingsPanel : Panel
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		backButton.Pressed += OnBackPressed;
 		seedEdit.TextChanged += OnSeedChanged;
 		generateWorldButton.Pressed += OnStartPressed;
 	}
@@ -26,6 +28,11 @@ public partial class WorldSettingsPanel : Panel
 		{
 			seedEdit.Text = oldText;
 		}
+	}
+	public void OnBackPressed()
+	{
+		GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
+		GetParent().QueueFree();
 	}
 	public void OnStartPressed()
 	{

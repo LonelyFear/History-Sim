@@ -509,5 +509,6 @@ public enum MapModes {
     TERRAIN_TYPE,
     TEMPERATURE,
     RAINFALL,
+    WIND_SPEED,
     NONE
 }

@@ -81,17 +81,17 @@ public class HeightmapGenerator
                             continue;
                         }
                         Vector2I next = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
-                        if (map[x,y] < world.SeaLevel * WorldGenerator.WorldHeight)
+                        if (!tiles[x,y].coastal && map[x,y] > 0 && map[next.X, next.Y] < 0)
                         {
                             tiles[x,y].coastal = true;
                             tiles[x,y].coastDist = 0;
+                            tiles[x,y].nearestCoast = tiles[x,y];
                             tilesToCheck.Enqueue(tiles[x,y]);
                         }
                     }
                 }
             }
         }  
-       
         GetDists(tilesToCheck, true);
         DeliverHeightData(map);            
     }
@@ -102,6 +102,7 @@ public class HeightmapGenerator
             for (int y = 0; y < worldSize.Y; y++)
             {
                 world.cells[x,y].elevation = heightData[x,y];
+                world.cells[x,y].coastDist = tiles[x,y].coastDist;
             }
         }
     }
@@ -282,7 +283,7 @@ public class HeightmapGenerator
                         // Gets latitude for erosion strength modulation
                         float latitudeFactor = Mathf.Abs((y / (float)world.WorldSize.Y) - 0.5f) * 2f;
                         // Strength of erosion at position
-                        float erosionStrength = Mathf.Lerp(0.05f, 0.3f, erosionStrengthCurve.Sample(latitudeFactor));
+                        float erosionStrength = Mathf.Lerp(0.05f, 0.2f, erosionStrengthCurve.Sample(latitudeFactor));
                         // Speed of deposition at position
                         float depositSpeed = 0.1f;
 
@@ -424,7 +425,7 @@ public class HeightmapGenerator
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                heightmap[x, y] += 0.4f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
+                                heightmap[x, y] += 0.5f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1f) * Mathf.Lerp(0.1f, 1f, noiseValue);
                             }                                
                         } else
                         {
@@ -447,15 +448,18 @@ public class HeightmapGenerator
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                newElevation += 0.5f * oceanRidgeCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.5f, 1f, noiseValue);
+                                // Ocean Ridges
+                                heightmap[x,y] += 0.4f * oceanRidgeCurve.Sample(boundaryFactor)  * Mathf.Lerp(0.5f, 1f, noiseValue);
                             }
                         } else
                         {
+                            // Convergence
                             minWidth = 15f * Mathf.Lerp(0.2f, 1f, widthNoiseValue);
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                newElevation = 0.7f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
+                                // Island Chains
+                                heightmap[x,y] += 0.7f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.1f, 1f, noiseValue);
                             }                            
                         }     
                         heightmap[x,y] = Mathf.Max(heightmap[x,y], newElevation);                   
@@ -704,32 +708,37 @@ public class HeightmapGenerator
                 for (int y = 0; y < worldSize.Y; y++)
                 {
                     TerrainCell cell = tiles[x,y];
+                    // Normalizes Noise
                     float noiseValue = Mathf.InverseLerp(minErosionValue, maxErosionValue, erosion.GetNoise(x * scale, y * scale));
                     //noiseValue = 0.5f;
                     float coastMultiplier;
                     if (cell.region.IsContinental())
                     {
-                        // Land hills
+                        // The closer land is to sea the flatter it is, modulated by noise
                         coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 80f, noiseValue)), 0f, 1f);
-                        //float topDist = 1f - (seaLevel + 0.1f);
-                        heightmap[x, y] = 0.25f * coastMultiplier;
+
+                        // Modulates height by distance to the coast
+                        heightmap[x, y] = 0.2f * coastMultiplier;
+                        // Adds sea level so we are above water
                         heightmap[x, y] += seaLevel;
-                        //heightmap[x, y] = Mathf.Clamp(tiles[x, y].boundaryDist/10f, 0.6f, 1f);
                     } else
                     {
+                        // Undersea Slope to Abyss
                         coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 10f, noiseValue)), 0f, 1f);
-                        heightmap[x, y] = Mathf.Lerp(0f, seaLevel, (1f - coastMultiplier));
+                        heightmap[x, y] = Mathf.Lerp(0f, seaLevel, 1f - coastMultiplier);
                         //heightmap[x, y] += seaLevel;                     
                     }
                 }
             }
         });
 
+        // Initializes our noise
         FastNoiseLite noise = new FastNoiseLite(world.rng.Next(-99999, 99999));
         heightNoise.SetFractalType(FastNoiseLite.FractalType.None);
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         float minNoise = float.MaxValue;
         float maxNoise = float.MinValue;
+
         Parallel.For(1, divisions + 1, (i) =>
         {
             for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
@@ -737,8 +746,11 @@ public class HeightmapGenerator
                 for (int y = 0; y < worldSize.Y; y++)
                 {
                     TerrainCell cell = tiles[x,y];
+                    // Gets noise that mimics erosion
                     float n = GetSlopeDependentNoise(x, y, noise, 8, 0.004f, 1f, 2.0f, 0.5f);
+                    // Normalizes Noise
                     float noiseValue = Mathf.InverseLerp(-1, 1, n);
+                    // Maximum and minimum values for debug
                     if (n < minNoise)
                     {
                         minNoise = n;
@@ -747,7 +759,8 @@ public class HeightmapGenerator
                     {
                         maxNoise = n;
                     }
-                    heightmap[x, y] += Mathf.Lerp(-0.15f, 0.15f, noiseValue);
+                    // Adjusts our heightmap
+                    heightmap[x, y] += Mathf.Lerp(-0.2f, 0.2f, noiseValue);
                 }
             }
         });

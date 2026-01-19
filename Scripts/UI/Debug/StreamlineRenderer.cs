@@ -3,9 +3,18 @@ using Vector2 = System.Numerics.Vector2;
 public partial class StreamlineRenderer : Node2D
 {
 	public WorldGenerator world;
+	[Export] public TimeManager timeManager;
+	bool lastWinter;
+
+    public override void _Process(double delta)
+    {
+		if (Mathf.PosMod(timeManager.GetMonth(), 6) == 0) QueueRedraw();
+    }
+
     public override void _Draw()
     {
-		if (world == null) return;
+		bool winter = timeManager.GetMonth() > 6;
+
 		Scale = new Godot.Vector2(1, 1) * 80f / world.WorldSize.X;
         for (int x = 0; x < world.WorldSize.X; x++)
         {
@@ -18,15 +27,22 @@ public partial class StreamlineRenderer : Node2D
 				{
 					for (int ay = 0; ay < sampleDist; ay++)
 					{
-						wind += world.cells[(x/sampleDist * sampleDist) + ax, (y/sampleDist * sampleDist) + ay].januaryWindVel;
+						if (winter)
+						{ 
+							wind += world.cells[(x/sampleDist * sampleDist) + ax, (y/sampleDist * sampleDist) + ay].januaryWindVel;
+						} else
+						{
+							wind += world.cells[(x/sampleDist * sampleDist) + ax, (y/sampleDist * sampleDist) + ay].julyWindVel;
+						}
 					}
 				}
+
 				wind /= sampleDist * sampleDist;
-				wind *= 5f;
+				wind *= sampleDist;
 				float scale = 16f;
 				Vector2 pos = new((x + (sampleDist/2f)) * scale, (y + (sampleDist/2f)) * scale);
-				//Vector2 wind = world.WindVelMap[x,y] * 3f;
-				//DrawLine(new Godot.Vector2(pos.X, pos.Y), new(pos.X + wind.X, pos.Y + wind.Y), new Color(1,1,1));
+
+				DrawLine(new Godot.Vector2(pos.X, pos.Y), new(pos.X + wind.X, pos.Y + wind.Y), new Color(1,1,1));	
 			}
 		}
     }

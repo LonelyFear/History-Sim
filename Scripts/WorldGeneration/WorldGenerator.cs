@@ -28,6 +28,8 @@ public class WorldGenerator
     public float SeaLevel { get; set; } = 0.0001f;
     [Key(3)]
     public int Seed { get; set; } = 1;
+    [Key(30)]
+    public int WindNoiseSeed { get; set; } = 1;
     [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
     [Key(5)] public Cell[,] cells;
     [IgnoreMember] public Random rng;
@@ -63,6 +65,7 @@ public class WorldGenerator
         WorldExists = false;
         WorldSize = new Vector2I(Mathf.RoundToInt(360 * WorldMult), Mathf.RoundToInt(180 * WorldMult));
         rng = new Random(Seed);
+        WindNoiseSeed = rng.Next();
     }
     void Generate()
     {
@@ -238,7 +241,7 @@ public class WorldGenerator
                 Color lowFlatColor = Color.Color8(31, 126, 52);
                 Color lowHillColor = Color.Color8(198, 187, 114);
                 Color highHillColor = Color.Color8(95, 42, 22);
-                Color mountainColor = Color.Color8(55, 55, 55);
+                Color mountainColor = Color.Color8(220, 220, 220);
                 Color shallowWatersColor = Color.Color8(71, 149, 197);
                 Color deepWatersColor = Color.Color8(27, 59, 111);
 

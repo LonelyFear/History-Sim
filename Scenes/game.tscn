@@ -1,7 +1,7 @@
 [gd_scene load_steps=30 format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
-[ext_resource type="Script" uid="uid://bwv1j01u212xb" path="res://Scenes/StreamlineRenderer.cs" id="2_fkdbe"]
+[ext_resource type="Script" uid="uid://bwv1j01u212xb" path="res://Scripts/UI/Debug/StreamlineRenderer.cs" id="2_fkdbe"]
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
@@ -15,16 +15,16 @@
 [ext_resource type="Script" uid="uid://ca4hg87crqxlm" path="res://Scripts/Managers/EncyclopediaManager.cs" id="8_iivbl"]
 [ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/info_tab.tscn" id="9_7nbq1"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="9_iivbl"]
-[ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/date_label.gd" id="10_7nbq1"]
+[ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/Sim Stats/date_label.gd" id="10_7nbq1"]
 [ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="10_exi56"]
-[ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/GameUI.cs" id="11_7nbq1"]
-[ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scenes/EncyclopediaMainMenu.cs" id="11_7t8sx"]
-[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/tps_label.gd" id="11_exi56"]
+[ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/Menus/GameUI.cs" id="11_7nbq1"]
+[ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scripts/UI/Encyclopedia/EncyclopediaMainMenu.cs" id="11_7t8sx"]
+[ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/Sim Stats/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/God Mode/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scripts/UI/Debug/FrameBreakdown.cs" id="12_ewbju"]
 [ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/index_tab.tscn" id="12_mg4q0"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
-[ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/ObjectInfo.cs" id="15_ewbju"]
+[ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/Sim Stats/ObjectInfo.cs" id="15_ewbju"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/God Mode/ActionPanel.cs" id="17_7nbq1"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
@@ -58,8 +58,9 @@ theme_override_font_sizes/font_size = 62
 text = "Pixel History"
 horizontal_alignment = 1
 
-[node name="StreamlineRenderer" type="Node2D" parent="."]
+[node name="StreamlineRenderer" type="Node2D" parent="." node_paths=PackedStringArray("timeManager")]
 script = ExtResource("2_fkdbe")
+timeManager = NodePath("../Time Manager")
 
 [node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("borderRenderer")]
 script = ExtResource("7_ewbju")

@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://chv60w7s0kt3y"]
 
-[ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scripts/UI/LoadingScreen.cs" id="1_1opfs"]
+[ext_resource type="Script" uid="uid://bfp4xsxutf" path="res://Scripts/UI/Menus/LoadingScreen.cs" id="1_1opfs"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="2_1opfs"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="3_iom8t"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_1opfs"]
