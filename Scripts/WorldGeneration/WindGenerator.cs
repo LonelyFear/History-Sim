@@ -5,7 +5,7 @@ using Vector2 = System.Numerics.Vector2;
 public class WindGenerator()
 {
     Vector2I worldSize;
-    Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/WindBearingCurve.tres");
+    Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/PrevailingWindCurve.tres");
     Curve windSpeedCurve = GD.Load<Curve>("res://Curves/WindSpeedCurve.tres");
     WorldGenerator world;
     
@@ -45,37 +45,36 @@ public class WindGenerator()
             {
                 for (int y = 0; y < worldSize.Y; y++)
                 {
-                    float posY = y;
-
                     float nx = winter ? x : x + (worldSize.X * 2);
 
-                    float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(nx * 0.3f,0)) * 0;
-                    float normalizedY = posY / world.WorldSize.Y;
-                    
+                    float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(nx * 0.3f,0)) * 1f;
+
+                    if (winter) world.cells[x,y].januaryWindOffset = noiseValue;
+                    else world.cells[x,y].julyWindOffset = noiseValue;
+
+                    float normalizedY = y / (float) world.WorldSize.Y;
                     float latitudeFactor = Mathf.Abs(normalizedY - 0.5f) * 2f;
 
-                    float noiseStrength = 0.15f;
-                    float dir = prevailingWindCurve.Sample(Mathf.Lerp(normalizedY, noiseValue, noiseStrength));
+                    float noiseStrength = 0.1f;
+                    float sampleValue = Mathf.Lerp(latitudeFactor, noiseValue, noiseStrength);
 
+                    float dir = prevailingWindCurve.Sample(sampleValue);
+
+                    if (normalizedY < 0.5f)
+                    {
+                        //dir = prevailingWindCurve.Sample(1f - sampleValue);
+                        dir = Mathf.PosMod(180f - dir, 360f);
+                    }
                     windDirMap[x, y] = dir;
 
-                    if (winter)
-                    {
-                        dir = prevailingWindCurve.Sample(Mathf.Lerp(1f - normalizedY, noiseValue, noiseStrength));
-                        windDirMap[x, y] = Mathf.PosMod(180f - dir, 360f);
-                        //windDirMap[x, y] = prevailingWindCurve.Sample(Mathf.Lerp(1f - normalizedY, noiseValue, noiseStrength));
-                    }
-
+                    sampleValue = Mathf.Lerp(normalizedY, noiseValue, noiseStrength);
                     float windMaxSpeed = 12f;
-                    float speedSampleValue = Mathf.Lerp(normalizedY, noiseValue, noiseStrength);
-
-                    windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(speedSampleValue);
+                    windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(sampleValue);
                     if (winter)
                     {
-                        windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(1f - speedSampleValue);
+                        windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(1f - sampleValue);
                     }
 
-                    /*
                     Vector2 windVector = GetVector(windSpeedMap[x,y], windDirMap[x,y]);
                     if (heightMap[x, y] > 0)
                     {
@@ -84,12 +83,11 @@ public class WindGenerator()
                         
                         Vector2 terrainGradient = -Utility.GetGradient(heightMap, x,y) * 0.01f;
 
-                        //windVector += terrainGradient;    
+                        windVector += terrainGradient;    
                     }
 
                     windSpeedMap[x, y] = windVector.Length();
                     windDirMap[x,y] = GetBearing(windVector);
-                    */
                 }
             }
         });

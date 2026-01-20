@@ -379,6 +379,8 @@ public class Cell
     [Key(11)] public string biomeId = "rock";
     [Key(12)] public string classification;
     [Key(13)] public Color heightmapRegionColor;
+    [IgnoreMember] public float januaryWindOffset;
+    [IgnoreMember] public float julyWindOffset;
     public float GetTempForMonth(int month)
     {
         float phase = (month / 12f) * Mathf.Pi * 2f;

@@ -11,7 +11,7 @@ public class RainfallMapGenerator
     Curve precipitationCurve = GD.Load<Curve>("res://Curves/Climate/PrecipitationCurve.tres");
     Curve evaporationCurve = GD.Load<Curve>("res://Curves/EvaporationCurve.tres");
     Curve daylightCurve = GD.Load<Curve>("res://Curves/DaylightCurve.tres");
-    Curve simpleEvaporationCurve = GD.Load<Curve>("res://Curves/Climate/SimpleEvaporationCurve.tres");
+    Curve windPressureCurve = GD.Load<Curve>("res://Curves/WindPressureCurve.tres");
     public void GenerateRainfallMap(WorldGenerator world){
         this.world = world;
 
@@ -87,11 +87,16 @@ public class RainfallMapGenerator
             moistureMap = newMap;
             float stepMoisture = 0;
             // Precipitation
+            
             for (int x = 0; x < world.WorldSize.X; x++)
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float precipitation = moistureMap[x,y] * precipitationCurve.Sample(winter ? world.cells[x,y].januaryTemp : world.cells[x,y].julyTemp);
+                    float yNormalized = Mathf.Lerp(y / (float)world.WorldSize.Y, winter ? world.cells[x,y].januaryWindOffset : world.cells[x,y].julyWindOffset, 0.1f);
+                    float precipitation = moistureMap[x,y] 
+                    * precipitationCurve.Sample(winter ? world.cells[x,y].januaryTemp : world.cells[x,y].julyTemp); 
+                    //* windPressureCurve.Sample(winter ? 1f - yNormalized : yNormalized);
+
                     moistureMap[x,y] -= precipitation;
                     map[x,y] += precipitation;
                     stepMoisture += moistureMap[x,y];

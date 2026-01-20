@@ -718,7 +718,7 @@ public class HeightmapGenerator
                         coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 80f, noiseValue)), 0f, 1f);
 
                         // Modulates height by distance to the coast
-                        heightmap[x, y] = 0.2f * coastMultiplier;
+                        heightmap[x, y] = 0.1f * coastMultiplier;
                         // Adds sea level so we are above water
                         heightmap[x, y] += seaLevel;
                     } else
