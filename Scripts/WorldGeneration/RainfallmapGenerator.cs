@@ -146,9 +146,12 @@ public class RainfallMapGenerator
             //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
             return (float)PET;
         }
-        float latitudeFactor = Mathf.Abs((y / (float)world.WorldSize.Y) - 0.5f) * 2f;
-        float landEvaporation = 168f * evaporationCurve.Sample(latitudeFactor);
-        return Mathf.Min((float)Mathf.Max(PET, 50f * evaporationCurve.Sample(latitudeFactor)), landEvaporation) * 1;
+        
+        float latitudeFactor = y / (float)world.WorldSize.Y;
+        float sampleValue = winter ? latitudeFactor : 1f - latitudeFactor;
+
+        float landEvaporation = 168f * evaporationCurve.Sample(sampleValue);
+        return Mathf.Min((float)Mathf.Max(PET, 50f * evaporationCurve.Sample(sampleValue)), landEvaporation) * 1;
     }
     public double GetPET(WorldGenerator world, int x, int y, bool winter)
     {

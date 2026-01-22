@@ -5,7 +5,7 @@ using Vector2 = System.Numerics.Vector2;
 public class WindGenerator()
 {
     Vector2I worldSize;
-    Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/PrevailingWindCurve.tres");
+    Curve prevailingWindCurve = GD.Load<Curve>("res://Curves/WindBearingCurve.tres");
     Curve windSpeedCurve = GD.Load<Curve>("res://Curves/WindSpeedCurve.tres");
     WorldGenerator world;
     
@@ -53,28 +53,18 @@ public class WindGenerator()
                     else world.cells[x,y].julyWindOffset = noiseValue;
 
                     float normalizedY = y / (float) world.WorldSize.Y;
-                    float latitudeFactor = Mathf.Abs(normalizedY - 0.5f) * 2f;
-
                     float noiseStrength = 0.1f;
-                    float sampleValue = Mathf.Lerp(latitudeFactor, noiseValue, noiseStrength);
+                    float sampleValue = winter ? Mathf.Lerp(normalizedY, noiseValue, noiseStrength) : 1f - Mathf.Lerp(normalizedY, noiseValue, noiseStrength);
 
                     float dir = prevailingWindCurve.Sample(sampleValue);
-
-                    if (normalizedY < 0.5f)
+                    if (!winter)
                     {
-                        //dir = prevailingWindCurve.Sample(1f - sampleValue);
                         dir = Mathf.PosMod(180f - dir, 360f);
                     }
                     windDirMap[x, y] = dir;
 
-                    sampleValue = Mathf.Lerp(normalizedY, noiseValue, noiseStrength);
                     float windMaxSpeed = 12f;
                     windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(sampleValue);
-                    if (winter)
-                    {
-                        windSpeedMap[x, y] = windMaxSpeed * windSpeedCurve.Sample(1f - sampleValue);
-                    }
-
                     Vector2 windVector = GetVector(windSpeedMap[x,y], windDirMap[x,y]);
                     if (heightMap[x, y] > 0)
                     {

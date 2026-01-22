@@ -44,18 +44,14 @@ public class TempmapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float latitudeFactor = y / (float)world.WorldSize.Y;
+                    float yNormalized = y / (float)world.WorldSize.Y;
+                    float latitudeFactor = winter ? yNormalized : 1f - yNormalized;
                     float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x, y));
 
                     float noiseWeight = 0.05f;
 
                     float tempValue = tempCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
                     float oceanValue = oceanCurve.Sample(Mathf.Lerp(latitudeFactor, noiseValue, noiseWeight));
-                    if (winter)
-                    {
-                        tempValue = tempCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));
-                        oceanValue = oceanCurve.Sample(Mathf.Lerp(1 - latitudeFactor, noiseValue, noiseWeight));                    
-                    }
                     
                     //map[x, y] = tempValue;
                     float continentiality = CalculateContinentiality(x,y, winter);
