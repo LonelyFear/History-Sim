@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://b1mh36mwq3q24"]
+[gd_scene format=3 uid="uid://b1mh36mwq3q24"]
 
 [ext_resource type="Script" uid="uid://chiuaxdydautl" path="res://Scripts/Misc/Game.cs" id="1_rku1e"]
 [ext_resource type="Script" uid="uid://bwv1j01u212xb" path="res://Scripts/UI/Debug/StreamlineRenderer.cs" id="2_fkdbe"]
@@ -41,13 +41,13 @@ content_margin_right = 10.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_iivbl"]
 
-[node name="Game" type="Node2D"]
+[node name="Game" type="Node2D" unique_id=350215680]
 script = ExtResource("1_rku1e")
 
-[node name="Background" type="Node2D" parent="."]
+[node name="Background" type="Node2D" parent="." unique_id=1651560279]
 z_index = -4096
 
-[node name="Label" type="Label" parent="Background"]
+[node name="Label" type="Label" parent="Background" unique_id=786910510]
 offset_left = 376.0
 offset_top = 649.0
 offset_right = 900.0
@@ -58,47 +58,47 @@ theme_override_font_sizes/font_size = 62
 text = "Pixel History"
 horizontal_alignment = 1
 
-[node name="StreamlineRenderer" type="Node2D" parent="." node_paths=PackedStringArray("timeManager")]
+[node name="StreamlineRenderer" type="Node2D" parent="." unique_id=1792482344 node_paths=PackedStringArray("timeManager")]
 script = ExtResource("2_fkdbe")
 timeManager = NodePath("../Time Manager")
 
-[node name="Time Manager" type="Node" parent="." node_paths=PackedStringArray("borderRenderer")]
+[node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("borderRenderer")]
 script = ExtResource("7_ewbju")
 borderRenderer = NodePath("../Border Renderer")
 gameSpeed = 0
 
-[node name="Border Renderer" type="Node2D" parent="." node_paths=PackedStringArray("mapManager")]
+[node name="Border Renderer" type="Node2D" parent="." unique_id=1745117610 node_paths=PackedStringArray("mapManager")]
 script = ExtResource("6_vm72l")
 mapManager = NodePath("../Map Manager")
 
-[node name="BorderMultiMesh" type="MultiMeshInstance2D" parent="Border Renderer"]
+[node name="BorderMultiMesh" type="MultiMeshInstance2D" parent="Border Renderer" unique_id=1392213271]
 z_index = 100
 z_as_relative = false
 texture = ExtResource("6_22asu")
 
-[node name="Map Manager" type="Node2D" parent="." node_paths=PackedStringArray("borderRenderer")]
+[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("borderRenderer")]
 z_index = 2
 script = ExtResource("6_85qyi")
 borderRenderer = NodePath("../Border Renderer")
 
-[node name="Region Map" type="Sprite2D" parent="Map Manager"]
+[node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Simulation" type="Node" parent="."]
+[node name="Simulation" type="Node" parent="." unique_id=762724169]
 script = ExtResource("6_nnt18")
 
-[node name="Terrain Map" type="Node2D" parent="."]
+[node name="Terrain Map" type="Node2D" parent="." unique_id=1639461542]
 z_index = -10
 z_as_relative = false
 script = ExtResource("7_nnt18")
 switchMap = true
 
-[node name="Terrain Map" type="Sprite2D" parent="Terrain Map"]
+[node name="Terrain Map" type="Sprite2D" parent="Terrain Map" unique_id=1473226301]
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Encyclopedia" type="CanvasLayer" parent="." node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenuText", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton")]
+[node name="Encyclopedia" type="CanvasLayer" parent="." unique_id=339626827 node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenuText", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton")]
 script = ExtResource("8_iivbl")
 infoTabScene = ExtResource("9_7nbq1")
 indexTabScene = ExtResource("12_mg4q0")
@@ -110,18 +110,18 @@ gameUi = NodePath("../UI")
 playerCamera = NodePath("../PlayerCamera")
 closeEncyclopediaButton = NodePath("Encyclopedia/Panel/ExitEncyclopediaButton")
 
-[node name="Encyclopedia" type="VBoxContainer" parent="Encyclopedia"]
+[node name="Encyclopedia" type="VBoxContainer" parent="Encyclopedia" unique_id=931421885]
 visible = false
 offset_right = 1280.0
 offset_bottom = 720.0
 theme_override_constants/separation = 0
 
-[node name="Panel" type="Panel" parent="Encyclopedia/Encyclopedia"]
+[node name="Panel" type="Panel" parent="Encyclopedia/Encyclopedia" unique_id=668623545]
 custom_minimum_size = Vector2(0, 35)
 layout_mode = 2
 theme_override_styles/panel = ExtResource("8_85qyi")
 
-[node name="ExitEncyclopediaButton" type="Button" parent="Encyclopedia/Encyclopedia/Panel"]
+[node name="ExitEncyclopediaButton" type="Button" parent="Encyclopedia/Encyclopedia/Panel" unique_id=1801466033]
 z_index = 1
 layout_mode = 1
 anchors_preset = 4
@@ -137,10 +137,10 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 text = "Exit Encyclopedia"
 
-[node name="TabManager" parent="Encyclopedia/Encyclopedia" instance=ExtResource("10_exi56")]
+[node name="TabManager" parent="Encyclopedia/Encyclopedia" unique_id=186887186 instance=ExtResource("10_exi56")]
 layout_mode = 2
 
-[node name="Main Menu" type="VBoxContainer" parent="Encyclopedia/Encyclopedia/TabManager"]
+[node name="Main Menu" type="VBoxContainer" parent="Encyclopedia/Encyclopedia/TabManager" unique_id=886363277]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -155,18 +155,18 @@ grow_vertical = 2
 theme_override_constants/separation = 4
 script = ExtResource("11_7t8sx")
 
-[node name="Label" type="Label" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+[node name="Label" type="Label" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=164688983]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 100
 text = "Encyclopedia"
 
-[node name="HSeparator" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+[node name="HSeparator" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=1862760748]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="EncyclopediaDesc" type="RichTextLabel" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+[node name="EncyclopediaDesc" type="RichTextLabel" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=626102497]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/normal_font_size = 30
@@ -179,12 +179,12 @@ text = "The encyclopedia is home to all the information about your world, from h
 fit_content = true
 autowrap_mode = 2
 
-[node name="HSeparator2" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu"]
+[node name="HSeparator2" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=1490569486]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="EncyclopediaMenu" type="TabContainer" parent="Encyclopedia"]
+[node name="EncyclopediaMenu" type="TabContainer" parent="Encyclopedia" unique_id=735957476]
 visible = false
 offset_right = 1280.0
 offset_bottom = 720.0
@@ -193,14 +193,14 @@ theme_override_font_sizes/font_size = 30
 theme_override_styles/panel = ExtResource("8_85qyi")
 tab_focus_mode = 0
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=2059065808]
 script = ExtResource("11_7nbq1")
 
-[node name="WorldStats" type="VBoxContainer" parent="UI"]
+[node name="WorldStats" type="VBoxContainer" parent="UI" unique_id=1044866030]
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="Population Label" type="Label" parent="UI/WorldStats"]
+[node name="Population Label" type="Label" parent="UI/WorldStats" unique_id=107232461]
 layout_mode = 2
 mouse_filter = 0
 theme = ExtResource("4_exi56")
@@ -215,7 +215,7 @@ Placeholder
 "
 script = ExtResource("11_nnt18")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI" unique_id=1419642350]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -224,7 +224,7 @@ offset_bottom = 199.0
 grow_horizontal = 0
 mouse_filter = 0
 
-[node name="Date Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
+[node name="Date Label" type="Label" parent="UI/VBoxContainer" unique_id=1603484514 node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -235,7 +235,7 @@ horizontal_alignment = 2
 script = ExtResource("10_7nbq1")
 timeManager = NodePath("../../../Time Manager")
 
-[node name="TPS Label" type="Label" parent="UI/VBoxContainer" node_paths=PackedStringArray("timeManager")]
+[node name="TPS Label" type="Label" parent="UI/VBoxContainer" unique_id=940896208 node_paths=PackedStringArray("timeManager")]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -249,7 +249,7 @@ script = ExtResource("11_exi56")
 timeManager = NodePath("../../../Time Manager")
 updateDelay = 0.25
 
-[node name="FrameBreakdown" type="Label" parent="UI/VBoxContainer"]
+[node name="FrameBreakdown" type="Label" parent="UI/VBoxContainer" unique_id=802929429]
 visible = false
 layout_mode = 2
 theme = ExtResource("4_exi56")
@@ -262,7 +262,7 @@ Regions Time:
 States Time: "
 script = ExtResource("12_ewbju")
 
-[node name="InfoHolder" type="Control" parent="UI" node_paths=PackedStringArray("panel", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
+[node name="InfoHolder" type="Control" parent="UI" unique_id=213025015 node_paths=PackedStringArray("panel", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
 layout_mode = 3
 anchors_preset = 0
 offset_top = 494.0
@@ -277,20 +277,20 @@ specialLabel = NodePath("Panel/VBoxContainer/ScrollContainer/VBoxContainer/Speci
 encyclopediaButton = NodePath("Panel/VBoxContainer/EncyclopediaButton")
 encyclopediaManager = NodePath("../../Encyclopedia")
 
-[node name="Panel" type="Panel" parent="UI/InfoHolder"]
+[node name="Panel" type="Panel" parent="UI/InfoHolder" unique_id=1417958973]
 layout_mode = 0
 offset_top = -359.0
 offset_right = 377.0
 offset_bottom = 145.0
 theme = ExtResource("4_exi56")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/Panel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/Panel" unique_id=1153285923]
 layout_mode = 0
 offset_right = 377.0
 offset_bottom = 504.0
 alignment = 1
 
-[node name="ScrollContainer" type="ScrollContainer" parent="UI/InfoHolder/Panel/VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/InfoHolder/Panel/VBoxContainer" unique_id=1166211816]
 custom_minimum_size = Vector2(0, 460)
 layout_mode = 2
 mouse_filter = 0
@@ -298,29 +298,29 @@ mouse_force_pass_scroll_events = false
 theme = ExtResource("4_exi56")
 theme_override_styles/panel = SubResource("StyleBoxEmpty_nnt18")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer" unique_id=1091706162]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="Name" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="Name" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=298328032]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 40
 text = "Nation Name"
 
-[node name="Type" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="Type" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=2131231100]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 22
 text = "Nation"
 
-[node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=624033057]
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="Population" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="Population" type="Label" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=1088169906]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_constants/line_spacing = -4
@@ -332,7 +332,7 @@ Merchants:
 Aristocrats:
 Artisans:"
 
-[node name="Special" type="RichTextLabel" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="Special" type="RichTextLabel" parent="UI/InfoHolder/Panel/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=2001700316]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/normal_font_size = 30
@@ -342,12 +342,12 @@ Wealth:"
 fit_content = true
 scroll_active = false
 
-[node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/Panel/VBoxContainer"]
+[node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/Panel/VBoxContainer" unique_id=342721538]
 layout_mode = 2
 theme_override_font_sizes/font_size = 25
 text = "View In Encyclopedia"
 
-[node name="Action Panel" type="Panel" parent="UI" node_paths=PackedStringArray("menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit")]
+[node name="Action Panel" type="Panel" parent="UI" unique_id=934192393 node_paths=PackedStringArray("menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit")]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -367,24 +367,24 @@ menuPanel = NodePath("../Options Panel")
 saveNamePanel = NodePath("../SaveNamePanel")
 saveNameEdit = NodePath("../SaveNamePanel/VBoxContainer/TextEdit")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="UI/Action Panel"]
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/Action Panel" unique_id=838619392]
 layout_mode = 0
 offset_left = 10.0
 offset_right = 1280.0
 offset_bottom = 82.0
 theme_override_constants/separation = 20
 
-[node name="TimeSpeedHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer"]
+[node name="TimeSpeedHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer" unique_id=107260626]
 layout_mode = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
+[node name="Label" type="Label" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder" unique_id=171896645]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 text = "Game Speed:"
 
-[node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder"]
+[node name="TimeSpeed" type="OptionButton" parent="UI/Action Panel/HBoxContainer/TimeSpeedHolder" unique_id=1829450767]
 layout_mode = 2
 focus_mode = 0
 theme = ExtResource("4_exi56")
@@ -406,23 +406,23 @@ popup/item_5/id = 5
 popup/item_6/text = "Unlimited"
 popup/item_6/id = 6
 
-[node name="MapModeHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer"]
+[node name="MapModeHolder" type="VBoxContainer" parent="UI/Action Panel/HBoxContainer" unique_id=525852745]
 layout_mode = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/Action Panel/HBoxContainer/MapModeHolder"]
+[node name="Label" type="Label" parent="UI/Action Panel/HBoxContainer/MapModeHolder" unique_id=549775214]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 text = "Map Mode:"
 
-[node name="MapMode" type="OptionButton" parent="UI/Action Panel/HBoxContainer/MapModeHolder"]
+[node name="MapMode" type="OptionButton" parent="UI/Action Panel/HBoxContainer/MapModeHolder" unique_id=1964536640]
 layout_mode = 2
 focus_mode = 0
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 selected = 0
-item_count = 10
+item_count = 11
 popup/item_0/text = "Realm"
 popup/item_0/id = 0
 popup/item_1/text = "Polity"
@@ -443,15 +443,17 @@ popup/item_8/text = "Temperature"
 popup/item_8/id = 8
 popup/item_9/text = "Rainfall"
 popup/item_9/id = 9
+popup/item_10/text = "Day Length"
+popup/item_10/id = 10
 
-[node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Action Panel/HBoxContainer"]
+[node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Action Panel/HBoxContainer" unique_id=761628914]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 button_pressed = true
 text = "Show Regions"
 
-[node name="ShowOverlaysCheck" type="CheckBox" parent="UI/Action Panel/HBoxContainer"]
+[node name="ShowOverlaysCheck" type="CheckBox" parent="UI/Action Panel/HBoxContainer" unique_id=1280145456]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
@@ -460,12 +462,12 @@ text = "Show Region
 Overlays"
 alignment = 1
 
-[node name="VSeparator" type="VSeparator" parent="UI/Action Panel/HBoxContainer"]
+[node name="VSeparator" type="VSeparator" parent="UI/Action Panel/HBoxContainer" unique_id=513657966]
 layout_mode = 2
 theme_override_constants/separation = 370
 theme_override_styles/separator = SubResource("StyleBoxEmpty_iivbl")
 
-[node name="MenuButton" type="Button" parent="UI/Action Panel/HBoxContainer"]
+[node name="MenuButton" type="Button" parent="UI/Action Panel/HBoxContainer" unique_id=1471884785]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("4_exi56")
@@ -473,7 +475,7 @@ theme_override_font_sizes/font_size = 40
 text = "Main
 Menu"
 
-[node name="Debug Label" type="Label" parent="UI"]
+[node name="Debug Label" type="Label" parent="UI" unique_id=130373389]
 visible = false
 offset_left = 109.0
 offset_top = 66.0
@@ -487,7 +489,7 @@ text = "Region Data:
 Population: 100"
 script = ExtResource("9_iivbl")
 
-[node name="SaveNamePanel" type="Panel" parent="UI"]
+[node name="SaveNamePanel" type="Panel" parent="UI" unique_id=789988692]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -502,7 +504,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_force_pass_scroll_events = false
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/SaveNamePanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/SaveNamePanel" unique_id=219805128]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -516,7 +518,7 @@ offset_bottom = 92.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="UI/SaveNamePanel/VBoxContainer"]
+[node name="Label" type="Label" parent="UI/SaveNamePanel/VBoxContainer" unique_id=1417416091]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_fonts/font = ExtResource("4_nnt18")
@@ -525,12 +527,12 @@ text = "Saving Simulation"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="OptionButton" type="OptionButton" parent="UI/SaveNamePanel/VBoxContainer"]
+[node name="OptionButton" type="OptionButton" parent="UI/SaveNamePanel/VBoxContainer" unique_id=1231302549]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 35
 
-[node name="TextEdit" type="LineEdit" parent="UI/SaveNamePanel/VBoxContainer"]
+[node name="TextEdit" type="LineEdit" parent="UI/SaveNamePanel/VBoxContainer" unique_id=1341581134]
 visible = false
 custom_minimum_size = Vector2(0, 35)
 layout_mode = 2
@@ -542,23 +544,23 @@ max_length = 20
 context_menu_enabled = false
 emoji_menu_enabled = false
 
-[node name="SaveOptions" type="HBoxContainer" parent="UI/SaveNamePanel/VBoxContainer"]
+[node name="SaveOptions" type="HBoxContainer" parent="UI/SaveNamePanel/VBoxContainer" unique_id=1479064244]
 layout_mode = 2
 alignment = 1
 
-[node name="SaveButton" type="Button" parent="UI/SaveNamePanel/VBoxContainer/SaveOptions"]
+[node name="SaveButton" type="Button" parent="UI/SaveNamePanel/VBoxContainer/SaveOptions" unique_id=1650550193]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 35
 text = "Save"
 
-[node name="CancelButton" type="Button" parent="UI/SaveNamePanel/VBoxContainer/SaveOptions"]
+[node name="CancelButton" type="Button" parent="UI/SaveNamePanel/VBoxContainer/SaveOptions" unique_id=1541377738]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 35
 text = "Cancel"
 
-[node name="Options Panel" type="Panel" parent="UI"]
+[node name="Options Panel" type="Panel" parent="UI" unique_id=534514165]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -573,7 +575,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_force_pass_scroll_events = false
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Options Panel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Options Panel" unique_id=602718195]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -587,7 +589,7 @@ offset_bottom = 99.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="UI/Options Panel/VBoxContainer"]
+[node name="Label" type="Label" parent="UI/Options Panel/VBoxContainer" unique_id=1836641387]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_fonts/font = ExtResource("4_nnt18")
@@ -596,17 +598,17 @@ text = "Options"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="UI/Options Panel/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="UI/Options Panel/VBoxContainer" unique_id=1431106254]
 layout_mode = 2
 theme_override_constants/separation = 17
 
-[node name="MainMenuButton" type="Button" parent="UI/Options Panel/VBoxContainer"]
+[node name="MainMenuButton" type="Button" parent="UI/Options Panel/VBoxContainer" unique_id=1878807488]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 32
 text = "Main Menu"
 
-[node name="OptionsButton" type="Button" parent="UI/Options Panel/VBoxContainer"]
+[node name="OptionsButton" type="Button" parent="UI/Options Panel/VBoxContainer" unique_id=700138133]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 32
@@ -614,20 +616,20 @@ disabled = true
 text = "Options
 "
 
-[node name="SaveNameButton" type="Button" parent="UI/Options Panel/VBoxContainer"]
+[node name="SaveNameButton" type="Button" parent="UI/Options Panel/VBoxContainer" unique_id=1288725362]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
 
-[node name="Loading" type="CanvasLayer" parent="."]
+[node name="Loading" type="CanvasLayer" parent="." unique_id=259550711]
 
-[node name="Loading Screen" parent="Loading" node_paths=PackedStringArray("streamlineRenderer") instance=ExtResource("2_nb51f")]
+[node name="Loading Screen" parent="Loading" unique_id=862057941 node_paths=PackedStringArray("streamlineRenderer") instance=ExtResource("2_nb51f")]
 visible = false
 z_index = 100
 streamlineRenderer = NodePath("../../StreamlineRenderer")
 
-[node name="PlayerCamera" parent="." instance=ExtResource("13_rfjv2")]
+[node name="PlayerCamera" parent="." unique_id=423552337 instance=ExtResource("13_rfjv2")]
 position = Vector2(640, 360)
 limit_left = 0
 limit_top = 0

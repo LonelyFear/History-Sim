@@ -21,9 +21,9 @@ public class RainfallMapGenerator
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetSeed(world.rng.Next());
         // Evaporation
-        RunRainfallPass(30, false);
+        RunRainfallPass(35, false);
         world.Stage = WorldGenStage.WINTER_RAINFALL;
-        RunRainfallPass(30, true);    
+        RunRainfallPass(35, true);    
     }
     void RunRainfallPass(int stepCount, bool winter)
     {
@@ -92,7 +92,7 @@ public class RainfallMapGenerator
             {
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
-                    float yNormalized = Mathf.Lerp(y / (float)world.WorldSize.Y, winter ? world.cells[x,y].januaryWindOffset : world.cells[x,y].julyWindOffset, 0.1f);
+                    //float yNormalized = Mathf.Lerp(y / (float)world.WorldSize.Y, winter ? world.cells[x,y].januaryWindOffset : world.cells[x,y].julyWindOffset, 0.1f);
                     float precipitation = moistureMap[x,y] 
                     * precipitationCurve.Sample(winter ? world.cells[x,y].januaryTemp : world.cells[x,y].julyTemp); 
                     //* windPressureCurve.Sample(winter ? 1f - yNormalized : yNormalized);
@@ -141,6 +141,7 @@ public class RainfallMapGenerator
     float GetEvaporation(int x, int y, bool winter)
     {
         double PET = GetPET(world, x,y, winter);
+
         if (world.cells[x,y].elevation < 0)
         {
             //return simpleEvaporationCurve.Sample(world.TempMap[x,y]) * 12f;
@@ -148,7 +149,7 @@ public class RainfallMapGenerator
         }
         
         float latitudeFactor = y / (float)world.WorldSize.Y;
-        float sampleValue = winter ? latitudeFactor : 1f - latitudeFactor;
+        float sampleValue = winter ? 1f - latitudeFactor :  latitudeFactor;
 
         float landEvaporation = 168f * evaporationCurve.Sample(sampleValue);
         return Mathf.Min((float)Mathf.Max(PET, 50f * evaporationCurve.Sample(sampleValue)), landEvaporation) * 1;
@@ -157,11 +158,8 @@ public class RainfallMapGenerator
     {
         float latitudeFactor = y / (float)world.WorldSize.Y;
 
-        double dayLength = daylightCurve.Sample(latitudeFactor);
-        if (winter)
-        {
-            dayLength = daylightCurve.Sample(1f - latitudeFactor);
-        }
+        double dayLength = daylightCurve.Sample(winter ? 1f - latitudeFactor :  latitudeFactor);
+
         double temp = Math.Clamp(winter ? world.cells[x,y].januaryTemp : world.cells[x,y].julyTemp, 0.0, 10000.0);
         double PET;
 
@@ -187,9 +185,11 @@ public class RainfallMapGenerator
         if (winter)
         {
             world.cells[x,y].januaryPET = (float)PET;
+            world.cells[x,y].januaryDaylight = (float)dayLength;
         } else
         {
             world.cells[x,y].julyPET = (float)PET;
+            world.cells[x,y].julyDaylight = (float)dayLength;
         }
         return PET;
     }

@@ -220,6 +220,7 @@ public partial class MapManager : Node2D
         Color color = new Color(0, 0, 0, 0);
         State regionOwner = region.owner;
         MapModes drawnMapMode = mapMode;
+        int month = (int)(timeManager.GetMonth() - 1);
         switch (drawnMapMode)
         {
             case MapModes.REALM:
@@ -440,12 +441,18 @@ public partial class MapManager : Node2D
             case MapModes.TEMPERATURE:
                 float opacity = 0.75f;
                 color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,1,1, opacity), new Color(1,0, 0, opacity)], 
-                Mathf.InverseLerp(-40, 40, region.avgMonthlyTemps[timeManager.GetMonth() - 1]));
+                Mathf.InverseLerp(-40, 40, region.avgMonthlyTemps[month]));
                 break;
             case MapModes.RAINFALL:
                 opacity = 0.75f;
                 color = Utility.MultiColourLerp([new Color(0,0,0, opacity), new Color(0,0,1, opacity), new Color(1,1,0, opacity)], 
-                Mathf.InverseLerp(0, 170, region.avgMonthlyRainfall[timeManager.GetMonth() - 1]));
+                Mathf.InverseLerp(0, 170, region.avgMonthlyRainfall[month]));
+                break;
+            case MapModes.DAY_LENGTH:
+                opacity = 0.75f;
+                color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
+                Mathf.InverseLerp(0, 24, region.tiles[0].GetDaylightForMonth(month)));
+                
                 break;
         }
         if (hoveredRegion == region){
@@ -509,6 +516,6 @@ public enum MapModes {
     TERRAIN_TYPE,
     TEMPERATURE,
     RAINFALL,
-    WIND_SPEED,
+    DAY_LENGTH,
     NONE
 }

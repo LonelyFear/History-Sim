@@ -366,6 +366,8 @@ public class WorldGenerator
 [MessagePackObject(AllowPrivate = true)]
 public class Cell  
 {
+    [Key(100)] public float januaryDaylight;
+    [Key(101)] public float julyDaylight;
     [Key(1)] public int elevation;
     [Key(2)] public float januaryTemp;
     [Key(3)] public float julyTemp;
@@ -391,6 +393,12 @@ public class Cell
     {
         float annualTemp = (januaryTemp + julyTemp) / 2f;
         return annualTemp;
+    }
+    public float GetDaylightForMonth(int month)
+    {
+        float phase = (month / 12f) * Mathf.Pi * 2f;
+        float seasonal = (Mathf.Cos(phase - Mathf.Pi) + 1f) * 0.5f;
+        return Mathf.Lerp(januaryDaylight, julyDaylight, seasonal);            
     }
     public float GetRainfallForMonth(int month)
     {

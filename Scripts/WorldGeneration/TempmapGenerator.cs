@@ -45,7 +45,7 @@ public class TempmapGenerator
                 for (int y = 0; y < world.WorldSize.Y; y++)
                 {
                     float yNormalized = y / (float)world.WorldSize.Y;
-                    float latitudeFactor = winter ? yNormalized : 1f - yNormalized;
+                    float latitudeFactor = winter ? 1f - yNormalized : yNormalized;
                     float noiseValue = Mathf.InverseLerp(-1, 1, noise.GetNoise(x, y));
 
                     float noiseWeight = 0.05f;
