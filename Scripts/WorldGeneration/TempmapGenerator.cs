@@ -55,6 +55,7 @@ public class TempmapGenerator
                     
                     //map[x, y] = tempValue;
                     float continentiality = CalculateContinentiality(x,y, winter);
+                    world.cells[x,y].continentiality = continentiality;
                     map[x, y] = Mathf.Lerp(oceanValue, tempValue, continentiality);
 
                     float heightFactor = 6.5f * (world.cells[x,y].elevation/1000f);
@@ -86,17 +87,17 @@ public class TempmapGenerator
         Vector2 currentPos = new(x,y);
         while (stepsTaken < 50)
         {
-            stepsTaken++;
-            Vector2 windVel = GetWindVelocity(x, y, winter);
-            currentPos -= windVel;
             float elevation = Utility.BilinearInterpolation(heightmap, Mathf.PosMod(currentPos.X, world.WorldSize.X), Mathf.PosMod(currentPos.Y, world.WorldSize.Y));
-
-            if (elevation < world.SeaLevel * WorldGenerator.WorldHeight)
+            if (elevation < 0)
             {
                 break;
-            }
+            }      
+
+            stepsTaken++;
+            Vector2 windVel = GetWindVelocity(currentPos.X, currentPos.Y, winter);
+            currentPos -= windVel;
         }
-        return Mathf.Clamp(continentialityCurve.Sample(stepsTaken), 0, 1);
+        return Mathf.Clamp(continentialityCurve.Sample(Mathf.Min(stepsTaken, 50)), 0, 1);
     }
     Vector2 GetWindVelocity(float x, float y, bool winter)
     {
@@ -106,9 +107,9 @@ public class TempmapGenerator
         float tx = sampleX - Mathf.Floor(sampleX);
         float ty = sampleY - Mathf.Floor(sampleY);
 
-        int x0 = (int)x;
+        int x0 = Mathf.PosMod((int)x, world.WorldSize.X);
         int x1 = Mathf.PosMod(x0 + 1, world.WorldSize.X);
-        int y0 = (int)y;
+        int y0 = Mathf.PosMod((int)y, world.WorldSize.Y);
         int y1 = Mathf.PosMod(y0 + 1, world.WorldSize.Y);    
 
         Vector2 bottomX = Vector2.Lerp(GetWindVel(x0, y0, winter), GetWindVel(x1, y0, winter), tx);

@@ -171,6 +171,9 @@ public partial class MapManager : Node2D
                         newSelected = null;
                     }
                     break;
+                case MapModes.RAINFALL:
+                    newSelected = hoveredRegion;
+                    break;
                 case MapModes.POLITIY:
                     if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
                     {
@@ -324,7 +327,7 @@ public partial class MapManager : Node2D
                 }
                 break;
             case MapModes.CULTURE:
-                if (region.largestCultureId != null)
+                if (region.largestCultureId != null && region.habitable)
                 {
                     color = objectManager.GetCulture(region.largestCultureId).color;
                 }
@@ -336,12 +339,12 @@ public partial class MapManager : Node2D
                 if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == ObjectType.CULTURE)
                 {
                     Culture culture = (Culture)selectedMetaObj;
-                    if (region.cultureIds.ContainsKey(culture.id) && region.largestCultureId != culture.id)
+                    if (region.cultureIds.ContainsKey(culture.id) && region.largestCultureId != culture.id && region.habitable)
                     {
                         color = culture.color;
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
                     }
-                    else if (region.largestCultureId != culture.id)
+                    else if (region.largestCultureId != culture.id || !region.habitable)
                     {
                         color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                     }
@@ -438,21 +441,10 @@ public partial class MapManager : Node2D
                     color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                 }
                 break;
-            case MapModes.TEMPERATURE:
-                float opacity = 0.75f;
-                color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,1,1, opacity), new Color(1,0, 0, opacity)], 
-                Mathf.InverseLerp(-40, 40, region.avgMonthlyTemps[month]));
-                break;
-            case MapModes.RAINFALL:
-                opacity = 0.75f;
-                color = Utility.MultiColourLerp([new Color(0,0,0, opacity), new Color(0,0,1, opacity), new Color(1,1,0, opacity)], 
-                Mathf.InverseLerp(0, 170, region.avgMonthlyRainfall[month]));
-                break;
             case MapModes.DAY_LENGTH:
-                opacity = 0.75f;
+                float opacity = 0.75f;
                 color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
                 Mathf.InverseLerp(0, 24, region.tiles[0].GetDaylightForMonth(month)));
-                
                 break;
         }
         if (hoveredRegion == region){
@@ -467,24 +459,45 @@ public partial class MapManager : Node2D
 
         Color noneColor = GetRegionColor(r, false);
         Color color = GetRegionColor(r);
+        int month = (int)(timeManager.GetMonth() - 1);
+
         foreach (Tile tile in r.tiles)
         {
             Color finalColor = color;
+            float opacity = 0.75f;
+            
+            switch (mapMode)
+            {
+                case MapModes.RAINFALL:
+                    finalColor = Utility.MultiColourLerp([Color.Color8(69, 4, 87, (byte)(opacity * 255f)), Color.Color8(31, 160, 136, (byte)(opacity * 255f)), Color.Color8(253, 231, 37, (byte)(opacity * 255f))], 
+                    Mathf.InverseLerp(0, 160, tile.GetRainfallForMonth(month)));
+                break;
+                case MapModes.TEMPERATURE:
+                    finalColor = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,1,1, opacity), new Color(1,0, 0, opacity)], 
+                    Mathf.InverseLerp(-40, 40, tile.GetTempForMonth(month)));
+                    break;
+                case MapModes.CONTINENTIALITY:
+                    finalColor = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
+                    Mathf.InverseLerp(0, 1, tile.continentiality));
+                    break;
+                default:
+                    // Carved Borders
+                    if (tile.renderOverlay && !IsMapModeCarved())
+                    {
+                        finalColor = noneColor;
+                    }
+                    if (r.isWater && r.pops.Count > 0)
+                    {
+                        //finalColor = new Color(1, 0.5f, 0);
+                    }
 
-            // Carved Borders
-            if (tile.renderOverlay && !IsMapModeCarved())
-            {
-                finalColor = noneColor;
-            }
-            if (r.isWater && r.pops.Count > 0)
-            {
-                //finalColor = new Color(1, 0.5f, 0);
+                break;                   
             }
             if (regionImage.GetPixel(tile.pos.X, tile.pos.Y) != finalColor * 0.9f)
             {
                 regionImage.SetPixel(tile.pos.X, tile.pos.Y, finalColor * 0.9f);
                 mapUpdate = true;
-            }               
+            }                
         }
     }
     public bool IsMapModeCarved()
@@ -517,5 +530,6 @@ public enum MapModes {
     TEMPERATURE,
     RAINFALL,
     DAY_LENGTH,
+    CONTINENTIALITY,
     NONE
 }

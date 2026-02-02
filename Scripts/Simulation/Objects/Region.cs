@@ -487,7 +487,7 @@ public class Region : PopObject, ISaveable
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;
-        if (arableLand / landCount < 0.2f)
+        if (arableLand / landCount <= 0.2f)
         {
             migrateable = false;
         }

@@ -246,6 +246,7 @@ public class SimManager
         region.CalcAverages();
         // Checks habitability
         region.CheckHabitability();
+        
         if (region.habitable)
         {
             habitableRegions.Add(region);
@@ -336,9 +337,10 @@ public class SimManager
         foreach (Region region in habitableRegions)
         {
             double nodeChance = 0.004;
-
+            //GD.Print(region.Migrateable());
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
+                GD.Print("Node");
                 long startingPopulation = Pop.ToNativePopulation(10000);
                 Culture culture = objectManager.CreateCulture();
 

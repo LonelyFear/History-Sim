@@ -26,6 +26,9 @@ public class Tile : Cell
 		januaryWindVel = cell.januaryWindVel;
 		julyWindVel = cell.julyWindVel;
 		elevation = cell.elevation;
+		julyDaylight = cell.julyDaylight;
+		januaryDaylight = cell.januaryDaylight;
+		continentiality = cell.continentiality;
 
 		biome = AssetManager.GetBiome(cell.biomeId);
 		

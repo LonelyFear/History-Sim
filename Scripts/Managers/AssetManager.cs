@@ -17,7 +17,7 @@ public static class AssetManager
     public static Dictionary<string, BaseResource> resources = new Dictionary<string, BaseResource>();
     public static void LoadBiomes(string modPath)
     {
-        string biomesPath = modPath + "/Biomes/BIOME1biomes.json";
+        string biomesPath = modPath + "/Biomes/biomes.json";
         FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
         if (bio != null)
         {
@@ -26,6 +26,8 @@ public static class AssetManager
             foreach (Biome biome in JsonSerializer.Deserialize<Biome[]>(biomeData))
             {
                 biomes.Add(biome.id, biome);
+                GD.Print(biome.name);
+                GD.Print(biome.arability);
             }
             GD.Print("Loaded " + biomes.Count + " biomes");
         }

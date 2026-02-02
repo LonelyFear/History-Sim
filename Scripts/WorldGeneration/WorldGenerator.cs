@@ -131,7 +131,7 @@ public class WorldGenerator
 
         try
         {
-            new BiomeGenerator().GenerateBiomes(this, true);
+            new BiomeGenerator().GenerateBiomes(this, false);
         } catch (Exception e)
         {
             GD.PushError(e);
@@ -368,6 +368,7 @@ public class Cell
 {
     [Key(100)] public float januaryDaylight;
     [Key(101)] public float julyDaylight;
+    [Key(102)] public float continentiality;
     [Key(1)] public int elevation;
     [Key(2)] public float januaryTemp;
     [Key(3)] public float julyTemp;
