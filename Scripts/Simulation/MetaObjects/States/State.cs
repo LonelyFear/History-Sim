@@ -179,10 +179,12 @@ public class State : PopObject, ISaveable
     }
     public void RemoveLeader()
     {
+         
         if (leaderId != null)
         {
             lastLeaderId = leaderId;
-            simManager.charactersIds[(ulong)lastLeaderId].role = CharacterRole.FORMER_LEADER;
+            Character lastLeader = simManager.charactersIds[(ulong)lastLeaderId];
+            lastLeader.role = CharacterRole.FORMER_LEADER;             
         }
         leaderId = null;
     }

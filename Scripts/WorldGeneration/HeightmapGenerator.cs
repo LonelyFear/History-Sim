@@ -63,7 +63,7 @@ public class HeightmapGenerator
                 int px = (int)(x * pixelPerX);
                 int py = (int)(y * pixelPerY);
                 int flippedPy = (2160 - 1) - py;
-                map[x,y] = realElevation[px, flippedPy] - (int)(world.SeaLevel * WorldGenerator.WorldHeight);
+                map[x,y] = realElevation[px, flippedPy] - 1;
             }
         }    
 

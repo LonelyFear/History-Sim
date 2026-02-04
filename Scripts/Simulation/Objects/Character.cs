@@ -111,8 +111,8 @@ public class Character : NamedObject
     {
         dead = true;
         tickDestroyed = sim.timeManager.ticks;
+        objectManager.CreateHistoricalEvent([this, role == CharacterRole.LEADER ? objectManager.GetState(stateId) : null], EventType.DEATH);
         SetRole(CharacterRole.DEAD);
-        objectManager.CreateHistoricalEvent([this], EventType.DEATH);
         //sim.DeleteCharacter(this);
     }
     public void CharacterAging()
@@ -167,6 +167,8 @@ public class Character : NamedObject
         {
             toBe = ["was", "were"];
         }
+        string pronoun = pronouns[intGender];
+
         string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(tickCreated, true)} to ";
 
         if (parentIds.Count <= 0)
@@ -195,7 +197,7 @@ public class Character : NamedObject
             }         
         }
 
-        desc += $". {pronouns[intGender].Capitalize()} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} ";
+        desc += $". {pronoun.Capitalize()} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} ";
         switch (role)
         {
             case CharacterRole.LEADER:
@@ -208,16 +210,20 @@ public class Character : NamedObject
                 desc += $"a commander in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             case CharacterRole.POLITICIAN:
-                desc += $"are a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
+                desc += $"a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
             case CharacterRole.NOBLE:
                 desc += $"a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
+            case CharacterRole.FORMER_LEADER:
+                desc += $" a former leader, now living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
+                break;     
             default:
                 desc += $"living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
                 break;
         }
-        desc += $", and {pronouns[intGender]} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(sim.timeManager.ticks - tickCreated)} years old. ";
+        desc += $", and {pronoun} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(GetAge())} years old" 
+        + (dead ? $" when {pronoun} died. " : ". ");
         // Personality
         return desc;
     }

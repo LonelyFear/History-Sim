@@ -417,7 +417,7 @@ public class ObjectManager
     {
         HistoricalEvent historicalEvent = new HistoricalEvent()
         {
-            objIds = relevantObjects.Select(obj => obj.GetFullId()).ToList(),
+            objIds = relevantObjects.Select(obj => obj == null ? "nullObject" : obj.GetFullId()).ToList(),
             tickOccured = timeManager.ticks,
             id = GetId(),
             type = eventType
@@ -425,6 +425,7 @@ public class ObjectManager
         historicalEvent.InitEvent();
         foreach (NamedObject obj in relevantObjects)
         {
+            if (obj == null) continue;
             obj.eventIds.Add(historicalEvent.id);
         }
         simManager.historicalEventIds.Add(historicalEvent.id, historicalEvent);

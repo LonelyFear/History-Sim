@@ -1,11 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Godot;
 using MessagePack;
 [MessagePackObject]
 public class NamedObject
 {
     [Key(401)] public uint tickCreated { get; set; }
-    [Key(402)] public uint tickDestroyed { get; set; }
+    [Key(402)] public uint tickDestroyed { get; set; } = 0;
     [Key(410)] public bool dead = false;
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static ObjectManager objectManager;
@@ -13,13 +15,17 @@ public class NamedObject
     [Key(404)] public string name { get; set; }
     [Key(405)] public string description { get; set; }
     [Key(406)] public List<ulong> eventIds = new List<ulong>();
-    public uint TicksSince(uint tick)
+    public uint TicksBetween(uint start, uint end)
     {
-        return simManager.timeManager.ticks - tick;
+        return end - start;
     }
     public uint GetAge()
     {
-        return TicksSince(tickCreated);
+        if (dead)
+        {
+            return TicksBetween(tickCreated, tickDestroyed);
+        }
+        return TicksBetween(tickCreated, simManager.timeManager.ticks);
     }
     public virtual string GenerateDescription()
     {
@@ -34,7 +40,8 @@ public class NamedObject
     }
     public virtual void Die()
     {
-        
+        dead = true;
+        tickDestroyed = simManager.timeManager.ticks;        
     }
     public string GenerateHistoryText()
     {

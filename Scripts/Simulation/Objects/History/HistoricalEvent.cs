@@ -22,6 +22,11 @@ public partial class HistoricalEvent
                 objText.Add(NamedObject.GetNamedObject<State>(objIds[0]).leaderTitle);     
                 objText.Add(NamedObject.GetNamedObject<Character>(objIds[1]).name);
                 break;
+            case EventType.LEADER_DEATH:
+                objText.Add(NamedObject.GetNamedObject<State>(objIds[0]).name);    
+                objText.Add(NamedObject.GetNamedObject<State>(objIds[0]).leaderTitle);     
+                objText.Add(NamedObject.GetNamedObject<Character>(objIds[1]).name);
+                break;
             case EventType.WAR_DECLARATION:
                 objText.Add(NamedObject.GetNamedObject<State>(objIds[0]).name);
                 objText.Add(NamedObject.GetNamedObject<State>(objIds[1]).name);               
@@ -42,25 +47,46 @@ public partial class HistoricalEvent
         switch (type)
         {
             case EventType.SUCCESSION:
+                /*
+                Key:
+                0 - Character Name
+                1 - Title
+                2 - Nation
+                */
                 text += $"{NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[1]), objText[2])} became the new {objText[1]} of the {NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[0]), objText[0])}";
                 break;
             case EventType.WAR_DECLARATION:
+                /*
+                Key:
+                0 - Nation 1
+                1 - Nation 2
+                */
                 text += $"{NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[0]), objText[0])} declared war on {NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[1]), objText[1])}.";
                 break;
             case EventType.WAR_END:
+                /*
+                Key:
+                0 - Nation 1
+                1 - Nation 2
+                */
                 text += $"The war between {NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[0]), objText[0])} and {NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[1]), objText[1])} ended.";
                 break;
             case EventType.DEATH:
+                /*
+                Key:
+                0 - Name
+                1 - Age (in years)
+                */
                 switch (NamedObject.GetNamedObject<NamedObject>(objIds[0]))
                 {
                     case Character:
-                        text += $"{NamedObject.GenerateUrlText(NamedObject.GetNamedObject<Character>(objIds[0]), objText[0])} and died at {timeManager.GetYear(text[1])} years old.";
+                        text += $"{NamedObject.GenerateUrlText(NamedObject.GetNamedObject<Character>(objIds[0]), objText[0])} died at {objText[1]} years old.";
                         break;
                     default:
                         text += $"{NamedObject.GenerateUrlText(NamedObject.GetNamedObject(objIds[0]), objText[0])} was dissolved.";
                         break;
                 }
-                break;
+                break;           
         }
         return text;
     }
@@ -70,5 +96,6 @@ public enum EventType
     SUCCESSION,
     WAR_DECLARATION,
     WAR_END,
-    DEATH
+    DEATH,
+    LEADER_DEATH
 }

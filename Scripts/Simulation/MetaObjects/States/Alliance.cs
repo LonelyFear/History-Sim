@@ -32,6 +32,7 @@ public class Alliance : NamedObject
     public override void Die()
     {
         dead = true;
+        tickDestroyed = simManager.timeManager.ticks;
         foreach (ulong memberId in memberStateIds.ToArray())
         {
             RemoveMember(memberId);

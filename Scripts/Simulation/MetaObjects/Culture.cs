@@ -9,11 +9,12 @@ public class Culture : PopObject
 
     public override void Die()
     {
+        dead = true;
+        tickDestroyed = simManager.timeManager.ticks;
         foreach (Pop pop in pops)
         {
             RemovePop(pop, this);
         }
-        dead = true;
     }
 
     public static bool CheckCultureSimilarity(Culture a, Culture b){
