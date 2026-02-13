@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 public partial class MapManager : Node2D
@@ -46,7 +47,7 @@ public partial class MapManager : Node2D
         simManager.mapManager = this;
         Scale = simManager.terrainMap.Scale * (SimManager.tilesPerRegion/(float)regionResolution);
         worldSize = SimManager.worldSize;
-        regionImage = Image.CreateEmpty(worldSize.X * regionResolution, worldSize.Y * regionResolution, true, Image.Format.Rgba8);
+        regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
         regionTexture = ImageTexture.CreateFromImage(regionImage);
         regionOverlay.Texture = regionTexture;
         initialized = true;
@@ -71,7 +72,7 @@ public partial class MapManager : Node2D
             UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
             
             mousePos = GetGlobalMousePosition();
-            hoveredRegionPos = simManager.GlobalToRegionPos(mousePos);
+            hoveredRegionPos = simManager.GlobalToTilePos(mousePos);
 
             UpdateHovering();
 
@@ -158,7 +159,7 @@ public partial class MapManager : Node2D
             switch (mapMode)
             {
                 case MapModes.REALM:
-                    if (!hoveredRegion.isWater)
+                    if (hoveredRegion.habitable)
                     {
                         newSelected = hoveredRegion;
                         if (hoveredState != null)
@@ -175,7 +176,7 @@ public partial class MapManager : Node2D
                     newSelected = hoveredRegion;
                     break;
                 case MapModes.POLITIY:
-                    if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
+                    if (hoveredRegion.habitable)
                     {
                         newSelected = hoveredRegion;
                         if (hoveredState != null)
@@ -221,6 +222,7 @@ public partial class MapManager : Node2D
     {
         float colorDarkness = 0.4f;
         Color color = new Color(0, 0, 0, 0);
+        if (region == null) return color;
         State regionOwner = region.owner;
         MapModes drawnMapMode = mapMode;
         int month = (int)(timeManager.GetMonth() - 1);
@@ -455,7 +457,8 @@ public partial class MapManager : Node2D
     public void UpdateRegionColor(int x, int y)
     {
 
-        Region r = objectManager.GetRegion(x, y);
+        Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
+        if (r == null) return;
 
         Color noneColor = GetRegionColor(r, false);
         Color color = GetRegionColor(r);

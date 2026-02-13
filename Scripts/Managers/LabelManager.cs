@@ -63,16 +63,4 @@ public partial class LabelManager : Node
 		}
 		*/
 	}
-
-	public Vector2 GetAveragePosition(State state)
-	{
-		Vector2 averagePos = new Vector2(0, 0);
-		foreach (Region r in state.regions)
-		{
-			averagePos += simManager.RegionToGlobalPos(new Vector2(r.pos.X, r.pos.Y));
-		}
-		averagePos /= (float)state.regions.Count;
-		return averagePos;
-	}
-	
 }

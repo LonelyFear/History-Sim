@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://0m3tyhyvbkex"]
+
+[ext_resource type="Script" uid="uid://s8gc2wln5ruq" path="res://Scripts/BorderRenderer.cs" id="1_e2ocx"]
+[ext_resource type="Texture2D" uid="uid://3m0jff0p0tkl" path="res://Sprites/border_texture.png" id="2_23wka"]
+
+[node name="Border Renderer" type="Node2D" unique_id=1132250060 node_paths=PackedStringArray("mapManager")]
+script = ExtResource("1_e2ocx")
+mapManager = NodePath("")
+
+[node name="BorderMultiMesh" type="MultiMeshInstance2D" parent="." unique_id=20718253]
+z_index = 100
+z_as_relative = false
+texture = ExtResource("2_23wka")

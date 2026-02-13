@@ -40,7 +40,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			case ObjectType.REGION:
 				Name = "Region Index";
 				indexNameLabel.Text = "Region Index";
-				foreach (Region region in sim.regions)
+				foreach (Region region in sim.regionIds.Values)
 				{
 					if (!region.habitable) continue;
 					CreateResultButton(region);

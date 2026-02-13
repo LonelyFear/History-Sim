@@ -50,6 +50,7 @@ public partial class BorderRenderer : Node2D
 
 	public void RedrawBorders()
     {
+		/*
 		List<(Region, Region)> drawnBorders = [];
 		List<int> borderSegments = new List<int>();
 
@@ -91,6 +92,7 @@ public partial class BorderRenderer : Node2D
             }
         }
 		BuildBorderMesh(borderMultiMesh.Multimesh, borderSegments, new Color(0,0,0,1));
+		*/
     }
 	void BuildBorderMesh(MultiMesh multiMesh, List<int> borderSegments, Color color)
     {
@@ -125,8 +127,8 @@ public partial class BorderRenderer : Node2D
 					offset = new Vector2(0, 0.5f);
 					break;
             }
-			Transform2D borderTransform = new(rotationRad, simManager.RegionToGlobalPos(new Vector2(xPos + offset.X, yPos + offset.Y)));
-			multiMesh.CallDeferred("set_instance_transform_2d", [i, borderTransform]);
+			//Transform2D borderTransform = new(rotationRad, simManager.RegionToGlobalPos(new Vector2(xPos + offset.X, yPos + offset.Y)));
+			//multiMesh.CallDeferred("set_instance_transform_2d", [i, borderTransform]);
 			multiMesh.CallDeferred("set_instance_color", [i, color]);            
         });
 		for (int i = 0; i < segmentCount; i++)

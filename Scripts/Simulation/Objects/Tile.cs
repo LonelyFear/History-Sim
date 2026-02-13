@@ -4,6 +4,7 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public class Tile : Cell
 {
+	public ulong? regionId;
 	public Vector2I pos;
 	public Biome biome;
 	public float navigability;

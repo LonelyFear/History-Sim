@@ -253,7 +253,7 @@ public class State : PopObject, ISaveable
                 }
                 List<State> checkedBordersForRegion = new List<State>();
                 // Gets the borders of our state
-                foreach (ulong borderId in region.borderingRegionIds.Values)
+                foreach (ulong borderId in region.borderingRegionIds)
                 {
                     Region border = objectManager.GetRegion(borderId);
                     // State

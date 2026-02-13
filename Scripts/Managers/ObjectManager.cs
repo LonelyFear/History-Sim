@@ -28,17 +28,12 @@ public class ObjectManager
     {
         int lx = Mathf.PosMod(x, SimManager.worldSize.X);
         int ly = Mathf.PosMod(y, SimManager.worldSize.Y);
-
-        int index = (lx * SimManager.worldSize.Y) + ly;
-        return simManager.regions[index];
+        Tile tile = simManager.tiles[lx, ly];
+        return GetRegion(tile.regionId);
     }
     public Region GetRegion(Vector2I pos)
     {
-        int lx = Mathf.PosMod(pos.X, SimManager.worldSize.X);
-        int ly = Mathf.PosMod(pos.Y, SimManager.worldSize.Y);
-
-        int index = (lx * SimManager.worldSize.Y) + ly;
-        return simManager.regions[index];
+        return GetRegion(pos.X, pos.Y);
     }
     public TradeZone GetTradeZone(ulong? id)
     {
@@ -69,11 +64,12 @@ public class ObjectManager
         Region region = new Region()
         {
             id = GetId(),
-            pos = new Vector2I(x, y),
-            linkUpdateCountdown = simManager.rng.Next(0, 13)
+            linkUpdateCountdown = simManager.rng.Next(0, 13),
+            pos = new Vector2I(x,y)
         };
-        //region.settlement = new Settlement(region);
-        simManager.regions.Add(region);
+        region.AddTile(simManager.tiles[x,y]);
+        region.terrainType = simManager.tiles[x,y].terrainType;
+
         simManager.regionIds.Add(region.id, region);
         return region;
     }

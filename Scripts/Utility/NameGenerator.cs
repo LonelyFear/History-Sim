@@ -64,7 +64,7 @@ public static class NameGenerator
         }
         return demonym.Capitalize();
     }
-    public static string GenerateRegionName()
+    public static string GenerateRegionName(Region region)
     {
         Random rng = new Random();
 
@@ -91,6 +91,28 @@ public static class NameGenerator
             if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
             name = name.Remove(c, 1);
         }
+        // Location Specific Names
+        switch (region.terrainType)
+        {
+            case TerrainType.LAND:
+                break;
+            case TerrainType.HILLS:
+                name = GetDemonym(name) + Utility.PickRandom([" Hills", " Highlanads"]);
+                break;
+            case TerrainType.MOUNTAINS:
+                name = "Mount " + name;
+                break;
+            case TerrainType.ICE:
+                name = GetDemonym(name) + Utility.PickRandom([" Glaciers", " Sheet"]);
+                break;
+            case TerrainType.SHALLOW_WATER:
+                name = GetDemonym(name) + " Waters";
+                break;
+            case TerrainType.DEEP_WATER:
+                name = GetDemonym(name) + " Sea";
+                break;
+        }
+
         name = name.Capitalize();
 
         return name;        

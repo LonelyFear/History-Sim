@@ -218,11 +218,7 @@ public class Pop
         // If the pop migrates
         if (rng.NextSingle() > migrateChance) return;
 
-        Region target = objectManager.GetRegion(region.borderingRegionIds[lastDirection]);
-        if (!shipborne || !target.Migrateable(this) || rng.NextDouble() < 0.2)
-        {
-            target = region.PickRandomBorder(out lastDirection);
-        }
+        Region target = target = region.PickRandomBorder();
 
         bool professionAllows = true;
 

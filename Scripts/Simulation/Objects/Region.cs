@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 [MessagePackObject]
 public class Region : PopObject, ISaveable
 {
-    [IgnoreMember] public List<Tile> tiles { get; set; }
+    [IgnoreMember] public List<Tile> tiles { get; set; } = new List<Tile>();
     [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
@@ -21,6 +21,7 @@ public class Region : PopObject, ISaveable
     [Key(11)] public float baseWealth { get; set; }
     [Key(12)] public float wealth { get; set; }
     [Key(13)] public int linkUpdateCountdown { get; set; } = 4;
+    [Key(20)] public Vector2I pos;
 
     // trade
     [IgnoreMember] public TradeZone tradeZone { get; set; }
@@ -32,7 +33,6 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public Region tradeLink { get; set; } = null;
     [Key(19)] public ulong tradeLinkID { get; set; }
 
-    [Key(20)] public Vector2I pos { get; set; }
     [IgnoreMember] public float navigability { get; set; }
     [IgnoreMember] public float avgTemperature { get; set; }
     [IgnoreMember] public float[] avgMonthlyTemps { get; set; } = new float[12];
@@ -48,7 +48,7 @@ public class Region : PopObject, ISaveable
     [Key(28)] public ulong ownerID { get; set; }
 
     // Demographics
-    [IgnoreMember] public Dictionary<Direction, ulong> borderingRegionIds { get; set; } = new Dictionary<Direction, ulong>();
+    [IgnoreMember] public List<ulong?> borderingRegionIds { get; set; } = new List<ulong?>();
 
     // Settlements
     //[Key(31)] public Settlement settlement = new Settlement();
@@ -84,9 +84,30 @@ public class Region : PopObject, ISaveable
         tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
         //settlement.Init();
     }
+    public void AddTile(Tile tile)
+    {
+        if (tiles.Contains(tile)) return;
+
+        if (tile.regionId != null)
+        {
+            objectManager.GetRegion(tile.regionId).RemoveTile(tile);
+        }
+
+        tile.regionId = id;
+        tiles.Add(tile);
+
+    }
+    public void RemoveTile(Tile tile)
+    {
+        if (!tiles.Contains(tile)) return;
+
+        tiles.Remove(tile);
+        tile.regionId = null;
+
+
+    }
     public void CalcAverages()
     {
-        name = NameGenerator.GenerateRegionName();
         landCount = 0;
         int waterCount = 0;
         
@@ -130,28 +151,6 @@ public class Region : PopObject, ISaveable
                 coastal = true;
             }            
         }
-        terrainType = TerrainType.LAND;
-        if (waterCount == 16)
-        {
-            isWater = true;
-            terrainType = TerrainType.DEEP_WATER;
-            if (terrainTypes.ContainsKey(TerrainType.SHALLOW_WATER))
-            {
-                terrainType = TerrainType.SHALLOW_WATER;
-            }
-        }
-        if (terrainTypes.TryGetValue(TerrainType.ICE, out int ice) && ice > 1 && landCount == 0)
-        {
-            terrainType = TerrainType.ICE;
-        }
-        if (terrainTypes.TryGetValue(TerrainType.HILLS, out int hillCount) && hillCount > 1)
-        {
-            terrainType = TerrainType.HILLS;
-        }
-        if (terrainTypes.TryGetValue(TerrainType.MOUNTAINS, out int mountainCount) && mountainCount > 1)
-        {
-            terrainType = TerrainType.MOUNTAINS;
-        }
         navigability /= landCount;
         avgTemperature /= tiles.Count;
         avgRainfall /= tiles.Count;
@@ -161,6 +160,8 @@ public class Region : PopObject, ISaveable
             avgMonthlyTemps[month] /= tiles.Count;
             avgMonthlyRainfall[month] /= tiles.Count;
         }
+        
+        name = NameGenerator.GenerateRegionName(this);
     }
 
     public void CheckHabitability()
@@ -175,6 +176,27 @@ public class Region : PopObject, ISaveable
         }
     }
 
+    public void GetBorderingRegions()
+    {
+        borderingRegionIds = new List<ulong?>();
+        foreach (Tile tile in tiles)
+        {
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
+                    Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
+                    Tile border = simManager.tiles[nPos.X, nPos.Y];
+
+                    if (border.regionId != null && border.regionId != id && !borderingRegionIds.Contains(border.regionId))
+                    {
+                        borderingRegionIds.Add(border.regionId);
+                    }
+                }
+            }
+        }
+    }
     public void UpdateOccupation()
     {
         if (owner == null || occupier == null || !owner.diplomacy.enemyIds.Contains(occupier.id))
@@ -208,7 +230,7 @@ public class Region : PopObject, ISaveable
     {
         border = false;
         frontier = false;
-        foreach (ulong regionId in borderingRegionIds.Values)
+        foreach (ulong regionId in borderingRegionIds)
         {     
             Region region = objectManager.GetRegion(regionId);
             if (region.owner == null)
@@ -236,7 +258,7 @@ public class Region : PopObject, ISaveable
 
     public void NeutralConquest()
     {
-        Region region = PickRandomBorder(out _);
+        Region region = PickRandomBorder();
         bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
         //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
@@ -254,7 +276,7 @@ public class Region : PopObject, ISaveable
 
     public void MilitaryConquest()
     {
-        Region region = PickRandomBorder(out _);
+        Region region = PickRandomBorder();
         if (region == null || region.conquered || region.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
         {
             return;
@@ -335,7 +357,7 @@ public class Region : PopObject, ISaveable
     {
         Region selectedLink = null;
         bool lowerLinks = true;
-        foreach (ulong regionId in borderingRegionIds.Values)
+        foreach (ulong regionId in borderingRegionIds)
         {
             Region region = objectManager.GetRegion(regionId);
             if (region.GetTradeWeight() >= GetTradeWeight())
@@ -498,16 +520,16 @@ public class Region : PopObject, ISaveable
         }
         return migrateable && habitable;
     }
-    public Region PickRandomBorder(out Direction direction, bool mustBeLiveable = false)
+    public Region PickRandomBorder(bool mustBeLiveable = false)
     {
-        direction = (Direction)rng.Next(0, 4); 
-        Region region = objectManager.GetRegion(borderingRegionIds[direction]);
+        int index = rng.Next(0, borderingRegionIds.Count); 
+        Region region = objectManager.GetRegion(borderingRegionIds[index]);
         if (mustBeLiveable)
         {
             while (!region.habitable)
             {
-                direction = (Direction)rng.Next(0, 3); 
-                region = objectManager.GetRegion(borderingRegionIds[direction]);
+                index = rng.Next(0, borderingRegionIds.Count);
+                region = objectManager.GetRegion(borderingRegionIds[index]);
             }
         }
         return region;
@@ -515,38 +537,46 @@ public class Region : PopObject, ISaveable
     public override string GenerateDescription()
     {
         // Region position
-        string desc = $"{name} is a region located at {pos.X}, {pos.Y}. The region ";
+        string desc = $"{name} is a region";
+
+        if (Pop.FromNativePopulation(population) > 0)
+        {
+            // Region controller
+            desc += " under the control of ";
+            // Pretty straightforward
+            if (GetController() == null)
+            {
+                desc += " no established factions.";
+            } else
+            {
+                if (GetController() != owner)
+                {
+                    desc += $"{GenerateUrlText(GetController(), GetController().name)} as occupied territory. ";
+                } else
+                {
+                    desc += $"{GenerateUrlText(owner, owner.name)}. ";
+                }
+            }
+            // If it is the capital add to description
+            if (owner != null && owner.capital == this)
+            {
+                desc += $" It is the capital of the {GenerateUrlText(owner, owner.name)}";
+            }             
+        }
+
+        // Looks Like 
+        // Name is a region under the control of blank. It has a population of blank
         desc += (Pop.FromNativePopulation(population) > 0) ?
         // If the region is populated
-        $"has a population of {Pop.FromNativePopulation(population):#,###0}. "
+        $" It has a population of {Pop.FromNativePopulation(population):#,###0}."
         // Otherwise
-        : "is uninhabited. ";
+        : " It uninhabited.";
         // The rest is irrelevant if the region is unpopulated
         if (Pop.FromNativePopulation(population) == 0)
         {
             return desc;
         }
-        // Region controller
-        desc += "It is under the control of ";
-        // Pretty straightforward
-        if (GetController() == null)
-        {
-            desc += "no established factions.";
-        } else
-        {
-            if (GetController() != owner)
-            {
-                desc += $"{GenerateUrlText(GetController(), GetController().name)} as occupied territory. ";
-            } else
-            {
-                desc += $"{GenerateUrlText(owner, owner.name)}. ";
-            }
-        }
-        // If it is the capital add to description
-        if (owner != null && owner.capital == this)
-        {
-            desc += $"It is the capital of the {GenerateUrlText(owner, owner.name)}";
-        }
+
         return desc;        
     }
 

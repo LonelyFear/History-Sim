@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Godot;
 using MessagePack;
@@ -28,7 +28,6 @@ public class SimManager
     public Tile[,] tiles;
     [IgnoreMember] public List<Region> habitableRegions = new List<Region>();
     [IgnoreMember] public List<Region> paintedRegions = new List<Region>();
-    [IgnoreMember] public Vector2I terrainSize;
     [IgnoreMember] public static Vector2I worldSize;
     [IgnoreMember] public WorldGenerator worldGenerator;
     [IgnoreMember] public MapManager mapManager;
@@ -43,7 +42,6 @@ public class SimManager
 
     // Lists
     // Saved Data
-    [IgnoreMember] public List<Region> regions { get; set; } = new List<Region>();
     [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
     //[IgnoreMember] public List<Pop> pops { get; set; } = new List<Pop>();
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
@@ -88,14 +86,14 @@ public class SimManager
     [IgnoreMember] public Dictionary<string, double> popsPerformanceInfo = [];
     [IgnoreMember] public Dictionary<string, double> regionPerformanceInfo = [];
     [IgnoreMember] public Vector2 terrainMapScale;
-    public Vector2I GlobalToRegionPos(Vector2 pos)
+    public Vector2I GlobalToTilePos(Vector2 pos)
     {
-        return (Vector2I)(pos / (terrainMapScale * regionGlobalWidth)) / tilesPerRegion;
+        return (Vector2I)(pos / (terrainMapScale * regionGlobalWidth));
     }
 
-    public Vector2 RegionToGlobalPos(Vector2 regionPos)
+    public Vector2 TileToGlobalPos(Vector2 regionPos)
     {
-        return tilesPerRegion * (regionPos * (terrainMapScale * regionGlobalWidth));
+        return regionPos * (terrainMapScale * regionGlobalWidth);
     }
     public void SaveSimToFile(string path)
     {
@@ -163,7 +161,6 @@ public class SimManager
     {
         AssignSimManager();
         timeManager.ticks = tick;
-        regions = [.. regionIds.Values];
         wars = [.. warIds.Values];
         tradeZones = [.. tradeZonesIds.Values];
         characters = [.. charactersIds.Values];
@@ -173,7 +170,7 @@ public class SimManager
             Region region = pair.Value;
             region.LoadFromSave();
             // Adds tiles and biomes
-            InitRegion(region);
+            //InitRegion(region);
         }
         BorderingRegions();
 
@@ -185,11 +182,11 @@ public class SimManager
 
     public void InitTerrainTiles()
     {
-        tiles = new Tile[terrainSize.X, terrainSize.Y];
+        tiles = new Tile[worldSize.X, worldSize.Y];
 
-        for (int x = 0; x < terrainSize.X; x++)
+        for (int x = 0; x < worldSize.X; x++)
         {
-            for (int y = 0; y < terrainSize.Y; y++)
+            for (int y = 0; y < worldSize.Y; y++)
             {
                 Tile newTile = new(worldGenerator.cells[x,y]);
                 tiles[x, y] = newTile;
@@ -217,40 +214,218 @@ public class SimManager
             }
         }
     }
+    public void PlaceRegionSeeds(int size, Dictionary<Vector2I,Vector2I> dict, TerrainType[] acceptedTerrain)
+    {
+        for (int gx = 0; gx < worldSize.X/size; gx++)
+        {
+            for (int gy = 0; gy < worldSize.Y/size; gy++)
+            {
+                Vector2I gridPos = new Vector2I(gx, gy);
+                Vector2I pos = (gridPos * size) + new Vector2I(rng.Next(0, size), rng.Next(0, size));
+
+                int attempts = 500;
+                while (!acceptedTerrain.Contains(tiles[pos.X, pos.Y].terrainType) && attempts > 0)
+                {
+                    attempts--;
+                    pos = (gridPos * size) + new Vector2I(rng.Next(0, size), rng.Next(0, size));
+                }
+
+                dict.Add(gridPos, pos);
+                objectManager.CreateRegion(pos.X, pos.Y).terrainType = tiles[pos.X, pos.Y].terrainType;
+            }            
+        }        
+    }
     public void CreateRegions()
     {
-        //GD.Print(regions.Count);
+        int landRegionSize = 4;
+        int seaRegionSize = 16;
+        Dictionary<Vector2I, Vector2I> landGridSeeds = new Dictionary<Vector2I, Vector2I>();
+        Dictionary<Vector2I, Vector2I> seaGridSeeds = new Dictionary<Vector2I, Vector2I>();
+
+        PlaceRegionSeeds(landRegionSize, landGridSeeds, [TerrainType.LAND, TerrainType.HILLS, TerrainType.MOUNTAINS]);
+        PlaceRegionSeeds(seaRegionSize, seaGridSeeds, [TerrainType.SHALLOW_WATER, TerrainType.DEEP_WATER, TerrainType.ICE]);
+
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
             {
-                // Creates a region
-                Region newRegion = objectManager.CreateRegion(x, y);
-                InitRegion(newRegion);
+                Tile tile = tiles[x,y];
+                Vector2I gridSize = worldSize/landRegionSize;
+                Vector2I gridPos = new Vector2I(x,y)/landRegionSize;
+                if (!tile.IsLand())
+                {
+                    gridSize = worldSize/seaRegionSize;
+                    gridPos = new Vector2I(x,y)/seaRegionSize;                    
+                }
+                 
+                ulong? closestId = null;
+                float closestDist = float.PositiveInfinity;
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        Vector2I samplePos = new Vector2I(Mathf.PosMod(gridPos.X + dx, gridSize.X), Mathf.PosMod(gridPos.Y + dy, gridSize.Y));
+                        float dist = tile.pos.DistanceTo(!tile.IsLand() ? seaGridSeeds[samplePos] : landGridSeeds[samplePos]);
+
+                        if (dist < closestDist)
+                        {
+                            int rx = !tile.IsLand() ? seaGridSeeds[samplePos].X : landGridSeeds[samplePos].X;
+                            int ry = !tile.IsLand() ? seaGridSeeds[samplePos].Y : landGridSeeds[samplePos].Y;
+                            if (tile.IsLand() == tiles[rx, ry].IsLand() && (tile.IsLand() || tile.terrainType == tiles[rx,ry].terrainType))
+                            {
+                                closestId = tiles[rx,ry].regionId;
+                                float distMultiplier = tile.terrainType != tiles[rx, ry].terrainType ? 4.0f : 1.0f;
+                                closestDist = dist * distMultiplier;                                
+                            }
+                        }
+                    }                    
+                }
+                if (closestId != null) objectManager.GetRegion(closestId).AddTile(tile);
             }
         }
-    }
-    public void InitRegion(Region region)
-    {
-        region.tiles = new();
-        for (int tx = 0; tx < tilesPerRegion; tx++)
+
+        // List of tiles not in a region
+        List<Tile> unassignedTiles = [];
+
+        // Removes Disconnected
+        Parallel.ForEach(regionIds.Values,  (region) =>
         {
-            for (int ty = 0; ty < tilesPerRegion; ty++)
+            HashSet<Tile> remainingCells;
+            lock (region.tiles)
             {
-                // Adds subregion to tile
-                Tile tile = tiles[region.pos.X * tilesPerRegion + tx, region.pos.Y * tilesPerRegion + ty];
-                region.tiles.Add(tile);
+                remainingCells = [.. region.tiles.ToArray()];
+            }      
+            Queue<Tile> cellsToEvaluate = new();
+            cellsToEvaluate.Enqueue(tiles[region.pos.X, region.pos.Y]);
+            while (cellsToEvaluate.Count > 0)
+            {
+                Tile tile = cellsToEvaluate.Dequeue();
+                Vector2I pos = tile.pos;
+                for (int dx = -1; dx < 2; dx++)
+                {
+                    for (int dy = -1; dy < 2; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                        {
+                            continue;
+                        }
+                        Tile next = tiles[Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y)];
+                        if (remainingCells.Contains(next))
+                        {
+                            cellsToEvaluate.Enqueue(next);
+                            remainingCells.Remove(next);
+                        }
+                    }
+                }
+            }  
+            foreach (Tile tile in remainingCells)
+            {
+                region.RemoveTile(tile);
+            }                      
+        });
+
+        // Boundary Queue
+        Queue<Tile> cellsJoined = new Queue<Tile>();
+        for (int x = 0; x < worldSize.X; x++)
+        {
+            for (int y = 0; y < worldSize.Y; y++)
+            {
+                Tile tile = tiles[x,y];
+                if (tile.regionId != null)
+                {
+                    cellsJoined.Enqueue(tile);                    
+                } else
+                {
+                    unassignedTiles.Add(tile);
+                }
             }
         }
-        // Calc average fertility
-        region.CalcAverages();
-        // Checks habitability
-        region.CheckHabitability();
-        
-        if (region.habitable)
+
+        GD.Print("Unassigned Tiles: " + unassignedTiles.Count);
+
+        // Grows region into enclaves
+        while (cellsJoined.Count > 0)
         {
-            habitableRegions.Add(region);
-        }        
+            Tile cell = cellsJoined.Dequeue();
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+                    Vector2I next = new Vector2I(Mathf.PosMod(cell.pos.X + dx, worldSize.X), Mathf.PosMod(cell.pos.Y + dy, worldSize.Y));
+                    Tile nextTile = tiles[next.X, next.Y];
+                    if (nextTile.regionId == null && cell.IsLand() == nextTile.IsLand() && (cell.IsLand() || cell.terrainType == nextTile.terrainType))
+                    {
+                        objectManager.GetRegion(cell.regionId).AddTile(nextTile);
+                        cellsJoined.Enqueue(nextTile);
+                        unassignedTiles.Remove(nextTile);
+                    }
+                }
+            }            
+        } 
+
+        GD.Print("Micro-Regions Tiles: " + unassignedTiles.Count);
+        // Creates Final Micro-Regions (Islands, Small Glaciers)
+        Dictionary<Vector2I, Vector2I> microRegions = new Dictionary<Vector2I, Vector2I>();
+        foreach (Tile tile in unassignedTiles)
+        {
+            microRegions.Add(tile.pos, tile.pos);
+        }
+
+        // Merges Micro-Regions
+        cellsJoined = new(unassignedTiles);
+        int maxAttempts = unassignedTiles.Count * 2;
+        while (maxAttempts > 0 && cellsJoined.Count > 0)
+        {
+            maxAttempts--;
+            Tile cell = cellsJoined.Dequeue();
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+                    Vector2I next = new Vector2I(Mathf.PosMod(cell.pos.X + dx, worldSize.X), Mathf.PosMod(cell.pos.Y + dy, worldSize.Y));
+                    Tile nextTile = tiles[next.X, next.Y];
+                    if (microRegions.ContainsKey(next) && microRegions[next] == next && cell.IsLand() == nextTile.IsLand())
+                    {
+                        microRegions[next] = microRegions[cell.pos];
+                        cellsJoined.Enqueue(nextTile);
+                    };
+                }
+            }            
+        } 
+        // Creates Micro Regions In Object Manager
+        foreach (var pair in microRegions)
+        {
+            Vector2I pos = pair.Key;
+            Vector2I rPos = pair.Value;
+            
+            if (tiles[rPos.X, rPos.Y].regionId == null)
+            {
+                objectManager.CreateRegion(rPos.X, rPos.Y);
+            }
+            Region r = objectManager.GetRegion(tiles[rPos.X, rPos.Y].regionId);
+            r.AddTile(tiles[pos.X, pos.Y]);
+        }
+
+        // Initializes Regions
+        foreach (var pair in regionIds.ToArray())
+        {
+            Region region = pair.Value;
+            if (region.tiles.Count < 1)
+            {
+                regionIds.Remove(region.id);
+                continue;
+            }
+            region.CalcAverages();
+            region.CheckHabitability();
+        }
     }
     void AssignSimManager()
     {
@@ -277,8 +452,7 @@ public class SimManager
     public void OnWorldgenFinished()
     {
         AssignSimManager();
-        terrainSize = worldGenerator.WorldSize;
-        worldSize = terrainSize / tilesPerRegion;
+        worldSize = worldGenerator.WorldSize;
 
         if (simLoadedFromSave)
         {
@@ -301,35 +475,16 @@ public class SimManager
         foreach (var pair in regionIds)
         {
             Region region = pair.Value;
-            if (region == null)
-            {
-                GD.PushError("Something is wrong");
-            }
-            int habitableBorderCount = 0;
-            int i = 0;
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
-                    {
-                        continue;
-                    }
-                    Direction direction = Utility.GetDirectionFromVector(new Vector2I(dx, dy));
-                    Region r = objectManager.GetRegion(region.pos.X + dx, region.pos.Y + dy);
-                    region.borderingRegionIds.Add(direction, r.id);
+            region.GetBorderingRegions();
 
-                    i++;
-                    if (r.habitable)
-                    {
-                        habitableBorderCount++;
-                    }
-                    if (r.habitable || region.habitable && !paintedRegions.Contains(region))
-                    {
-                        paintedRegions.Add(region);
-                    }
-                }
-            }           
+            foreach (ulong? borderId in region.borderingRegionIds)
+            {
+                Region r = objectManager.GetRegion(borderId);
+                if (r.habitable || region.habitable && !paintedRegions.Contains(region))
+                {
+                    paintedRegions.Add(region);
+                }                
+            }         
         }
     }
     void InitPops()
