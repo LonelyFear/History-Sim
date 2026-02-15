@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 [MessagePackObject]
 public class Region : PopObject, ISaveable
 {
-    [IgnoreMember] public List<Tile> tiles { get; set; } = new List<Tile>();
+    [Key(203)] public List<Vector2I> tiles { get; set; } = new List<Vector2I>();
     [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
@@ -86,7 +86,7 @@ public class Region : PopObject, ISaveable
     }
     public void AddTile(Tile tile)
     {
-        if (tiles.Contains(tile)) return;
+        if (tiles.Contains(tile.pos)) return;
 
         if (tile.regionId != null)
         {
@@ -94,27 +94,44 @@ public class Region : PopObject, ISaveable
         }
 
         tile.regionId = id;
-        tiles.Add(tile);
-
+        tiles.Add(tile.pos);
     }
     public void RemoveTile(Tile tile)
     {
-        if (!tiles.Contains(tile)) return;
+        if (!tiles.Contains(tile.pos)) return;
 
-        tiles.Remove(tile);
+        tiles.Remove(tile.pos);
         tile.regionId = null;
-
-
     }
-    public void CalcAverages()
+    public void GetCentralTile()
+    {
+        Vector2 average = new();
+        foreach (Vector2I tilePos in tiles)
+        {
+            average += tilePos;
+        }
+        average /= tiles.Count;
+        pos = (Vector2I)average.Round();
+    }
+    public void InitRegion()
+    {
+        CalcAverages();
+        CheckHabitability();
+    }
+    public void NameRegion()
+    {
+        name = NameGenerator.GenerateRegionName(this);
+    }
+    void CalcAverages()
     {
         landCount = 0;
         int waterCount = 0;
         
         Dictionary<TerrainType, int> terrainTypes = [];
         biomes = [];
-        foreach (Tile tile in tiles)
+        foreach (Vector2I tilePos in tiles)
         {
+            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
             avgTemperature += tile.GetAverageTemp();
             avgRainfall += tile.GetAnnualRainfall();
             avgElevation += tile.elevation;
@@ -155,20 +172,23 @@ public class Region : PopObject, ISaveable
         avgTemperature /= tiles.Count;
         avgRainfall /= tiles.Count;
         avgElevation /= tiles.Count;
+
         for (int month = 0; month < 12; month++)
         {
             avgMonthlyTemps[month] /= tiles.Count;
             avgMonthlyRainfall[month] /= tiles.Count;
         }
-        
-        name = NameGenerator.GenerateRegionName(this);
     }
 
-    public void CheckHabitability()
+    void CheckHabitability()
     {
         if (landCount > 0)
         {
             habitable = true;
+            if (!simManager.habitableRegions.Contains(this))
+            {
+                simManager.habitableRegions.Add(this);
+            }
         }
         else
         {
@@ -179,8 +199,9 @@ public class Region : PopObject, ISaveable
     public void GetBorderingRegions()
     {
         borderingRegionIds = new List<ulong?>();
-        foreach (Tile tile in tiles)
+        foreach (Vector2I tilePos in tiles)
         {
+            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
             for (int dx = -1; dx < 2; dx++)
             {
                 for (int dy = -1; dy < 2; dy++)

@@ -218,7 +218,7 @@ public partial class MapManager : Node2D
         UpdateRegionColors(simManager.regionIds.Values);
     }
     
-    public Color GetRegionColor(Region region, bool includeOverlay = true)
+    public Color GetRegionColor(Region region, bool includeOverlay = true, bool includeCapital = false)
     {
         float colorDarkness = 0.4f;
         Color color = new Color(0, 0, 0, 0);
@@ -239,7 +239,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (regionOwner.capital == region && regionOwner.vassalManager.sovereignty == Sovereignty.INDEPENDENT)
+                        if (regionOwner.capital == region && regionOwner.vassalManager.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }
@@ -278,7 +278,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (region.owner.capital == region)
+                        if (region.owner.capital == region && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }
@@ -445,8 +445,9 @@ public partial class MapManager : Node2D
                 break;
             case MapModes.DAY_LENGTH:
                 float opacity = 0.75f;
+                Tile tile = simManager.tiles[region.pos.X, region.pos.Y];
                 color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
-                Mathf.InverseLerp(0, 24, region.tiles[0].GetDaylightForMonth(month)));
+                Mathf.InverseLerp(0, 24, tile.GetDaylightForMonth(month)));
                 break;
         }
         if (hoveredRegion == region){
@@ -462,11 +463,18 @@ public partial class MapManager : Node2D
 
         Color noneColor = GetRegionColor(r, false);
         Color color = GetRegionColor(r);
+        Color centralColor = GetRegionColor(r, true, true);
         int month = (int)(timeManager.GetMonth() - 1);
 
-        foreach (Tile tile in r.tiles)
+        foreach (Vector2I tilePos in r.tiles)
         {
+            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
             Color finalColor = color;
+            if (tilePos == r.pos)
+            {
+                finalColor = centralColor;
+            }
+            
             float opacity = 0.75f;
             
             switch (mapMode)

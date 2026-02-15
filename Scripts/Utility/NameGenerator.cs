@@ -97,7 +97,7 @@ public static class NameGenerator
             case TerrainType.LAND:
                 break;
             case TerrainType.HILLS:
-                name = GetDemonym(name) + Utility.PickRandom([" Hills", " Highlanads"]);
+                name = GetDemonym(name) + Utility.PickRandom([" Hills", " Highlands"]);
                 break;
             case TerrainType.MOUNTAINS:
                 name = "Mount " + name;

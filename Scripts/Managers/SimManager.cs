@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Godot;
 using MessagePack;
@@ -169,8 +170,7 @@ public class SimManager
         {
             Region region = pair.Value;
             region.LoadFromSave();
-            // Adds tiles and biomes
-            //InitRegion(region);
+            region.InitRegion();
         }
         BorderingRegions();
 
@@ -242,9 +242,11 @@ public class SimManager
         Dictionary<Vector2I, Vector2I> landGridSeeds = new Dictionary<Vector2I, Vector2I>();
         Dictionary<Vector2I, Vector2I> seaGridSeeds = new Dictionary<Vector2I, Vector2I>();
 
+        // Creates region seeds
         PlaceRegionSeeds(landRegionSize, landGridSeeds, [TerrainType.LAND, TerrainType.HILLS, TerrainType.MOUNTAINS]);
         PlaceRegionSeeds(seaRegionSize, seaGridSeeds, [TerrainType.SHALLOW_WATER, TerrainType.DEEP_WATER, TerrainType.ICE]);
 
+        // Region voronoi Diagrams
         for (int x = 0; x < worldSize.X; x++)
         {
             for (int y = 0; y < worldSize.Y; y++)
@@ -252,6 +254,7 @@ public class SimManager
                 Tile tile = tiles[x,y];
                 Vector2I gridSize = worldSize/landRegionSize;
                 Vector2I gridPos = new Vector2I(x,y)/landRegionSize;
+                // Switches grid used if land
                 if (!tile.IsLand())
                 {
                     gridSize = worldSize/seaRegionSize;
@@ -260,26 +263,33 @@ public class SimManager
                  
                 ulong? closestId = null;
                 float closestDist = float.PositiveInfinity;
+                // Goes through nearby grid cells
                 for (int dx = -1; dx < 2; dx++)
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
+                        // Gets distance to seed
                         Vector2I samplePos = new Vector2I(Mathf.PosMod(gridPos.X + dx, gridSize.X), Mathf.PosMod(gridPos.Y + dy, gridSize.Y));
                         float dist = tile.pos.DistanceTo(!tile.IsLand() ? seaGridSeeds[samplePos] : landGridSeeds[samplePos]);
 
                         if (dist < closestDist)
-                        {
+                        {   
+                            // Gets seed position
                             int rx = !tile.IsLand() ? seaGridSeeds[samplePos].X : landGridSeeds[samplePos].X;
                             int ry = !tile.IsLand() ? seaGridSeeds[samplePos].Y : landGridSeeds[samplePos].Y;
+                            // Checks if we can be close to this seed
                             if (tile.IsLand() == tiles[rx, ry].IsLand() && (tile.IsLand() || tile.terrainType == tiles[rx,ry].terrainType))
                             {
                                 closestId = tiles[rx,ry].regionId;
+                                // Multiplies distance if terrain type doesnt match
                                 float distMultiplier = tile.terrainType != tiles[rx, ry].terrainType ? 4.0f : 1.0f;
+                                // Sets closest distance
                                 closestDist = dist * distMultiplier;                                
                             }
                         }
                     }                    
                 }
+                // Adds tile to region
                 if (closestId != null) objectManager.GetRegion(closestId).AddTile(tile);
             }
         }
@@ -290,12 +300,15 @@ public class SimManager
         // Removes Disconnected
         Parallel.ForEach(regionIds.Values,  (region) =>
         {
+            // Initializes remaining cells
             HashSet<Tile> remainingCells;
             lock (region.tiles)
             {
-                remainingCells = [.. region.tiles.ToArray()];
+                remainingCells = (HashSet<Tile>)region.tiles.Select(pos => tiles[pos.X, pos.Y]);
             }      
             Queue<Tile> cellsToEvaluate = new();
+
+            // Performs a flood fill to see which tiles are connected to the region
             cellsToEvaluate.Enqueue(tiles[region.pos.X, region.pos.Y]);
             while (cellsToEvaluate.Count > 0)
             {
@@ -318,6 +331,7 @@ public class SimManager
                     }
                 }
             }  
+            // Removes remainders
             foreach (Tile tile in remainingCells)
             {
                 region.RemoveTile(tile);
@@ -343,7 +357,7 @@ public class SimManager
 
         GD.Print("Unassigned Tiles: " + unassignedTiles.Count);
 
-        // Grows region into enclaves
+        // Tries to grow regions into empty space
         while (cellsJoined.Count > 0)
         {
             Tile cell = cellsJoined.Dequeue();
@@ -359,6 +373,7 @@ public class SimManager
                     Tile nextTile = tiles[next.X, next.Y];
                     if (nextTile.regionId == null && cell.IsLand() == nextTile.IsLand() && (cell.IsLand() || cell.terrainType == nextTile.terrainType))
                     {
+                        // Adds tile to region if we can
                         objectManager.GetRegion(cell.regionId).AddTile(nextTile);
                         cellsJoined.Enqueue(nextTile);
                         unassignedTiles.Remove(nextTile);
@@ -366,6 +381,8 @@ public class SimManager
                 }
             }            
         } 
+
+        // By this point there are some small pockets left over that we want to have assigned to a new region
 
         GD.Print("Micro-Regions Tiles: " + unassignedTiles.Count);
         // Creates Final Micro-Regions (Islands, Small Glaciers)
@@ -418,14 +435,45 @@ public class SimManager
         foreach (var pair in regionIds.ToArray())
         {
             Region region = pair.Value;
+            region.InitRegion();
+            region.NameRegion();
+        }
+        RemoveEmptyRegions();
+    }
+    void RemoveEmptyRegions()
+    {
+        foreach (var pair in regionIds.ToArray())
+        {
+            Region region = pair.Value;
             if (region.tiles.Count < 1)
             {
                 regionIds.Remove(region.id);
                 continue;
+            }       
+        } 
+    }
+    public void MergeRegions()
+    {
+        foreach (Region region in regionIds.Values)
+        {
+            if (region.tiles.Count < 4)
+            {
+                foreach (ulong borderId in region.borderingRegionIds)
+                {
+                    Region border = objectManager.GetRegion(borderId);
+                    if (border.tiles.Count > 0 && border.tiles.Count < 20 && border.terrainType == region.terrainType)
+                    {
+                        foreach (Vector2I tilePos in region.tiles)
+                        {
+                            Tile tile = tiles[tilePos.X, tilePos.Y];
+                            region.RemoveTile(tile);
+                            border.AddTile(tile);
+                        }
+                    }
+                }
             }
-            region.CalcAverages();
-            region.CheckHabitability();
         }
+        RemoveEmptyRegions();
     }
     void AssignSimManager()
     {
@@ -464,6 +512,7 @@ public class SimManager
             InitTerrainTiles();
             CreateRegions();
             BorderingRegions();
+            MergeRegions();
             InitPops();
         }
         node.InvokeEvent();
@@ -495,7 +544,6 @@ public class SimManager
             //GD.Print(region.Migrateable());
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
-                GD.Print("Node");
                 long startingPopulation = Pop.ToNativePopulation(10000);
                 Culture culture = objectManager.CreateCulture();
 
