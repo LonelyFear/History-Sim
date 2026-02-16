@@ -12,7 +12,6 @@
 [ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="8_85qyi"]
 [ext_resource type="Script" uid="uid://ca4hg87crqxlm" path="res://Scripts/Managers/EncyclopediaManager.cs" id="8_iivbl"]
 [ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/info_tab.tscn" id="9_7nbq1"]
-[ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="9_iivbl"]
 [ext_resource type="Script" uid="uid://vt1lv4bf6jeb" path="res://Scripts/UI/Sim Stats/date_label.gd" id="10_7nbq1"]
 [ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="10_exi56"]
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/Menus/GameUI.cs" id="11_7nbq1"]
@@ -37,8 +36,6 @@ thickness = 4
 content_margin_left = 10.0
 content_margin_right = 10.0
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_iivbl"]
-
 [node name="Game" type="Node2D" unique_id=350215680]
 script = ExtResource("1_rku1e")
 
@@ -61,15 +58,13 @@ visible = false
 script = ExtResource("2_fkdbe")
 timeManager = NodePath("../Time Manager")
 
-[node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("borderRenderer")]
+[node name="Time Manager" type="Node" parent="." unique_id=975540197]
 script = ExtResource("7_ewbju")
-borderRenderer = NodePath("")
 gameSpeed = 0
 
-[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("borderRenderer")]
+[node name="Map Manager" type="Node2D" parent="." unique_id=618181759]
 z_index = 2
 script = ExtResource("6_85qyi")
-borderRenderer = NodePath("")
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
 scale = Vector2(16, 16)
@@ -359,8 +354,8 @@ saveNameEdit = NodePath("../SaveNamePanel/VBoxContainer/TextEdit")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI/Action Panel" unique_id=838619392]
 layout_mode = 0
-offset_left = 10.0
-offset_right = 1280.0
+offset_left = 6.0
+offset_right = 1273.0
 offset_bottom = 82.0
 theme_override_constants/separation = 20
 
@@ -454,32 +449,19 @@ text = "Show Region
 Overlays"
 alignment = 1
 
-[node name="VSeparator" type="VSeparator" parent="UI/Action Panel/HBoxContainer" unique_id=513657966]
+[node name="EncyclopediaButton" type="Button" parent="UI/Action Panel/HBoxContainer" unique_id=189557080]
+custom_minimum_size = Vector2(82, 82)
 layout_mode = 2
-theme_override_constants/separation = 370
-theme_override_styles/separator = SubResource("StyleBoxEmpty_iivbl")
-
-[node name="MenuButton" type="Button" parent="UI/Action Panel/HBoxContainer" unique_id=1471884785]
-layout_mode = 2
-size_flags_horizontal = 3
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 40
-text = "Main
-Menu"
+text = "Encyclopedia"
 
-[node name="Debug Label" type="Label" parent="UI" unique_id=130373389]
-visible = false
-offset_left = 109.0
-offset_top = 66.0
-offset_right = 200.0
-offset_bottom = 97.0
+[node name="MenuButton" type="Button" parent="UI/Action Panel/HBoxContainer" unique_id=1471884785]
+custom_minimum_size = Vector2(82, 82)
+layout_mode = 2
 theme = ExtResource("4_exi56")
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 7
-theme_override_font_sizes/font_size = 13
-text = "Region Data:
-Population: 100"
-script = ExtResource("9_iivbl")
+theme_override_font_sizes/font_size = 40
+text = "Options"
 
 [node name="SaveNamePanel" type="Panel" parent="UI" unique_id=789988692]
 visible = false
@@ -553,7 +535,6 @@ theme_override_font_sizes/font_size = 35
 text = "Cancel"
 
 [node name="Options Panel" type="Panel" parent="UI" unique_id=534514165]
-visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5

@@ -304,7 +304,7 @@ public class SimManager
             HashSet<Tile> remainingCells;
             lock (region.tiles)
             {
-                remainingCells = (HashSet<Tile>)region.tiles.Select(pos => tiles[pos.X, pos.Y]);
+                remainingCells = [..region.tiles.Select(pos => tiles[pos.X, pos.Y])];
             }      
             Queue<Tile> cellsToEvaluate = new();
 
@@ -454,21 +454,33 @@ public class SimManager
     }
     public void MergeRegions()
     {
+        // Merges Region
         foreach (Region region in regionIds.Values)
         {
             if (region.tiles.Count < 4)
             {
-                foreach (ulong borderId in region.borderingRegionIds)
+                // Loops over borders
+                foreach (ulong borderId in region.borderingRegionIds.ToArray())
                 {
+                    // Border we can potentially merge with
                     Region border = objectManager.GetRegion(borderId);
+                    // Checks conditions
                     if (border.tiles.Count > 0 && border.tiles.Count < 20 && border.terrainType == region.terrainType)
                     {
-                        foreach (Vector2I tilePos in region.tiles)
+                        // Removes references to us
+                        foreach (ulong otherBorders in region.borderingRegionIds)
+                        {
+                            objectManager.GetRegion(otherBorders).borderingRegionIds.Remove(region.id);
+                        }
+
+                        // Merges us with border
+                        foreach (Vector2I tilePos in region.tiles.ToArray())
                         {
                             Tile tile = tiles[tilePos.X, tilePos.Y];
                             region.RemoveTile(tile);
                             border.AddTile(tile);
                         }
+                        break;
                     }
                 }
             }
