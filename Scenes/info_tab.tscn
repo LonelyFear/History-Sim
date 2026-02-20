@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://8kvblrpf5g8"]
+[gd_scene format=3 uid="uid://8kvblrpf5g8"]
 
 [ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_5rqtu"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_0jkeo"]
@@ -17,7 +17,7 @@ content_margin_top = 0.0
 content_margin_right = 10.0
 content_margin_bottom = 10.0
 
-[node name="InfoTab" type="VBoxContainer" node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
+[node name="InfoTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
 offset_left = 10.0
 offset_top = 32.0
 offset_right = 1270.0
@@ -33,42 +33,42 @@ objStats = NodePath("DescScrollBar/VBoxContainer/Stats")
 objHist = NodePath("DescScrollBar/VBoxContainer/History")
 metadata/_tab_index = 1
 
-[node name="ObjName" type="Label" parent="."]
+[node name="ObjName" type="Label" parent="." unique_id=602530060]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 70
 text = "Object Name"
 
-[node name="ObjType" type="Label" parent="."]
+[node name="ObjType" type="Label" parent="." unique_id=1255607242]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 25
 text = "Object Type"
 
-[node name="TitleSeparator" type="HSeparator" parent="."]
+[node name="TitleSeparator" type="HSeparator" parent="." unique_id=56924337]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="DescScrollBar" type="ScrollContainer" parent="."]
+[node name="DescScrollBar" type="ScrollContainer" parent="." unique_id=404727885]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxEmpty_5rqtu")
 horizontal_scroll_mode = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="DescScrollBar"]
+[node name="VBoxContainer" type="VBoxContainer" parent="DescScrollBar" unique_id=1470565023]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="DescTitle" type="Label" parent="DescScrollBar/VBoxContainer"]
+[node name="DescTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=136005221]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 30
 text = "Description:"
 
-[node name="Description" type="RichTextLabel" parent="DescScrollBar/VBoxContainer"]
+[node name="Description" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=1810584970]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30
@@ -78,18 +78,18 @@ fit_content = true
 meta_underlined = false
 hint_underlined = false
 
-[node name="DescSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer"]
+[node name="DescSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer" unique_id=1698521707]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="StatsTitle" type="Label" parent="DescScrollBar/VBoxContainer"]
+[node name="StatsTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=1569492835]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 30
 text = "Stats:"
 
-[node name="Stats" type="RichTextLabel" parent="DescScrollBar/VBoxContainer"]
+[node name="Stats" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=741282142]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30
@@ -98,18 +98,18 @@ text = "Statistics Go Here"
 fit_content = true
 autowrap_mode = 2
 
-[node name="StatsSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer"]
+[node name="StatsSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer" unique_id=529642687]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="HistoryTitle" type="Label" parent="DescScrollBar/VBoxContainer"]
+[node name="HistoryTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=1835261741]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 30
 text = "History:"
 
-[node name="History" type="RichTextLabel" parent="DescScrollBar/VBoxContainer"]
+[node name="History" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=1816751528]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/normal_font_size = 30

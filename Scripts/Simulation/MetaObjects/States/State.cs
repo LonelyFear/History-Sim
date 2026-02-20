@@ -183,7 +183,7 @@ public class State : PopObject, ISaveable
         if (leaderId != null)
         {
             lastLeaderId = leaderId;
-            Character lastLeader = simManager.charactersIds[(ulong)lastLeaderId];
+            Character lastLeader = objectManager.GetCharacter(lastLeaderId);
             lastLeader.role = CharacterRole.FORMER_LEADER;             
         }
         leaderId = null;
@@ -234,7 +234,7 @@ public class State : PopObject, ISaveable
         int occRegions = 0;
         foreach (ulong charId in characterIds)
         {
-            if (simManager.charactersIds[charId].role != CharacterRole.DEAD)
+            if (objectManager.GetCharacter(charId).role != CharacterRole.DEAD)
             {
                 aliveCharacters++;
             }

@@ -71,7 +71,7 @@ public partial class ObjectInfo : Control
                         specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower(true)).ToString("#,###0") + "\n";
                         if (state.leaderId != null)
                         {
-                            Character leader = simManager.charactersIds[(ulong)state.leaderId];
+                            Character leader = objectManager.GetCharacter(state.leaderId);
                             specialLabel.Text += "\n" + $"Leader: {state.leaderTitle} {leader.firstName + " " + leader.lastName}";
                             specialLabel.Text += "\n" + $"Leader Age: {timeManager.GetYear(leader.GetAge())} year(s)" + "\n";
                         } else

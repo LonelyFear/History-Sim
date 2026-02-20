@@ -50,12 +50,9 @@ public class SimManager
     //[IgnoreMember] public List<State> states { get; set; } = new List<State>();
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
     [IgnoreMember] public List<ulong> deletedStateIds = new List<ulong>();
-    [IgnoreMember] public List<TradeZone> tradeZones { get; set; } = new List<TradeZone>();
-    [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZonesIds { get; set; } = new Dictionary<ulong, TradeZone>();
-    [IgnoreMember] public List<Character> characters { get; set; } = new List<Character>();
-    [IgnoreMember] public Dictionary<ulong, Character> charactersIds { get; set; } = new Dictionary<ulong, Character>();
+    [IgnoreMember] public Dictionary<ulong, Market> marketIds { get; set; } = new Dictionary<ulong, Market>();
+    [IgnoreMember] public Dictionary<ulong, Character> characterIds { get; set; } = new Dictionary<ulong, Character>();
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
-    [IgnoreMember] public List<War> wars { get; set; } = new List<War>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
     [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = new Dictionary<ulong, HistoricalEvent>();
     [IgnoreMember] public Dictionary<ulong, Settlement> settlementIds = new Dictionary<ulong, Settlement>();
@@ -119,10 +116,10 @@ public class SimManager
         statesSave.StoreBuffer(MessagePackSerializer.Serialize(statesIds, options));
         FileAccess cultureSave = FileAccess.Open($"{path}/cultures.pxsave", FileAccess.ModeFlags.Write);
         cultureSave.StoreBuffer(MessagePackSerializer.Serialize(cultureIds, options));
-        FileAccess tradeSave = FileAccess.Open($"{path}/trade_zones.pxsave", FileAccess.ModeFlags.Write);
-        tradeSave.StoreBuffer(MessagePackSerializer.Serialize(tradeZonesIds, options));
+        FileAccess tradeSave = FileAccess.Open($"{path}/markets.pxsave", FileAccess.ModeFlags.Write);
+        tradeSave.StoreBuffer(MessagePackSerializer.Serialize(marketIds, options));
         FileAccess charactersSave = FileAccess.Open($"{path}/characters.pxsave", FileAccess.ModeFlags.Write);
-        charactersSave.StoreBuffer(MessagePackSerializer.Serialize(charactersIds, options));
+        charactersSave.StoreBuffer(MessagePackSerializer.Serialize(characterIds, options));
         FileAccess warsSave = FileAccess.Open($"{path}/wars.pxsave", FileAccess.ModeFlags.Write);
         warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
         FileAccess eventsSave = FileAccess.Open($"{path}/events.pxsave", FileAccess.ModeFlags.Write);
@@ -150,8 +147,8 @@ public class SimManager
         sim.popsIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Pop>>(FileAccess.GetFileAsBytes($"{path}/pops.pxsave"), options);
         sim.statesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, State>>(FileAccess.GetFileAsBytes($"{path}/states.pxsave"), options);
         sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/cultures.pxsave"), options);
-        sim.tradeZonesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/trade_zones.pxsave"), options);
-        sim.charactersIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
+        sim.marketIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Market>>(FileAccess.GetFileAsBytes($"{path}/markets.pxsave"), options);
+        sim.characterIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<Dictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
         sim.settlementIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Settlement>>(FileAccess.GetFileAsBytes($"{path}/settlements.pxsave"), options);
@@ -162,9 +159,6 @@ public class SimManager
     {
         AssignSimManager();
         timeManager.ticks = tick;
-        wars = [.. warIds.Values];
-        tradeZones = [.. tradeZonesIds.Values];
-        characters = [.. charactersIds.Values];
         
         foreach (var pair in regionIds)
         {
@@ -502,9 +496,6 @@ public class SimManager
         NamedObject.objectManager = objectManager;
         PopObject.timeManager = timeManager;
 
-        TradeZone.simManager = this;
-        TradeZone.objectManager = objectManager;
-
         Pop.objectManager = objectManager;
         Character.sim = this;
         IndexTab.sim = this;
@@ -833,8 +824,9 @@ public class SimManager
     {
         try
         {
-            foreach (Character character in characters.ToArray())
+            foreach (var pair in characterIds)
             {
+                Character character = pair.Value;
                 // Dead character stuff
                 if (character.dead)
                 {

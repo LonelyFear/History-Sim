@@ -21,10 +21,10 @@ public partial class PopulationLabel : Label
         {
             Text = "World Population: " + (simManager.worldPopulation / Pop.simPopulationMultiplier).ToString("#,##0\n");
             Text += "Total Events: " + simManager.historicalEventIds.Count.ToString("#,##0\n");
-            Text += "Total Characters: " + simManager.characters.Count.ToString("#,##0\n");
+            Text += "Total Characters: " + simManager.characterIds.Count.ToString("#,##0\n");
             Text += "Populated Regions: " + simManager.populatedRegions.ToString("#,##0\n");
             Text += "Total Pops: " + simManager.popsIds.Count.ToString("#,##0\n");
-            Text += "Wars: " + simManager.wars.Count.ToString("#,##0");
+            Text += "Wars: " + simManager.warIds.Count.ToString("#,##0");
         }
         else
         {

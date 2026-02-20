@@ -24,7 +24,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			case ObjectType.CHARACTER:
 				Name = "Character Index";
 				indexNameLabel.Text = "Character Index";
-				foreach (Character character in sim.characters)
+				foreach (Character character in sim.characterIds.Values)
 				{
 					CreateResultButton(character);
 				}

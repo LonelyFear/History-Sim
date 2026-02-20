@@ -35,11 +35,11 @@ public class ObjectManager
     {
         return GetRegion(pos.X, pos.Y);
     }
-    public TradeZone GetTradeZone(ulong? id)
+    public Market GetMarket(ulong? id)
     {
         try
         {
-            return simManager.tradeZonesIds[(ulong)id];
+            return simManager.marketIds[(ulong)id];
         }
         catch
         {
@@ -255,18 +255,18 @@ public class ObjectManager
         }
         else
         {
-            if (simManager.charactersIds.ContainsKey((ulong)id))
+            if (simManager.characterIds.ContainsKey((ulong)id))
             {
-                return simManager.charactersIds[(ulong)id];
+                return simManager.characterIds[(ulong)id];
             }
             return null;
         }
     }
     public Character GetCharacter(ulong id)
     {
-        if (simManager.charactersIds.ContainsKey(id))
+        if (simManager.characterIds.ContainsKey(id))
         {
-            return simManager.charactersIds[id];
+            return simManager.characterIds[id];
         }
         return null;
     }
@@ -287,8 +287,7 @@ public class ObjectManager
         character.JoinState(state.id);
         character.SetRole(role);
         // Documents character
-        simManager.characters.Add(character);
-        simManager.charactersIds.Add(character.id, character);
+        simManager.characterIds.Add(character.id, character);
         return character;
     }
     public void DeleteCharacter(Character character)
@@ -298,7 +297,7 @@ public class ObjectManager
         // Removes reference to character from it children
         foreach (ulong charId in character.childIds)
         {
-            Character child = simManager.charactersIds[charId];
+            Character child = simManager.characterIds[charId];
             child.parentIds.Remove(charId);
         }
         // And removes reference as child from parent
@@ -308,8 +307,7 @@ public class ObjectManager
             parent.childIds.Remove(character.id);
         }
         simManager.objectDeleted.Invoke(character.id);
-        simManager.characters.Remove(character);
-        simManager.charactersIds.Remove(character.id);
+        simManager.characterIds.Remove(character.id);
     }
     public Alliance CreateAlliance(State founder, AllianceType type)
     {
@@ -331,6 +329,7 @@ public class ObjectManager
         {
             alliance.RemoveMember(memberId);
         }
+        simManager.objectDeleted.Invoke(alliance.id);
         simManager.allianceIds.Remove(alliance.id);
     }
     public Alliance GetAlliance(ulong? id)
@@ -345,20 +344,23 @@ public class ObjectManager
             return null;
         }    
     }
-    public TradeZone CreateTradeZone(Region region)
+    public Market CreateTradeZone(Region region)
     {
-        TradeZone zone = new TradeZone()
+        Market zone = new Market()
         {
             id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
-            CoTid = region.id,
+            centerId = region.id,
+            name = region.name + " Market"
         };
+
+        zone.AddRegion(region);
+
         zone.regionIds.Add(region.id);
-        simManager.tradeZones.Add(zone);
-        simManager.tradeZonesIds.Add(zone.id, zone);
+        simManager.marketIds.Add(zone.id, zone);
         return zone;
     }
-    public void DeleteTradeZone(TradeZone tradeZone )
+    public void DeleteTradeZone(Market tradeZone )
     {
         if (tradeZone == null) return;
         foreach (ulong regionId in tradeZone.regionIds.ToArray())
@@ -366,8 +368,8 @@ public class ObjectManager
             Region region = GetRegion(regionId);
             tradeZone.RemoveRegion(region);
         }
-        simManager.tradeZones.Remove(tradeZone);
-        simManager.tradeZonesIds.Remove(tradeZone.id);     
+        simManager.objectDeleted.Invoke(tradeZone.id);
+        simManager.marketIds.Remove(tradeZone.id);     
     }
     public War StartWar(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
     {
@@ -388,7 +390,6 @@ public class ObjectManager
         war.InitWarLead(false);
         war.NameWar();
 
-        simManager.wars.Add(war);
         simManager.warIds.Add(war.id, war);
         return war;
     }
@@ -398,7 +399,6 @@ public class ObjectManager
         {
             CreateHistoricalEvent([GetState(war.primaryAgressorId), GetState(war.primaryDefenderId)], EventType.WAR_END);
             war.dead = true;
-            simManager.wars.Remove(war);
             simManager.warIds.Remove(war.id);
             foreach (ulong stateId in war.participantIds.ToArray())
             {

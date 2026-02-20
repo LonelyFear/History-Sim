@@ -24,9 +24,8 @@ public class Region : PopObject, ISaveable
     [Key(20)] public Vector2I pos;
 
     // trade
-    [IgnoreMember] public TradeZone tradeZone { get; set; }
-    [Key(14)] public ulong tradeZoneID { get; set; }
-    [Key(15)] public bool isCoT { get; set; } = false;    
+    [Key(14)] public ulong? marketId { get; set; }
+    [Key(15)] public bool isMarketCenter { get; set; } = false;    
     [Key(16)] public float tradeIncome = 0;
     [Key(17)] public float taxIncome = 0;
     [Key(18)] public int zoneSize = 1;
@@ -67,7 +66,6 @@ public class Region : PopObject, ISaveable
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
-        tradeZoneID = tradeZone != null ? tradeZone.id : 0;
         //borderingRegionsIDs = borderingRegions.Select(r => r.id).ToArray();
         ownerID = owner != null ? owner.id : 0;
         occupierID = occupier != null ? occupier.id : 0;
@@ -77,7 +75,6 @@ public class Region : PopObject, ISaveable
     {
         //GD.Print(id);
         LoadPopObjectFromSave();
-        tradeZone = tradeZoneID == 0 ? null : simManager.tradeZonesIds[tradeZoneID];
         //borderingRegions = borderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
         owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
         occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
@@ -393,19 +390,22 @@ public class Region : PopObject, ISaveable
             }
         }
 
-        if (selectedLink != null && selectedLink.tradeZone != null)
+        if (selectedLink != null && selectedLink.marketId != null)
         {
-            selectedLink.tradeZone.AddRegion(this);
+            objectManager.GetMarket(selectedLink.marketId).AddRegion(this);
         }
 
-        isCoT = lowerLinks && selectedLink == null;
-        if (isCoT && (tradeZone == null || tradeZone.CoTid != id))
+        isMarketCenter = lowerLinks && selectedLink == null;
+
+        Market market = objectManager.GetMarket(marketId);
+        if (isMarketCenter && (marketId == null || objectManager.GetMarket(marketId).centerId != id))
         {
-            tradeZone = objectManager.CreateTradeZone(this);
+            objectManager.CreateTradeZone(this);
         }
-        if (!isCoT && tradeZone != null && tradeZone.CoTid == id)
+        market = objectManager.GetMarket(marketId);
+        if (!isMarketCenter && marketId != null && market.centerId == id)
         {
-            objectManager.DeleteTradeZone(tradeZone);
+            objectManager.DeleteTradeZone(objectManager.GetMarket(marketId));
         }
 
         tradeLink = selectedLink;
@@ -464,9 +464,10 @@ public class Region : PopObject, ISaveable
         //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
         float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.001f;
         float zoneSizeTradeWeight = 0;
-        if (isCoT)
+        
+        if (isMarketCenter)
         {
-            zoneSizeTradeWeight = tradeZone.GetZoneSize();
+            zoneSizeTradeWeight = objectManager.GetMarket(marketId).GetZoneSize();
         }
 
         float politySizeTradeWeight = 0f;

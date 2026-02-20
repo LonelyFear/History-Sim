@@ -38,12 +38,11 @@ public partial class TimeManager : Node
     double waitTime;
     double currentTime;
     [Export] public GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
-    OptionButton gameSpeedUI;
+    [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
     public override void _Ready()
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
-        gameSpeedUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/TimeSpeedHolder/TimeSpeed");
         // Connection
 		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
 	}

@@ -16,6 +16,9 @@ public partial class ActionPanel : Panel
     [Export] public Panel menuPanel;
     [Export] public Panel saveNamePanel;
     [Export] public LineEdit saveNameEdit;
+    [Export] public Button encyclopediaButton;
+    [Export] EncyclopediaManager encyclopediaManager;
+
     List<string> saveOverwritePaths;
     bool uiVisible = true;
     public override void _Ready()
@@ -25,6 +28,7 @@ public partial class ActionPanel : Panel
         saveMenuButton.Pressed += OpenSaveMenu;
         saveButton.Pressed += OnSimSave;
         saveCancelButton.Pressed += OpenSaveMenu;
+        encyclopediaButton.Pressed += OnEncyclopediaClick;
     }
 
     public override void _Process(double delta)
@@ -44,7 +48,10 @@ public partial class ActionPanel : Panel
         GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
         GetNode<Game>("/root/Game").QueueFree();        
     }
-
+    public void OnEncyclopediaClick()
+    {
+        encyclopediaManager.OpenEncyclopedia();
+    }
     public void OnMenuClick()
     {
         menuPanel.Visible = !menuPanel.Visible;

@@ -27,8 +27,8 @@ public partial class MapManager : Node2D
     public MapModes selectedMode;
     public bool mapUpdate = false;
     public bool initialized = false;
-    public OptionButton mapModeUI;
-    public CheckBox showRegionsCheckbox;
+    [Export] public OptionButton mapModeUI;
+    [Export] public CheckBox showRegionsCheckbox;
 
     int regionResolution = 4;
     public static ObjectManager objectManager;
@@ -37,8 +37,6 @@ public partial class MapManager : Node2D
     public override void _Ready()
     {
         regionOverlay = GetNode<Sprite2D>("Region Map");
-        mapModeUI = GetNode<OptionButton>("/root/Game/UI/Action Panel/HBoxContainer/MapModeHolder/MapMode");
-        showRegionsCheckbox = GetNode<CheckBox>("/root/Game/UI/Action Panel/HBoxContainer/ShowRegionsCheckbox");
 		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += InitMapManager;
 	}
     void InitMapManager() {
@@ -388,11 +386,11 @@ public partial class MapManager : Node2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.GetTradeWeight() / simManager.maxTradeWeight);
-                    if (region.tradeZone != null)
+                    if (region.marketId != null)
                     {
-                        color = region.tradeZone.color;
+                        color = objectManager.GetMarket(region.marketId).color;
                     }
-                    if (region.isCoT)
+                    if (region.isMarketCenter && includeCapital)
                     {
                         color = new Color(1f, 1f, 0f);
                     }
