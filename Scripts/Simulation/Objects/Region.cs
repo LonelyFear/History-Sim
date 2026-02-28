@@ -58,10 +58,10 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float arableLand { get; set; }
 
     [Key(37)] public int populationDensity = 500;
-    [Key(38)] public long maxPopulation = Pop.ToNativePopulation(500) * 16;
+    [Key(38)] public long maxPopulation = 500 * 16;
     public void UpdateMaxPopulation()
     {
-        maxPopulation = Pop.ToNativePopulation(populationDensity) * landCount;
+        maxPopulation = populationDensity * landCount;
     }
     public void PrepareForSave()
     {
@@ -224,7 +224,7 @@ public class Region : PopObject, ISaveable
     }
     public void RandomStateFormation()
     {
-        if (rng.NextDouble() < 0.0001 * navigability && population > Pop.ToNativePopulation(1000))
+        if (rng.NextDouble() < 0.0001 * navigability && population > 1000)
         {
             objectManager.CreateState(this);
 
@@ -284,7 +284,7 @@ public class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetArmyPower(false);
 
-        bool attackerVictory = Battle.CalcBattle(region, attackerPower, Pop.ToNativePopulation(200000));
+        bool attackerVictory = Battle.CalcBattle(region, attackerPower, 200000);
 
         if (attackerVictory)
         {
@@ -354,7 +354,7 @@ public class Region : PopObject, ISaveable
     public void CheckPopulation()
     {
         CountPopulation();
-        if (population < Pop.ToNativePopulation(1) && owner != null)
+        if (population < 1 && owner != null)
         {
             owner.RemoveRegion(this);
         }
@@ -365,10 +365,10 @@ public class Region : PopObject, ISaveable
         lastBaseWealth = baseWealth;
         lastWealth = wealth;
 
-        long farmers = Pop.FromNativePopulation(professions[SocialClass.FARMER]);
-        long nonFarmers = Pop.FromNativePopulation(workforce - professions[SocialClass.FARMER]);
+        long farmers = professions[SocialClass.FARMER];
+        long nonFarmers = workforce - professions[SocialClass.FARMER];
 
-        float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (Pop.FromNativePopulation(dependents) * 0.01f);
+        float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
         baseWealth = baseProduction * (arableLand / landCount);
     }
     public void LinkTrade()
@@ -462,7 +462,7 @@ public class Region : PopObject, ISaveable
         
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
         //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
-        float populationTradeWeight = Pop.FromNativePopulation(workforce) * 0.001f;
+        float populationTradeWeight = workforce * 0.001f;
         float zoneSizeTradeWeight = 0;
         
         if (isMarketCenter)
@@ -505,7 +505,7 @@ public class Region : PopObject, ISaveable
         while (popsToCheck.Count > 0)
         {
             Pop pop = popsToCheck.Dequeue();
-            if (pop.population < Pop.ToNativePopulation(1))
+            if (pop.population < 1)
             {
                 continue;
             }
@@ -561,7 +561,7 @@ public class Region : PopObject, ISaveable
         // Region position
         string desc = $"{name} is a region";
 
-        if (Pop.FromNativePopulation(population) > 0)
+        if (population > 0)
         {
             // Region controller
             desc += " under the control of ";
@@ -588,13 +588,13 @@ public class Region : PopObject, ISaveable
 
         // Looks Like 
         // Name is a region under the control of blank. It has a population of blank
-        desc += (Pop.FromNativePopulation(population) > 0) ?
+        desc += (population > 0) ?
         // If the region is populated
-        $" It has a population of {Pop.FromNativePopulation(population):#,###0}."
+        $" It has a population of {population:#,###0}."
         // Otherwise
         : " It uninhabited.";
         // The rest is irrelevant if the region is unpopulated
-        if (Pop.FromNativePopulation(population) == 0)
+        if (population == 0)
         {
             return desc;
         }
@@ -605,10 +605,10 @@ public class Region : PopObject, ISaveable
     public override string GenerateStatsText()
     {
         string text = $"Name: {name}";
-        text += $"\nPopulation: {Pop.FromNativePopulation(population):#,###0}\n";
+        text += $"\nPopulation: {population:#,###0}\n";
         
 
-        if (Pop.FromNativePopulation(population) > 0)
+        if (population > 0)
         {
             text += $"Cultures Breakdown:\n";
 
@@ -618,15 +618,15 @@ public class Region : PopObject, ISaveable
                 long localPopulation = cultureSizePair.Value;
                 
                 // Skips if the culture is too small
-                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
+                if (localPopulation < 1) continue;
 
                 text += GenerateUrlText(culture, culture.name) + ":\n";
-                text += $"  Population: {Pop.FromNativePopulation(localPopulation):#,###0} ";
+                text += $"  Population: {localPopulation:#,###0} ";
 
                 float culturePercentage = localPopulation/(float)population;
                 text += $"({culturePercentage:P0})\n";
             }     
-            text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
+            text += $"\nWorkforce: {workforce:#,###0}\n";
             /*
             text += $"Professions Breakdown:\n";     
 

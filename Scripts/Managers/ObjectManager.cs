@@ -73,7 +73,7 @@ public class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
-    public Pop CreatePop(long workforce, long dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
+    public Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
     {
         simManager.currentBatch++;
         if (simManager.currentBatch > 12)
@@ -180,11 +180,18 @@ public class ObjectManager
                 color = new Color(r, g, b),
                 capital = region,
                 tickCreated = timeManager.ticks,
+                
             };
-            state.diplomacy = new StateDiplomacyManager(state);
-            state.vassalManager = new StateVassalManager(state);
             state.AddRegion(region);
-            simManager.statesIds.Add(state.id, state);
+            simManager.statesIds.Add(state.id, state);      
+                  
+            state.diplomacy = new StateDiplomacyManager(state);
+            state.vassalManager = new StateVassalManager(state);   
+
+            // Init ai manager after vassal and diplo
+            state.AIManager = new StateAIManager(state);
+
+
         }
     }
     public void DeleteState(State deletedState)

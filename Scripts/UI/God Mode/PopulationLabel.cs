@@ -19,7 +19,7 @@ public partial class PopulationLabel : Label
     {
         if (simManager != null)
         {
-            Text = "World Population: " + (simManager.worldPopulation / Pop.simPopulationMultiplier).ToString("#,##0\n");
+            Text = "World Population: " + simManager.worldPopulation.ToString("#,##0\n");
             Text += "Total Events: " + simManager.historicalEventIds.Count.ToString("#,##0\n");
             Text += "Total Characters: " + simManager.characterIds.Count.ToString("#,##0\n");
             Text += "Populated Regions: " + simManager.populatedRegions.ToString("#,##0\n");

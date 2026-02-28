@@ -8,11 +8,9 @@ using MessagePack;
 public class Pop
 {
     [Key(0)] public ulong id;
-    [Key(2)] public long population { get; set; } = 0;
-    [Key(3)] public long workforce { get; set; } = 0;
-    [Key(4)] public long dependents { get; set; } = 0;
-    [IgnoreMember] public long workforceChange { get; set; } = 0;
-    [IgnoreMember] public long dependentChange { get; set; } = 0;
+    [Key(2)] public int population { get; set; } = 0;
+    [Key(3)] public int workforce { get; set; } = 0;
+    [Key(4)] public int dependents { get; set; } = 0;
 
     [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
     [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
@@ -53,7 +51,7 @@ public class Pop
         region = objectManager.GetRegion(regionId);
         culture = objectManager.GetCulture(cultureId);
     }
-    public void ChangePopulation(long wfChange, long dfChange)
+    public void ChangePopulation(int wfChange, int dfChange)
     {
         wfChange = Math.Max(wfChange, -workforce);
         dfChange = Math.Max(dfChange, -dependents);
@@ -65,16 +63,6 @@ public class Pop
         culture.ChangePopulation(wfChange, dfChange, profession, culture);
         region.ChangePopulation(wfChange, dfChange, profession, culture);
     }
-
-    public const long simPopulationMultiplier = 1000;
-    public static long FromNativePopulation(long simPopulation)
-    {
-        return simPopulation / simPopulationMultiplier;
-    }
-    public static long ToNativePopulation(long population)
-    {
-        return population * simPopulationMultiplier;
-    }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
         if (a == null || b == null || a == b)
@@ -83,11 +71,11 @@ public class Pop
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public Pop ChangeSocialClass(long workforceDelta, long dependentsDelta, SocialClass newSocialClass)
+    public Pop ChangeSocialClass(int workforceDelta, int dependentsDelta, SocialClass newSocialClass)
     {
         // Makes sure the profession is actually changing
         // And that we arent just creating an empty pop
-        if (newSocialClass == profession || (workforceDelta < ToNativePopulation(1) && dependentsDelta < ToNativePopulation(1)))
+        if (newSocialClass == profession || (workforceDelta < 1 && dependentsDelta < 1))
         {
             return null;
         }
@@ -176,7 +164,7 @@ public class Pop
     */
     public double CalculatePoliticalPower()
     {
-        double popSizePoliticalPower = FromNativePopulation(workforce) * 0.0005;
+        double popSizePoliticalPower = workforce * 0.0005;
         double basePoliticalPower = 0;
         switch (profession)
         {
@@ -270,13 +258,13 @@ public class Pop
                 movedPercentage = (region.population - region.maxPopulation) / (float)population;
             }
             
-            long movedDependents = (long)(dependents * movedPercentage);
-            long movedWorkforce = (long)(workforce * movedPercentage);
+            int movedDependents = (int)(dependents * movedPercentage);
+            int movedWorkforce = (int)(workforce * movedPercentage);
 
             MovePop(target, movedWorkforce, movedDependents);
         }
     }
-    public void MovePop(Region destination, long movedWorkforce, long movedDependents)
+    public void MovePop(Region destination, int movedWorkforce, int movedDependents)
     {
         if (destination == null || destination == region)
         {
@@ -318,11 +306,10 @@ public class Pop
     {
 
         float bRate;
-        if (population < ToNativePopulation(2))
+        if (population < 2)
         {
             bRate = 0;
         }
-        else
         {
             bRate = GetBirthRate();
         }
@@ -332,18 +319,28 @@ public class Pop
             {
                 if (region.population > region.maxPopulation)
                 {
-                    bRate *= FromNativePopulation(region.maxPopulation)/(float)FromNativePopulation(region.population);
+                    bRate *= region.maxPopulation/(float)region.population;
                 }            
             }            
         }
-
-
-
         float NIR = bRate - GetDeathRate();
 
-        long change = Mathf.RoundToInt((workforce + dependents) * NIR);
-        long dependentChange = Mathf.RoundToInt(change * targetDependencyRatio);
-        long workforceChange = change - dependentChange;
+        int change = Mathf.RoundToInt((workforce + dependents) * NIR);
+        int dependentChange = (int)(change * targetDependencyRatio);
+        int workforceChange = change - dependentChange;   
+
+        // Chance of an extra person
+        if (rng.NextSingle() < ((workforce + dependents) * NIR) - (int)((workforce + dependents) * NIR))
+        {
+            if (rng.NextSingle() < targetDependencyRatio)
+            {
+                dependentChange++;
+            } else
+            {
+                workforceChange++;
+            }
+        }
+
         ChangePopulation(workforceChange, dependentChange);
     }
 }

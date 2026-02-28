@@ -31,6 +31,8 @@ public class Character : NamedObject
     [Key(12)] public float healthDecreaseChance = 0.075f;
 
     // Character Skills
+    // Skills provide buffs/debuffs
+    // Some skills like charisma and intellect can interact like personality
     [Key(31)] public Dictionary<string, int> skills = new Dictionary<string, int>
     {
         {"charisma", 50 },
@@ -40,7 +42,9 @@ public class Character : NamedObject
         {"stewardship", 50 },
         {"combat", 50 }
     };
+
     // Character Personality
+    // Personality changes interaction/actions
     [Key(30)]
     public Dictionary<string, int> personality = new Dictionary<string, int>
     {

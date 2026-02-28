@@ -484,16 +484,26 @@ public class SimManager
     void AssignSimManager()
     {
         terrainMapScale = terrainMap.Scale;
+
         HistoricalEvent.timeManager = timeManager;
+
         StateDiplomacyManager.objectManager = objectManager;
+
         StateVassalManager.objectManager = objectManager;
+
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
+
         MapManager.objectManager = objectManager;
+
         Battle.objectManager = objectManager;
+
+        AIBase.objectManager = objectManager;
+        AIBase.simManager = this;
 
         NamedObject.simManager = this;
         NamedObject.objectManager = objectManager;
+        
         PopObject.timeManager = timeManager;
 
         Pop.objectManager = objectManager;
@@ -547,10 +557,10 @@ public class SimManager
             //GD.Print(region.Migrateable());
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
-                long startingPopulation = Pop.ToNativePopulation(10000);
+                long startingPopulation = rng.Next(600, 1200);
                 Culture culture = objectManager.CreateCulture();
 
-                objectManager.CreatePop((long)(startingPopulation * 0.25f), (long)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
+                objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
             }
         }
     }
@@ -570,7 +580,7 @@ public class SimManager
         {
             Pop pop = pair.Value;
             // Deletions
-            if (pop.region == null || pop.population <= Pop.ToNativePopulation(1))
+            if (pop.region == null || pop.population <= 1)
             {
                 objectManager.DestroyPop(pop);
             }
@@ -730,17 +740,9 @@ public class SimManager
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
-            }
-            //state.GetRealmBorders();
-            state.Capitualate();
-        }
-        foreach (var pair in statesIds.ToArray())
-        {
-            State state = pair.Value;
-            if (state.rulingPop != null)
-            {
                 state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             }
+            state.Capitualate();
 
             try
             {
@@ -765,14 +767,19 @@ public class SimManager
                 
                 state.diplomacy.UpdateEnemies();
                 state.diplomacy.UpdateRelations();
-
-                //state.diplomacy.EndWars();
-                //state.diplomacy.StartWars();     
+  
             } catch (Exception e)
             {
                 GD.PushError(e);
             }
         }
+        // Updates Character Ai
+        foreach (var pair in statesIds.ToArray())
+        {
+            State state = pair.Value;
+            state.AIManager.TickAI();
+        }
+        // Counts State Stats
         var partitioner = Partitioner.Create(statesIds.Values);
         Parallel.ForEach(partitioner, (state) =>
         {

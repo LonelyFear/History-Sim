@@ -105,7 +105,7 @@ public class Settlement : NamedObject
     public void UpdateBuildingSlot(string buildingId)
     {
         BuildingSlot slot = buildings[buildingId];
-        slot.maxEmployment = slot.buildingLevel * Pop.ToNativePopulation(AssetManager.GetBuilding(buildingId).workersPerLevel);
+        slot.maxEmployment = slot.buildingLevel * AssetManager.GetBuilding(buildingId).workersPerLevel;
         if (slot.buildingLevel <= 0)
         {
             buildings.Remove(buildingId);

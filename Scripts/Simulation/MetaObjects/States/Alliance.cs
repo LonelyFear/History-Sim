@@ -6,9 +6,8 @@ using MessagePack;
 [MessagePackObject]
 // Alliances
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
-public class Alliance : NamedObject
+public class Alliance : PopObject
 {
-
     [Key(0)] public AllianceType type;
     [Key(2)] public ulong? leadStateId;
     [Key(1)] public List<ulong> memberStateIds = new List<ulong>();
@@ -62,6 +61,11 @@ public class Alliance : NamedObject
             member.realmId = null;
         }      
     }
+    public override void CountPopulation()
+    {
+        base.CountPopulation();
+    }
+
     public HashSet<Region> GetRegions()
     {
         HashSet<Region> regions = new HashSet<Region>();
@@ -91,11 +95,15 @@ public class Alliance : NamedObject
 }
 public enum AllianceType
 {
+    // Political Types
     REALM,
     UNION,
     PERSONAL_UNION,
     CONFEDERATION,
+
+    // Cooperative Types
     ALLIANCE,
     DEFENSIVE_PACT,
-    COALITION
+    COALITION,
+    CUSTOMS_UNION
 }

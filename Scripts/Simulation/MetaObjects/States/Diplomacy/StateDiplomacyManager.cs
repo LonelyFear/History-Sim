@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using Godot;
 using MessagePack;
 
@@ -17,6 +18,9 @@ public partial class StateDiplomacyManager
     [Key(0)] public ulong stateId;
     [IgnoreMember] State state;
     [IgnoreMember] public Random rng = PopObject.rng;
+
+    // Constants
+    [IgnoreMember] const float threatAdjustmentRate = 0.1f; // Rate of threat adjustment for lerping threat
     public StateDiplomacyManager(){}
     public StateDiplomacyManager(State selectedState)
     {
@@ -124,9 +128,15 @@ public partial class StateDiplomacyManager
                 relationIds[relationState.id].borderLength = 0;
             }          
 
-            // Calc Percieved Threat
-            int newThreat = 0;
-            relation.threat = Mathf.Lerp(relation.threat, newThreat, 0.05f);
+            
+            float newThreat = 0;
+            // Calc Percieved Threat (-100 to 100)
+            int stateSize = state.GetSize(true);
+            newThreat += (stateSize - relationState.GetSize(true))/(float)stateSize * 50;
+            
+            // Moves threat for realistic adjustment
+            // Eg: If we feared a nation for a while then we wont just immediatly like them when they fall 
+            relation.threat = Mathf.MoveToward(relation.threat, newThreat, threatAdjustmentRate);
         }
     }
     public void LeaveAllWars()
@@ -178,55 +188,28 @@ public partial class StateDiplomacyManager
             }
         }
     }
-    /*
-    public void StartWars()
+    public bool IsAlliedToState(State otherState)
     {
-        try
+        foreach (ulong allianceId in allianceIds)
         {
-            foreach (var pair in relationIds.ToArray())
+            Alliance alliance = objectManager.GetAlliance(allianceId);
+            
+            if (alliance.type != AllianceType.CUSTOMS_UNION && alliance.memberStateIds.Contains(otherState.id))
             {
-                State target = objectManager.GetState(pair.Key);
-
-                if (target == null)
-                {
-                    GD.PushError("Null Relation: sta" + pair.Key);
-                    relationIds.Remove(pair.Key);
-                    continue;
-                }
-
-                int opinion = pair.Value.opinion;
-                bool cantStartWar = target == state || enemyIds.Contains(target.id) || target.vassalManager.GetOverlord(true) == state || target.vassalManager.GetLiege(true) == state;
-                if (cantStartWar)
-                {
-                    continue;
-                }
-                
-                // Sovereign Wars
-                if (state.vassalManager.sovereignty == Sovereignty.INDEPENDENT && target.vassalManager.sovereignty == Sovereignty.INDEPENDENT && opinion < Mathf.Inf && target.vassalManager.GetLiege() != state)
-                {
-                    //GD.Print("Wars");
-                    float warDeclarationChance = 0.005f;//Mathf.Lerp(0.001f, 0.005f, opinion / -100);
-                    if (PopObject.rng.NextSingle() < warDeclarationChance)
-                    {
-                        //GD.Print("war");
-                        //GD.Print("State in realm: " + GetRealmStates().Contains(this));
-                        objectManager.StartWar([state], [target], WarType.CONQUEST, stateId, target.id);
-                        return;
-                    }
-                }
-                // Rebellions
-                if (state.loyalty < State.minRebellionLoyalty && target == state.vassalManager.GetLiege())
-                {
-                    // TODO: Rebellions
-                }
+                return true;
             }
         }
-        catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-    } 
-  
+        return false;
+    }
+
+    public Relation GetRelationsWithState(State state)
+    {
+        Relation relation = null;
+        relationIds.TryGetValue(state.id, out relation);
+        return relation;
+    }
+   
+    /*
     public void EndWars()
     {
         foreach (var warPair in warIds)

@@ -45,7 +45,7 @@ public partial class ObjectInfo : Control
                 nameLabel.Text = selectedObject.name;
                 switch (selectedObject.GetObjectType()) {
                     case ObjectType.STATE:
-                        populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
+                        populationLabel.Text = "Population: " + ((PopObject)selectedObject).population.ToString("#,###0");
                         State state = (State)selectedObject;
                         switch (state.vassalManager.sovereignty)
                         {
@@ -68,7 +68,7 @@ public partial class ObjectInfo : Control
                         specialLabel.Text = $"Founded in Month {timeManager.GetMonth(state.tickCreated)} of Year {timeManager.GetYear(state.tickCreated)}";
                         specialLabel.Text += "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
                         specialLabel.Text += "\n" + "Wealth: " + state.totalWealth.ToString("#,###0");
-                        specialLabel.Text += "\n" + "Military Power: " + Pop.FromNativePopulation(state.GetArmyPower(true)).ToString("#,###0") + "\n";
+                        specialLabel.Text += "\n" + "Military Power: " + state.GetArmyPower(true).ToString("#,###0") + "\n";
                         if (state.leaderId != null)
                         {
                             Character leader = objectManager.GetCharacter(state.leaderId);
@@ -105,7 +105,7 @@ public partial class ObjectInfo : Control
                         }
                         break;
                     case ObjectType.REGION:
-                        populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
+                        populationLabel.Text = "Population: " + ((PopObject)selectedObject).population.ToString("#,###0");
                         Region region = (Region)selectedObject;
                         populationLabel.Text += "\n" + "Wealth: " + region.wealth.ToString("#,###0");
                         populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0");
@@ -124,7 +124,7 @@ public partial class ObjectInfo : Control
                         }
                         break;
                     case ObjectType.CULTURE:
-                        populationLabel.Text = "Population: " + Pop.FromNativePopulation(((PopObject)selectedObject).population).ToString("#,###0");
+                        populationLabel.Text = "Population: " + ((PopObject)selectedObject).population.ToString("#,###0");
                         Culture culture = (Culture)selectedObject;
                         specialLabel.Text = "Pops: " + culture.pops.Count.ToString("#,###0");
                         break;

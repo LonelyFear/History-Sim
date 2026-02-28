@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using Godot;
 using MessagePack;
 using System.Data.Common;
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 
 public class State : PopObject, ISaveable
 {
     [IgnoreMember] public string baseName = "Nation";
     [IgnoreMember] public string govtName;
     [IgnoreMember] public string leaderTitle { get; set; } = "King";
+    [Key(1)] public StateAIManager AIManager;
     [Key(2)] public Color color { get; set; }
     [Key(3)] public Color displayColor;
     [Key(4)] public Color capitalColor;
@@ -19,7 +20,7 @@ public class State : PopObject, ISaveable
     [Key(6)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     
     [IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
-    [Key(7)] public List<ulong> regionsIDs { get; set; } = new List<ulong>();
+    [Key(7)] public HashSet<ulong> regionsIDs { get; set; } = new HashSet<ulong>();
     [IgnoreMember] public Region capital { get; set; }
     [Key(8)] public ulong capitalID;
     [Key(9)] public long manpower { get; set; } = 0;
@@ -68,13 +69,14 @@ public class State : PopObject, ISaveable
     {
         PreparePopObjectForSave();
         capitalID = capital.id;
-        regionsIDs = regions.Select(r => r.id).ToList();
+        regionsIDs = [.. regions.Select(r => r.id)];
     }
     public void LoadFromSave()
     {
+        AIManager.InitAI();
         LoadPopObjectFromSave();
         capital = objectManager.GetRegion(capitalID);
-        regions = regionsIDs.Select(r => objectManager.GetRegion(r)).ToHashSet();
+        regions = [.. regionsIDs.Select(r => objectManager.GetRegion(r))];
         diplomacy.Init(this);
         vassalManager.Init(this);
     }
@@ -242,77 +244,74 @@ public class State : PopObject, ISaveable
         // If realm leader uses realm stats
         foreach (Region region in checkedRegions)
         {
+            // Adds up population to state total
             countedP += region.population;
             countedW += region.workforce;
             countedWealth += region.wealth;
+
             if (region.frontier || region.border)
             {
+                // Counts up occupied regions
                 if (region.occupier != null && regions.Contains(region))
                 {
                     occRegions++;
                 }
+
                 List<State> checkedBordersForRegion = new List<State>();
-                // Gets the borders of our state
-                foreach (ulong borderId in region.borderingRegionIds)
+                // Gets the states bordering this region
+                foreach (ulong? borderId in region.borderingRegionIds)
                 {
-                    Region border = objectManager.GetRegion(borderId);
-                    // State
+
+                    Region border = objectManager.GetRegion(borderId); 
                     State borderState = border.owner;
-                    // Makes sure the state is real
+
+                    // Makes sure the state is real and not us
                     if (borderState == null || borderState == this)
                     {
                         continue;
                     }
 
                     checkedBordersForRegion.Add(borderState);
-                    bool borderAlreadyCounted = checkedBordersForRegion.Contains(borderState);
 
-                    // Adds the bordering state
-                    if (!borders.ContainsKey(borderState.id))
+                    // If we already got borders for this region then skip
+                    if (checkedBordersForRegion.Contains(borderState))
                     {
-                        //diplomacy.GetRelations(borderState.id);
-                        borders.Add(borderState.id, 1);
-                    } else if (!borderAlreadyCounted)
-                    {
-                        // Extends border length
-                        borders[borderState.id]++;
+                        continue;
                     }
 
-                    // Adds the bordering realm leader
-                    if (!borders.ContainsKey(borderState.vassalManager.GetOverlord(true).id))
+                    // Extends our border with the state
+                    if (!borders.TryAdd(borderState.id, 1))
                     {
-                        borders.Add(borderState.vassalManager.GetOverlord(true).id, 1);
-                    } else if (!borderAlreadyCounted)
+                        borders[borderState.id]++;
+                    }
+                    
+                    // Adds the bordering overlord if they arent the state (So we dont overcount borders)
+                    ulong borderOverlordId = borderState.vassalManager.GetOverlord(true).id;
+                    if (!borders.TryAdd(borderOverlordId, 1))
                     {
-                        // Extends borderLength with realm
-                        borders[borderState.vassalManager.GetOverlord(true).id]++;
+                        borders[borderOverlordId]++;
                     }
                 }
             }
 
+            // Counts up professions
             foreach (SocialClass profession in region.professions.Keys)
             {
                 countedSocialClasses[profession] += region.professions[profession];
-                /*
-                if (region.settlement.requiredWorkers.ContainsKey(profession))
-                {
-                    countedRequiredWorkers[profession] += region.settlement.requiredWorkers[profession];
-                    countedJobs[profession] += region.settlement.maxJobs[profession];                    
-                }
-                */
             }
+
+            // Counts up cultures
             foreach (ulong cultureId in region.cultureIds.Keys)
             {
-                if (cCultures.ContainsKey(cultureId))
+                // Adds regional culture population to state population
+                if (!cCultures.TryAdd(cultureId, region.cultureIds[cultureId]))
                 {
                     cCultures[cultureId] += region.cultureIds[cultureId];
                 }
-                else
-                {
-                    cCultures.Add(cultureId, region.cultureIds[cultureId]);
-                }
             }
         }
+        
+        // Updates values
         occupiedLand = occRegions;
         borderingStateIds = borders;
         totalWealth = countedWealth;
@@ -453,6 +452,21 @@ public class State : PopObject, ISaveable
         }
         return manpower;
     }
+    public int GetSize(bool includeRealm)
+    {
+        int size = regions.Count;
+        if (realmId != null && vassalManager.sovereignty == Sovereignty.INDEPENDENT && includeRealm)
+        {
+            size = 0;
+            Alliance realm = objectManager.GetAlliance(realmId);
+            foreach (ulong memberId in realm.memberStateIds)
+            {
+                State memberState = objectManager.GetState(memberId);
+                size += memberState.regions.Count;
+            }
+        }
+        return size;
+    }
     public int GetMaxRegionsCount()
     {
         return 20 + (tech.societyLevel * 2);
@@ -491,9 +505,9 @@ public class State : PopObject, ISaveable
     public override string GenerateStatsText()
     {
         string text = $"Name: {name}";
-        text += $"\nPopulation: {Pop.FromNativePopulation(population):#,###0}\n";
+        text += $"\nPopulation: {population:#,###0}\n";
         
-        if (Pop.FromNativePopulation(population) > 0)
+        if (population > 0)
         {
             text += $"Cultures Breakdown:\n";
 
@@ -503,15 +517,15 @@ public class State : PopObject, ISaveable
                 long localPopulation = cultureSizePair.Value;
                 
                 // Skips if the culture is too small
-                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
+                if (localPopulation < 1) continue;
 
                 text += GenerateUrlText(culture, culture.name) + ":\n";
-                text += $"  Population: {Pop.FromNativePopulation(localPopulation):#,###0} ";
+                text += $"  Population: {localPopulation:#,###0} ";
 
                 float culturePercentage = localPopulation/(float)population;
                 text += $"({culturePercentage:P0})\n";
             }    
-            text += $"\nWorkforce: {Pop.FromNativePopulation(workforce):#,###0}\n";
+            text += $"\nWorkforce: {workforce:#,###0}\n";
             /*
             text += $"Professions Breakdown:\n";     
 

@@ -1,5 +1,10 @@
+using System;
+using System.Runtime.Serialization;
+using MessagePack;
+
 public abstract class AIBase
 {
-    public static ObjectManager objectManager;
-    public static SimManager simManager;
+    [IgnoreMember] public static ObjectManager objectManager;
+    [IgnoreMember] public static SimManager simManager;
+    [IgnoreMember] public static Random rng = new Random();
 }

@@ -14,8 +14,8 @@ public class Battle{
     static readonly Random rng = new();
     public static bool CalcBattle(Region loc, long attackers, long defenders){
         bool attackSuccessful = false;
-        long baseAttackerPower = Pop.FromNativePopulation(attackers);
-        long baseDefenderPower = Pop.FromNativePopulation(defenders);
+        long baseAttackerPower = attackers;
+        long baseDefenderPower = defenders;
         double attackPower = Mathf.Round(baseAttackerPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
         double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 1.5, rng.NextDouble()));
 

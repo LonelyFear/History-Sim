@@ -318,7 +318,7 @@ public partial class MapManager : Node2D
             case MapModes.POPULATION:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    long regionPopulation = Pop.ToNativePopulation(1000 * (int)Mathf.Pow(SimManager.tilesPerRegion, 2));
+                    long regionPopulation = 1000 * (int)Mathf.Pow(SimManager.tilesPerRegion, 2);
                     color = new Color(0, region.population / Mathf.Max(simManager.highestPopulation, regionPopulation), 0, 1);
                 }
                 else if (region.habitable)
