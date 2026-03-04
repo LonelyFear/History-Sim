@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://l1cr5gsmerod"]
+
+[ext_resource type="Script" uid="uid://qwide1mdvfue" path="res://Scenes/ShaderTest.cs" id="1_56mpk"]
+[ext_resource type="Texture2D" uid="uid://bjjn4eyner8wb" path="res://Sprites/Icons.png" id="2_wso2r"]
+
+[node name="ShaderTest" type="Node2D" unique_id=902442390]
+script = ExtResource("1_56mpk")
+
+[node name="SampleImage" type="Sprite2D" parent="." unique_id=922483452]
+position = Vector2(479, 384)
+scale = Vector2(16, 16)
+texture = ExtResource("2_wso2r")

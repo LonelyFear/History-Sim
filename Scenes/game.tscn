@@ -229,7 +229,6 @@ timeManager = NodePath("../../../Time Manager")
 updateDelay = 0.25
 
 [node name="FrameBreakdown" type="Label" parent="UI/VBoxContainer" unique_id=802929429]
-visible = false
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)

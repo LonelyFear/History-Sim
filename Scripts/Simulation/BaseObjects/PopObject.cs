@@ -10,7 +10,8 @@ public abstract class PopObject : NamedObject
     [Key(103)] public long highestPossiblePopulation { get; set; } = 0;
     [Key(104)] public long dependents { get; set; } = 0;
     [Key(105)] public long workforce { get; set; } = 0;
-    
+    [Key(1070)] public Color color { get; set; }
+
     [IgnoreMember] public HashSet<Pop> pops = new HashSet<Pop>();
     [Key(106)] public List<ulong> popsIds;
     [IgnoreMember] public static TimeManager timeManager;

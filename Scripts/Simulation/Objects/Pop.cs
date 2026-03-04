@@ -344,7 +344,6 @@ public class Pop
         ChangePopulation(workforceChange, dependentChange);
     }
 }
-
 public enum SocialClass
 {
     FARMER,

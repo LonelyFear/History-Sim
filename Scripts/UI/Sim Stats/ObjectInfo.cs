@@ -47,6 +47,12 @@ public partial class ObjectInfo : Control
                     case ObjectType.STATE:
                         populationLabel.Text = "Population: " + ((PopObject)selectedObject).population.ToString("#,###0");
                         State state = (State)selectedObject;
+
+                        Alliance realm = state.vassalManager.sovereignty == Sovereignty.INDEPENDENT ? objectManager.GetAlliance(state.realmId) : null;
+
+                        // Chooses if we want to display realm or state data
+                        Organization org = realm == null ? state : realm;
+
                         switch (state.vassalManager.sovereignty)
                         {
                             case Sovereignty.COLONY:
@@ -63,12 +69,20 @@ public partial class ObjectInfo : Control
                                 break;
                         }
 
-                        uint yearAge = timeManager.GetYear(state.GetAge());
-                        uint monthAge = timeManager.GetMonth(state.GetAge());
+                        uint yearAge = timeManager.GetYear(selectedObject.GetAge());
+                        uint monthAge = timeManager.GetMonth(selectedObject.GetAge());
                         specialLabel.Text = $"Founded in Month {timeManager.GetMonth(state.tickCreated)} of Year {timeManager.GetYear(state.tickCreated)}";
                         specialLabel.Text += "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";
-                        specialLabel.Text += "\n" + "Wealth: " + state.totalWealth.ToString("#,###0");
-                        specialLabel.Text += "\n" + "Military Power: " + state.GetArmyPower(true).ToString("#,###0") + "\n";
+                        specialLabel.Text += "\n" + "Total Wealth: " + org.totalWealth.ToString("#,###0");
+                        
+                        if (realm == null)
+                        {
+                            specialLabel.Text += "\n" + "Military Power: " + state.GetArmyPower().ToString("#,###0") + "\n";                            
+                        } else
+                        {
+                            specialLabel.Text += "\n" + "Military Power: " + realm.GetAllianceArmyPower().ToString("#,###0") + "\n";                               
+                        }
+
                         if (state.leaderId != null)
                         {
                             Character leader = objectManager.GetCharacter(state.leaderId);
@@ -108,7 +122,7 @@ public partial class ObjectInfo : Control
                         populationLabel.Text = "Population: " + ((PopObject)selectedObject).population.ToString("#,###0");
                         Region region = (Region)selectedObject;
                         populationLabel.Text += "\n" + "Wealth: " + region.wealth.ToString("#,###0");
-                        populationLabel.Text += "\n" + "Trade Weight: " + region.GetTradeWeight().ToString("#,###0");
+                        populationLabel.Text += "\n" + "Trade Weight: " + region.tradeWeight.ToString("#,###0");
 
                         specialLabel.Text = "Ariable Land Ratio: " + (region.arableLand / region.landCount).ToString("0.0%") + "\n";
                         specialLabel.Text += "Average Wealth: " + region.wealth.ToString("#,##0.0");

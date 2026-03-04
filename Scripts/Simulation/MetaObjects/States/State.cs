@@ -3,16 +3,15 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-using System.Data.Common;
+
 [MessagePackObject(AllowPrivate = true)]
 
-public class State : PopObject, ISaveable
+public class State : Organization, ISaveable
 {
     [IgnoreMember] public string baseName = "Nation";
     [IgnoreMember] public string govtName;
     [IgnoreMember] public string leaderTitle { get; set; } = "King";
     [Key(1)] public StateAIManager AIManager;
-    [Key(2)] public Color color { get; set; }
     [Key(3)] public Color displayColor;
     [Key(4)] public Color capitalColor;
     [Key(5)] public bool capitualated = false;
@@ -23,10 +22,8 @@ public class State : PopObject, ISaveable
     [Key(7)] public HashSet<ulong> regionsIDs { get; set; } = new HashSet<ulong>();
     [IgnoreMember] public Region capital { get; set; }
     [Key(8)] public ulong capitalID;
-    [Key(9)] public long manpower { get; set; } = 0;
-    [Key(10)] public int occupiedLand { get; set; } = 0;
+    
     // Taxes & Wealth
-    [Key(11)] public float totalWealth { get; set; } = 0;
     [Key(12)] public float mobilizationRate { get; set; } = 0.3f;
     [Key(13)] public float poorTaxRate { get; set; } = 0.3f;
     [Key(14)] public float middleTaxRate { get; set; } = 0.1f;
@@ -45,15 +42,12 @@ public class State : PopObject, ISaveable
     // Diplomacy Managers
     [Key(40)] public StateDiplomacyManager diplomacy = new StateDiplomacyManager();
     [Key(41)] public StateVassalManager vassalManager = new StateVassalManager();
-    // Borders & Sovereignty
-    [IgnoreMember] public Dictionary<ulong, int> borderingStateIds { get; set; } = new Dictionary<ulong, int>();
     //[Key(22)] public Dictionary<ulong, int> borderingStatesIDs { get; set; }
 
     [Key(27)] public Tech tech = new Tech();
 
     [Key(28)] public int maxSize = 1;
     // Government
-    [Key(29)] public long wealth;
     [Key(30)] public Pop rulingPop;
     [Key(31)] public ulong? lastLeaderId = null;
     [Key(32)] public ulong? leaderId = null;
@@ -63,8 +57,6 @@ public class State : PopObject, ISaveable
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
     [Key(367)] public uint timeAsVassal = 0;
-    [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = new Dictionary<SocialClass, long>();
-    [IgnoreMember] public Dictionary<SocialClass, long> maxJobs = new Dictionary<SocialClass, long>();
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
@@ -206,122 +198,6 @@ public class State : PopObject, ISaveable
                 break;
         }
     }
-    public override void CountPopulation()
-    {
-        HashSet<Region> checkedRegions = regions;
-        Alliance realm = objectManager.GetAlliance(realmId);
-        bool isRealmLeader = realm == null ? false : realm.leadStateId == id;
-        if (realm != null && isRealmLeader)
-        {
-            checkedRegions = realm.GetRegions();
-        }
-
-        int aliveCharacters = 0;
-        long countedP = 0;
-        long countedW = 0;
-
-        Dictionary<ulong, int> borders = new Dictionary<ulong, int>();
-        Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
-        Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
-        Dictionary<SocialClass, long> countedJobs = new Dictionary<SocialClass, long>();
-        foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
-        {
-            countedSocialClasses.Add(profession, 0);
-            countedRequiredWorkers.Add(profession, 0);
-            countedJobs.Add(profession, 0);
-        }
-
-        Dictionary<ulong, long> cCultures = new Dictionary<ulong, long>();
-        float countedWealth = 0;
-        int occRegions = 0;
-        foreach (ulong charId in characterIds)
-        {
-            if (objectManager.GetCharacter(charId).role != CharacterRole.DEAD)
-            {
-                aliveCharacters++;
-            }
-        }
-        // If realm leader uses realm stats
-        foreach (Region region in checkedRegions)
-        {
-            // Adds up population to state total
-            countedP += region.population;
-            countedW += region.workforce;
-            countedWealth += region.wealth;
-
-            if (region.frontier || region.border)
-            {
-                // Counts up occupied regions
-                if (region.occupier != null && regions.Contains(region))
-                {
-                    occRegions++;
-                }
-
-                List<State> checkedBordersForRegion = new List<State>();
-                // Gets the states bordering this region
-                foreach (ulong? borderId in region.borderingRegionIds)
-                {
-
-                    Region border = objectManager.GetRegion(borderId); 
-                    State borderState = border.owner;
-
-                    // Makes sure the state is real and not us
-                    if (borderState == null || borderState == this)
-                    {
-                        continue;
-                    }
-
-                    checkedBordersForRegion.Add(borderState);
-
-                    // If we already got borders for this region then skip
-                    if (checkedBordersForRegion.Contains(borderState))
-                    {
-                        continue;
-                    }
-
-                    // Extends our border with the state
-                    if (!borders.TryAdd(borderState.id, 1))
-                    {
-                        borders[borderState.id]++;
-                    }
-                    
-                    // Adds the bordering overlord if they arent the state (So we dont overcount borders)
-                    ulong borderOverlordId = borderState.vassalManager.GetOverlord(true).id;
-                    if (!borders.TryAdd(borderOverlordId, 1))
-                    {
-                        borders[borderOverlordId]++;
-                    }
-                }
-            }
-
-            // Counts up professions
-            foreach (SocialClass profession in region.professions.Keys)
-            {
-                countedSocialClasses[profession] += region.professions[profession];
-            }
-
-            // Counts up cultures
-            foreach (ulong cultureId in region.cultureIds.Keys)
-            {
-                // Adds regional culture population to state population
-                if (!cCultures.TryAdd(cultureId, region.cultureIds[cultureId]))
-                {
-                    cCultures[cultureId] += region.cultureIds[cultureId];
-                }
-            }
-        }
-        
-        // Updates values
-        occupiedLand = occRegions;
-        borderingStateIds = borders;
-        totalWealth = countedWealth;
-        professions = countedSocialClasses;
-        requiredWorkers = countedRequiredWorkers;
-        maxJobs = countedJobs;
-        cultureIds = cCultures;
-        population = countedP + aliveCharacters;
-        workforce = countedW;
-    }
     public void AddRegion(Region region)
     {
         if (!regions.Contains(region))
@@ -428,28 +304,19 @@ public class State : PopObject, ISaveable
         }
         return rebels;
     }
-    public long GetArmyPower(bool includeRealm)
+    
+    public long GetArmyPower(bool realmPower = false)
     {
-        float interiorArmyPower = GetManpower(includeRealm) / (float)GetRegions(includeRealm).Count;
+        if (realmId != null && vassalManager.sovereignty == Sovereignty.INDEPENDENT && realmPower)
+        {
+            return objectManager.GetAlliance(realmId).GetAllianceArmyPower();
+        }
+        float interiorArmyPower = GetManpower() / (float)regions.Count;
         return (long)interiorArmyPower;
     }
-    public HashSet<Region> GetRegions(bool includeRealm)
+
+    public long GetManpower()
     {
-        HashSet<Region> collectedRegions = [.. regions];
-        if (realmId == null || !includeRealm)
-        {
-            return collectedRegions;
-        } else
-        {
-            return objectManager.GetAlliance(realmId).GetRegions();
-        }
-    }
-    public long GetManpower(bool includeRealm)
-    {
-        if (includeRealm && realmId != null)
-        {
-            return objectManager.GetAlliance(realmId).GetAllianceManpower();
-        }
         return manpower;
     }
     public int GetSize(bool includeRealm)

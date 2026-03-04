@@ -641,15 +641,24 @@ public class SimManager
                     }
                 }
                 region.conquered = false;
-                region.hasBaseTradeWeight = false;
-                region.hasTradeWeight = false;
-                region.tradeIncome = 0f;
-                region.taxIncome = 0f;
+                region.taxIncome = 0;
+                region.tradeIncome = 0;
+                if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
+                {
+                    region.GetTradeWeight();
+                }                
                 region.linkUpdateCountdown--;
             });
-            regionPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
-            stopwatch.Restart();
 
+            foreach (Region region in habitableRegions)
+            {
+                region.GetBaseTradeWeight();
+                region.UpdateTradeIncome();
+            }
+
+            regionPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();  
+                      
             foreach (Region region in habitableRegions)
             {
                 stopwatch.Restart();
@@ -659,14 +668,15 @@ public class SimManager
                     continue;
                 }
                 
-                
                 // Economy
                 region.CalcBaseWealth();
+                
                 if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
                 {
-                    region.linkUpdateCountdown = 12;
                     region.LinkTrade();
+                    region.linkUpdateCountdown = 12;
                 }
+                
                 regionPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
@@ -680,9 +690,9 @@ public class SimManager
                 {
                     if (region.frontier && region.occupier == null)
                     {
-                        region.NeutralConquest();
+                        //region.NeutralConquest();
                     }
-                    region.MilitaryConquest();
+                    //region.MilitaryConquest();
                     
                 }  
                 regionPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
@@ -698,25 +708,8 @@ public class SimManager
             foreach (Region region in habitableRegions)
             {
                 highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
-                if (region.owner != null)
-                {
-                    if (region.occupier != null && !region.owner.diplomacy.enemyIds.Contains(region.occupier.id))
-                    {
-                        region.occupier = null;
-                    }
-                }
-                else
-                {
-                    region.occupier = null;
-                }
-                if (region.wealth > maxWealth)
-                {
-                    maxWealth = region.wealth;
-                }
-                if (region.GetTradeWeight() > maxTradeWeight)
-                {
-                    maxTradeWeight = region.GetTradeWeight();
-                }
+                maxWealth = Mathf.Max(maxWealth, region.wealth);
+                maxTradeWeight = Mathf.Max(region.tradeWeight, maxTradeWeight);
             }
             regionPerformanceInfo["Trade Weight Time"] = stopwatch.Elapsed.TotalMilliseconds;
         }
@@ -783,7 +776,7 @@ public class SimManager
         var partitioner = Partitioner.Create(statesIds.Values);
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.CountPopulation();
+            state.CountOrgPopulation([..state.regions]);
             state.Recruitment();
             state.UpdateDisplayColor();
             StateNamer.UpdateStateNames(state);
@@ -825,6 +818,7 @@ public class SimManager
                 alliance.Die();
                 continue;
             }
+            alliance.CountOrgPopulation([..alliance.GetRegions()]);
         }
     }
     public void UpdateCharacters()

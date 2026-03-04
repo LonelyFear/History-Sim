@@ -17,6 +17,7 @@ public class Market : NamedObject
         {
             objectManager.GetMarket(region.marketId).RemoveRegion(region);
         }
+        
         if (region.marketId != id)
         {
             region.marketId = id;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -6,11 +7,12 @@ using MessagePack;
 [MessagePackObject]
 // Alliances
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
-public class Alliance : PopObject
+public class Alliance : Organization
 {
     [Key(0)] public AllianceType type;
     [Key(2)] public ulong? leadStateId;
     [Key(1)] public List<ulong> memberStateIds = new List<ulong>();
+
     //[IgnoreMember] List<Region> regions = new List<Region>();
     public void AddMember(ulong memberId)
     {
@@ -27,6 +29,10 @@ public class Alliance : PopObject
         {
             newMember.realmId = id;
         }
+    }
+    public bool HasMember(State state)
+    {
+        return memberStateIds.Contains(state.id);
     }
     public override void Die()
     {
@@ -61,10 +67,6 @@ public class Alliance : PopObject
             member.realmId = null;
         }      
     }
-    public override void CountPopulation()
-    {
-        base.CountPopulation();
-    }
 
     public HashSet<Region> GetRegions()
     {
@@ -91,6 +93,16 @@ public class Alliance : PopObject
             mp += memberState.manpower;
         }
         return mp;
+    }
+    public long GetAllianceArmyPower()
+    {
+        long ap = 0;
+        foreach (ulong stateId in memberStateIds)
+        {
+            State memberState = objectManager.GetState(stateId);
+            ap += memberState.GetArmyPower();
+        }
+        return ap;       
     }
 }
 public enum AllianceType

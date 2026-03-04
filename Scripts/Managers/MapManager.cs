@@ -385,7 +385,7 @@ public partial class MapManager : Node2D
             case MapModes.TRADE_WEIGHT:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.GetTradeWeight() / simManager.maxTradeWeight);
+                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
                     if (region.marketId != null)
                     {
                         color = objectManager.GetMarket(region.marketId).color;
@@ -502,11 +502,14 @@ public partial class MapManager : Node2D
 
                 break;                   
             }
+
+            /*
             if (regionImage.GetPixel(tile.pos.X, tile.pos.Y) != finalColor * 0.9f)
             {
                 regionImage.SetPixel(tile.pos.X, tile.pos.Y, finalColor * 0.9f);
                 mapUpdate = true;
-            }                
+            }  
+            */              
         }
     }
     public bool IsMapModeCarved()

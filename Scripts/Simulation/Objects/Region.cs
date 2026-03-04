@@ -14,8 +14,6 @@ public class Region : PopObject, ISaveable
     [Key(300)] public bool isWater { get; set; }
     [Key(4)] public int tradeWeight { get; set; } = 0;
     [Key(5)] public int baseTradeWeight { get; set; } = 0;
-    [Key(6)] public bool hasTradeWeight;
-    [Key(7)] public bool hasBaseTradeWeight;
     [Key(8)] public float lastWealth { get; set; } = 0;
     [Key(9)] public float lastBaseWealth { get; set; } = 0;
     [Key(11)] public float baseWealth { get; set; }
@@ -24,13 +22,15 @@ public class Region : PopObject, ISaveable
     [Key(20)] public Vector2I pos;
 
     // trade
-    [Key(14)] public ulong? marketId { get; set; }
+    [Key(14)] public ulong? marketId { get; set; } = null;
     [Key(15)] public bool isMarketCenter { get; set; } = false;    
     [Key(16)] public float tradeIncome = 0;
     [Key(17)] public float taxIncome = 0;
     [Key(18)] public int zoneSize = 1;
     [IgnoreMember] public Region tradeLink { get; set; } = null;
     [Key(19)] public ulong tradeLinkID { get; set; }
+    [Key(360)] public bool tradedUp { get; set; }
+
 
     [IgnoreMember] public float navigability { get; set; }
     [IgnoreMember] public float avgTemperature { get; set; }
@@ -282,7 +282,7 @@ public class Region : PopObject, ISaveable
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
-        attackerPower = owner.GetArmyPower(false);
+        attackerPower = owner.GetArmyPower();
 
         bool attackerVictory = Battle.CalcBattle(region, attackerPower, 200000);
 
@@ -294,8 +294,8 @@ public class Region : PopObject, ISaveable
 
     public void MilitaryConquest()
     {
-        Region region = PickRandomBorder();
-        if (region == null || region.conquered || region.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(region.GetController().id))
+        Region targetRegion = PickRandomBorder();
+        if (targetRegion == null || targetRegion.conquered || targetRegion.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(targetRegion.GetController().id))
         {
             return;
         }                 
@@ -310,21 +310,21 @@ public class Region : PopObject, ISaveable
             }
             attackerPower = GetController().GetArmyPower(true);
         }
-        lock (region.GetController())
+        lock (targetRegion.GetController())
         {
-            if (region.GetController() == null)
+            if (targetRegion.GetController() == null)
             {
                 return;
             }
-            defenderPower = region.GetController().GetArmyPower(true);
+            defenderPower = targetRegion.GetController().GetArmyPower(true);
         }
         
-        bool attackerVictory = Battle.CalcBattle(region, attackerPower, defenderPower);
+        bool attackerVictory = Battle.CalcBattle(targetRegion, attackerPower, defenderPower);
         if (attackerVictory)
         {
-            lock (region)
+            lock (targetRegion)
             {
-                region.occupier = GetController();
+                targetRegion.occupier = GetController();
             }
         }         
     }
@@ -351,6 +351,7 @@ public class Region : PopObject, ISaveable
         }
         return totalHappiness / totalPoliticalPower;
     }
+    
     public void CheckPopulation()
     {
         CountPopulation();
@@ -371,93 +372,144 @@ public class Region : PopObject, ISaveable
         float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
         baseWealth = baseProduction * (arableLand / landCount);
     }
+    int GetRelativeTradeWeight(Region region)
+    {
+        float relativeTradeWeight = region.tradeWeight;
+
+        // Makes regions less likely to link with those in other states
+        if (region.GetController() != GetController())
+        {
+            //relativeTradeWeight *= 0.8f;
+        }  
+        return (int)relativeTradeWeight;
+    }
     public void LinkTrade()
     {
+        // Default is that we are linked to nobody
         Region selectedLink = null;
-        bool lowerLinks = true;
+
+        // Default is that we are not a market center
+        bool newMarketCenterStatus = true;
+
+        // Loops over borders
         foreach (ulong regionId in borderingRegionIds)
         {
             Region region = objectManager.GetRegion(regionId);
-            if (region.GetTradeWeight() >= GetTradeWeight())
-                lowerLinks = false;
-            if (region.GetTradeWeight() > GetTradeWeight())
-            {
 
-                if (selectedLink == null || region.GetTradeWeight() > selectedLink.GetTradeWeight())
-                {
-                    selectedLink = region;
-                }
+
+            // If we have an equal or lower weight to a region then we cant be market leader
+            if (GetRelativeTradeWeight(region) >= tradeWeight)
+            {
+                newMarketCenterStatus = false;
+
+                // We can only link to regions with a HIGHER trade weight
+                if (GetRelativeTradeWeight(region) != tradeWeight)
+                {    
+                    // If this region has a greater trade weight than our current link, link to it
+                    if (selectedLink == null || GetRelativeTradeWeight(region) > GetRelativeTradeWeight(selectedLink))
+                    {
+                        selectedLink = region;
+                    }
+                }                
             }
         }
 
-        if (selectedLink != null && selectedLink.marketId != null)
+        // Joins market of region we linked to if it has a market
+        if (selectedLink != null && selectedLink.marketId != marketId)
         {
-            objectManager.GetMarket(selectedLink.marketId).AddRegion(this);
+            Market marketJoined = objectManager.GetMarket(selectedLink.marketId);
+            if (marketJoined != null)
+            {
+                lock (marketJoined)
+                {
+                    marketJoined.AddRegion(this);
+                }                 
+            }
+ 
         }
 
-        isMarketCenter = lowerLinks && selectedLink == null;
+        isMarketCenter = newMarketCenterStatus;
 
+        // Gets the market we will be working with below
         Market market = objectManager.GetMarket(marketId);
-        if (isMarketCenter && (marketId == null || objectManager.GetMarket(marketId).centerId != id))
+
+        // If we are a market center and we dont have a market or are in someone elses market
+        if (isMarketCenter && (market == null || market.centerId != id))
         {
-            objectManager.CreateTradeZone(this);
-        }
-        market = objectManager.GetMarket(marketId);
-        if (!isMarketCenter && marketId != null && market.centerId == id)
-        {
-            objectManager.DeleteTradeZone(objectManager.GetMarket(marketId));
+            // Then create a new market
+            market = objectManager.CreateTradeZone(this);
         }
 
+        // Then, on whatever market we just created, if we are no longer a market center
+        if (!isMarketCenter && market != null && market.centerId == id)
+        {
+            // Then delete the market
+            objectManager.DeleteTradeZone(market);
+        }
+        
+        // Finally updates our trade link
         tradeLink = selectedLink;
-        if (tradeLink != null)
-        {
-            tradeLink.tradeIncome += (baseWealth * 1) + tradeIncome;
-        }
     }
-    public int GetTradeWeight()
+    public void UpdateTradeIncome()
     {
-        //return GetBaseTradeWeight();
-        if (hasTradeWeight)
-        {
-            return tradeWeight;
-        }
-        if (!hasBaseTradeWeight)
-        {
-            GetBaseTradeWeight();
-        }
+        // If our link isnt to no one, give our trade link some extra income
+        if (tradeLink != null)
+        {   
+            lock (tradeLink)
+            {
+                tradeLink.tradeIncome += (baseWealth * 0.1f) + tradeIncome;
+            }
+        }          
+    }
+    // Trade weight
+    // Trade works almost like gravity, more trade weight means that more tiles link to you
+    public void GetTradeWeight()
+    {
+        GetBaseTradeWeight();
+
+        // Current depth in market expansion
         int depth = 0;
+
+        // The maximum depth we will go before stopping, determines the growth range of markets
+        // Region in markets will traverse up the link chain, ether reaching the maximum depth or market center
+        // The further the chain goes the less impact the higher trade weights have
         int maxDepth = 7;
+
         List<float> tradeWeights = new List<float>();
         float multiplier = 1.0f;
         Region currentRegion = this;
-        do
+        do // For each step
         {
+            // Increases depth by one
             depth++;
+            // Trade weight decay factor
             multiplier -= 0.1f;
+            // We get the region that our current region is linked to
             Region nextRegion = currentRegion.tradeLink;
+
+            // If the region is linked
             if (nextRegion != null)
             {
+                // Adds the weight to the chain multiplied by multiplier
+                // Note that this uses base trade weight so markets dont expand forever
                 tradeWeights.Add(nextRegion.baseTradeWeight * multiplier);
+                // Then continues
                 currentRegion = nextRegion;
             }
-            else
-            {
-                break;
-            }
+        // This goes on until we have reached the maximum depth or we have reached the trade center
         } while (currentRegion != null && depth < maxDepth);
 
+        
+        tradeWeight = baseTradeWeight;
+        // If we have anything in the chain
         if (tradeWeights.Count > 0)
         {
+            // Our trade weight is set to the highest of the largest value in the chain and our base trade weight
+            // This simulates how a market center is going to be shipping goods to the rest of its market
             tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
         }
-        else
-        {
-            tradeWeight = (int)baseTradeWeight;
-        }
-        hasTradeWeight = true;
-        return tradeWeight;
     }
-    public int GetBaseTradeWeight()
+    public void GetBaseTradeWeight()
     {
         
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
@@ -475,11 +527,8 @@ public class Region : PopObject, ISaveable
         {
             politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
-        // Add trade links
-        hasBaseTradeWeight = true;
 
         baseTradeWeight = (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
-        return baseTradeWeight;
     }    
     public void UpdateWealth()
     {

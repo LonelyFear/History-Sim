@@ -362,12 +362,10 @@ public class ObjectManager
         };
 
         zone.AddRegion(region);
-
-        zone.regionIds.Add(region.id);
         simManager.marketIds.Add(zone.id, zone);
         return zone;
     }
-    public void DeleteTradeZone(Market tradeZone )
+    public void DeleteTradeZone(Market tradeZone)
     {
         if (tradeZone == null) return;
         foreach (ulong regionId in tradeZone.regionIds.ToArray())
