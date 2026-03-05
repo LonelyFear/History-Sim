@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 public partial class MapManager : Node2D
@@ -15,7 +16,7 @@ public partial class MapManager : Node2D
     TimeManager timeManager;
     Vector2I worldSize;
     Sprite2D regionOverlay;
-    ImageTexture regionTexture;
+    //ImageTexture regionTexture;
     Image regionImage;
     
     public MapModes mapMode;
@@ -32,6 +33,18 @@ public partial class MapManager : Node2D
 
     int regionResolution = 4;
     public static ObjectManager objectManager;
+    // Shaders
+    RenderingDevice rd = RenderingServer.GetRenderingDevice();
+    RDShaderFile regionShaderFile = GD.Load<RDShaderFile>("res://Shaders/region_renderer.glsl");
+    Rid regionOverlayShader;
+    Rid regionOverlayShaderPipeline;
+	Rid texture;
+    Texture2Drd texture_rd;
+	Rid dimensionsBuffer;
+    Rid colorsBuffer;
+    Color[] regionColors;
+    //float[] colorValues;
+    
 
     // NOTE: Painted regions are updated in TimeManager.cs
     public override void _Ready()
@@ -40,15 +53,55 @@ public partial class MapManager : Node2D
 		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += InitMapManager;
 	}
     void InitMapManager() {
+        // Frees dimension buffer
+        //rd.FreeRid(dimensionsBuffer);
+        
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         timeManager = simManager.timeManager;
         simManager.mapManager = this;
         Scale = simManager.terrainMap.Scale * (SimManager.tilesPerRegion/(float)regionResolution);
         worldSize = SimManager.worldSize;
-        regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, true, Image.Format.Rgba8);
-        regionTexture = ImageTexture.CreateFromImage(regionImage);
-        regionOverlay.Texture = regionTexture;
+        regionColors = new Color[worldSize.X * worldSize.Y];
+        //colorValues = new float[worldSize.X * 4 * worldSize.Y];
+
+        regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, false, Image.Format.Rgbaf);
         initialized = true;
+        InitShader();
+    }
+    public void InitShader()
+    {
+        // Creates shader and pipeline
+        regionOverlayShader = rd.ShaderCreateFromSpirV(regionShaderFile.GetSpirV());
+		regionOverlayShaderPipeline = rd.ComputePipelineCreate(regionOverlayShader);
+
+        // Creates a buffer for world size
+		int[] dimensionsArray = [worldSize.X, worldSize.Y];
+		byte[] dimensionBytes = new byte[dimensionsArray .Length * sizeof(int)];
+		Buffer.BlockCopy(dimensionsArray, 0, dimensionBytes , 0, dimensionBytes.Length);
+		dimensionsBuffer = rd.StorageBufferCreate((uint)dimensionBytes.Length, dimensionBytes);  
+
+        // Creates image buffer
+        GD.Print(worldSize);
+        GD.Print(regionImage.GetSize());
+        RDTextureView textureView = new();
+		RDTextureFormat textureFormat = new()
+		{
+			Width = (uint)worldSize.X,
+			Height = (uint)worldSize.Y,
+			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
+
+			UsageBits = RenderingDevice.TextureUsageBits.StorageBit | 
+			RenderingDevice.TextureUsageBits.CanCopyFromBit |
+			RenderingDevice.TextureUsageBits.SamplingBit
+		};
+        texture = rd.TextureCreate(textureFormat, textureView, [regionImage.GetData()]);       
+
+        // Setting up image display
+        texture_rd = new()
+        {
+            TextureRdRid = texture,
+        }; 
+        regionOverlay.Texture = texture_rd;
     }
     public void UpdateRegionColors(IEnumerable<Region> regions)
     {
@@ -62,6 +115,51 @@ public partial class MapManager : Node2D
                 UpdateRegionColor(region.pos.X, region.pos.Y);
             }
         });
+        PrepBuffers();
+        RunShader();
+    }
+
+    public void PrepBuffers()
+    {
+		byte[] colorsBytes = MemoryMarshal.AsBytes(regionColors.AsSpan()).ToArray();
+
+		colorsBuffer = rd.StorageBufferCreate((uint)colorsBytes.Length, colorsBytes);  
+    }
+    public void RunShader()
+    {
+        RDUniform dimensionsUniform = new()
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 0,
+		};
+		dimensionsUniform.AddId(dimensionsBuffer);
+
+        RDUniform colorsUniform = new()
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 1,
+		};
+		colorsUniform.AddId(colorsBuffer);
+
+		RDUniform imageUniform = new()
+		{
+			UniformType = RenderingDevice.UniformType.Image,
+			Binding = 2,
+		};
+		imageUniform.AddId(texture);
+
+
+        Rid uniformSet = rd.UniformSetCreate([dimensionsUniform, colorsUniform, imageUniform], regionOverlayShader, 0);
+		long computeList = rd.ComputeListBegin();
+
+		rd.ComputeListBindComputePipeline(computeList, regionOverlayShaderPipeline);
+		rd.ComputeListBindUniformSet(computeList, uniformSet, 0);
+		rd.ComputeListDispatch(computeList, (uint)worldSize.X/12, (uint)worldSize.Y/12, 1);
+		rd.ComputeListEnd();
+
+		rd.FreeRid(uniformSet);
+        rd.FreeRid(colorsBuffer);
+
     }
     public override void _Process(double delta)
     {
@@ -108,7 +206,6 @@ public partial class MapManager : Node2D
         if (value != regionOverlay.Visible)
         {
             regionOverlay.Visible = value;
-            borderRenderer.Visible = value;
             if (!value)
             {
                 hoveredRegion = null;
@@ -459,7 +556,6 @@ public partial class MapManager : Node2D
         Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
-        Color noneColor = GetRegionColor(r, false);
         Color color = GetRegionColor(r);
         Color centralColor = GetRegionColor(r, true, true);
         int month = (int)(timeManager.GetMonth() - 1);
@@ -488,28 +584,10 @@ public partial class MapManager : Node2D
                 case MapModes.CONTINENTIALITY:
                     finalColor = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
                     Mathf.InverseLerp(0, 1, tile.continentiality));
-                    break;
-                default:
-                    // Carved Borders
-                    if (tile.renderOverlay && !IsMapModeCarved())
-                    {
-                        finalColor = noneColor;
-                    }
-                    if (r.isWater && r.pops.Count > 0)
-                    {
-                        //finalColor = new Color(1, 0.5f, 0);
-                    }
-
-                break;                   
+                    break;                
             }
-
-            /*
-            if (regionImage.GetPixel(tile.pos.X, tile.pos.Y) != finalColor * 0.9f)
-            {
-                regionImage.SetPixel(tile.pos.X, tile.pos.Y, finalColor * 0.9f);
-                mapUpdate = true;
-            }  
-            */              
+            int index = (tilePos.Y * worldSize.X) + tilePos.X;
+            regionColors[index] = finalColor;          
         }
     }
     public bool IsMapModeCarved()
@@ -521,12 +599,14 @@ public partial class MapManager : Node2D
         return true;
     }
     void UpdateMap(){
+        /*
         if (mapUpdate)
         {
             mapUpdate = false;
             regionTexture.Update(regionImage);
             regionOverlay.Texture = regionTexture;
         }
+        */
     }
 }
 

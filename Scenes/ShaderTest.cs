@@ -71,7 +71,7 @@ public partial class ShaderTest : Node2D
 
 		rd.ComputeListBindComputePipeline(computeList, pipeline);
 		rd.ComputeListBindUniformSet(computeList, uniformSet, 0);
-		rd.ComputeListDispatch(computeList, 32, 32, 1);
+		rd.ComputeListDispatch(computeList, 8, 8, 1);
 		rd.ComputeListEnd();
 		rd.FreeRid(uniformSet);
 

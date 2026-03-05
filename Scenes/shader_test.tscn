@@ -1,12 +1,21 @@
 [gd_scene format=3 uid="uid://l1cr5gsmerod"]
 
 [ext_resource type="Script" uid="uid://qwide1mdvfue" path="res://Scenes/ShaderTest.cs" id="1_56mpk"]
+[ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="2_mrmnq"]
 [ext_resource type="Texture2D" uid="uid://bjjn4eyner8wb" path="res://Sprites/Icons.png" id="2_wso2r"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mrmnq"]
 
 [node name="ShaderTest" type="Node2D" unique_id=902442390]
 script = ExtResource("1_56mpk")
 
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1263010046]
+position = Vector2(576, 372)
+scale = Vector2(2.78125, 2.78125)
+texture = ExtResource("2_mrmnq")
+
 [node name="SampleImage" type="Sprite2D" parent="." unique_id=922483452]
-position = Vector2(479, 384)
+material = SubResource("ShaderMaterial_mrmnq")
+position = Vector2(560, 337)
 scale = Vector2(16, 16)
 texture = ExtResource("2_wso2r")
