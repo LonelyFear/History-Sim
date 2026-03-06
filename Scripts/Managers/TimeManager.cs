@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Godot;
@@ -126,7 +127,18 @@ public partial class TimeManager : Node
 
             // Runs draw async
             // Draw tasks creats buffers for shaders so we dont want to run on first tick
-            drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.habitableRegions));
+            MapModes[] specialMapModes = [MapModes.RAINFALL, MapModes.TEMPERATURE, MapModes.CONTINENTIALITY];
+            // 
+            if (specialMapModes.Contains(mapManager.mapMode))
+            {
+                // Only runs on ALL regions when we need to
+                drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.regionIds.Values));
+            } else
+            {
+                // Default
+                drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.habitableRegions));
+            }
+            
         }        
     }
     void GetWaitTime()
