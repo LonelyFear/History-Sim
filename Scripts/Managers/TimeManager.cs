@@ -30,6 +30,7 @@ public partial class TimeManager : Node
     Task tickTask;
     Task monthTask;
     Task yearTask;
+    Task drawTask;
     bool doYear = true;
     bool doMonth = true;
     bool didMonth = false;
@@ -70,6 +71,7 @@ public partial class TimeManager : Node
             bool tickDone = tickTask == null || tickTask.IsCompleted;
             bool yearDone = yearTask == null || yearTask.IsCompleted;
             bool monthDone = monthTask == null || monthTask.IsCompleted;
+            bool drawDone = drawTask == null || drawTask.IsCompleted;
             if (simStart && tickDone)
             {
                 if (doMonth && !debuggerMode)
@@ -97,7 +99,7 @@ public partial class TimeManager : Node
                             monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
                         }
                         TickGame();
-                        mapManager.UpdateRegionColors(simManager.regionIds.Values);
+                        RenderGame(drawDone);
                     }
 
                 }
@@ -105,7 +107,28 @@ public partial class TimeManager : Node
 
         }
     }
+    void RenderGame(bool drawDone)
+    {
+        // Hides region overlay 
+        if (!mapManager.showRegionsCheckbox.ButtonPressed)
+        {
+            mapManager.regionOverlay.Visible = false;
+        }
+        if (drawDone && mapManager.showRegionsCheckbox.ButtonPressed)
+        {
+            // Shows region overlat
+            mapManager.regionOverlay.Visible = true;
+            // Makes sure we have a buffer for the shader
+            if (drawTask != null)
+            {
+                mapManager.RunShader();
+            } 
 
+            // Runs draw async
+            // Draw tasks creats buffers for shaders so we dont want to run on first tick
+            drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.habitableRegions));
+        }        
+    }
     void GetWaitTime()
     {
         double monthTime = (double)ticksPerMonth / ticksPerDay;

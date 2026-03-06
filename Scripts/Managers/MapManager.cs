@@ -10,12 +10,11 @@ using System.Threading.Tasks;
 
 public partial class MapManager : Node2D
 {
-    [Export] BorderRenderer borderRenderer;
     Task mapmodeTask = null;
     SimManager simManager;
     TimeManager timeManager;
     Vector2I worldSize;
-    Sprite2D regionOverlay;
+    public Sprite2D regionOverlay;
     //ImageTexture regionTexture;
     Image regionImage;
     
@@ -105,18 +104,15 @@ public partial class MapManager : Node2D
     }
     public void UpdateRegionColors(IEnumerable<Region> regions)
     {
-        if (!regionOverlay.Visible) return;
+        //if (!(bool)regionOverlay.CallDeferred("is_visible")) return;
         var partitioner = Partitioner.Create(regions);
         //borderRenderer.RedrawBorders();
         Parallel.ForEach(partitioner, (region) =>
         {
-            if (region != null)
-            {
-                UpdateRegionColor(region.pos.X, region.pos.Y);
-            }
+            UpdateRegionColor(region.pos.X, region.pos.Y);
         });
         PrepBuffers();
-        RunShader();
+        //RunShader();
     }
 
     public void PrepBuffers()
@@ -165,7 +161,7 @@ public partial class MapManager : Node2D
     {
         if (initialized)
         {
-            UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
+            //UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
             
             mousePos = GetGlobalMousePosition();
             hoveredRegionPos = simManager.GlobalToTilePos(mousePos);
@@ -313,7 +309,7 @@ public partial class MapManager : Node2D
         UpdateRegionColors(simManager.regionIds.Values);
     }
     
-    public Color GetRegionColor(Region region, bool includeOverlay = true, bool includeCapital = false)
+    public Color GetRegionColor(Region region, bool includeCapital = false)
     {
         float colorDarkness = 0.4f;
         Color color = new Color(0, 0, 0, 0);
@@ -551,13 +547,13 @@ public partial class MapManager : Node2D
         return color;
     }
     public void UpdateRegionColor(int x, int y)
-    {
-
+    {   
+            
         Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
         Color color = GetRegionColor(r);
-        Color centralColor = GetRegionColor(r, true, true);
+        Color centralColor = GetRegionColor(r, true);
         int month = (int)(timeManager.GetMonth() - 1);
 
         foreach (Vector2I tilePos in r.tiles)
