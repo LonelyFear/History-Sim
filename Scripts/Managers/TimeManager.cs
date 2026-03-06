@@ -127,7 +127,7 @@ public partial class TimeManager : Node
 
             // Runs draw async
             // Draw tasks creats buffers for shaders so we dont want to run on first tick
-            MapModes[] specialMapModes = [MapModes.RAINFALL, MapModes.TEMPERATURE, MapModes.CONTINENTIALITY];
+            MapModes[] specialMapModes = [MapModes.RAINFALL, MapModes.TEMPERATURE, MapModes.CONTINENTIALITY, MapModes.DAY_LENGTH];
             // 
             if (specialMapModes.Contains(mapManager.mapMode))
             {
