@@ -30,49 +30,16 @@ public partial class StateAIManager : AIBase
         diplomacyManager = state.diplomacy;
         vassalManager = state.vassalManager;
     }  
+    
     public void TickAI()
     {
         aiTicks++;
-        if (Mathf.PosMod(aiTicks, ticksBetweenTickRecalc) == 0)
-        {
-            RecalculateWeights();
-        }
-        DeclareWars();
     }  
-    public void RecalculateWeights()
-    {
-        StateWeights newWeights = weights;
-        State state = objectManager.GetState(stateId);
-        Character leader = objectManager.GetCharacter(state.leaderId);
-        Culture rulingCulture = state.rulingPop.culture;
-
-        // Calculates weights
-        newWeights.Agression = 1;
-        newWeights.Expansion = 1;
-
-        // Averages "Personality Factor". Lerps between base trait and personality factor so leaders have effect
-        if (leader != null)
-        {
-            float personalityFactor = Utility.CalcWeightedAverage([
-            (1 - Normalize(leader.personality["temperment"]), 5), 
-            (Normalize(leader.personality["greed"]), 2),
-            (NormalizeNegative(leader.personality["boldness"]), 1)]);
-            
-            newWeights.Agression = Mathf.Lerp(newWeights.Agression, personalityFactor, 0.6f);
-
-            personalityFactor = Utility.CalcWeightedAverage([
-            (Normalize(leader.personality["ambition"]), 6), 
-            (Normalize(leader.personality["greed"]), 5),
-            (NormalizeNegative(leader.personality["boldness"]), 2)]);
-            newWeights.Expansion = Mathf.Lerp(newWeights.Expansion, personalityFactor, 0.6f);
-        }
-
-        weights = newWeights;
-    }
 
     public float NormalizeNegative(float value) {return (value - 50) / 50f;}
     public float Normalize(float value) {return value / 100f;}
 
+    /*
     public void DeclareWars()
     {
         // Wars of Expansion
@@ -108,14 +75,5 @@ public partial class StateAIManager : AIBase
             }
         }
     }
-}
-
-[MessagePackObject(AllowPrivate = true)]
-internal struct StateWeights
-{
-    [Key(0)] public float Agression;
-    [Key(1)] public float Expansion;
-    [Key(2)] public float Development;
-    [Key(3)] public float Cooperation;
-    [Key(4)] public float Defense;
+    */
 }
