@@ -7,7 +7,15 @@ using Vector2 = System.Numerics.Vector2;
 public static class Utility
 {
     private static Random rng = new Random();
-
+    
+    public static float RandomRange(float min, float max, Random r = null)
+    {
+        if (r == null)
+        {
+            r = rng;
+        }
+        return Mathf.Lerp(min, max, r.NextSingle());
+    }
     public static void Shuffle<T>(this IList<T> list, Random r = null)
     {
         if (r == null)

@@ -13,7 +13,7 @@ public class Organization : PopObject
     [Key(10)] public int occupiedLand { get; set; } = 0;
     [IgnoreMember] public Dictionary<ulong, int> borderingAllianceIds { get; set; } = new Dictionary<ulong, int>();
     [IgnoreMember] public Dictionary<ulong, int> borderingStateIds { get; set; } = new Dictionary<ulong, int>();
-
+    [IgnoreMember] public Dictionary<ulong, int> independentBorderIds { get; set; } = new Dictionary<ulong, int>();
     // Economy
     [Key(11)] public float totalWealth { get; set; } = 0;
     [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = new Dictionary<SocialClass, long>();
@@ -24,7 +24,9 @@ public class Organization : PopObject
         long countedP = 0;
         long countedW = 0;
 
+        Dictionary<ulong, int> allianceBorders = new Dictionary<ulong, int>();
         Dictionary<ulong, int> borders = new Dictionary<ulong, int>();
+        Dictionary<ulong, int> independentBorders = new Dictionary<ulong, int>();
         Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedJobs = new Dictionary<SocialClass, long>();
@@ -71,7 +73,15 @@ public class Organization : PopObject
                     if (!borders.TryAdd(borderState.id, 1))
                     {
                         borders[borderState.id]++;
-                    }     
+                    } 
+
+                    if (borderState.sovereignty == Sovereignty.INDEPENDENT)
+                    {
+                        if (!independentBorders.TryAdd(borderState.id, 1))
+                        {
+                            independentBorders[borderState.id]++;
+                        }                         
+                    }  
 
                     // Gets the alliances this state is in
                     foreach (ulong allianceId in border.owner.allianceIds)
@@ -85,9 +95,9 @@ public class Organization : PopObject
                         }           
 
                         // Extends our border with the alliance
-                        if (!borders.TryAdd(borderingAlliance.id, 1))
+                        if (!allianceBorders.TryAdd(borderingAlliance.id, 1))
                         {
-                            borders[borderingAlliance.id]++;
+                            allianceBorders[borderingAlliance.id]++;
                         }                                     
                     }
                 }
@@ -113,6 +123,8 @@ public class Organization : PopObject
         // Updates values
         occupiedLand = occRegions;
         borderingStateIds = borders;
+        independentBorderIds = independentBorders;
+        borderingAllianceIds = allianceBorders;
         totalWealth = countedWealth;
         professions = countedSocialClasses;
         requiredWorkers = countedRequiredWorkers;

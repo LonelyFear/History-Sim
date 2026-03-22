@@ -6,8 +6,8 @@ using MessagePack;
 public class Relation
 {
     // Constants
-    [IgnoreMember] public const int minOpinion = -100;
-    [IgnoreMember] public const int maxOpinion = 100;  
+    [IgnoreMember] public const float minOpinion = 0;
+    [IgnoreMember] public const float maxOpinion = 1;  
 
     [Key(0)] public float opinion = 0;
     [Key(10)] public float threat = 0;
@@ -17,18 +17,18 @@ public class Relation
     [Key(4)] public bool borders = false;
 
     public Relation() { }
-    public Relation(int opinion = 0, bool rival = false, bool enemy = false)
+    public Relation(float opinion = 0.5f, bool rival = false, bool enemy = false)
     {
         SetOpinion(opinion);
         this.rival = rival;
         this.enemy = enemy;
         
     }
-    public void ChangeOpinion(int amount)
+    public void ChangeOpinion(float amount)
     {
         opinion = Mathf.Clamp(opinion + amount, minOpinion, maxOpinion);
     }
-    public void SetOpinion(int amount)
+    public void SetOpinion(float amount)
     {
         opinion = Mathf.Clamp(amount, minOpinion, maxOpinion);
     }

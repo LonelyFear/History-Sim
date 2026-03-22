@@ -37,6 +37,7 @@ public class State : Organization, ISaveable
     [Key(18)] public ulong liegeID;
     */
     // Alliances
+    [Key(21)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     [Key(36)] public ulong? realmId;
     [Key(37)] public List<ulong> allianceIds = new List<ulong>();
     // Diplomacy Managers
@@ -74,7 +75,7 @@ public class State : Organization, ISaveable
     }
     public void UpdateCapital()
     {
-        switch (vassalManager.sovereignty)
+        switch (sovereignty)
         {
             case Sovereignty.INDEPENDENT:
                 capitalColor = new Color(1, 0, 0);
@@ -185,7 +186,7 @@ public class State : Organization, ISaveable
     public void UpdateDisplayColor()
     {
         displayColor = color;
-        switch (vassalManager.sovereignty)
+        switch (sovereignty)
         {
             case Sovereignty.COLONY:
                 displayColor = vassalManager.GetLiege().color;
@@ -307,7 +308,7 @@ public class State : Organization, ISaveable
     
     public long GetArmyPower(bool realmPower = false)
     {
-        if (realmId != null && vassalManager.sovereignty == Sovereignty.INDEPENDENT && realmPower)
+        if (realmId != null && sovereignty == Sovereignty.INDEPENDENT && realmPower)
         {
             return objectManager.GetAlliance(realmId).GetAllianceArmyPower();
         }
@@ -322,7 +323,7 @@ public class State : Organization, ISaveable
     public int GetSize(bool includeRealm)
     {
         int size = regions.Count;
-        if (realmId != null && vassalManager.sovereignty == Sovereignty.INDEPENDENT && includeRealm)
+        if (realmId != null && sovereignty == Sovereignty.INDEPENDENT && includeRealm)
         {
             size = 0;
             Alliance realm = objectManager.GetAlliance(realmId);
@@ -356,7 +357,7 @@ public class State : Organization, ISaveable
         {
             desc = $"The {name} is an {govtName.ToLower()} in the simulation. It is ";
         }
-        switch (vassalManager.sovereignty)
+        switch (sovereignty)
         {
             case Sovereignty.INDEPENDENT:
                 desc += "an independent state";

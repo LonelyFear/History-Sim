@@ -4,7 +4,7 @@ using System.Net.Quic;
 using Godot;
 using MessagePack;
 [MessagePackObject]
-public class Character : NamedObject
+public partial class Character : NamedObject
 {
     // Constants
     [IgnoreMember] const float hdChanceAnnualGrowth = 0.02f;
@@ -33,7 +33,7 @@ public class Character : NamedObject
     // Character Skills
     // Skills provide buffs/debuffs
     // Some skills like charisma and intellect can interact like personality
-    [Key(31)] public Dictionary<string, int> skills = new Dictionary<string, int>
+    [Key(31)] public Dictionary<string, float> skills {get; private set;} = new Dictionary<string, float>
     {
         {"charisma", 50 },
         {"intellect", 50 },
@@ -46,15 +46,9 @@ public class Character : NamedObject
     // Character Personality
     // Personality changes interaction/actions
     [Key(30)]
-    public Dictionary<string, int> personality = new Dictionary<string, int>
+    public Dictionary<string, float> personality {get; private set;} = new Dictionary<string, float>
     {
-        {"sociability", 50 },
-        {"greed", 50 },
-        {"ambition", 50 },
-        {"empathy", 50 },
-        {"boldness", 50 },
-        {"temperment", 50 },
-        {"attractiveness", 50}
+        {"agression", 0.5f},
     };
     [Key(40)] public Gender gender = Gender.MALE;
     

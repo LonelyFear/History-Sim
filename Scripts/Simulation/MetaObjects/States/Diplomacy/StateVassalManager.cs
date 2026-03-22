@@ -14,7 +14,7 @@ public partial class StateVassalManager
     [Key(0)] ulong stateId;
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     [Key(17)] public List<ulong?> vassalIds { get; set; } = new List<ulong?>();
-    [Key(21)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
+    
     public StateVassalManager() { }
     public StateVassalManager(State selectedState)
     {
@@ -34,7 +34,7 @@ public partial class StateVassalManager
             return;
         }
         // Join Lieges Realm
-        if (sovereignty != Sovereignty.INDEPENDENT)
+        if (state.sovereignty != Sovereignty.INDEPENDENT)
         {
             State liege = GetLiege();
             liege.vassalManager.UpdateRealm();
@@ -83,7 +83,7 @@ public partial class StateVassalManager
             newVassal.diplomacy.LeaveAllWars();
 
             // Adds vassal to us
-            newVassal.vassalManager.sovereignty = Sovereignty.PUPPET;
+            newVassal.sovereignty = Sovereignty.PUPPET;
             newVassal.vassalManager.liegeId = stateId;
             
             vassalIds.Add(vassalId);
@@ -104,7 +104,7 @@ public partial class StateVassalManager
         StateVassalManager vassalManager = vassal.vassalManager;
 
         vassalManager.liegeId = null;
-        vassalManager.sovereignty = Sovereignty.INDEPENDENT;
+        vassal.sovereignty = Sovereignty.INDEPENDENT;
         vassal.diplomacy.LeaveAllWars();
         // Removes Associations
         vassalIds.Remove(vassalId);

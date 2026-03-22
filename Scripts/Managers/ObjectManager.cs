@@ -189,7 +189,7 @@ public class ObjectManager
             state.vassalManager = new StateVassalManager(state);   
 
             // Init ai manager after vassal and diplo
-            state.AIManager = new StateAIManager(state);
+            state.AIManager = new StateAIManager([new DeclareWarsAction()],state);
 
 
         }

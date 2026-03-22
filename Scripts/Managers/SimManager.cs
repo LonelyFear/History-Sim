@@ -498,8 +498,11 @@ public class SimManager
 
         Battle.objectManager = objectManager;
 
-        AIBase.objectManager = objectManager;
-        AIBase.simManager = this;
+        StateAIManager.objectManager = objectManager;
+        StateAIManager.simManager = this;
+        
+        StateAIManager.objectManager = objectManager;
+        StateAIManager.simManager = this;
 
         NamedObject.simManager = this;
         NamedObject.objectManager = objectManager;
@@ -770,7 +773,7 @@ public class SimManager
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
-            state.AIManager.TickAI();
+            state.AIManager.Tick();
         }
         // Counts State Stats
         var partitioner = Partitioner.Create(statesIds.Values);

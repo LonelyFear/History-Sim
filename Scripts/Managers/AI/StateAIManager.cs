@@ -1,25 +1,29 @@
+using System;
 using System.IO.Compression;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using Godot;
 using MessagePack;
 
 [MessagePackObject(AllowPrivate = true)]
-public partial class StateAIManager : AIBase
+public partial class StateAIManager : UtilityAi.AiAgent
 {
+    [IgnoreMember] public static ObjectManager objectManager;
+    [IgnoreMember] public static SimManager simManager;
     [Key(0)] public ulong stateId;
-    [IgnoreMember] State state;
-    [IgnoreMember] StateDiplomacyManager diplomacyManager;
-    [IgnoreMember] StateVassalManager vassalManager;
-    [Key(1)] StateWeights weights;
-    [Key(2)] int aiTicks = 0;
+    [IgnoreMember] public State state;
+    [IgnoreMember] public StateDiplomacyManager diplomacyManager;
+    [IgnoreMember] public StateVassalManager vassalManager;
+    [Key(2)] int ticks = 0;
 
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
     [IgnoreMember] const float warChanceMultiplier = 0.01f;
 
     public StateAIManager () {}
-    public StateAIManager (State sta)
+    public StateAIManager (UtilityAi.IAction[] aiActions, State sta)
     {
+        actions = aiActions;
         stateId = sta.id;
         state = sta;
         InitAI();
@@ -30,15 +34,18 @@ public partial class StateAIManager : AIBase
         diplomacyManager = state.diplomacy;
         vassalManager = state.vassalManager;
     }  
-    
-    public void TickAI()
-    {
-        aiTicks++;
-    }  
-
     public float NormalizeNegative(float value) {return (value - 50) / 50f;}
     public float Normalize(float value) {return value / 100f;}
 
+    public void Tick()
+    {
+        ticks++;
+        if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
+        {
+            currentAction = GetBestAction();
+        }
+        currentAction.PerformAction(this);
+    }
     /*
     public void DeclareWars()
     {

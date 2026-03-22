@@ -20,7 +20,7 @@ public partial class StateDiplomacyManager
     [IgnoreMember] public Random rng = PopObject.rng;
 
     // Constants
-    [IgnoreMember] const float threatAdjustmentRate = 0.1f; // Rate of threat adjustment for lerping threat
+    [IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
     public StateDiplomacyManager(){}
     public StateDiplomacyManager(State selectedState)
     {
@@ -129,14 +129,21 @@ public partial class StateDiplomacyManager
             }          
 
             
-            float newThreat = 0;
-            // Calc Percieved Threat (-100 to 100)
+            float newThreat = 0.5f;
+            // Calc Percieved Threat (0 to 1)
             int stateSize = state.GetSize(true);
-            newThreat += (stateSize - relationState.GetSize(true))/(float)stateSize * 50;
+            float relativeSizeRatio = stateSize - relationState.GetSize(true)/(float)stateSize;
+
+            newThreat += relativeSizeRatio * 0.5f;
+
+            if (relationState.sovereignty != Sovereignty.INDEPENDENT)
+            {
+                newThreat *= 0.5f;
+            }
             
             // Moves threat for realistic adjustment
             // Eg: If we feared a nation for a while then we wont just immediatly like them when they fall 
-            relation.threat = Mathf.MoveToward(relation.threat, newThreat, threatAdjustmentRate);
+            relation.threat = Mathf.MoveToward(relation.threat, Mathf.Clamp(newThreat, 0, 1), threatAdjustmentRate);
         }
     }
     public void LeaveAllWars()
