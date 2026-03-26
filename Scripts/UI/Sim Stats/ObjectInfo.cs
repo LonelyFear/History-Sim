@@ -48,24 +48,24 @@ public partial class ObjectInfo : Control
                         populationLabel.Text = "Population: " + ((PopObject)selectedObject).population.ToString("#,###0");
                         State state = (State)selectedObject;
 
-                        Alliance realm = state.vassalManager.sovereignty == Sovereignty.INDEPENDENT ? objectManager.GetAlliance(state.realmId) : null;
+                        Alliance realm = state.sovereignty == Sovereignty.INDEPENDENT ? objectManager.GetAlliance(state.realmId) : null;
 
                         // Chooses if we want to display realm or state data
                         Organization org = realm == null ? state : realm;
 
-                        switch (state.vassalManager.sovereignty)
+                        switch (state.sovereignty)
                         {
                             case Sovereignty.COLONY:
-                                typeLabel.Text = "Colonial State";
+                                typeLabel.Text = "Colony";
                                 break;
                             case Sovereignty.PROVINCE:
-                                typeLabel.Text = "Provincial State";
+                                typeLabel.Text = "Province";
                                 break;
                             case Sovereignty.PUPPET:
                                 typeLabel.Text = "Puppet State";
                                 break;
                             case Sovereignty.INDEPENDENT:
-                                typeLabel.Text = "Sovereign State";
+                                typeLabel.Text = "Independent State";
                                 break;
                         }
 

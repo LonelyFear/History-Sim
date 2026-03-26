@@ -330,7 +330,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (regionOwner.capital == region && regionOwner.vassalManager.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
+                        if (regionOwner.capital == region && regionOwner.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }

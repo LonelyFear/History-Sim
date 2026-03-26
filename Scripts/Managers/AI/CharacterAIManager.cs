@@ -1,4 +1,6 @@
-public class CharacterAIManager : AIBase
+using UtilityAi;
+
+public class CharacterAIManager : AiAgent
 {
     
 }

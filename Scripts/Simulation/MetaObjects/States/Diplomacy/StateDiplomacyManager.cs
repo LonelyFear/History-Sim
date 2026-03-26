@@ -130,9 +130,10 @@ public partial class StateDiplomacyManager
 
             
             float newThreat = 0.5f;
+
             // Calc Percieved Threat (0 to 1)
             int stateSize = state.GetSize(true);
-            float relativeSizeRatio = stateSize - relationState.GetSize(true)/(float)stateSize;
+            float relativeSizeRatio = (stateSize - relationState.GetSize(true))/(float)stateSize;
 
             newThreat += relativeSizeRatio * 0.5f;
 
@@ -211,9 +212,15 @@ public partial class StateDiplomacyManager
 
     public Relation GetRelationsWithState(State state)
     {
-        Relation relation = null;
-        relationIds.TryGetValue(state.id, out relation);
-        return relation;
+        try
+        {
+            Relation relation = null;
+            relationIds.TryGetValue(state.id, out relation);
+            return relation;            
+        } catch
+        {
+            return null;
+        }
     }
    
     /*

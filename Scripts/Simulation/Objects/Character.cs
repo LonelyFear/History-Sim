@@ -33,6 +33,7 @@ public partial class Character : NamedObject
     // Character Skills
     // Skills provide buffs/debuffs
     // Some skills like charisma and intellect can interact like personality
+    /*
     [Key(31)] public Dictionary<string, float> skills {get; private set;} = new Dictionary<string, float>
     {
         {"charisma", 50 },
@@ -42,6 +43,7 @@ public partial class Character : NamedObject
         {"stewardship", 50 },
         {"combat", 50 }
     };
+    */
 
     // Character Personality
     // Personality changes interaction/actions
@@ -121,40 +123,25 @@ public partial class Character : NamedObject
             health -= agingHealthDecrease;
         }
     }
-    public TraitLevel IntToTraitLevel(int trait)
+    public TraitLevel GetPersonalityLevel(string trait)
     {
         TraitLevel level;
 
-        if (trait > 90)
-        {
-            level = TraitLevel.EXTREMELY_HIGH;
-        }
-        else if (trait > 75)
-        {
-            level = TraitLevel.VERY_HIGH;
-        }
-        else if (trait > 60)
+        if (personality[trait] > 0.66f)
         {
             level = TraitLevel.HIGH;
         }
-        else if (trait > 39)
+        else if (personality[trait] > 0.33f)
         {
             level = TraitLevel.MEDIUM;
         }
-        else if (trait > 24)
+        else // traitStrength > 0
         {
             level = TraitLevel.LOW;
         }
-        else if (trait > 9)
-        {
-            level = TraitLevel.VERY_LOW;
-        }
-        else
-        {
-            level = TraitLevel.EXTREMELY_LOW;
-        }
         return level;
     }
+
     public override string GenerateDescription()
     {
         string[] pronouns = ["he", "she", "they"];
@@ -248,11 +235,7 @@ public enum Gender
 
 public enum TraitLevel
 {
-    EXTREMELY_HIGH,
-    VERY_HIGH,
     HIGH,
     MEDIUM,
     LOW,
-    VERY_LOW,
-    EXTREMELY_LOW
 }

@@ -7,7 +7,10 @@ using Vector2 = System.Numerics.Vector2;
 public static class Utility
 {
     private static Random rng = new Random();
-    
+    public static float Average(float[] values)
+    {
+        return values.Sum() / values.Length;
+    }
     public static float RandomRange(float min, float max, Random r = null)
     {
         if (r == null)

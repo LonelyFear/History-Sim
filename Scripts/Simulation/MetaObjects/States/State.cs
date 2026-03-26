@@ -243,10 +243,6 @@ public class State : Organization, ISaveable
         if (leader == null)
         {
             stabilityTarget -= 0.25;
-        } else
-        {
-            stabilityTarget += (leader.skills["stewardship"] - 50f) / 200;
-            stabilityTarget += (leader.personality["empathy"] - 50f) / 400;
         }
 
         //stabilityTarget += totalWealth * 0.0001;

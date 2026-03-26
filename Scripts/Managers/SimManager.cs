@@ -747,7 +747,7 @@ public class SimManager
                     state.SuccessionUpdate();
                 }
                 state.UpdateStability();
-                if (state.vassalManager.sovereignty != Sovereignty.INDEPENDENT)
+                if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
                     if (state.vassalManager.GetLiege() == null)
                     {

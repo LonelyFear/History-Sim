@@ -289,6 +289,10 @@ public class ObjectManager
             lastName = lastName,
             tickCreated = timeManager.ticks - age,
         };
+        foreach (string trait in character.personality.Keys)
+        {
+            character.personality[trait] = Utility.RandomRange(0, 1, simManager.rng);
+        }
         // Adds character to state and gives it role
         character.name = $"{character.firstName} {character.lastName}";
         character.JoinState(state.id);

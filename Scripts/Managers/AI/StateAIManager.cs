@@ -1,5 +1,6 @@
 using System;
 using System.IO.Compression;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using Godot;
@@ -42,45 +43,83 @@ public partial class StateAIManager : UtilityAi.AiAgent
         ticks++;
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
-            currentAction = GetBestAction();
+            TickChangeRelations();
         }
-        currentAction.PerformAction(this);
     }
-    /*
-    public void DeclareWars()
+    public void TickChangeRelations()
     {
-        // Wars of Expansion
-        // Calculates chance of initiating war based on agression and expansion
-        // Cant declare expansion wars if not independent (Will be change later)
-        if (rng.NextSingle() < weights.Expansion * weights.Agression && state.vassalManager.sovereignty == Sovereignty.INDEPENDENT)
+        foreach (State border in state.independentBorderIds.Select(pair => objectManager.GetState(pair.Key)))
         {
-            foreach (var pair in state.borderingStateIds)
+            Relation relations = diplomacyManager.GetRelationsWithState(border);
+            Character leader = objectManager.GetCharacter(state.leaderId);
+            if (border == null || relations == null || leader == null) continue;
+            
+            Character otherLeader = objectManager.GetCharacter(border.leaderId);
+            if (otherLeader == null) continue;
+
+            float positiveChance = 0f;
+            float neutralChance = 1f;
+
+            float diplomacyScore = rng.NextSingle();
+
+            // Agressive leader vs Agressive leader
+            TraitLevel otherLeaderAgression = otherLeader.GetPersonalityLevel("agression");
+
+            switch (leader.GetPersonalityLevel("agression"))
             {
-                int borderLength = pair.Value;
-                State potentialTarget = objectManager.GetState(pair.Key);
+                case TraitLevel.HIGH:
+                    positiveChance = 0.1f;
+                    neutralChance = 0.4f;
+                    // agressiveChance = 0.5                
+                    if (otherLeaderAgression == TraitLevel.HIGH)
+                    {
+                        positiveChance = 0.05f;
+                        neutralChance = 0.35f;   
+                        // agressiveChance = 0.6                     
+                    }
+                    break;
+                case TraitLevel.MEDIUM:
+                    positiveChance = 0.2f;
+                    neutralChance = 0.4f;
+                    // agressiveChance = 0.4
+                    break;
+                case TraitLevel.LOW:
+                    positiveChance = 0.3f;
+                    neutralChance = 0.5f;
+                    // agressiveChance = 0.2
+                    if (otherLeaderAgression == TraitLevel.LOW)
+                    {
+                        positiveChance = 0.4f;
+                        neutralChance = 0.5f;   
+                        // agressiveChance = 0.1                     
+                    }
+                    break;
+            }
 
-                // Cant declare expansion wars on states in mutual alliances and realms
-                // Cant declare expansion wars on vassals
-                if (diplomacyManager.GetRelationsWithState(potentialTarget) == null || diplomacyManager.IsAlliedToState(potentialTarget) || potentialTarget.vassalManager.sovereignty != Sovereignty.INDEPENDENT || potentialTarget == state)
+            if (diplomacyScore < positiveChance)
+            {
+                // Positive outcome
+                if (!relations.rival)
                 {
-                    continue;
-                }
-
-                // Now we have potential war target
-                // War chance always starts out as 1 and is reduced (multiplied by base war chance to prevent monthly wars ofc)
-                float warChance = 1;
-                warChance += Normalize(diplomacyManager.GetRelationsWithState(potentialTarget).threat);
-                // Over 100% war chances are fine
-                // We dont want negative chances for wars
-                warChance = Mathf.Max(warChance, 0);
-
-                if (rng.NextSingle() < warChance * warChanceMultiplier)
+                    relations.ChangeOpinion(0.1f);
+                } else
                 {
-                    // WAR!!!
-                    // TODO
-                }
+                    if (rng.NextSingle() < 0.1f)
+                    {
+                        // Ends rivalry
+                        relations.rival = false;
+                        border.diplomacy.GetRelationsWithState(state).rival = false;
+                    };
+                }                
+            } else if (diplomacyScore < neutralChance + positiveChance)
+            {
+                // Neutral outcome
+                relations.ChangeOpinion(0f);
+            } else
+            {
+                // Negative outcome
+                relations.ChangeOpinion(-0.1f);
             }
         }
     }
-    */
 }

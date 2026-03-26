@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 using MessagePack;
 
 namespace  UtilityAi
@@ -8,6 +10,7 @@ namespace  UtilityAi
         [IgnoreMember] protected IAction currentAction = null;
         [IgnoreMember] protected IAction[] actions;
         [IgnoreMember] public Random rng = new Random();
+        [IgnoreMember] public Dictionary<string, float> utilityScores = new Dictionary<string, float>();
         public AiAgent() {}
         public AiAgent(IAction[] aiActions, int rngSeed = int.MinValue)
         {
@@ -29,7 +32,9 @@ namespace  UtilityAi
             float highestUtility = -100;
             foreach (IAction action in actions)
             {
-                if (action.CalcUtility(this) > highestUtility)
+                float utility = action.CalcUtility(this);
+                utilityScores[action.GetID()] = utility;
+                if (utility > highestUtility)
                 {
                     bestAction = action;
                 }
@@ -41,6 +46,7 @@ namespace  UtilityAi
 
     public interface IAction
     {
+        public string GetID();
         public float CalcUtility(AiAgent agent);
         public void PerformAction(AiAgent agent);
     }    

@@ -23,6 +23,7 @@
 [ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scripts/UI/Encyclopedia/EncyclopediaMainMenu.cs" id="14_fkdbe"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/Sim Stats/ObjectInfo.cs" id="15_ewbju"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/God Mode/ActionPanel.cs" id="17_7nbq1"]
+[ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="22_vm72l"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
 content_margin_left = 4.0
@@ -584,6 +585,12 @@ layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
+
+[node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("map")]
+offset_right = 40.0
+offset_bottom = 23.0
+script = ExtResource("22_vm72l")
+map = NodePath("../../Map Manager")
 
 [node name="Loading" type="CanvasLayer" parent="." unique_id=259550711]
 
