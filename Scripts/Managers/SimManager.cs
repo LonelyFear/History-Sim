@@ -646,16 +646,17 @@ public class SimManager
                 region.conquered = false;
                 region.taxIncome = 0;
                 region.tradeIncome = 0;
+                
+                region.linkUpdateCountdown--;
                 if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
                 {
-                    region.GetTradeWeight();
+                    region.GetTradeWeight();                
                 }                
-                region.linkUpdateCountdown--;
             });
 
             foreach (Region region in habitableRegions)
             {
-                region.GetBaseTradeWeight();
+                //region.GetBaseTradeWeight();
                 region.UpdateTradeIncome();
             }
 
@@ -693,9 +694,9 @@ public class SimManager
                 {
                     if (region.frontier && region.occupier == null)
                     {
-                        //region.NeutralConquest();
+                        region.NeutralConquest();
                     }
-                    //region.MilitaryConquest();
+                    region.MilitaryConquest();
                     
                 }  
                 regionPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  

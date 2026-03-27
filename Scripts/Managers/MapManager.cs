@@ -25,7 +25,6 @@ public partial class MapManager : Node2D
     public State hoveredState = null;
     public PopObject selectedMetaObj {get; private set; }
     public MapModes selectedMode;
-    public bool mapUpdate = false;
     public bool initialized = false;
     [Export] public OptionButton mapModeUI;
     [Export] public CheckBox showRegionsCheckbox;
@@ -171,7 +170,6 @@ public partial class MapManager : Node2D
             if (regionOverlay.Visible)
             {
                 CheckMapmodeChange();
-                UpdateMap();
             }
         }
 
@@ -583,7 +581,7 @@ public partial class MapManager : Node2D
                     break;                
             }
             int index = (tilePos.Y * worldSize.X) + tilePos.X;
-            regionColors[index] = finalColor;          
+            regionColors[index] = finalColor;      
         }
     }
     public bool IsMapModeCarved()
@@ -593,16 +591,6 @@ public partial class MapManager : Node2D
             return false;
         }
         return true;
-    }
-    void UpdateMap(){
-        /*
-        if (mapUpdate)
-        {
-            mapUpdate = false;
-            regionTexture.Update(regionImage);
-            regionOverlay.Texture = regionTexture;
-        }
-        */
     }
 }
 

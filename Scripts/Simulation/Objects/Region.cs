@@ -13,12 +13,12 @@ public class Region : PopObject, ISaveable
     [Key(3)] public bool coastal { get; set; }
     [Key(300)] public bool isWater { get; set; }
     [Key(4)] public int tradeWeight { get; set; } = 0;
-    [Key(5)] public int baseTradeWeight { get; set; } = 0;
+    //[Key(5)] public int baseTradeWeight { get; set; } = 0;
     [Key(8)] public float lastWealth { get; set; } = 0;
     [Key(9)] public float lastBaseWealth { get; set; } = 0;
     [Key(11)] public float baseWealth { get; set; }
     [Key(12)] public float wealth { get; set; }
-    [Key(13)] public int linkUpdateCountdown { get; set; } = 4;
+    [Key(13)] public int linkUpdateCountdown { get; set; } = 12;
     [Key(20)] public Vector2I pos;
 
     // trade
@@ -57,11 +57,18 @@ public class Region : PopObject, ISaveable
     [Key(36)] public bool frontier { get; set; }
     [IgnoreMember] public float arableLand { get; set; }
 
-    [Key(37)] public int populationDensity = 500;
-    [Key(38)] public long maxPopulation = 500 * 16;
+    [Key(37)] public int populationDensity = 1000;
+    [Key(38)] public long maxPopulation 
+    {
+        get
+        {
+            return (int)((populationDensity + (int)tradeIncome) * arableLand);
+        }
+    }
+    
     public void UpdateMaxPopulation()
     {
-        maxPopulation = populationDensity * landCount;
+        //maxPopulation = populationDensity * landCount;
     }
     public void PrepareForSave()
     {
@@ -372,17 +379,6 @@ public class Region : PopObject, ISaveable
         float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
         baseWealth = baseProduction * (arableLand / landCount);
     }
-    int GetRelativeTradeWeight(Region region)
-    {
-        float relativeTradeWeight = region.tradeWeight;
-
-        // Makes regions less likely to link with those in other states
-        if (region.GetController() != GetController())
-        {
-            //relativeTradeWeight *= 0.8f;
-        }  
-        return (int)relativeTradeWeight;
-    }
     public void LinkTrade()
     {
         // Default is that we are linked to nobody
@@ -398,15 +394,15 @@ public class Region : PopObject, ISaveable
 
 
             // If we have an equal or lower weight to a region then we cant be market leader
-            if (GetRelativeTradeWeight(region) >= tradeWeight)
+            if (region.tradeWeight >= tradeWeight)
             {
                 newMarketCenterStatus = false;
 
                 // We can only link to regions with a HIGHER trade weight
-                if (GetRelativeTradeWeight(region) != tradeWeight)
+                if (region.tradeWeight != tradeWeight)
                 {    
                     // If this region has a greater trade weight than our current link, link to it
-                    if (selectedLink == null || GetRelativeTradeWeight(region) > GetRelativeTradeWeight(selectedLink))
+                    if (selectedLink == null || region.tradeWeight > selectedLink.tradeWeight)
                     {
                         selectedLink = region;
                     }
@@ -454,7 +450,7 @@ public class Region : PopObject, ISaveable
     {
         // If our link isnt to no one, give our trade link some extra income
         if (tradeLink != null)
-        {   
+        {               
             lock (tradeLink)
             {
                 tradeLink.tradeIncome += (baseWealth * 0.1f) + tradeIncome;
@@ -465,7 +461,7 @@ public class Region : PopObject, ISaveable
     // Trade works almost like gravity, more trade weight means that more tiles link to you
     public void GetTradeWeight()
     {
-        GetBaseTradeWeight();
+        int baseTradeWeight = GetBaseTradeWeight();
 
         // Current depth in market expansion
         int depth = 0;
@@ -473,7 +469,7 @@ public class Region : PopObject, ISaveable
         // The maximum depth we will go before stopping, determines the growth range of markets
         // Region in markets will traverse up the link chain, ether reaching the maximum depth or market center
         // The further the chain goes the less impact the higher trade weights have
-        int maxDepth = 7;
+        int maxDepth = 5;
 
         List<float> tradeWeights = new List<float>();
         float multiplier = 1.0f;
@@ -492,7 +488,7 @@ public class Region : PopObject, ISaveable
             {
                 // Adds the weight to the chain multiplied by multiplier
                 // Note that this uses base trade weight so markets dont expand forever
-                tradeWeights.Add(nextRegion.baseTradeWeight * multiplier);
+                tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier);
                 // Then continues
                 currentRegion = nextRegion;
             }
@@ -506,10 +502,11 @@ public class Region : PopObject, ISaveable
         {
             // Our trade weight is set to the highest of the largest value in the chain and our base trade weight
             // This simulates how a market center is going to be shipping goods to the rest of its market
+            //GD.Print(tradeWeight + " vs " + baseTradeWeight);
             tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
         }
     }
-    public void GetBaseTradeWeight()
+    public int GetBaseTradeWeight()
     {
         
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
@@ -528,7 +525,7 @@ public class Region : PopObject, ISaveable
             politySizeTradeWeight = owner.regions.Count * 0.5f;
         }
 
-        baseTradeWeight = (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
+        return (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
     }    
     public void UpdateWealth()
     {

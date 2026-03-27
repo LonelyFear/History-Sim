@@ -60,19 +60,20 @@ public partial class TimeManager : Node
     public override void _Process(double delta)
     {
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
+        GetWaitTime();
+        currentTime += delta;
         if (forcePause)
         {
             return;
         }
-        GetWaitTime();
-        currentTime += delta;
+
         if (currentTime >= waitTime)
         {
             currentTime = 0;
             bool tickDone = tickTask == null || tickTask.IsCompleted;
             bool yearDone = yearTask == null || yearTask.IsCompleted;
             bool monthDone = monthTask == null || monthTask.IsCompleted;
-            bool drawDone = drawTask == null || drawTask.IsCompleted;
+            
             if (simStart && tickDone)
             {
                 if (doMonth && !debuggerMode)
@@ -100,16 +101,19 @@ public partial class TimeManager : Node
                             monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
                         }
                         TickGame();
-                        RenderGame(drawDone);
                     }
 
                 }
             }
-
+        }
+        if (mapManager.initialized)
+        {
+            RenderGame();
         }
     }
-    void RenderGame(bool drawDone)
+    public void RenderGame()
     {
+        bool drawDone = drawTask == null || drawTask.IsCompleted;
         // Hides region overlay 
         if (!mapManager.showRegionsCheckbox.ButtonPressed)
         {
@@ -139,7 +143,7 @@ public partial class TimeManager : Node
                 drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.habitableRegions));
             }
             
-        }        
+        }     
     }
     void GetWaitTime()
     {
