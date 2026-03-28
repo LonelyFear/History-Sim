@@ -285,15 +285,12 @@ public class Region : PopObject, ISaveable
     {
         Region region = PickRandomBorder();
         bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
-        //float overSizeExpandChance = owner.GetMaxRegionsCount()/(float)owner.regions.Count * 0.01f;
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        bool attackerVictory = Battle.CalcBattle(region, attackerPower, 200000);
-
-        if (attackerVictory)
+        if (Battle.CalcBattle(region, attackerPower, 2000000 + region.population))
         {
             owner.AddRegion(region);
         }
@@ -305,34 +302,16 @@ public class Region : PopObject, ISaveable
         if (targetRegion == null || targetRegion.conquered || targetRegion.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(targetRegion.GetController().id))
         {
             return;
-        }                 
+        }      
 
-        long attackerPower = 0;
-        long defenderPower = 0;
-        lock (GetController())
-        {
-            if (GetController() == null)
-            {
-                return;
-            }
-            attackerPower = GetController().GetArmyPower(true);
-        }
-        lock (targetRegion.GetController())
-        {
-            if (targetRegion.GetController() == null)
-            {
-                return;
-            }
-            defenderPower = targetRegion.GetController().GetArmyPower(true);
-        }
+        if (GetController() == null || targetRegion.GetController() == null) return;
         
-        bool attackerVictory = Battle.CalcBattle(targetRegion, attackerPower, defenderPower);
-        if (attackerVictory)
+        long attackerPower = GetController().GetArmyPower(true);
+        long defenderPower = targetRegion.GetController().GetArmyPower(true);
+
+        if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
         {
-            lock (targetRegion)
-            {
-                targetRegion.occupier = GetController();
-            }
+            targetRegion.occupier = GetController();
         }         
     }
     

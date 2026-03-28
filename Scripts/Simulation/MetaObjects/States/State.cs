@@ -114,13 +114,6 @@ public class State : Organization, ISaveable
     }        
     public bool StateCollapse()
     {
-        foreach (var warPair in diplomacy.warIds)
-        {
-            if (objectManager.GetWar(warPair.Key).warType == WarType.CIVIL_WAR)
-            {
-                return false;
-            }
-        }
         if (stability > minCollapseStability)
         {
             return false;
@@ -229,78 +222,6 @@ public class State : Organization, ISaveable
             region.conquered = true;
         }
     }
-    public void UpdateStability()
-    {
-        double stabilityTarget = 1;
-        //stabilityTarget -= diplomacy.warIds.Count * 0.05;
-
-        if (largestCultureId != GetRulingCulture().id)
-        {
-            stabilityTarget -= 0.25;
-        }
-
-        Character leader = objectManager.GetCharacter(leaderId);
-        if (leader == null)
-        {
-            stabilityTarget -= 0.25;
-        }
-
-        //stabilityTarget += totalWealth * 0.0001;
-
-        if (rulingPop == null)
-        {
-            stabilityTarget *= 0.1;
-        }
-        if (vassalManager.vassalIds.Count > GetMaxVassals())
-        {
-            stabilityTarget -= (vassalManager.vassalIds.Count / GetMaxVassals()) - 1;
-        }
-        //stabilityTarget -= (poorTaxRate + middleTaxRate + richTaxRate)/3d * 0.3;
-
-        stabilityTarget = Mathf.Clamp(stabilityTarget, 0, 1);
-        stability = Mathf.Lerp(stability, stabilityTarget, 0.05);
-    }
-    public void UpdateLoyalty()
-    {
-        double loyaltyTarget = 1;
-        State liege = vassalManager.GetLiege();
-        if (largestCultureId != liege.GetRulingCulture().id)
-        {
-            loyaltyTarget -= 0.1;
-        }
-        if (largestCultureId != liege.largestCultureId)
-        {
-            loyaltyTarget -= 0.25;
-        }
-        if (regions.Count > liege.regions.Count)
-        {
-            if (liege.regions.Count <= 0)
-            {
-                timeManager.forcePause = true;
-                simManager.mapManager.SelectMetaObject(liege);
-                GD.Print(liege.name);
-            }
-            loyaltyTarget -= (regions.Count - liege.regions.Count)/liege.regions.Count * 0.5;
-        }
-        loyaltyTarget -= liege.tributeRate;
-        loyaltyTarget -= Mathf.Min(capital.pos.DistanceTo(liege.capital.pos)/100d, 0.5f);
-
-        loyaltyTarget = Mathf.Clamp(loyaltyTarget, 0, 1);
-        loyalty = Mathf.Lerp(loyalty, loyaltyTarget, 0.05);
-    }
-    public List<State> GatherRebels()
-    {
-        List<State> rebels = [this];
-        foreach (State vassal in vassalManager.GetLiege().vassalManager.GetVassals())
-        {
-            double joinChance = 0.5;
-            if (rng.NextDouble() < joinChance && !rebels.Contains(vassal))
-            {
-                rebels.Add(vassal);
-            }
-        }
-        return rebels;
-    }
     
     public long GetArmyPower(bool realmPower = false)
     {
@@ -333,7 +254,7 @@ public class State : Organization, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 20 + (tech.societyLevel * 2);
+        return 10 + (tech.societyLevel * 2);
     }
     public int GetMaxVassals() {
         return 5;

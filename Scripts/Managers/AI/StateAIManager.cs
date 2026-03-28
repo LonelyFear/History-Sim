@@ -20,6 +20,10 @@ public partial class StateAIManager : UtilityAi.AiAgent
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
     [IgnoreMember] const float warChanceMultiplier = 0.01f;
+    [IgnoreMember] const float diploChangeChance = 0.1f;
+
+    // Curves
+    [IgnoreMember] Curve threatConfidenceCurve = GD.Load<Curve>("res://Curves/Simulation/ThreatConfidenceCurve.tres");
 
     public StateAIManager () {}
     public StateAIManager (UtilityAi.IAction[] aiActions, State sta)
@@ -44,17 +48,39 @@ public partial class StateAIManager : UtilityAi.AiAgent
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
             TickChangeRelations();
+            TickDiplomaticAgression();
         }
+    }
+    public void TickDiplomaticAgression()
+    {
+        foreach (var pair in diplomacyManager.relationIds)
+        {
+            State potentialEnemy = objectManager.GetState(pair.Key);
+            Relation relations = pair.Value;
+            Character leader = objectManager.GetCharacter(state.leaderId);
+            if (potentialEnemy == null || relations == null || leader == null || state.sovereignty != Sovereignty.INDEPENDENT || relations.opinion > 0.5 || relations.enemy || potentialEnemy.sovereignty != Sovereignty.INDEPENDENT) continue;
+
+            float animosity = 1f - (relations.opinion/0.5f);
+            float confidence = threatConfidenceCurve.Sample(relations.opinion);
+
+            if (rng.NextSingle() < animosity * confidence * warChanceMultiplier)
+            {
+                diplomacyManager.DeclareWar(potentialEnemy);
+            }
+        }     
     }
     public void TickChangeRelations()
     {
-        foreach (State border in state.independentBorderIds.Select(pair => objectManager.GetState(pair.Key)))
+        foreach (var pair in diplomacyManager.relationIds)
         {
-            Relation relations = diplomacyManager.GetRelationsWithState(border);
+            if (rng.NextSingle() >= diploChangeChance) continue;
+
+            State target = objectManager.GetState(pair.Key);
+            Relation relations = pair.Value;
             Character leader = objectManager.GetCharacter(state.leaderId);
-            if (border == null || relations == null || leader == null) continue;
+            if (target == null || relations == null || leader == null) continue;
             
-            Character otherLeader = objectManager.GetCharacter(border.leaderId);
+            Character otherLeader = objectManager.GetCharacter(target.leaderId);
             if (otherLeader == null) continue;
 
             float positiveChance = 0f;
@@ -68,20 +94,20 @@ public partial class StateAIManager : UtilityAi.AiAgent
             switch (leader.GetPersonalityLevel("agression"))
             {
                 case TraitLevel.HIGH:
-                    positiveChance = 0.1f;
+                    positiveChance = 0.2f;
                     neutralChance = 0.4f;
-                    // agressiveChance = 0.5                
+                    // agressiveChance = 0.4               
                     if (otherLeaderAgression == TraitLevel.HIGH)
                     {
-                        positiveChance = 0.05f;
-                        neutralChance = 0.35f;   
-                        // agressiveChance = 0.6                     
+                        positiveChance = 0.1f;
+                        neutralChance = 0.4f;   
+                        // agressiveChance = 0.5                     
                     }
                     break;
                 case TraitLevel.MEDIUM:
-                    positiveChance = 0.2f;
+                    positiveChance = 0.3f;
                     neutralChance = 0.4f;
-                    // agressiveChance = 0.4
+                    // agressiveChance = 0.3
                     break;
                 case TraitLevel.LOW:
                     positiveChance = 0.3f;
@@ -101,24 +127,23 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 // Positive outcome
                 if (!relations.rival)
                 {
-                    relations.ChangeOpinion(0.1f);
+                    relations.ChangeOpinion(0.05f);
                 } else
                 {
                     if (rng.NextSingle() < 0.1f)
                     {
                         // Ends rivalry
-                        relations.rival = false;
-                        border.diplomacy.GetRelationsWithState(state).rival = false;
+                        diplomacyManager.EndRivalry(target);
                     };
                 }                
             } else if (diplomacyScore < neutralChance + positiveChance)
             {
                 // Neutral outcome
-                relations.ChangeOpinion(0f);
+                // Just nothing :)
             } else
             {
                 // Negative outcome
-                relations.ChangeOpinion(-0.1f);
+                relations.ChangeOpinion(-0.05f);
             }
         }
     }

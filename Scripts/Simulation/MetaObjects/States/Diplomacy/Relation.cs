@@ -19,18 +19,13 @@ public class Relation
     public Relation() { }
     public Relation(float opinion = 0.5f, bool rival = false, bool enemy = false)
     {
-        SetOpinion(opinion);
+        this.opinion = Mathf.Clamp(opinion, minOpinion, maxOpinion);
         this.rival = rival;
         this.enemy = enemy;
-        
     }
-    public void ChangeOpinion(float amount)
+    public void ChangeOpinion(float change)
     {
-        opinion = Mathf.Clamp(opinion + amount, minOpinion, maxOpinion);
-    }
-    public void SetOpinion(float amount)
-    {
-        opinion = Mathf.Clamp(amount, minOpinion, maxOpinion);
+        opinion = Mathf.Clamp(opinion + change, minOpinion, maxOpinion);
     }
 }
 public enum Vassalage

@@ -747,7 +747,6 @@ public class SimManager
                 {
                     state.SuccessionUpdate();
                 }
-                state.UpdateStability();
                 if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
                     if (state.vassalManager.GetLiege() == null)
@@ -755,14 +754,11 @@ public class SimManager
                         GD.Print(state.vassalManager.liegeId);
                     }
                     state.timeAsVassal += TimeManager.ticksPerMonth;
-                    state.UpdateLoyalty();
                     state.diplomacy.JoinLiegeWars();
                 }   
 
                 state.vassalManager.UpdateRealm();
                 state.UpdateCapital();
-                
-                state.diplomacy.UpdateEnemies();
                 state.diplomacy.UpdateRelations();
   
             } catch (Exception e)

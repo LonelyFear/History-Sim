@@ -13,9 +13,10 @@ public class Market : NamedObject
 
     public void AddRegion(Region region)
     {
-        if (region.marketId != null && region.marketId != id)
+        Market originalMarket = objectManager.GetMarket(region.marketId);
+        if (originalMarket != null && region.marketId != id)
         {
-            objectManager.GetMarket(region.marketId).RemoveRegion(region);
+            originalMarket.RemoveRegion(region);
         }
         
         if (region.marketId != id)
@@ -26,7 +27,7 @@ public class Market : NamedObject
     }
     public void RemoveRegion(Region region)
     {
-        if (region.marketId == id)
+        if (region != null && region.marketId == id)
         {
             region.marketId = null;
             regionIds.Remove(region.id);

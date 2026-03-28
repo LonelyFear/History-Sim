@@ -32,6 +32,7 @@ public partial class StateDiplomacyManager
     {
         this.state = state;
     }
+    /*
     public void UpdateEnemies()
     {
         // Adds enemies from wars
@@ -63,6 +64,42 @@ public partial class StateDiplomacyManager
         }
         enemyIds = newEnemies;
     }
+    */
+
+    // Wars
+    public void DeclareWar(State target, WarType type = WarType.CONQUEST)
+    {
+        GD.Print($"Trying to start a war between {state.name} and {target.name}");
+        objectManager.StartWar([state], [target], type, state, target);
+    }
+    public void LeaveWarsWithState(State target)
+    {
+        if (!relationIds[target.id].enemy) return;
+
+        foreach (ulong warId in warIds.Keys.ToArray())
+        {
+            War war = objectManager.GetWar(warId);
+            if (war.participantIds.Contains(target.id)) war.RemoveParticipant(state);
+        }        
+    }
+    public void LeaveAllWars()
+    {
+        foreach (ulong warId in warIds.Keys.ToArray())
+        {
+            War war = objectManager.GetWar(warId);
+            war.RemoveParticipant(state);
+        }
+    }
+    public void JoinLiegeWars()
+    {
+        State liege = state.vassalManager.GetLiege();
+        
+        foreach (War war in liege.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
+        {
+            war.AddParticipant(state, liege.diplomacy.warIds[war.id]);
+        }  
+    } 
+    // Enemy Utility
     public void AddEnemy(ulong stateId)
     {
         EstablishRelations(stateId);
@@ -89,6 +126,8 @@ public partial class StateDiplomacyManager
             RemoveEnemy(stateId);     
         }
     }
+
+    // Relations
     public void UpdateRelations()
     {
         // All bordering or enemy states
@@ -106,14 +145,14 @@ public partial class StateDiplomacyManager
         // Establishes relations
         foreach (State target in relationStates)
         {
-            if (relationIds.ContainsKey(target.id) && target != null && target.id != stateId)
+            if (!relationIds.ContainsKey(target.id) && target != null && target.id != stateId)
             {
                 EstablishRelations(target.id);
             } 
         }  
-        UpdateRelationValues();
+        CalculateThreats();
     }
-    void UpdateRelationValues(){
+    void CalculateThreats(){
         foreach (var pair in relationIds){
             Relation relation = pair.Value;
             State relationState = objectManager.GetState(pair.Key);
@@ -147,23 +186,6 @@ public partial class StateDiplomacyManager
             relation.threat = Mathf.MoveToward(relation.threat, Mathf.Clamp(newThreat, 0, 1), threatAdjustmentRate);
         }
     }
-    public void LeaveAllWars()
-    {
-        foreach (ulong warId in warIds.Keys.ToArray())
-        {
-            War war = objectManager.GetWar(warId);
-            war.RemoveParticipant(stateId);
-        }
-    }
-    public void JoinLiegeWars()
-    {
-        State liege = state.vassalManager.GetLiege();
-        
-        foreach (War war in liege.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
-        {
-            war.AddParticipant(state.id, liege.diplomacy.warIds[war.id]);
-        }  
-    } 
     public void RemoveRelations(ulong? targetId)
     {
         if (relationIds.ContainsKey(targetId))
@@ -171,30 +193,38 @@ public partial class StateDiplomacyManager
             relationIds.Remove(targetId);
         }
     }
-    public void EstablishRelations(ulong? targetId, int opinion = 0)
+    public void EstablishRelations(ulong? targetId, float opinion = 0.5f)
     {
-        if (targetId == null || targetId == stateId || objectManager.GetState(targetId) == null)
+        if (relationIds.TryAdd(targetId, new Relation(opinion, false, false)))
         {
-            if (objectManager.GetState(targetId) == null)
-            {
-                GD.PushError("Trying to establish relations with nonexistent state");
-            }
-            if (targetId == stateId)
-            {
-                GD.PushError("Trying to establish relations with self");
-            }
-            return;
-        }
-
-        if (!relationIds.ContainsKey(targetId))
-        {
-            relationIds.Add(targetId, new Relation(opinion, false, false));
-
             if (state.borderingStateIds.TryGetValue((ulong)targetId, out int borderLength))
             {
                 relationIds[targetId].borderLength = borderLength;
             }
         }
+    }
+    // Relations Utilities
+    public void DeclareRivalry(State target)
+    {
+        EstablishRelations(target.id);
+        GetRelationsWithState(target).rival = true;
+
+        target.diplomacy.EstablishRelations(state.id);
+        target.diplomacy.GetRelationsWithState(state).rival = true;        
+    }
+
+    public void EndRivalry(State target)
+    {
+        EstablishRelations(target.id);
+        GetRelationsWithState(target).rival = true;
+
+        target.diplomacy.EstablishRelations(state.id);
+        target.diplomacy.GetRelationsWithState(state).rival = true;        
+    }
+    // Check utilities
+    public bool IsAtWarWithState(State otherState)
+    {
+        return relationIds[otherState.id].enemy;
     }
     public bool IsAlliedToState(State otherState)
     {
@@ -209,153 +239,16 @@ public partial class StateDiplomacyManager
         }
         return false;
     }
-
-    public Relation GetRelationsWithState(State state)
+    public Relation GetRelationsWithState(State s)
     {
         try
         {
             Relation relation = null;
-            relationIds.TryGetValue(state.id, out relation);
+            relationIds.TryGetValue(s.id, out relation);
             return relation;            
         } catch
         {
             return null;
         }
     }
-   
-    /*
-    public void EndWars()
-    {
-        foreach (var warPair in warIds)
-        {
-            War war = objectManager.GetWar(warPair.Key);
-            bool isAttacker = warPair.Value;
-
-            if (war.primaryAgressorId != stateId && war.primaryDefenderId != stateId)
-            {
-                continue;
-            }
-            // If one of the leading parties are no longer valid war leaders
-            if (objectManager.GetState(war.primaryAgressorId).vassalManager.sovereignty != Sovereignty.INDEPENDENT || 
-            objectManager.GetState(war.primaryDefenderId).vassalManager.sovereignty != Sovereignty.INDEPENDENT)
-            {
-                war.RemoveParticipant(stateId);
-                continue;
-            }
-            // Below is if state has authority to end wars
-            double warEndChance = 0;
-            bool enemyCapitualated = isAttacker ? objectManager.GetState(war.primaryDefenderId).capitualated : objectManager.GetState(war.primaryAgressorId).capitualated;
-            switch (war.warType)
-            {
-                default:
-                    //warEndChance = Mathf.Max(relationIds[war.primaryDefenderId], 0) * 0.01;
-                    if (enemyCapitualated)
-                    {
-                        warEndChance = 1;
-                    }
-                    break;
-            }
-            // If there isnt a chance of the war ending just skip
-            if (rng.NextSingle() >= warEndChance)
-            {
-                continue;
-            }
-            List<ulong> formerDefenderIds = [..war.defenderIds];
-            List<ulong> formerAttackerIds = [..war.attackerIds];
-            objectManager.EndWar(war); // Just ends the war
-            // War end terms, assumes state is the victor (Which it should be)
-            switch (war.warType)
-            {
-                case WarType.CONQUEST:
-                    // Wars of conquest
-                    try
-                    {
-                        if (isAttacker)
-                        {
-                            // Attacker victory
-                            foreach (ulong defenderId in formerDefenderIds)
-                            {
-                                State defender = objectManager.GetState(defenderId);
-                                if (!defender.capitualated || defender.capital.occupier == null)
-                                {
-                                    continue;
-                                }
-                                //GD.Print("Capitualated Defender Puppeted");
-                                defender.capital.occupier.vassalManager.AddVassal(defenderId);
-                            }
-                        }
-                        else
-                        {
-                            // Defender Victory
-                            foreach (ulong attackerId in formerAttackerIds)
-                            {
-                                State attacker = objectManager.GetState(attackerId);
-                                if (!attacker.capitualated || attacker.capital.occupier == null)
-                                {
-                                    continue;
-                                }
-                                //GD.Print("Capitualated Attacker Puppeted");
-                                attacker.capital.occupier.vassalManager.AddVassal(attackerId);
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-                    break;
-                case WarType.REVOLT:
-                    try
-                    {
-                        if (isAttacker)
-                        {
-                            foreach (State vassal in objectManager.GetState(war.primaryDefenderId).vassalManager.GetVassals())
-                            {
-                                //simManager.GetState(war.primaryDefenderId).RemoveVassal(vassal);
-                            }
-                        }
-                        else
-                        {
-                            foreach (ulong rebelId in war.attackerIds)
-                            {
-                                State rebel = objectManager.GetState(rebelId);
-                                state.vassalManager.AddVassal(rebelId);
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-
-                    break;
-                case WarType.CIVIL_WAR:
-                    try
-                    {
-                        if (isAttacker)
-                        {
-                            //objectManager.DeleteState(objectManager.GetState(war.primaryDefenderId));                                
-                        }
-                        else
-                        {
-                            foreach (ulong rebelId in war.attackerIds)
-                            {
-                                State rebel = objectManager.GetState(rebelId);
-                                if (rebel != null)
-                                {
-                                    state.vassalManager.AddVassal(rebelId);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        GD.PushError(e);
-                    }
-
-                    break;
-            }
-        }
-    }
-    */
 }

@@ -4,6 +4,16 @@ using System;
 public partial class DebugLabel : Label
 {
     [Export] MapManager map;
+    SimManager simManager;
+    ObjectManager objectManager;
+    public override void _Ready()
+    {
+		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += Init;
+	}
+    void Init() {
+        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        objectManager = simManager.objectManager;
+    }
     public override void _Process(double delta)
     {
         if (map != null)
@@ -15,10 +25,12 @@ public partial class DebugLabel : Label
                 //string leaderText = "Leader: None";
                 Text = "State: " + state.name;
                 AddLine("Population: " + state.population.ToString("#,###0"));
-                AddLine("Ai Weights: ");
-                foreach (var pair in state.AIManager.utilityScores)
+                AddLine("Relations: ");
+                foreach (var pair in state.diplomacy.relationIds)
                 {
-                    AddLine(pair.Key + ": " + pair.Value);
+                    State relationState = objectManager.GetState(pair.Key);
+                    Relation relation = pair.Value;
+                    AddLine(relationState.name + ": " + Math.Round(Mathf.Lerp(-100, 100, relation.opinion)));
                 }
             } else {
                 Text = "";

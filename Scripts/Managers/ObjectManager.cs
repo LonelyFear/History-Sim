@@ -208,7 +208,7 @@ public class ObjectManager
         foreach (ulong warId in deletedState.diplomacy.warIds.Keys)
         {
             War war = GetWar(warId);
-            war.RemoveParticipant(deletedState.id);
+            war.RemoveParticipant(deletedState);
         }
         foreach (ulong vassalId in deletedState.vassalManager.vassalIds.ToArray())
         {
@@ -380,9 +380,9 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(tradeZone.id);
         simManager.marketIds.Remove(tradeZone.id);     
     }
-    public War StartWar(List<State> atk, List<State> def, WarType warType, ulong agressorLeader, ulong defenderLeader)
+    public War StartWar(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
     {
-        if (agressorLeader == defenderLeader || GetState(agressorLeader) == null || GetState(defenderLeader) == null)
+        if (agressorLeader == defenderLeader || agressorLeader == null || defenderLeader == null)
         {
             return null;
         }
@@ -390,13 +390,13 @@ public class ObjectManager
         {
             id = GetId(),
             warType = warType,
-            primaryAgressorId = agressorLeader,
-            primaryDefenderId = defenderLeader,
+            primaryAgressorId = agressorLeader.id,
+            primaryDefenderId = defenderLeader.id,
             tickCreated = timeManager.ticks,
         };
-        CreateHistoricalEvent([GetState(agressorLeader), GetState(defenderLeader)], EventType.WAR_DECLARATION);
-        war.InitWarLead(true);
-        war.InitWarLead(false);
+        CreateHistoricalEvent([agressorLeader, defenderLeader], EventType.WAR_DECLARATION);
+        war.AddParticipant(agressorLeader, true);
+        war.AddParticipant(defenderLeader, false);
         war.NameWar();
 
         simManager.warIds.Add(war.id, war);
@@ -411,7 +411,8 @@ public class ObjectManager
             simManager.warIds.Remove(war.id);
             foreach (ulong stateId in war.participantIds.ToArray())
             {
-                war.RemoveParticipant(stateId);           
+                State state = GetState(stateId);
+                war.RemoveParticipant(state);           
             }            
         } catch (Exception e)
         {
