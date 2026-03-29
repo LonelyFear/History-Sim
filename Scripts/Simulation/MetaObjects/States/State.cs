@@ -18,8 +18,8 @@ public class State : Organization, ISaveable
 
     [Key(6)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     
-    [IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
-    [Key(7)] public HashSet<ulong> regionsIDs { get; set; } = new HashSet<ulong>();
+    //[IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
+    //[Key(7)] public HashSet<ulong> regionsIds { get; set; } = new HashSet<ulong>();
     [IgnoreMember] public Region capital { get; set; }
     [Key(8)] public ulong capitalID;
     
@@ -39,10 +39,8 @@ public class State : Organization, ISaveable
     // Alliances
     [Key(21)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     [Key(36)] public ulong? realmId;
-    [Key(37)] public List<ulong> allianceIds = new List<ulong>();
-    // Diplomacy Managers
     [Key(40)] public StateDiplomacyManager diplomacy = new StateDiplomacyManager();
-    [Key(41)] public StateVassalManager vassalManager = new StateVassalManager();
+    //[Key(41)] public StateVassalManager vassalManager = new StateVassalManager();
     //[Key(22)] public Dictionary<ulong, int> borderingStatesIDs { get; set; }
 
     [Key(27)] public Tech tech = new Tech();
@@ -62,16 +60,15 @@ public class State : Organization, ISaveable
     {
         PreparePopObjectForSave();
         capitalID = capital.id;
-        regionsIDs = [.. regions.Select(r => r.id)];
+        //regionsIDs = [.. regions.Select(r => r.id)];
     }
     public void LoadFromSave()
     {
         AIManager.InitAI();
         LoadPopObjectFromSave();
         capital = objectManager.GetRegion(capitalID);
-        regions = [.. regionsIDs.Select(r => objectManager.GetRegion(r))];
+        //regions = [.. regionsIDs.Select(r => objectManager.GetRegion(r))];
         diplomacy.Init(this);
-        vassalManager.Init(this);
     }
     public void UpdateCapital()
     {
@@ -97,8 +94,9 @@ public class State : Organization, ISaveable
         {
             if (!capitualated)
             {
-                foreach (Region region in regions)
+                foreach (ulong regionId in regionIds)
                 {
+                    Region region = objectManager.GetRegion(regionId);
                     if (capital.occupier != this && capital.occupier != null)
                     {
                         region.occupier = capital.occupier;
@@ -182,26 +180,25 @@ public class State : Organization, ISaveable
         switch (sovereignty)
         {
             case Sovereignty.COLONY:
-                displayColor = vassalManager.GetLiege().color;
+                displayColor = diplomacy.GetLiege().color;
                 break;
             case Sovereignty.PROVINCE:
-                displayColor = vassalManager.GetLiege().color;
+                displayColor = diplomacy.GetLiege().color;
                 break;
             case Sovereignty.PUPPET:
-                displayColor = vassalManager.GetLiege().color;
+                displayColor = diplomacy.GetLiege().color;
                 break;
         }
     }
     public void AddRegion(Region region)
     {
-        if (!regions.Contains(region))
+        if (!regionIds.Contains(region.id))
         {
-            if (region.owner != null)
-            {
-                region.owner.RemoveRegion(region);
-            }
+            region.owner?.RemoveRegion(region);
             region.owner = this;
-            regions.Add(region);
+
+            regionIds.Add(region.id);
+
             foreach (Pop pop in region.pops)
             {
                 pops.Add(pop);
@@ -211,16 +208,15 @@ public class State : Organization, ISaveable
     }
     public void RemoveRegion(Region region)
     {
-        if (regions.Contains(region))
+        if (!regionIds.Contains(region.id)) return;
+
+        region.owner = null;
+        regionIds.Remove(region.id);
+        foreach (Pop pop in region.pops)
         {
-            region.owner = null;
-            regions.Remove(region);
-            foreach (Pop pop in region.pops)
-            {
-                pops.Remove(pop);
-            }
-            region.conquered = true;
+            pops.Remove(pop);
         }
+        region.conquered = true;
     }
     
     public long GetArmyPower(bool realmPower = false)
@@ -229,17 +225,17 @@ public class State : Organization, ISaveable
         {
             return objectManager.GetAlliance(realmId).GetAllianceArmyPower();
         }
-        float interiorArmyPower = GetManpower() / (float)regions.Count;
+        float interiorArmyPower = GetManpower();
         return (long)interiorArmyPower;
     }
 
     public long GetManpower()
     {
-        return manpower;
+        return (long)(workforce * mobilizationRate);
     }
     public int GetSize(bool includeRealm)
     {
-        int size = regions.Count;
+        int size = regionIds.Count;
         if (realmId != null && sovereignty == Sovereignty.INDEPENDENT && includeRealm)
         {
             size = 0;
@@ -247,7 +243,7 @@ public class State : Organization, ISaveable
             foreach (ulong memberId in realm.memberStateIds)
             {
                 State memberState = objectManager.GetState(memberId);
-                size += memberState.regions.Count;
+                size += memberState.regionIds.Count;
             }
         }
         return size;
@@ -280,7 +276,7 @@ public class State : Organization, ISaveable
                 desc += "an independent state";
                 break;
             default:
-                desc += $"a vassal of the {GenerateUrlText(vassalManager.GetLiege(), vassalManager.GetLiege().name)}";
+                desc += $"a vassal of the {GenerateUrlText(diplomacy.GetLiege(), diplomacy.GetLiege().name)}";
                 break;
         }
         desc += $" lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}. "
@@ -335,14 +331,18 @@ public class State : Organization, ISaveable
         return text;
     }    
 }   
-
+public enum Sovereignty
+{
+    INDEPENDENT = 3,
+    PUPPET = 2,
+    COLONY = 1,
+    PROVINCE = 0
+}
 public enum GovernmentType {
     REPUBLIC,
     MONARCHY,
     AUTOCRACY,
 }
-
-
 public enum WarType
 {
     CONQUEST,

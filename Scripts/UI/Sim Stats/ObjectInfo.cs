@@ -94,7 +94,7 @@ public partial class ObjectInfo : Control
                         }
 
                         specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("##0%");
-                        if (state.vassalManager.liegeId != null)
+                        if (state.diplomacy.liegeId != null)
                         {
                             specialLabel.Text += "\n" + "Loyalty: " + state.loyalty.ToString("##0%");
                         }
@@ -105,11 +105,12 @@ public partial class ObjectInfo : Control
                         {
                             foreach (War war in state.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)).ToArray())
                             {
+                                if (war == null) continue;
                                 yearAge = timeManager.GetYear(war.GetAge());
                                 monthAge = timeManager.GetMonth(war.GetAge());
                                 specialLabel.Text += "\n" + $"{war.name}";
-                                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.primaryAgressorId}]{objectManager.GetState(war.primaryAgressorId).name}[/url][/color]";
-                                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.primaryDefenderId}]{objectManager.GetState(war.primaryDefenderId).name}[/url][/color]";
+                                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{objectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
+                                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{objectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
                                 specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
                             }
                         }

@@ -5,100 +5,103 @@ using Godot;
 using MessagePack;
 using MessagePack.Formatters;
 [MessagePackObject]
-public class War : NamedObject
+public partial class War : NamedObject
 {
-    [Key(0)] public List<ulong> attackerIds { get; set; } = new List<ulong>();
-    [Key(1)] public List<ulong> defenderIds { get; set; } = new List<ulong>();
-    [Key(2)] public List<ulong> participantIds = new List<ulong>();
-    [Key(3)] public ulong primaryAgressorId;
-    [Key(4)] public ulong primaryDefenderId;
+    [Key(1)] public Dictionary<WarSide, List<ulong>> sideIds = new Dictionary<WarSide, List<ulong>>();
+    [Key(2)] public HashSet<ulong> participantIds {get; private set;} = [];
+    [Key(22)] public List<ulong> removedIds = [];
+    [Key(3)] public Dictionary<WarSide, ulong> warLeaderIds = new Dictionary<WarSide, ulong>();
     [Key(5)] public WarType warType { get; set; } = WarType.CONQUEST;
-    [IgnoreMember] static Random rng = new Random();
+    public War() {}
+    public void InitWar()
+    {
+        sideIds[WarSide.AGRESSOR] = [];
+        sideIds[WarSide.DEFENDER] = [];
+    }
     public void NameWar()
     {
+        State agressor = objectManager.GetState(warLeaderIds[WarSide.AGRESSOR]);
+        State defender = objectManager.GetState(warLeaderIds[WarSide.DEFENDER]);
         switch (warType)
         {
             case WarType.CONQUEST:
-                string[] warNames = { "War", "Conflict" };
-                name = $"{objectManager.GetState(primaryAgressorId).baseName}-{objectManager.GetState(primaryDefenderId).baseName} {warNames.PickRandom()}";
+                name = $"{agressor.baseName}-{defender.baseName} War";
                 break;
             case WarType.CIVIL_WAR:
-                name = $"{NameGenerator.GetDemonym(objectManager.GetState(primaryDefenderId).name)} Civil War";
+                name = $"{NameGenerator.GetDemonym(defender.name)} Civil War";
                 break;
             case WarType.REVOLT:
-                warNames = ["Revolution", "Uprising", "Rebellion", "Revolt"];
-                name = $"{NameGenerator.GetDemonym(objectManager.GetState(primaryAgressorId).name)} {warNames.PickRandom()}";
+                name = $"{NameGenerator.GetDemonym(agressor.name)} Rebellion";
                 break;
         }
     }
-    public void AddParticipant(State state, bool isAttacker)
+    public static WarSide GetOtherSide(WarSide side)
     {
-        if (dead) return;
-        if (participantIds.Contains(state.id))
+        return (WarSide)Mathf.PosMod((int)side + 1, 2);
+    }
+
+    public void AddParticipant(State state, WarSide side)
+    {
+        if (participantIds.Contains(state.id)) return;
+
+        WarSide opposingSide = (WarSide)Mathf.PosMod((int)side + 1, 2);
+
+        sideIds[side].Add(state.id);
+        state.diplomacy.SetEnemies(sideIds[opposingSide], true);
+
+        foreach (ulong enemyId in sideIds[opposingSide])
         {
-            return;
+            State enemy = objectManager.GetState(enemyId);
+            enemy.diplomacy.SetEnemy(state.id, true);
         }
-
-        if (isAttacker)
-        {
-            attackerIds.Add(state.id);
-            state.diplomacy.AddEnemies(defenderIds);
-
-            foreach (ulong defenderId in defenderIds)
-            {
-                State defender = objectManager.GetState(defenderId);
-                defender.diplomacy.AddEnemy(state.id);
-            }
-        }
-        else
-        {
-            defenderIds.Add(state.id);
-            state.diplomacy.AddEnemies(attackerIds);
-
-            foreach (ulong attackerId in attackerIds)
-            {
-                State attacker = objectManager.GetState(attackerId);
-                attacker.diplomacy.AddEnemy(state.id);
-            }
-        }    
-        state.diplomacy.warIds.Add(id, isAttacker);
+ 
+        state.diplomacy.warIds[id] = side;
         participantIds.Add(state.id);
     }
     public void RemoveParticipant(State state)
     {
-        if (dead) return;
-
-        // Removes from participants list
-        state.diplomacy.warIds.Remove(id);
-        participantIds.Remove(state.id);
+        // Gets the side this state is on
+        WarSide side = WarSide.DEFENDER;
+        try
+        {
+            side = state.diplomacy.warIds[id];
+        } catch (Exception e)
+        {
+            GD.PushError(state.name);
+            GD.PushError(participantIds.Contains(state.id));
+            GD.PushError(e);
+        }
+        
+        if (!participantIds.Remove(state.id)) return;
 
         // Removes enemies and sided participation
-        // Removes enemies of attacker
-        if (attackerIds.Remove(state.id))
+        if (sideIds[side].Remove(state.id))
         {
-            state.diplomacy.RemoveEnemies(defenderIds);
-            foreach (ulong defenderId in defenderIds)
-            {
-                State defender = objectManager.GetState(defenderId);
-                defender.diplomacy.RemoveEnemy(state.id);
-            }
-        }
-        // Removes enemies of defender
-        else if (defenderIds.Remove(state.id))
-        {
-            state.diplomacy.RemoveEnemies(attackerIds);
-            foreach (ulong attackerId in attackerIds)
-            {
-                State attacker = objectManager.GetState(attackerId);
-                attacker.diplomacy.RemoveEnemy(state.id);
-            }
-        }
+            // Gets opposition
+            WarSide opposingSide = (WarSide)Mathf.PosMod((int)side + 1, 2);
+            state.diplomacy.SetEnemies(sideIds[opposingSide], false);
 
-        bool warEndConditions = attackerIds.Count < 1 || defenderIds.Count < 1 || primaryAgressorId == state.id || primaryDefenderId == state.id;
+            // Makes it so our (former) opposition wont fight us
+            foreach (ulong enemyId in sideIds[opposingSide])
+            {
+                State enemy = objectManager.GetState(enemyId);
+                enemy.diplomacy.SetEnemy(state.id, false);
+            }
+        }
+        // Removes from participants list
+        state.diplomacy.warIds.Remove(id);
+
+        // Checks if we can end the war
+        bool warEndConditions = sideIds[WarSide.AGRESSOR].Count < 1 || sideIds[WarSide.DEFENDER].Count < 1 || warLeaderIds[side] == state.id;
         if (warEndConditions)
         {
             objectManager.EndWar(this);
         }
     }
-    
+
+    public enum WarSide
+    {
+        AGRESSOR,
+        DEFENDER
+    }
 }

@@ -7,19 +7,20 @@ using MessagePack;
 public class Organization : PopObject
 {
     // Military
-    [Key(9)] public long manpower { get; set; } = 0;
+    [Key(9)] public long manpower { get; set; }
     
     // Political
-    [Key(10)] public int occupiedLand { get; set; } = 0;
-    [IgnoreMember] public Dictionary<ulong, int> borderingAllianceIds { get; set; } = new Dictionary<ulong, int>();
-    [IgnoreMember] public Dictionary<ulong, int> borderingStateIds { get; set; } = new Dictionary<ulong, int>();
-    [IgnoreMember] public Dictionary<ulong, int> independentBorderIds { get; set; } = new Dictionary<ulong, int>();
+    [Key(10)] public int occupiedLand { get; set; }
+    [IgnoreMember] public Dictionary<ulong, int> borderingAllianceIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, int> borderingStateIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, int> independentBorderIds { get; set; } = [];
     // Economy
-    [Key(11)] public float totalWealth { get; set; } = 0;
-    [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = new Dictionary<SocialClass, long>();
-    [IgnoreMember] public Dictionary<SocialClass, long> maxJobs = new Dictionary<SocialClass, long>();
+    [Key(11)] public float totalWealth { get; set; }
+    [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = [];
+    [IgnoreMember] public Dictionary<SocialClass, long> maxJobs = [];
+    [Key(700)] public HashSet<ulong> regionIds { get; set; } = [];
     
-    public void CountOrgPopulation(Region[] regionsToCheck)
+    public override void CountPopulation()
     {
         long countedP = 0;
         long countedW = 0;
@@ -41,8 +42,9 @@ public class Organization : PopObject
         float countedWealth = 0;
         int occRegions = 0;
         // If realm leader uses realm stats
-        foreach (Region region in regionsToCheck)
+        foreach (ulong regionId in regionIds)
         {
+            Region region = objectManager.GetRegion(regionId);
             // Adds up population to state total
             countedP += region.population;
             countedW += region.workforce;
@@ -51,7 +53,7 @@ public class Organization : PopObject
             if (region.frontier || region.border)
             {
                 // Counts up occupied regions
-                if (region.occupier != null && regionsToCheck.Contains(region))
+                if (region.occupier != null)
                 {
                     occRegions++;
                 }
@@ -84,7 +86,7 @@ public class Organization : PopObject
                     }  
 
                     // Gets the alliances this state is in
-                    foreach (ulong allianceId in border.owner.allianceIds)
+                    foreach (ulong allianceId in border.owner.diplomacy.allianceIds)
                     {
                         Alliance borderingAlliance = objectManager.GetAlliance(allianceId);
 

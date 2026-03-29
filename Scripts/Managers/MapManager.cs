@@ -253,7 +253,7 @@ public partial class MapManager : Node2D
                         newSelected = hoveredRegion;
                         if (hoveredState != null)
                         {
-                            newSelected = hoveredState.vassalManager.GetOverlord(true);
+                            newSelected = hoveredState.diplomacy.GetOverlord();
                         }
                     }
                     else
@@ -320,7 +320,7 @@ public partial class MapManager : Node2D
             case MapModes.REALM:
                 if (region.pops.Count > 0)
                 {
-                    color = new Color(0.2f, 0.2f, 0.2f);
+                    color = new Color(0.2f, 0.2f, 0.2f, 0);
                     if (regionOwner != null)
                     {
                         color = regionOwner.displayColor;
@@ -348,7 +348,7 @@ public partial class MapManager : Node2D
                         case ObjectType.STATE:
                             Color cBefore = color;
                             // Darkens Unrelated Regions
-                            if (region.owner == null || region.owner.vassalManager.GetOverlord(true) != ((State)selectedMetaObj).vassalManager.GetOverlord(true))
+                            if (region.owner == null || region.owner.diplomacy.GetOverlord() != ((State)selectedMetaObj).diplomacy.GetOverlord())
                             {
                                 color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.7f);
                             }                           
@@ -359,7 +359,7 @@ public partial class MapManager : Node2D
             case MapModes.POLITIY:
                 if (region.pops.Count > 0)
                 {
-                    color = new Color(0.2f, 0.2f, 0.2f);
+                    color = new Color(0.2f, 0.2f, 0.2f, 0);
                     if (region.owner != null)
                     {
                         color = region.owner.displayColor;
@@ -397,7 +397,7 @@ public partial class MapManager : Node2D
                             }
 
                             // Highlights Realms
-                            if (region.owner.vassalManager.GetOverlord(true) == selectedMetaObj)
+                            if (region.owner.diplomacy.GetOverlord() == selectedMetaObj)
                             {
                                 color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], colorDarkness);
                             }

@@ -224,7 +224,7 @@ public class Region : PopObject, ISaveable
     }
     public void UpdateOccupation()
     {
-        if (owner == null || occupier == null || !owner.diplomacy.enemyIds.Contains(occupier.id))
+        if (owner == null || occupier == null || !owner.diplomacy.IsEnemyWithState(occupier))
         {
             occupier = null;
         }
@@ -276,7 +276,7 @@ public class Region : PopObject, ISaveable
         }
         if (owner != null)
         {
-            return owner.vassalManager.GetOverlord(true);
+            return owner.diplomacy.GetOverlord();
         }
         return null;
     }    
@@ -285,7 +285,7 @@ public class Region : PopObject, ISaveable
     {
         Region region = PickRandomBorder();
         bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
-        if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
+        if (!checks || owner.regionIds.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
         attackerPower = owner.GetArmyPower();
@@ -299,7 +299,7 @@ public class Region : PopObject, ISaveable
     public void MilitaryConquest()
     {
         Region targetRegion = PickRandomBorder();
-        if (targetRegion == null || targetRegion.conquered || targetRegion.GetController() == null || GetController() == null || !GetController().diplomacy.enemyIds.Contains(targetRegion.GetController().id))
+        if (targetRegion == null || targetRegion.conquered || targetRegion.GetController() == null || GetController() == null || !GetController().diplomacy.IsEnemyWithState(targetRegion.GetController()))
         {
             return;
         }      
@@ -501,7 +501,7 @@ public class Region : PopObject, ISaveable
         float politySizeTradeWeight = 0f;
         if (owner != null && owner.capital == this)
         {
-            politySizeTradeWeight = owner.regions.Count * 0.5f;
+            politySizeTradeWeight = owner.regionIds.Count * 0.5f;
         }
 
         return (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);

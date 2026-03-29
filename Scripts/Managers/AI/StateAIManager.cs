@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
 using System.Linq.Expressions;
@@ -14,8 +15,8 @@ public partial class StateAIManager : UtilityAi.AiAgent
     [Key(0)] public ulong stateId;
     [IgnoreMember] public State state;
     [IgnoreMember] public StateDiplomacyManager diplomacyManager;
-    [IgnoreMember] public StateVassalManager vassalManager;
     [Key(2)] int ticks = 0;
+    [Key(3)] List<ulong> endedWarIds;
 
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
@@ -37,7 +38,6 @@ public partial class StateAIManager : UtilityAi.AiAgent
     {
         state = objectManager.GetState(stateId);
         diplomacyManager = state.diplomacy;
-        vassalManager = state.vassalManager;
     }  
     public float NormalizeNegative(float value) {return (value - 50) / 50f;}
     public float Normalize(float value) {return value / 100f;}
@@ -49,16 +49,52 @@ public partial class StateAIManager : UtilityAi.AiAgent
         {
             TickChangeRelations();
             TickDiplomaticAgression();
+            TickEndWars();
         }
+    }
+    public void TickEndWars()
+    {
+        foreach (var pair in state.diplomacy.warIds)
+        {
+            War war = objectManager.GetWar(pair.Key);
+            War.WarSide side = pair.Value;
+            War.WarSide enemySide = War.GetOtherSide(side);
+
+            // Surrender Via Capitulation
+            if (state.capitualated && war.warLeaderIds[side] == state.id)
+            {
+                objectManager.GetState(war.warLeaderIds[enemySide]).AIManager.CalcWarVictory(war, enemySide);
+            }
+        }
+    }
+    public void CalcWarVictory(War war, War.WarSide side)
+    {
+        War.WarSide enemySide = War.GetOtherSide(side);
+        List<ulong> enemyIds = [..war.sideIds[enemySide]];
+        switch (war.warType)
+        {
+            case WarType.CONQUEST:
+                foreach (ulong enemyId in enemyIds)
+                {
+                    State enemyState = objectManager.GetState(enemyId);
+                    //GD.Print(war.participantIds.Contains(enemyId));
+                    enemyState.diplomacy.RemoveAllVassals();
+                    state.diplomacy.AddVassal(enemyState, Sovereignty.PUPPET);
+                }
+                break;
+        } 
+        objectManager.EndWar(war);
     }
     public void TickDiplomaticAgression()
     {
+        if (state.sovereignty != Sovereignty.INDEPENDENT) return;
+
         foreach (var pair in diplomacyManager.relationIds)
         {
             State potentialEnemy = objectManager.GetState(pair.Key);
             Relation relations = pair.Value;
             Character leader = objectManager.GetCharacter(state.leaderId);
-            if (potentialEnemy == null || relations == null || leader == null || state.sovereignty != Sovereignty.INDEPENDENT || relations.opinion > 0.5 || relations.enemy || potentialEnemy.sovereignty != Sovereignty.INDEPENDENT) continue;
+            if (potentialEnemy == null || relations == null || leader == null || relations.opinion > 0.5 || !diplomacyManager.CanFightState(potentialEnemy)) continue;
 
             float animosity = 1f - (relations.opinion/0.5f);
             float confidence = threatConfidenceCurve.Sample(relations.opinion);
@@ -97,12 +133,6 @@ public partial class StateAIManager : UtilityAi.AiAgent
                     positiveChance = 0.2f;
                     neutralChance = 0.4f;
                     // agressiveChance = 0.4               
-                    if (otherLeaderAgression == TraitLevel.HIGH)
-                    {
-                        positiveChance = 0.1f;
-                        neutralChance = 0.4f;   
-                        // agressiveChance = 0.5                     
-                    }
                     break;
                 case TraitLevel.MEDIUM:
                     positiveChance = 0.3f;
@@ -110,15 +140,9 @@ public partial class StateAIManager : UtilityAi.AiAgent
                     // agressiveChance = 0.3
                     break;
                 case TraitLevel.LOW:
-                    positiveChance = 0.3f;
-                    neutralChance = 0.5f;
+                    positiveChance = 0.4f;
+                    neutralChance = 0.4f;
                     // agressiveChance = 0.2
-                    if (otherLeaderAgression == TraitLevel.LOW)
-                    {
-                        positiveChance = 0.4f;
-                        neutralChance = 0.5f;   
-                        // agressiveChance = 0.1                     
-                    }
                     break;
             }
 
@@ -127,13 +151,13 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 // Positive outcome
                 if (!relations.rival)
                 {
-                    relations.ChangeOpinion(0.05f);
+                    diplomacyManager.ChangeOpinion(target, 0.05f);
                 } else
                 {
                     if (rng.NextSingle() < 0.1f)
                     {
                         // Ends rivalry
-                        diplomacyManager.EndRivalry(target);
+                        diplomacyManager.SetRivalry(target, false);
                     };
                 }                
             } else if (diplomacyScore < neutralChance + positiveChance)
@@ -143,7 +167,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
             } else
             {
                 // Negative outcome
-                relations.ChangeOpinion(-0.05f);
+                diplomacyManager.ChangeOpinion(target, -0.05f);
             }
         }
     }

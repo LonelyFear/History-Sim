@@ -489,8 +489,6 @@ public class SimManager
 
         StateDiplomacyManager.objectManager = objectManager;
 
-        StateVassalManager.objectManager = objectManager;
-
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
 
@@ -729,7 +727,7 @@ public class SimManager
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
-            if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null)
+            if (state.regionIds.Count < 1 || state.StateCollapse() || state.rulingPop == null)
             {
                 objectManager.DeleteState(state);
                 continue;
@@ -749,15 +747,17 @@ public class SimManager
                 }
                 if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
+                    /*
                     if (state.vassalManager.GetLiege() == null)
                     {
                         GD.Print(state.vassalManager.liegeId);
                     }
+                    */
                     state.timeAsVassal += TimeManager.ticksPerMonth;
                     state.diplomacy.JoinLiegeWars();
                 }   
 
-                state.vassalManager.UpdateRealm();
+                //state.vassalManager.UpdateRealm();
                 state.UpdateCapital();
                 state.diplomacy.UpdateRelations();
   
@@ -776,8 +776,7 @@ public class SimManager
         var partitioner = Partitioner.Create(statesIds.Values);
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.CountOrgPopulation([..state.regions]);
-            state.Recruitment();
+            state.CountPopulation();
             state.UpdateDisplayColor();
             StateNamer.UpdateStateNames(state);
         });
@@ -818,7 +817,8 @@ public class SimManager
                 alliance.Die();
                 continue;
             }
-            alliance.CountOrgPopulation([..alliance.GetRegions()]);
+            alliance.UpdateRegions();
+            alliance.CountPopulation();
         }
     }
     public void UpdateCharacters()

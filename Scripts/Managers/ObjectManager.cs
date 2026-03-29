@@ -186,7 +186,6 @@ public class ObjectManager
             simManager.statesIds.Add(state.id, state);      
                   
             state.diplomacy = new StateDiplomacyManager(state);
-            state.vassalManager = new StateVassalManager(state);   
 
             // Init ai manager after vassal and diplo
             state.AIManager = new StateAIManager([new DeclareWarsAction()],state);
@@ -200,23 +199,24 @@ public class ObjectManager
         {
             simManager.mapManager.SelectMetaObject(null);
         }
-        if (deletedState.vassalManager.liegeId != null)
+        if (deletedState.diplomacy.liegeId != null)
         {
-            State liege = GetState(deletedState.vassalManager.liegeId);
-            liege.vassalManager.RemoveVassal(deletedState.id);
+            State liege = GetState(deletedState.diplomacy.liegeId);
+            liege.diplomacy.RemoveVassal(deletedState);
         }
         foreach (ulong warId in deletedState.diplomacy.warIds.Keys)
         {
             War war = GetWar(warId);
             war.RemoveParticipant(deletedState);
         }
-        foreach (ulong vassalId in deletedState.vassalManager.vassalIds.ToArray())
+        foreach (ulong vassalId in deletedState.diplomacy.vassalIds)
         {
-            deletedState.vassalManager.RemoveVassal(vassalId);
+            State vassal = GetState(vassalId);
+            deletedState.diplomacy.RemoveVassal(vassal);
         }
-        foreach (Region region in deletedState.regions.ToArray())
+        foreach (ulong regionId in deletedState.regionIds.ToArray())
         {
-            deletedState.RemoveRegion(region);
+            deletedState.RemoveRegion(GetRegion(regionId));
         }
         foreach (ulong characterId in deletedState.characterIds.ToArray())
         {
@@ -228,10 +228,10 @@ public class ObjectManager
             relation.diplomacy.RemoveRelations(deletedState.id);
             relation.borderingStateIds.Remove(deletedState.id);
         }
-        foreach (ulong allianceId in deletedState.allianceIds.ToArray())
+        foreach (ulong allianceId in deletedState.diplomacy.allianceIds.ToArray())
         {
             Alliance alliance = GetAlliance(allianceId);
-            alliance.RemoveMember(deletedState.id);
+            alliance.RemoveMember(deletedState);
         }
 
         simManager.objectDeleted.Invoke(deletedState.id);
@@ -320,7 +320,7 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(character.id);
         simManager.characterIds.Remove(character.id);
     }
-    public Alliance CreateAlliance(State founder, AllianceType type)
+    public Alliance CreateAlliance(State founder, OrgType type = OrgType.ALLIANCE)
     {
         Alliance alliance = new Alliance()
         {
@@ -328,7 +328,7 @@ public class ObjectManager
             tickCreated = timeManager.ticks,
             type = type
         };
-        alliance.AddMember(founder.id);
+        alliance.AddMember(founder);
         alliance.SetLeader(founder.id);
 
         simManager.allianceIds.Add(alliance.id, alliance);
@@ -338,7 +338,7 @@ public class ObjectManager
     {
         foreach (ulong memberId in alliance.memberStateIds.ToArray())
         {
-            alliance.RemoveMember(memberId);
+            alliance.RemoveMember(GetState(memberId));
         }
         simManager.objectDeleted.Invoke(alliance.id);
         simManager.allianceIds.Remove(alliance.id);
@@ -390,13 +390,15 @@ public class ObjectManager
         {
             id = GetId(),
             warType = warType,
-            primaryAgressorId = agressorLeader.id,
-            primaryDefenderId = defenderLeader.id,
             tickCreated = timeManager.ticks,
         };
+        war.warLeaderIds[War.WarSide.AGRESSOR] = agressorLeader.id;
+        war.warLeaderIds[War.WarSide.DEFENDER] = defenderLeader.id;
+        war.InitWar();
+        
         CreateHistoricalEvent([agressorLeader, defenderLeader], EventType.WAR_DECLARATION);
-        war.AddParticipant(agressorLeader, true);
-        war.AddParticipant(defenderLeader, false);
+        war.AddParticipant(agressorLeader, War.WarSide.AGRESSOR);
+        war.AddParticipant(defenderLeader, War.WarSide.DEFENDER);
         war.NameWar();
 
         simManager.warIds.Add(war.id, war);
@@ -404,20 +406,16 @@ public class ObjectManager
     }
     public void EndWar(War war)
     {
-        try
+        //CreateHistoricalEvent([GetState(war.warLeaderIds[War.WarSide.AGRESSOR]), GetState(war.warLeaderIds[War.WarSide.DEFENDER])], EventType.WAR_END);
+        
+        foreach (ulong stateId in war.participantIds)
         {
-            CreateHistoricalEvent([GetState(war.primaryAgressorId), GetState(war.primaryDefenderId)], EventType.WAR_END);
-            war.dead = true;
-            simManager.warIds.Remove(war.id);
-            foreach (ulong stateId in war.participantIds.ToArray())
-            {
-                State state = GetState(stateId);
-                war.RemoveParticipant(state);           
-            }            
-        } catch (Exception e)
-        {
-            GD.PushError(e);
-        }
+            State state = GetState(stateId);
+            war.RemoveParticipant(state);           
+        } 
+
+        war.dead = true; 
+        simManager.warIds.Remove(war.id);          
     }
     public void CreateHistoricalEvent(NamedObject[] relevantObjects, EventType eventType)
     {

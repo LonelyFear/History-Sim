@@ -9,41 +9,12 @@ using MessagePack;
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
 public class Alliance : Organization
 {
-    [Key(0)] public AllianceType type;
+    [Key(0)] public OrgType type;
     [Key(2)] public ulong? leadStateId;
     [Key(1)] public List<ulong> memberStateIds = new List<ulong>();
 
     //[IgnoreMember] List<Region> regions = new List<Region>();
-    public void AddMember(ulong memberId)
-    {
-        State newMember = objectManager.GetState(memberId);
-        if (newMember == null || newMember.allianceIds.Contains(id))
-        {
-            return;
-        }
-        newMember.allianceIds.Add(id);
-        memberStateIds.Add(memberId);
 
-        // Realm Stuff
-        if (type == AllianceType.REALM)
-        {
-            newMember.realmId = id;
-        }
-    }
-    public bool HasMember(State state)
-    {
-        return memberStateIds.Contains(state.id);
-    }
-    public override void Die()
-    {
-        dead = true;
-        tickDestroyed = simManager.timeManager.ticks;
-        foreach (ulong memberId in memberStateIds.ToArray())
-        {
-            RemoveMember(memberId);
-        }
-        leadStateId = null;
-    }
     public void SetLeader(ulong? leaderId)
     {
         if (memberStateIds.Contains((ulong)leaderId))
@@ -51,38 +22,45 @@ public class Alliance : Organization
             leadStateId = leaderId;
         }
     }
-    public void RemoveMember(ulong memberId)
+    public State GetAllianceLeader()
     {
-        State member = objectManager.GetState(memberId);
-        if (!member.allianceIds.Contains(id))
-        {
-            return;
-        }
-        member.allianceIds.Remove(id);
-        memberStateIds.Remove(memberId);  
-
-        // Realm Stuff
-        if (type == AllianceType.REALM)
-        {
-            member.realmId = null;
-        }      
+        return objectManager.GetState(leadStateId);
     }
-
-    public HashSet<Region> GetRegions()
+    public void AddMember(State newMember)
     {
-        HashSet<Region> regions = new HashSet<Region>();
-        foreach (ulong stateId in memberStateIds.ToArray())
+        if (memberStateIds.Contains(newMember.id)) return;
+
+        if (type == OrgType.REALM)
+        {
+            newMember.diplomacy.GetRealm()?.RemoveMember(newMember);
+        }
+
+        newMember.diplomacy.allianceIds.Add(id);
+        memberStateIds.Add(newMember.id);
+    }
+    public void RemoveMember(State member)
+    {
+        if (!memberStateIds.Contains(member.id)) return;
+
+        member.diplomacy.allianceIds.Remove(id);
+        memberStateIds.Remove(member.id);  
+
+        if (memberStateIds.Count < 1 || member.id == leadStateId)
+        {
+            Die();
+            objectManager.DeleteAlliance(this);
+        }
+    }
+    public void UpdateRegions()
+    {
+        foreach (ulong stateId in memberStateIds)
         {
             State memberState = objectManager.GetState(stateId);
-            lock (memberState.regions)
+            foreach (ulong regionId in memberState.regionIds)
             {
-                foreach (Region region in memberState.regions)
-                {
-                    regions.Add(region);
-                }                
+                regionIds = [..regionIds.Append(regionId)];
             }
         }
-        return regions;
     }
     public long GetAllianceManpower()
     {
@@ -104,18 +82,24 @@ public class Alliance : Organization
         }
         return ap;       
     }
+    public bool HasMember(State state)
+    {
+        return memberStateIds.Contains(state.id);
+    }
+    public override void Die()
+    {
+        dead = true;
+        tickDestroyed = simManager.timeManager.ticks;
+        foreach (ulong memberId in memberStateIds.ToArray())
+        {
+            RemoveMember(objectManager.GetState(memberId));
+        }
+        leadStateId = null;
+    }
 }
-public enum AllianceType
+public enum OrgType
 {
     // Political Types
     REALM,
-    UNION,
-    PERSONAL_UNION,
-    CONFEDERATION,
-
-    // Cooperative Types
     ALLIANCE,
-    DEFENSIVE_PACT,
-    COALITION,
-    CUSTOMS_UNION
 }
