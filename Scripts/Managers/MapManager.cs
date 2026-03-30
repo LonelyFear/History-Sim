@@ -328,7 +328,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (regionOwner.capital == region && regionOwner.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
+                        if (regionOwner.capitalId == region.id && regionOwner.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }
@@ -367,7 +367,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (region.owner.capital == region && includeCapital)
+                        if (region.owner.capitalId == region.id && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }

@@ -6,7 +6,7 @@ using MessagePack;
 
 [MessagePackObject(AllowPrivate = true)]
 
-public class State : Organization, ISaveable
+public class State : Polity, ISaveable
 {
     [IgnoreMember] public string baseName = "Nation";
     [IgnoreMember] public string govtName;
@@ -20,8 +20,7 @@ public class State : Organization, ISaveable
     
     //[IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
     //[Key(7)] public HashSet<ulong> regionsIds { get; set; } = new HashSet<ulong>();
-    [IgnoreMember] public Region capital { get; set; }
-    [Key(8)] public ulong capitalID;
+    [Key(8)] public ulong capitalId;
     
     // Taxes & Wealth
     [Key(12)] public float mobilizationRate { get; set; } = 0.3f;
@@ -59,14 +58,12 @@ public class State : Organization, ISaveable
     public void PrepareForSave()
     {
         PreparePopObjectForSave();
-        capitalID = capital.id;
         //regionsIDs = [.. regions.Select(r => r.id)];
     }
     public void LoadFromSave()
     {
         AIManager.InitAI();
         LoadPopObjectFromSave();
-        capital = objectManager.GetRegion(capitalID);
         //regions = [.. regionsIDs.Select(r => objectManager.GetRegion(r))];
         diplomacy.Init(this);
     }
@@ -90,6 +87,7 @@ public class State : Organization, ISaveable
     }
     public void Capitualate()
     {
+        Region capital = objectManager.GetRegion(capitalId);
         if (capital.occupier != null)
         {
             if (!capitualated)
@@ -180,13 +178,13 @@ public class State : Organization, ISaveable
         switch (sovereignty)
         {
             case Sovereignty.COLONY:
-                displayColor = diplomacy.GetLiege().color;
+                displayColor = diplomacy.GetOverlord().color;
                 break;
             case Sovereignty.PROVINCE:
-                displayColor = diplomacy.GetLiege().color;
+                displayColor = diplomacy.GetOverlord().color;
                 break;
             case Sovereignty.PUPPET:
-                displayColor = diplomacy.GetLiege().color;
+                displayColor = diplomacy.GetOverlord().color;
                 break;
         }
     }
@@ -265,6 +263,7 @@ public class State : Organization, ISaveable
     }
     public override string GenerateDescription()
     {
+        Region capital = objectManager.GetRegion(capitalId);
         string desc = $"The {name} is a {govtName.ToLower()} in the simulation. It is ";
         if ("aeiou".Contains(govtName[0]))
         {

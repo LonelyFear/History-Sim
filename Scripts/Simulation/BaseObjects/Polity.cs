@@ -4,16 +4,16 @@ using System.Linq;
 using MessagePack;
 
 [MessagePackObject]
-public class Organization : PopObject
+public class Polity : PopObject
 {
     // Military
     [Key(9)] public long manpower { get; set; }
     
     // Political
     [Key(10)] public int occupiedLand { get; set; }
-    [IgnoreMember] public Dictionary<ulong, int> borderingAllianceIds { get; set; } = [];
-    [IgnoreMember] public Dictionary<ulong, int> borderingStateIds { get; set; } = [];
-    [IgnoreMember] public Dictionary<ulong, int> independentBorderIds { get; set; } = [];
+    [IgnoreMember] public HashSet<ulong> borderingAllianceIds { get; set; } = [];
+    [IgnoreMember] public HashSet<ulong> borderingStateIds { get; set; } = [];
+    [IgnoreMember] public HashSet<ulong> independentBorderIds { get; set; } = [];
     // Economy
     [Key(11)] public float totalWealth { get; set; }
     [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = [];
@@ -25,9 +25,9 @@ public class Organization : PopObject
         long countedP = 0;
         long countedW = 0;
 
-        Dictionary<ulong, int> allianceBorders = new Dictionary<ulong, int>();
-        Dictionary<ulong, int> borders = new Dictionary<ulong, int>();
-        Dictionary<ulong, int> independentBorders = new Dictionary<ulong, int>();
+        HashSet<ulong> allianceBorders = [];
+        HashSet<ulong> borders = [];
+        HashSet<ulong> independentBorders = [];
         Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
         Dictionary<SocialClass, long> countedJobs = new Dictionary<SocialClass, long>();
@@ -41,10 +41,14 @@ public class Organization : PopObject
         Dictionary<ulong, long> cCultures = new Dictionary<ulong, long>();
         float countedWealth = 0;
         int occRegions = 0;
-        // If realm leader uses realm stats
-        foreach (ulong regionId in regionIds)
+
+        foreach (ulong regionId in regionIds.ToArray())
         {
             Region region = objectManager.GetRegion(regionId);
+            if (region == null) {
+                regionIds.Remove(regionId);
+                continue;
+            }
             // Adds up population to state total
             countedP += region.population;
             countedW += region.workforce;
@@ -72,18 +76,16 @@ public class Organization : PopObject
                     }
 
                     // Extends our border with the state
-                    if (!borders.TryAdd(borderState.id, 1))
+                    State[] statesToEvaluate = [borderState, borderState.diplomacy.GetOverlord()];
+                    foreach (State bs in statesToEvaluate)
                     {
-                        borders[borderState.id]++;
-                    } 
-
-                    if (borderState.sovereignty == Sovereignty.INDEPENDENT)
-                    {
-                        if (!independentBorders.TryAdd(borderState.id, 1))
+                        borders.Add(bs.id);  
+                        if (borderState.sovereignty == Sovereignty.INDEPENDENT)
                         {
-                            independentBorders[borderState.id]++;
-                        }                         
-                    }  
+                            independentBorders.Add(bs.id);                   
+                        }                          
+                    }
+
 
                     // Gets the alliances this state is in
                     foreach (ulong allianceId in border.owner.diplomacy.allianceIds)
@@ -97,10 +99,7 @@ public class Organization : PopObject
                         }           
 
                         // Extends our border with the alliance
-                        if (!allianceBorders.TryAdd(borderingAlliance.id, 1))
-                        {
-                            allianceBorders[borderingAlliance.id]++;
-                        }                                     
+                        allianceBorders.Add(borderingAlliance.id);                                    
                     }
                 }
             }

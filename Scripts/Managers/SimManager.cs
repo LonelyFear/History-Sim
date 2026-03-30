@@ -55,7 +55,6 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
     [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = new Dictionary<ulong, HistoricalEvent>();
-    [IgnoreMember] public Dictionary<ulong, Settlement> settlementIds = new Dictionary<ulong, Settlement>();
 
     // Misc
     public uint currentBatch = 2;
@@ -124,8 +123,6 @@ public class SimManager
         warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
         FileAccess eventsSave = FileAccess.Open($"{path}/events.pxsave", FileAccess.ModeFlags.Write);
         eventsSave.StoreBuffer(MessagePackSerializer.Serialize(historicalEventIds, options));
-        FileAccess settlementsSave = FileAccess.Open($"{path}/settlements.pxsave", FileAccess.ModeFlags.Write);
-        settlementsSave.StoreBuffer(MessagePackSerializer.Serialize(settlementIds, options));
     }
     public static SimManager LoadSimFromFile(string path)
     {
@@ -151,7 +148,6 @@ public class SimManager
         sim.characterIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<Dictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
-        sim.settlementIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Settlement>>(FileAccess.GetFileAsBytes($"{path}/settlements.pxsave"), options);
         sim.simLoadedFromSave = true;
         return sim;
     }

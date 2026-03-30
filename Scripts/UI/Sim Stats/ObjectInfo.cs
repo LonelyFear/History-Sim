@@ -51,7 +51,7 @@ public partial class ObjectInfo : Control
                         Alliance realm = state.sovereignty == Sovereignty.INDEPENDENT ? objectManager.GetAlliance(state.realmId) : null;
 
                         // Chooses if we want to display realm or state data
-                        Organization org = realm == null ? state : realm;
+                        Polity org = realm == null ? state : realm;
 
                         switch (state.sovereignty)
                         {

@@ -1,13 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
+using Godot;
 using MessagePack;
 
 [MessagePackObject]
 // Alliances
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
-public class Alliance : Organization
+public class Alliance : Polity
 {
     [Key(0)] public OrgType type;
     [Key(2)] public ulong? leadStateId;
@@ -53,14 +52,17 @@ public class Alliance : Organization
     }
     public void UpdateRegions()
     {
+        HashSet<ulong> countedIds = [];
         foreach (ulong stateId in memberStateIds)
         {
             State memberState = objectManager.GetState(stateId);
             foreach (ulong regionId in memberState.regionIds)
             {
-                regionIds = [..regionIds.Append(regionId)];
+                countedIds.Add(regionId);
             }
         }
+        regionIds = countedIds;
+        //GD.Print(regionIds.Count);
     }
     public long GetAllianceManpower()
     {

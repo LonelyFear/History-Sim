@@ -499,7 +499,7 @@ public class Region : PopObject, ISaveable
         }
 
         float politySizeTradeWeight = 0f;
-        if (owner != null && owner.capital == this)
+        if (owner != null && owner.capitalId == id)
         {
             politySizeTradeWeight = owner.regionIds.Count * 0.5f;
         }
@@ -605,7 +605,7 @@ public class Region : PopObject, ISaveable
                 }
             }
             // If it is the capital add to description
-            if (owner != null && owner.capital == this)
+            if (owner != null && owner.capitalId == id)
             {
                 desc += $" It is the capital of the {GenerateUrlText(owner, owner.name)}";
             }             

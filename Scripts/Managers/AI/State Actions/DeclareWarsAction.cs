@@ -24,7 +24,7 @@ public class DeclareWarsAction : IAction
         // Consideration 2
         float relationsFactor = 0;
         int consideredStates = 0;
-        foreach (State border in state.independentBorderIds.Select(pair => objectManager.GetState(pair.Key)))
+        foreach (State border in state.independentBorderIds.Select(pair => objectManager.GetState(pair)))
         {
             Relation relations = state.diplomacy.GetRelationsWithState(border);
             if (relations == null) continue;

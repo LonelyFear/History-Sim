@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 
 public partial class DebugLabel : Label
 {
@@ -26,12 +27,20 @@ public partial class DebugLabel : Label
                 Text = "State: " + state.name;
                 AddLine("Population: " + state.population.ToString("#,###0"));
                 AddLine("Relations: ");
-                foreach (var pair in state.diplomacy.relationIds)
+                try
                 {
-                    State relationState = objectManager.GetState(pair.Key);
-                    Relation relation = pair.Value;
-                    AddLine(relationState.name + ": " + Math.Round(Mathf.Lerp(-100, 100, relation.opinion)));
+                    foreach (var pair in state.diplomacy.relationIds.ToArray())
+                    {
+                        State relationState = objectManager.GetState(pair.Key);
+                        if (relationState.sovereignty != Sovereignty.INDEPENDENT) return;
+                        Relation relation = pair.Value;
+                        AddLine(relationState.name + ": " + Math.Round(Mathf.Lerp(-100, 100, relation.opinion)));
+                    }                    
+                } catch
+                {
+                    AddLine("ERROR!");
                 }
+
             } else {
                 Text = "";
             }            
