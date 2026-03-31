@@ -26,7 +26,8 @@ public partial class MapManager : Node2D
     public PopObject selectedMetaObj {get; private set; }
     public MapModes selectedMode;
     public bool initialized = false;
-    [Export] public OptionButton mapModeUI;
+    [Export] PlayerCamera playerCamera;
+    [Export] OptionButton mapModeUI;
     [Export] public CheckBox showRegionsCheckbox;
 
     [Export(PropertyHint.Range, "1,10")] int regionResolution = 4;
@@ -41,6 +42,7 @@ public partial class MapManager : Node2D
 	Rid dimensionsBuffer;
     Rid colorsBuffer;
     Rid bordersBuffer;
+    Rid cameraBuffer;
 
     // Input arrays
     Color[] regionColors;
@@ -97,7 +99,6 @@ public partial class MapManager : Node2D
 			RenderingDevice.TextureUsageBits.SamplingBit
 		};
         texture = rd.TextureCreate(textureFormat, textureView, [regionImage.GetData()]);       
-
         // Setting up image display
         texture_rd = new()
         {
@@ -124,7 +125,12 @@ public partial class MapManager : Node2D
 		colorsBuffer = rd.StorageBufferCreate((uint)colorsBytes.Length, colorsBytes);  
 
 		byte[] borderBytes = MemoryMarshal.AsBytes(borderValues.AsSpan()).ToArray();
-		bordersBuffer = rd.StorageBufferCreate((uint)borderBytes.Length, borderBytes);  
+		bordersBuffer = rd.StorageBufferCreate((uint)borderBytes.Length, borderBytes); 
+
+        float[] cameraData = [playerCamera.Zoom.X];
+
+        byte[] cameraBytes = MemoryMarshal.AsBytes(cameraData.AsSpan()).ToArray();
+        cameraBuffer = rd.StorageBufferCreate((uint)cameraBytes.Length, cameraBytes); 
     }
     public void RunShader()
     {
@@ -156,7 +162,14 @@ public partial class MapManager : Node2D
 		};
 		bordersUniform.AddId(bordersBuffer);
 
-        Rid uniformSet = rd.UniformSetCreate([dimensionsUniform, colorsUniform, imageUniform, bordersUniform], regionOverlayShader, 0);
+        RDUniform cameraUniform = new()
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 4,
+		};
+		cameraUniform.AddId(cameraBuffer);        
+
+        Rid uniformSet = rd.UniformSetCreate([dimensionsUniform, colorsUniform, imageUniform, bordersUniform, cameraUniform], regionOverlayShader, 0);
 		long computeList = rd.ComputeListBegin();
 
 		rd.ComputeListBindComputePipeline(computeList, regionOverlayShaderPipeline);
@@ -168,6 +181,7 @@ public partial class MapManager : Node2D
 		rd.FreeRid(uniformSet);
         rd.FreeRid(colorsBuffer);
         rd.FreeRid(bordersBuffer);
+        rd.FreeRid(cameraBuffer);
     }
     public override void _Process(double delta)
     {
@@ -335,7 +349,8 @@ public partial class MapManager : Node2D
             case MapModes.REALM:
                 if (region.pops.Count > 0)
                 {
-                    color = new Color(0.2f, 0.2f, 0.2f, 0);
+                    borderId = 1;
+                    color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (regionOwner != null)
                     {
                         borderId = regionOwner.diplomacy.GetOverlord().id;
@@ -375,7 +390,8 @@ public partial class MapManager : Node2D
             case MapModes.POLITIY:
                 if (region.pops.Count > 0)
                 {
-                    color = new Color(0.2f, 0.2f, 0.2f, 0);
+                    borderId = 1;
+                    color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (region.owner != null)
                     {
                         borderId = region.owner.id;

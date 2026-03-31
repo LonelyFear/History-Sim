@@ -19,6 +19,10 @@ layout(set = 0, binding = 3, std430) readonly buffer borderBuffer {
     uint64_t[] borders;
 } borderData;
 
+layout(set = 0, binding = 4, std430) readonly buffer cameraBuffer {
+    float zoom;
+} camera;
+
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 int getIndex(int posX, int posY){
@@ -36,13 +40,15 @@ void main() {
     int borderIndex = 0;
     bool isBorderToRender = false;
 
-    ivec2[] positionsToCheck = ivec2[4](ivec2(uv.x, uv.y + 1), ivec2(uv.x, uv.y - 1), ivec2(uv.x + 1, uv.y), ivec2(uv.x - 1, uv.y));
+    int thickness = 1;
 
-    for (int i = 0; i < positionsToCheck.length(); i++){
-        ivec2 pos = positionsToCheck[i];
-        if (borderData.borders[getIndex(pos.x/dimensions.resolution, pos.y/dimensions.resolution)] != borderData.borders[index]){
-            isBorderToRender = true;
-            break;
+    for (int dx = -thickness; dx <= thickness; dx++){
+        for (int dy = -thickness; dy <= thickness; dy++){
+            ivec2 pos = ivec2(uv.x + dx, uv.y + dy);
+            if (borderData.borders[getIndex(pos.x/dimensions.resolution, pos.y/dimensions.resolution)] != borderData.borders[index]){
+                isBorderToRender = true;
+                break;
+            }            
         }
     }
 

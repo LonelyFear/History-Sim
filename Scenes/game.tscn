@@ -64,9 +64,10 @@ script = ExtResource("7_ewbju")
 gameSpeed = 0
 gameSpeedUI = NodePath("../UI/Action Panel/Action Bar/TimeSpeedHolder/TimeSpeed")
 
-[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("mapModeUI", "showRegionsCheckbox")]
+[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("playerCamera", "mapModeUI", "showRegionsCheckbox")]
 z_index = 2
 script = ExtResource("6_85qyi")
+playerCamera = NodePath("../PlayerCamera")
 mapModeUI = NodePath("../UI/Action Panel/Action Bar/MapModeHolder/MapMode")
 showRegionsCheckbox = NodePath("../UI/Action Panel/Action Bar/ShowRegionsCheckbox")
 regionResolution = 6

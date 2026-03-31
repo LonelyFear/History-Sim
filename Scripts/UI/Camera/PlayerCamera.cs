@@ -7,7 +7,7 @@ public partial class PlayerCamera : Camera2D
     [Export] float cameraSpeed = 500f;
     [Export] float zoomSpeed = 10;
     Vector2 zoomTarget;
-    [Export] float maxZoom = .1f;
+    [Export] float maxZoom = 1f;
     [Export] float minZoom = 6f;
 
     bool dragging;
