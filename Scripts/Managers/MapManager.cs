@@ -29,7 +29,7 @@ public partial class MapManager : Node2D
     [Export] public OptionButton mapModeUI;
     [Export] public CheckBox showRegionsCheckbox;
 
-    int regionResolution = 4;
+    [Export(PropertyHint.Range, "1,10")] int regionResolution = 4;
     public static ObjectManager objectManager;
     // Shaders
     RenderingDevice rd = RenderingServer.GetRenderingDevice();
@@ -40,7 +40,11 @@ public partial class MapManager : Node2D
     Texture2Drd texture_rd;
 	Rid dimensionsBuffer;
     Rid colorsBuffer;
+    Rid bordersBuffer;
+
+    // Input arrays
     Color[] regionColors;
+    ulong[] borderValues;
     //float[] colorValues;
     
 
@@ -57,12 +61,12 @@ public partial class MapManager : Node2D
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         timeManager = simManager.timeManager;
         simManager.mapManager = this;
-        Scale = simManager.terrainMap.Scale * (SimManager.tilesPerRegion/(float)regionResolution);
+        Scale = simManager.terrainMap.Scale/regionResolution;
         worldSize = SimManager.worldSize;
+        borderValues = new ulong[worldSize.X * worldSize.Y];
         regionColors = new Color[worldSize.X * worldSize.Y];
-        //colorValues = new float[worldSize.X * 4 * worldSize.Y];
 
-        regionImage = Image.CreateEmpty(worldSize.X, worldSize.Y, false, Image.Format.Rgbaf);
+        regionImage = Image.CreateEmpty(worldSize.X*regionResolution, worldSize.Y*regionResolution, false, Image.Format.Rgbaf);
         initialized = true;
         InitShader();
     }
@@ -73,8 +77,8 @@ public partial class MapManager : Node2D
 		regionOverlayShaderPipeline = rd.ComputePipelineCreate(regionOverlayShader);
 
         // Creates a buffer for world size
-		int[] dimensionsArray = [worldSize.X, worldSize.Y];
-		byte[] dimensionBytes = new byte[dimensionsArray .Length * sizeof(int)];
+		int[] dimensionsArray = [worldSize.X, worldSize.Y, regionResolution];
+		byte[] dimensionBytes = new byte[dimensionsArray.Length * sizeof(int)];
 		Buffer.BlockCopy(dimensionsArray, 0, dimensionBytes , 0, dimensionBytes.Length);
 		dimensionsBuffer = rd.StorageBufferCreate((uint)dimensionBytes.Length, dimensionBytes);  
 
@@ -84,8 +88,8 @@ public partial class MapManager : Node2D
         RDTextureView textureView = new();
 		RDTextureFormat textureFormat = new()
 		{
-			Width = (uint)worldSize.X,
-			Height = (uint)worldSize.Y,
+			Width = (uint)regionImage.GetSize().X,
+			Height = (uint)regionImage.GetSize().Y,
 			Format = RenderingDevice.DataFormat.R32G32B32A32Sfloat,
 
 			UsageBits = RenderingDevice.TextureUsageBits.StorageBit | 
@@ -117,8 +121,10 @@ public partial class MapManager : Node2D
     public void PrepBuffers()
     {
 		byte[] colorsBytes = MemoryMarshal.AsBytes(regionColors.AsSpan()).ToArray();
-
 		colorsBuffer = rd.StorageBufferCreate((uint)colorsBytes.Length, colorsBytes);  
+
+		byte[] borderBytes = MemoryMarshal.AsBytes(borderValues.AsSpan()).ToArray();
+		bordersBuffer = rd.StorageBufferCreate((uint)borderBytes.Length, borderBytes);  
     }
     public void RunShader()
     {
@@ -143,18 +149,25 @@ public partial class MapManager : Node2D
 		};
 		imageUniform.AddId(texture);
 
+        RDUniform bordersUniform = new()
+		{
+			UniformType = RenderingDevice.UniformType.StorageBuffer,
+			Binding = 3,
+		};
+		bordersUniform.AddId(bordersBuffer);
 
-        Rid uniformSet = rd.UniformSetCreate([dimensionsUniform, colorsUniform, imageUniform], regionOverlayShader, 0);
+        Rid uniformSet = rd.UniformSetCreate([dimensionsUniform, colorsUniform, imageUniform, bordersUniform], regionOverlayShader, 0);
 		long computeList = rd.ComputeListBegin();
 
 		rd.ComputeListBindComputePipeline(computeList, regionOverlayShaderPipeline);
 		rd.ComputeListBindUniformSet(computeList, uniformSet, 0);
-		rd.ComputeListDispatch(computeList, (uint)worldSize.X/12, (uint)worldSize.Y/12, 1);
+
+		rd.ComputeListDispatch(computeList, (uint)regionImage.GetSize().X/16, (uint)regionImage.GetSize().Y/16, 1);
 		rd.ComputeListEnd();
 
 		rd.FreeRid(uniformSet);
         rd.FreeRid(colorsBuffer);
-
+        rd.FreeRid(bordersBuffer);
     }
     public override void _Process(double delta)
     {
@@ -307,10 +320,12 @@ public partial class MapManager : Node2D
         UpdateRegionColors(simManager.regionIds.Values);
     }
     
-    public Color GetRegionColor(Region region, bool includeCapital = false)
+    public Color GetRegionColor(Region region, out ulong borderId, bool includeCapital = false)
     {
         float colorDarkness = 0.4f;
         Color color = new Color(0, 0, 0, 0);
+        borderId = 0;
+
         if (region == null) return color;
         State regionOwner = region.owner;
         MapModes drawnMapMode = mapMode;
@@ -323,6 +338,7 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 0);
                     if (regionOwner != null)
                     {
+                        borderId = regionOwner.diplomacy.GetOverlord().id;
                         color = regionOwner.displayColor;
                         if (region.occupier != null)
                         {
@@ -362,6 +378,8 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 0);
                     if (region.owner != null)
                     {
+                        borderId = region.owner.id;
+
                         color = region.owner.displayColor;
                         if (region.occupier != null)
                         {
@@ -420,6 +438,7 @@ public partial class MapManager : Node2D
             case MapModes.CULTURE:
                 if (region.largestCultureId != null && region.habitable)
                 {
+                    borderId = (ulong)region.largestCultureId;
                     color = objectManager.GetCulture(region.largestCultureId).color;
                 }
                 else if (region.habitable)
@@ -479,6 +498,7 @@ public partial class MapManager : Node2D
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
                     if (region.marketId != null)
                     {
+                        borderId = (ulong)region.marketId;
                         color = objectManager.GetMarket(region.marketId).color;
                     }
                     if (region.isMarketCenter && includeCapital)
@@ -504,6 +524,7 @@ public partial class MapManager : Node2D
                 break;
             */
             case MapModes.TERRAIN_TYPE:
+                borderId = (ulong)region.terrainType;
                 switch (region.terrainType)
                 {
                     case TerrainType.SHALLOW_WATER:
@@ -550,8 +571,10 @@ public partial class MapManager : Node2D
         Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
-        Color color = GetRegionColor(r);
-        Color centralColor = GetRegionColor(r, true);
+        ulong borderId = 0;
+        Color color = GetRegionColor(r, out borderId);
+
+        Color centralColor = GetRegionColor(r, out ulong _, true);
         int month = (int)(timeManager.GetMonth() - 1);
 
         foreach (Vector2I tilePos in r.tiles)
@@ -580,8 +603,20 @@ public partial class MapManager : Node2D
                     Mathf.InverseLerp(0, 1, tile.continentiality));
                     break;                
             }
+            /*
+            Vector2I pos = tilePos * regionResolution;
+            for (int dx = 0; dx < regionResolution; dx++)
+            {
+                for (int dy = 0; dy < regionResolution; dy++)
+                {
+                    int index = ((pos.Y + dy) * worldSize.X * regionResolution) + (pos.X + dx);
+                    regionColors[index] = finalColor;                     
+                }                
+            }
+            */
             int index = (tilePos.Y * worldSize.X) + tilePos.X;
-            regionColors[index] = finalColor;      
+            regionColors[index] = finalColor;     
+            borderValues[index] = borderId;   
         }
     }
     public bool IsMapModeCarved()

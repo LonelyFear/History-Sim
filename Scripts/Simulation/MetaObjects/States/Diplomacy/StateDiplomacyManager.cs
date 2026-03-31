@@ -247,6 +247,15 @@ public partial class StateDiplomacyManager
         }
         return null;
     }
+    public Polity GetRealmOrState()
+    {
+        Alliance realm = GetRealm();
+        if (realm == null)
+        {
+            return state;
+        }
+        return realm;
+    }
     // Vassalage
     public void UpdateRealm()
     {
