@@ -69,6 +69,7 @@ z_index = 2
 script = ExtResource("6_85qyi")
 mapModeUI = NodePath("../UI/Action Panel/Action Bar/MapModeHolder/MapMode")
 showRegionsCheckbox = NodePath("../UI/Action Panel/Action Bar/ShowRegionsCheckbox")
+regionResolution = 6
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
 scale = Vector2(16, 16)

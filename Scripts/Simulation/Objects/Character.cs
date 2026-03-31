@@ -144,72 +144,47 @@ public partial class Character : NamedObject
 
     public override string GenerateDescription()
     {
-        string[] pronouns = ["he", "she", "they"];
+        string[] pronouns = ["he", "she"];
         int intGender = (int)gender;
 
-        string[] toBe = ["is", "are"];
-        if (dead)
-        {
-            toBe = ["was", "were"];
-        }
         string pronoun = pronouns[intGender];
+        string w = dead ? "was" : "is";
 
-        string desc = $"{name} {toBe[0]} a character born in {sim.timeManager.GetStringDate(tickCreated, true)} to ";
+        string desc = $"{name} {w} a character born in {sim.timeManager.GetStringDate(tickCreated, true)} to ";
 
         if (parentIds.Count <= 0)
         {
             desc += "unknown parents";
         } else
         {
-            for (int i = 0; i < parentIds.Count; i++)
-            {
-                Character parent = objectManager.GetCharacter(parentIds[i]);
-                if (parent != null)
-                {
-                    desc += GenerateUrlText(parent, parent.name);
-                } else
-                {
-                    desc += "an unknown parent";
-                }
-                
-                if (i + 2 < parentIds.Count)
-                {
-                    desc += ", ";
-                } else if (i + 1 < parentIds.Count)
-                {
-                    desc += " and ";
-                }
-            }         
+            Character parentOne = objectManager.GetCharacter(parentIds[0]);
+            Character parentTwo = objectManager.GetCharacter(parentIds[1]);
+            desc += $"{(parentOne == null ? "an unknown parent" : GenerateUrlText(parentOne, parentOne.name))} and {(parentTwo == null ? "an unknown parent" : GenerateUrlText(parentTwo, parentTwo.name))}";      
         }
-
-        desc += $". {pronoun.Capitalize()} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} ";
-        switch (role)
+        desc += $". {pronoun.Capitalize()} ";
+        
+        // Role
+        desc += role switch
         {
-            case CharacterRole.LEADER:
-                desc += $"the {objectManager.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;
-            case CharacterRole.HEIR:
-                desc += $"the heir to the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;
-            case CharacterRole.COMMANDER:
-                desc += $"a commander in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;
-            case CharacterRole.POLITICIAN:
-                desc += $"a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;
-            case CharacterRole.NOBLE:
-                desc += $"a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;
-            case CharacterRole.FORMER_LEADER:
-                desc += $" a former leader, now living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;     
-            default:
-                desc += $"living in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}";
-                break;
-        }
-        desc += $", and {pronoun} {toBe[Mathf.Clamp(intGender - 1, 0, 1)]} {sim.timeManager.GetYear(GetAge())} years old" 
+            CharacterRole.LEADER => $"{w} the {objectManager.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+            CharacterRole.HEIR => $"{w} the heir to the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+            CharacterRole.COMMANDER => $"{w} a general in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+            CharacterRole.POLITICIAN => $"{w} a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+            CharacterRole.NOBLE => $"{w} a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+            _ => $"{(dead ? "lived" : "is living")} in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+        };
+
+        desc += $", and {pronoun} {w} {sim.timeManager.GetYear(GetAge())} years old" 
         + (dead ? $" when {pronoun} died. " : ". ");
         // Personality
+        string agressionString = GetPersonalityLevel("agression") switch
+        {
+            TraitLevel.HIGH => "an Agressive stance, seeking to start conflict and expand. ",
+            TraitLevel.MEDIUM => "a Neutral stance, wanting to preserve power. ",
+            TraitLevel.LOW => "a Passive stance, wanting to avoid conflict and make allies. ",
+            _ => "an Arbitrary stance, making desicions on a whim. "
+        };
+        desc += $"{pronoun.Capitalize()} {(dead ? "had" : "has")} {agressionString}"; 
         return desc;
     }
     
