@@ -723,7 +723,7 @@ public class SimManager
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
-            if (state.regionIds.Count < 1 || state.StateCollapse() || state.rulingPop == null)
+            if (state.regionIds.Count < 1 || state.StateCollapse() || state.rulingPop == null || objectManager.GetRegion(state.capitalId) == null)
             {
                 objectManager.DeleteState(state);
                 continue;

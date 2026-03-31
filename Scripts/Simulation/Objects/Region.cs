@@ -224,7 +224,7 @@ public class Region : PopObject, ISaveable
     }
     public void UpdateOccupation()
     {
-        if (owner == null || occupier == null || !owner.diplomacy.IsEnemyWithState(occupier))
+        if (owner == null || occupier == null || !owner.diplomacy.GetOverlord().diplomacy.IsEnemyWithState(occupier))
         {
             occupier = null;
         }
@@ -270,16 +270,16 @@ public class Region : PopObject, ISaveable
     }
     public State GetController()
     {
-        if (occupier != null)
-        {
-            return occupier;
-        }
-        if (owner != null)
-        {
-            return owner.diplomacy.GetOverlord();
-        }
+        if (occupier != null) return occupier.diplomacy.GetOverlord();
+        if (owner != null) return owner.diplomacy.GetOverlord();
         return null;
-    }    
+    }   
+    public Polity GetPolity()
+    {
+        if (occupier != null) return occupier.diplomacy.GetPolity();
+        if (owner != null) return owner.diplomacy.GetPolity();
+        return null;
+    }     
 
     public void NeutralConquest()
     {
@@ -306,8 +306,8 @@ public class Region : PopObject, ISaveable
 
         if (GetController() == null || targetRegion.GetController() == null) return;
         
-        long attackerPower = GetController().GetArmyPower(true);
-        long defenderPower = targetRegion.GetController().GetArmyPower(true);
+        long attackerPower = GetPolity().GetArmyPower();
+        long defenderPower = GetPolity().GetArmyPower();
 
         if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
         {

@@ -14,7 +14,7 @@ public partial class StateDiplomacyManager
     // Diplomacy
     [Key(19)] public Dictionary<ulong?, Relation> relationIds { get; set; } = [];
     [Key(20)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
-    [Key(0)] public ulong stateId;
+    [Key(0)] ulong stateId;
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     //[IgnoreMember] ulong realmId;
     [Key(12)] public List<ulong> allianceIds = new List<ulong>();
@@ -95,19 +95,14 @@ public partial class StateDiplomacyManager
     public void UpdateRelations()
     {
         // All bordering or enemy states
-        List<State> relationStates;
-        if (GetRealm() != null) {
-            //GD.Print(GetRealm().borderingStateIds.Count);
-            relationStates = [..GetRealm().borderingStateIds.Select(id => objectManager.GetState(id))];
-        }
-        else {
-            relationStates = [.. state.borderingStateIds.Select(id => objectManager.GetState(id))];
-        }
+        List<State> relationStates = [..GetPolity().borderingStateIds.Select(id => objectManager.GetState(id))];
+
         // Removes unneeded relations
         foreach (var pair in relationIds)
         {
             State target = objectManager.GetState(pair.Key);
-            if (target == null || (!IsEnemyWithState(target) && !relationStates.Contains(target)))
+            bool cantHaveRelations = !IsEnemyWithState(target) && !relationStates.Contains(target);
+            if (target == null || cantHaveRelations)
             {
                 RemoveRelations(pair.Key);
                 continue;
@@ -119,7 +114,7 @@ public partial class StateDiplomacyManager
         {
             if (target != null && !relationIds.ContainsKey(target.id) && target.id != stateId)
             {
-                EstablishRelations(target.id);
+                EstablishRelations(target);
             } 
         }  
         CalculateThreats();
@@ -158,25 +153,13 @@ public partial class StateDiplomacyManager
             target.diplomacy.RemoveRelations(state.id);
         }     
     }
-    public Relation EstablishOrGetRelations(State target)
+    public Relation EstablishRelations(State target)
     {
-        Relation relations = GetRelationsWithState(target);
-        if (relations == null)
+        if (relationIds.TryAdd(target.id, new Relation()))
         {
-            return EstablishRelations(target.id);
+            target.diplomacy.EstablishRelations(state);
         }
-        return relations;
-    }
-    public Relation EstablishRelations(ulong? targetId)
-    {
-        State target = objectManager.GetState(targetId);
-        if (target == null) return null;
-
-        if (relationIds.TryAdd(targetId, new Relation()))
-        {
-            target.diplomacy.EstablishRelations(state.id);
-        }
-        return relationIds[targetId];
+        return relationIds[target.id];
     }
 
     // Relations Utilities
@@ -195,8 +178,8 @@ public partial class StateDiplomacyManager
     }
     public void GetMutualRelations(State target, out Relation usThem, out Relation themUs)
     {
-        usThem = EstablishOrGetRelations(target);
-        themUs = target.diplomacy.EstablishOrGetRelations(state);
+        usThem = EstablishRelations(target);
+        themUs = target.diplomacy.EstablishRelations(state);
     }    
     // Check utilities
     public bool CanFightState(State target)
@@ -234,6 +217,10 @@ public partial class StateDiplomacyManager
         }
         return null;          
     }
+    public bool HasRelations(State target)
+    {
+        return relationIds.ContainsKey(target.id);
+    }
     // Alliance
     public Alliance GetRealm()
     {
@@ -247,7 +234,7 @@ public partial class StateDiplomacyManager
         }
         return null;
     }
-    public Polity GetRealmOrState()
+    public Polity GetPolity()
     {
         Alliance realm = GetRealm();
         if (realm == null)
@@ -259,7 +246,7 @@ public partial class StateDiplomacyManager
     // Vassalage
     public void UpdateRealm()
     {
-        if (state.sovereignty == Sovereignty.INDEPENDENT && GetRealm() == null && vassalIds.Count > 0){
+        if (state.sovereignty == Sovereignty.INDEPENDENT && vassalIds.Count > 0 && GetRealm() == null){
             objectManager.CreateAlliance(state, OrgType.REALM);
         }
         foreach (ulong? vassalId in vassalIds)
@@ -271,20 +258,21 @@ public partial class StateDiplomacyManager
     public void AddVassal(State vassal, Sovereignty sovereignty)
     {
         if (sovereignty == Sovereignty.INDEPENDENT || vassalIds.Contains(vassal.id)) return;
-        State vassalFormerLiege = vassal.diplomacy.GetLiege();
 
+        State vassalFormerLiege = vassal.diplomacy.GetLiege();
         vassalFormerLiege?.diplomacy.RemoveVassal(vassal);
 
         vassal.sovereignty = sovereignty;
         vassal.diplomacy.liegeId = state.id;
-        vassalIds.Add(stateId);
+        vassalIds.Add(vassal.id);
 
         UpdateRealm();
         GetRealm().AddMember(vassal);
+        vassal.diplomacy.UpdateRealm();
     }
     public void RemoveVassal(State vassal)
     {
-        if (!vassalIds.Remove(stateId)) return;
+        if (!vassalIds.Remove(vassal.id)) return;
 
         vassal.sovereignty = Sovereignty.INDEPENDENT;
         vassal.diplomacy.liegeId = null;

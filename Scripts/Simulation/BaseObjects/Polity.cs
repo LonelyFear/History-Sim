@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 using MessagePack;
 
-[MessagePackObject]
-public class Polity : PopObject
+public abstract class Polity : PopObject
 {
-    // Military
-    [Key(9)] public long manpower { get; set; }
-    
     // Political
     [Key(10)] public int occupiedLand { get; set; }
     [IgnoreMember] public HashSet<ulong> borderingAllianceIds { get; set; } = [];
@@ -28,9 +25,10 @@ public class Polity : PopObject
         HashSet<ulong> allianceBorders = [];
         HashSet<ulong> borders = [];
         HashSet<ulong> independentBorders = [];
-        Dictionary<SocialClass, long> countedSocialClasses = new Dictionary<SocialClass, long>();
-        Dictionary<SocialClass, long> countedRequiredWorkers = new Dictionary<SocialClass, long>();
-        Dictionary<SocialClass, long> countedJobs = new Dictionary<SocialClass, long>();
+        Dictionary<SocialClass, long> countedSocialClasses = [];
+        Dictionary<SocialClass, long> countedRequiredWorkers = [];
+        Dictionary<SocialClass, long> countedJobs = [];
+
         foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
         {
             countedSocialClasses.Add(profession, 0);
@@ -38,17 +36,19 @@ public class Polity : PopObject
             countedJobs.Add(profession, 0);
         }
 
-        Dictionary<ulong, long> cCultures = new Dictionary<ulong, long>();
+        Dictionary<ulong, long> cCultures = [];
         float countedWealth = 0;
         int occRegions = 0;
 
         foreach (ulong regionId in regionIds.ToArray())
         {
             Region region = objectManager.GetRegion(regionId);
+
             if (region == null) {
                 regionIds.Remove(regionId);
                 continue;
             }
+            
             // Adds up population to state total
             countedP += region.population;
             countedW += region.workforce;
@@ -64,25 +64,24 @@ public class Polity : PopObject
 
                 //List<State> checkedBordersForRegion = new List<State>();
                 // Gets the states bordering this region
-                foreach (ulong? borderId in region.borderingRegionIds)
+                foreach (ulong borderId in region.borderingRegionIds)
                 {
                     Region border = objectManager.GetRegion(borderId); 
-                    State borderState = border.owner;
 
                     // Makes sure the state is real and not us (If this org is alliance we make sure the state doesnt have membership)
-                    if (borderState == null || borderState == this || (this is Alliance && ((Alliance)this).HasMember(borderState)))
+                    if (border.owner == null || border.owner == this/* || (this is Alliance alliance && alliance.HasMember(borderState))*/)
                     {
                         continue;
                     }
 
                     // Extends our border with the state
-                    State[] statesToEvaluate = [borderState, borderState.diplomacy.GetOverlord()];
-                    foreach (State bs in statesToEvaluate)
+                    State[] statesToEvaluate = [border.owner, border.owner.diplomacy.GetOverlord()];
+                    foreach (State state in statesToEvaluate)
                     {
-                        borders.Add(bs.id);  
-                        if (borderState.sovereignty == Sovereignty.INDEPENDENT)
+                        borders.Add(state.id);  
+                        if (border.owner.sovereignty == Sovereignty.INDEPENDENT)
                         {
-                            independentBorders.Add(bs.id);                   
+                            independentBorders.Add(state.id);                   
                         }                          
                     }
 
@@ -97,7 +96,6 @@ public class Polity : PopObject
                         {
                             continue;
                         }           
-
                         // Extends our border with the alliance
                         allianceBorders.Add(borderingAlliance.id);                                    
                     }
@@ -134,4 +132,9 @@ public class Polity : PopObject
         population = countedP;
         workforce = countedW;
     }
+    public long GetArmyPower()
+    {
+        return GetManpower();
+    }
+    public abstract long GetManpower();
 }

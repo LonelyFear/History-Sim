@@ -32,7 +32,7 @@ public partial class DebugLabel : Label
                     foreach (var pair in state.diplomacy.relationIds.ToArray())
                     {
                         State relationState = objectManager.GetState(pair.Key);
-                        if (relationState.sovereignty != Sovereignty.INDEPENDENT) return;
+                        if (relationState.sovereignty != Sovereignty.INDEPENDENT) continue;
                         Relation relation = pair.Value;
                         AddLine(relationState.name + ": " + Math.Round(Mathf.Lerp(-100, 100, relation.opinion)));
                     }                    

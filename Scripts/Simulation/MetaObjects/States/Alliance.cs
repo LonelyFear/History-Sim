@@ -64,26 +64,6 @@ public class Alliance : Polity
         regionIds = countedIds;
         //GD.Print(regionIds.Count);
     }
-    public long GetAllianceManpower()
-    {
-        long mp = 0;
-        foreach (ulong stateId in memberStateIds)
-        {
-            State memberState = objectManager.GetState(stateId);
-            mp += memberState.manpower;
-        }
-        return mp;
-    }
-    public long GetAllianceArmyPower()
-    {
-        long ap = 0;
-        foreach (ulong stateId in memberStateIds)
-        {
-            State memberState = objectManager.GetState(stateId);
-            ap += memberState.GetArmyPower();
-        }
-        return ap;       
-    }
     public bool HasMember(State state)
     {
         return memberStateIds.Contains(state.id);
@@ -98,6 +78,17 @@ public class Alliance : Polity
         }
         leadStateId = null;
     }
+    public override long GetManpower()
+    {
+        long mp = 0;
+        foreach (ulong stateId in memberStateIds)
+        {
+            State memberState = objectManager.GetState(stateId);
+            mp += memberState.GetManpower();
+        }
+        return mp;
+    }
+
 }
 public enum OrgType
 {

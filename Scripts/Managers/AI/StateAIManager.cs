@@ -59,11 +59,16 @@ public partial class StateAIManager : UtilityAi.AiAgent
             War war = objectManager.GetWar(pair.Key);
             War.WarSide side = pair.Value;
             War.WarSide enemySide = War.GetOtherSide(side);
-
+            State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
             // Surrender Via Capitulation
             if (state.capitualated && war.warLeaderIds[side] == state.id)
             {
-                objectManager.GetState(war.warLeaderIds[enemySide]).AIManager.CalcWarVictory(war, enemySide);
+                enemyWarLead.AIManager.CalcWarVictory(war, enemySide);
+            }
+            // Ends war because we dont even know who we are fighting
+            if (!state.diplomacy.HasRelations(enemyWarLead))
+            {
+                objectManager.EndWar(war);
             }
         }
     }
@@ -77,12 +82,21 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 foreach (ulong enemyId in enemyIds)
                 {
                     State enemyState = objectManager.GetState(enemyId);
-                    //GD.Print(war.participantIds.Contains(enemyId));
-                    enemyState.diplomacy.RemoveAllVassals();
-                    state.diplomacy.AddVassal(enemyState, Sovereignty.PUPPET);
+                    State[] enemyVassals = [.. enemyState.diplomacy.vassalIds.Select(objectManager.GetState)];
+
+                    foreach (State enemyVassal in enemyVassals)
+                    {
+                        enemyVassal.GetOccupier()?.diplomacy.AddVassal(enemyVassal, Sovereignty.PUPPET);
+                    }
+                    
+                    if (enemyState.GetOccupier() != null)
+                    {
+                        enemyState.diplomacy.RemoveAllVassals();
+                        enemyState.GetOccupier().diplomacy.AddVassal(enemyState, Sovereignty.PUPPET);
+                    }
                 }
                 break;
-        } 
+        }
         objectManager.EndWar(war);
     }
     public void TickDiplomaticAgression()

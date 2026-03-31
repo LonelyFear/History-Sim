@@ -88,6 +88,8 @@ public class State : Polity, ISaveable
     public void Capitualate()
     {
         Region capital = objectManager.GetRegion(capitalId);
+        if (capital == null) return;
+
         if (capital.occupier != null)
         {
             if (!capitualated)
@@ -107,7 +109,12 @@ public class State : Polity, ISaveable
         {
             capitualated = false;
         }
-    }        
+    }  
+    public State GetOccupier()
+    {
+        if (!capitualated) return null;
+        return objectManager.GetRegion(capitalId).occupier;
+    }      
     public bool StateCollapse()
     {
         if (stability > minCollapseStability)
@@ -190,47 +197,37 @@ public class State : Polity, ISaveable
     }
     public void AddRegion(Region region)
     {
-        if (!regionIds.Contains(region.id))
+        if (region == null || regionIds.Contains(region.id)) return;
+
+        region.owner?.RemoveRegion(region);
+        region.owner = this;
+
+        regionIds.Add(region.id);
+
+        foreach (Pop pop in region.pops)
         {
-            region.owner?.RemoveRegion(region);
-            region.owner = this;
-
-            regionIds.Add(region.id);
-
-            foreach (Pop pop in region.pops)
-            {
-                pops.Add(pop);
-            }
-            region.conquered = true;
+            pops.Add(pop);
         }
+        region.conquered = true;
     }
     public void RemoveRegion(Region region)
     {
-        if (!regionIds.Contains(region.id)) return;
+        if (region == null || !regionIds.Remove(region.id)) return;
 
         region.owner = null;
-        regionIds.Remove(region.id);
+
         foreach (Pop pop in region.pops)
         {
             pops.Remove(pop);
         }
         region.conquered = true;
     }
-    
-    public long GetArmyPower(bool realmPower = false)
+
+    public override long GetManpower()
     {
-        if (realmId != null && sovereignty == Sovereignty.INDEPENDENT && realmPower)
-        {
-            return objectManager.GetAlliance(realmId).GetAllianceArmyPower();
-        }
-        float interiorArmyPower = GetManpower();
-        return (long)interiorArmyPower;
+        return (int)(workforce * 0.05f);
     }
 
-    public long GetManpower()
-    {
-        return (long)(workforce * mobilizationRate);
-    }
     public int GetSize(bool includeRealm)
     {
         int size = regionIds.Count;
@@ -248,7 +245,7 @@ public class State : Polity, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 10 + (tech.societyLevel * 2);
+        return 10 + (int)(tech.societyLevel * 2);
     }
     public int GetMaxVassals() {
         return 5;

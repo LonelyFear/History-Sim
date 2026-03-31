@@ -26,7 +26,7 @@ public abstract class PopObject : NamedObject
     
     [Key(108)] public Dictionary<ulong, long> cultureIds = new Dictionary<ulong, long>();
     [Key(109)] public ulong? largestCultureId = null;
-    
+    [Key(1090)] public Tech averageTech;
     [IgnoreMember] public static Random rng = new Random();
     
 
@@ -58,9 +58,14 @@ public abstract class PopObject : NamedObject
             { SocialClass.SOLDIER, 0},
             { SocialClass.ARISTOCRAT, 0},
         };
+        Tech newAvg = new();
         //Culture currentLargest = null;
         foreach (Pop pop in pops)
         {
+            newAvg.militaryLevel += pop.tech.militaryLevel;
+            newAvg.societyLevel += pop.tech.societyLevel;
+            newAvg.industryLevel += pop.tech.industryLevel;
+
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
@@ -75,18 +80,12 @@ public abstract class PopObject : NamedObject
                 countedCultures[pop.culture] += pop.population;
             }
         }
-        /*
-        cultures = countedCultures;
-        foreach (Culture culture in cultures.Keys)
-        {
-            if (currentLargest == null || cultures[culture] > cultures[currentLargest])
-            {
-                currentLargest = culture;
-            }
-        }
-        */
-        //largestCulture = currentLargest;
+        newAvg.militaryLevel /= pops.Count;
+        newAvg.societyLevel /= pops.Count;
+        newAvg.industryLevel /= pops.Count;
 
+        averageTech = newAvg;
+        
         highestPossiblePopulation = maxPopulation;
         professions = countedSocialClasss;
         population = countedPopulation;

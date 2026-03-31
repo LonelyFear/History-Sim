@@ -3,10 +3,10 @@ using MessagePack;
 [MessagePackObject(keyAsPropertyName: true)]
 public struct Tech
 {
-    public int militaryLevel { get; set; }
-    public int scienceLevel { get; set; }
-    public int societyLevel { get; set; }
-    public int industryLevel { get; set; }
+    public float militaryLevel { get; set; }
+    public float scienceLevel { get; set; }
+    public float societyLevel { get; set; }
+    public float industryLevel { get; set; }
 
     public Tech() { }
     public Tech(int milLevel, int sciLevel, int socLevel, int indLevel)
