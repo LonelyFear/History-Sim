@@ -229,8 +229,8 @@ public class SimManager
     {
         int landRegionSize = 4;
         int seaRegionSize = 16;
-        Dictionary<Vector2I, Vector2I> landGridSeeds = new Dictionary<Vector2I, Vector2I>();
-        Dictionary<Vector2I, Vector2I> seaGridSeeds = new Dictionary<Vector2I, Vector2I>();
+        Dictionary<Vector2I, Vector2I> landGridSeeds = [];
+        Dictionary<Vector2I, Vector2I> seaGridSeeds = [];
 
         // Creates region seeds
         PlaceRegionSeeds(landRegionSize, landGridSeeds, [TerrainType.LAND, TerrainType.HILLS, TerrainType.MOUNTAINS]);
@@ -731,7 +731,7 @@ public class SimManager
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
-                state.maxSize = 6 + state.rulingPop.tech.societyLevel;
+                state.maxSize = 6 + (int)state.rulingPop.tech.societyLevel;
             }
             state.Capitualate();
 

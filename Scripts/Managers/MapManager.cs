@@ -479,23 +479,8 @@ public partial class MapManager : Node2D
             case MapModes.TECH:
                 if (region.habitable)
                 {
-                    float indAverage = 0;
-                    float milAverage = 0;
-                    float sciAverage = 0;
-                    float socAverage = 0;
-                    foreach (Pop pop in region.pops.ToArray())
-                    {
-                        socAverage += pop.tech.societyLevel;
-                        milAverage += pop.tech.militaryLevel;
-                        sciAverage += pop.tech.scienceLevel;
-                        indAverage += pop.tech.industryLevel;
-                    }
-                    indAverage /= region.pops.Count;
-                    milAverage /= region.pops.Count;
-                    sciAverage /= region.pops.Count;
-                    socAverage /= region.pops.Count;
-
-                    color = new Color(milAverage / 20f, indAverage / 20f, socAverage / 20f);
+                    region.GetAverageTech();
+                    color = new Color(region.averageTech.militaryLevel / 20f, region.averageTech.industryLevel / 20f, region.averageTech.societyLevel / 20f);
                 }
                 break;
             case MapModes.WEALTH:

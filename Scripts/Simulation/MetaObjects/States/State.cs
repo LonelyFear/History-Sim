@@ -223,7 +223,7 @@ public class State : Polity, ISaveable
         region.conquered = true;
     }
 
-    public override long GetManpower()
+    public override int GetManpower()
     {
         return (int)(workforce * 0.05f);
     }

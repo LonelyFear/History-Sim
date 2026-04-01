@@ -224,16 +224,21 @@ public partial class StateDiplomacyManager
     // Alliance
     public Alliance GetRealm()
     {
+        return GetAllianceOfType(AllianceType.REALM);
+    }
+    public Alliance GetAllianceOfType(AllianceType desiredType)
+    {
         foreach (ulong allianceId in allianceIds)
         {
-            Alliance potentialRealm = objectManager.GetAlliance(allianceId);
-            if (potentialRealm.type == OrgType.REALM)
+            Alliance potentialResult = objectManager.GetAlliance(allianceId);
+            if (potentialResult.type == desiredType)
             {
-                return potentialRealm;
+                return potentialResult;
             }
         }
         return null;
     }
+    
     public Polity GetPolity()
     {
         Alliance realm = GetRealm();
@@ -247,7 +252,7 @@ public partial class StateDiplomacyManager
     public void UpdateRealm()
     {
         if (state.sovereignty == Sovereignty.INDEPENDENT && vassalIds.Count > 0 && GetRealm() == null){
-            objectManager.CreateAlliance(state, OrgType.REALM);
+            objectManager.CreateAlliance(state, AllianceType.REALM);
         }
         foreach (ulong? vassalId in vassalIds)
         {
@@ -257,7 +262,7 @@ public partial class StateDiplomacyManager
     }
     public void AddVassal(State vassal, Sovereignty sovereignty)
     {
-        if (sovereignty == Sovereignty.INDEPENDENT || vassalIds.Contains(vassal.id)) return;
+        if (sovereignty == Sovereignty.INDEPENDENT || vassalIds.Contains(vassal.id) || vassal == state) return;
 
         State vassalFormerLiege = vassal.diplomacy.GetLiege();
         vassalFormerLiege?.diplomacy.RemoveVassal(vassal);

@@ -317,13 +317,14 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(character.id);
         simManager.characterIds.Remove(character.id);
     }
-    public Alliance CreateAlliance(State founder, OrgType type = OrgType.ALLIANCE)
+    public Alliance CreateAlliance(State founder, AllianceType type = AllianceType.ALLIANCE, bool exclusive = true)
     {
         Alliance alliance = new Alliance()
         {
             id = GetId(),
             tickCreated = timeManager.ticks,
-            type = type
+            type = type,
+            exclusive = exclusive
         };
         alliance.AddMember(founder);
         alliance.SetLeader(founder.id);

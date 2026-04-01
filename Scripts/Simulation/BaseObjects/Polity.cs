@@ -6,6 +6,9 @@ using MessagePack;
 
 public abstract class Polity : PopObject
 {
+    // Military
+    [Key(710)] public int manpower;
+    [Key(720)] public int armyPower;
     // Political
     [Key(10)] public int occupiedLand { get; set; }
     [IgnoreMember] public HashSet<ulong> borderingAllianceIds { get; set; } = [];
@@ -13,8 +16,6 @@ public abstract class Polity : PopObject
     [IgnoreMember] public HashSet<ulong> independentBorderIds { get; set; } = [];
     // Economy
     [Key(11)] public float totalWealth { get; set; }
-    [IgnoreMember] public Dictionary<SocialClass, long> requiredWorkers = [];
-    [IgnoreMember] public Dictionary<SocialClass, long> maxJobs = [];
     [Key(700)] public HashSet<ulong> regionIds { get; set; } = [];
     
     public override void CountPopulation()
@@ -26,19 +27,16 @@ public abstract class Polity : PopObject
         HashSet<ulong> borders = [];
         HashSet<ulong> independentBorders = [];
         Dictionary<SocialClass, long> countedSocialClasses = [];
-        Dictionary<SocialClass, long> countedRequiredWorkers = [];
-        Dictionary<SocialClass, long> countedJobs = [];
 
         foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
         {
             countedSocialClasses.Add(profession, 0);
-            countedRequiredWorkers.Add(profession, 0);
-            countedJobs.Add(profession, 0);
         }
 
         Dictionary<ulong, long> cCultures = [];
         float countedWealth = 0;
         int occRegions = 0;
+        Tech newAvg = new();
 
         foreach (ulong regionId in regionIds.ToArray())
         {
@@ -48,6 +46,11 @@ public abstract class Polity : PopObject
                 regionIds.Remove(regionId);
                 continue;
             }
+
+            region.GetAverageTech();
+            newAvg.militaryLevel += region.averageTech.militaryLevel;
+            newAvg.societyLevel += region.averageTech.societyLevel;
+            newAvg.industryLevel += region.averageTech.industryLevel;
             
             // Adds up population to state total
             countedP += region.population;
@@ -126,15 +129,22 @@ public abstract class Polity : PopObject
         borderingAllianceIds = allianceBorders;
         totalWealth = countedWealth;
         professions = countedSocialClasses;
-        requiredWorkers = countedRequiredWorkers;
-        maxJobs = countedJobs;
         cultureIds = cCultures;
         population = countedP;
         workforce = countedW;
+
+        manpower = GetManpower();
+        armyPower = GetArmyPower();
+
+        // Tech
+        newAvg.militaryLevel /= Mathf.Max(regionIds.Count, 1);
+        newAvg.societyLevel /= Mathf.Max(regionIds.Count, 1);
+        newAvg.industryLevel /= Mathf.Max(regionIds.Count, 1);
+        averageTech = newAvg;
     }
-    public long GetArmyPower()
+    public int GetArmyPower()
     {
-        return GetManpower();
+        return (int)(GetManpower() * (totalWealth/workforce) * (averageTech.militaryLevel + 1));
     }
-    public abstract long GetManpower();
+    public abstract int GetManpower();
 }

@@ -8,9 +8,10 @@ using MessagePack;
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
 public class Alliance : Polity
 {
-    [Key(0)] public OrgType type;
+    [Key(0)] public AllianceType type;
     [Key(2)] public ulong? leadStateId;
     [Key(1)] public List<ulong> memberStateIds = new List<ulong>();
+    [Key(3)] public bool exclusive = true;
 
     //[IgnoreMember] List<Region> regions = new List<Region>();
 
@@ -29,9 +30,9 @@ public class Alliance : Polity
     {
         if (memberStateIds.Contains(newMember.id)) return;
 
-        if (type == OrgType.REALM)
+        if (exclusive)
         {
-            newMember.diplomacy.GetRealm()?.RemoveMember(newMember);
+            newMember.diplomacy.GetAllianceOfType(type)?.RemoveMember(newMember);
         }
 
         newMember.diplomacy.allianceIds.Add(id);
@@ -78,21 +79,22 @@ public class Alliance : Polity
         }
         leadStateId = null;
     }
-    public override long GetManpower()
+    public override int GetManpower()
     {
-        long mp = 0;
-        foreach (ulong stateId in memberStateIds)
+        int mp = 0;
+        foreach (ulong stateId in memberStateIds.ToArray())
         {
             State memberState = objectManager.GetState(stateId);
-            mp += memberState.GetManpower();
+            mp += memberState.manpower;
         }
         return mp;
     }
 
 }
-public enum OrgType
+public enum AllianceType
 {
     // Political Types
     REALM,
     ALLIANCE,
+    UNION
 }

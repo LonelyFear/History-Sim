@@ -99,19 +99,19 @@ public class Pop
 
     public void TechnologyUpdate()
     {
-        double militaryTechChance = 0.002;
-        double societyTechChance = 0.002;
-        double industryTechChance = 0.01;
+        float militaryTechChance = 0.002f;
+        float societyTechChance = 0.002f;
+        float industryTechChance = 0.01f;
         Tech t = tech;
-        if (rng.NextDouble() < militaryTechChance)
+        if (rng.NextSingle() < militaryTechChance)
         {
             t.militaryLevel++;
         }
-        if (rng.NextDouble() < societyTechChance)
+        if (rng.NextSingle() < societyTechChance)
         {
             t.societyLevel++;
         }
-        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && rng.NextDouble() < industryTechChance)
+        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && rng.NextSingle() < industryTechChance)
         {
             t.industryLevel++;
         }

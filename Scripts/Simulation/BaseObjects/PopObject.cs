@@ -42,6 +42,24 @@ public abstract class PopObject : NamedObject
         //largestCulture = largestCultureId == 0 ? null : objectManager.GetCulture(largestCultureId);
         //cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => objectManager.GetCulture(kv.Key), kv => kv.Value);
     }
+
+    public virtual void GetAverageTech()
+    {
+        Tech newAvg = new();
+        //Culture currentLargest = null;
+        foreach (Pop pop in pops)
+        {
+            newAvg.militaryLevel += pop.tech.militaryLevel;
+            newAvg.societyLevel += pop.tech.societyLevel;
+            newAvg.industryLevel += pop.tech.industryLevel;
+        }
+        int popCount = Mathf.Max(pops.Count, 1);
+        newAvg.militaryLevel /= popCount;
+        newAvg.societyLevel /= popCount;
+        newAvg.industryLevel /= popCount;
+        
+        averageTech = newAvg;
+    }
     public virtual void CountPopulation()
     {
         long maxPopulation = 0;
@@ -62,9 +80,12 @@ public abstract class PopObject : NamedObject
         //Culture currentLargest = null;
         foreach (Pop pop in pops)
         {
-            newAvg.militaryLevel += pop.tech.militaryLevel;
-            newAvg.societyLevel += pop.tech.societyLevel;
-            newAvg.industryLevel += pop.tech.industryLevel;
+            newAvg = new()
+            {
+                militaryLevel = 20,
+                societyLevel = newAvg.societyLevel + pop.tech.societyLevel,
+                industryLevel = newAvg.industryLevel + pop.tech.industryLevel              
+            };
 
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
@@ -80,11 +101,12 @@ public abstract class PopObject : NamedObject
                 countedCultures[pop.culture] += pop.population;
             }
         }
-        newAvg.militaryLevel /= pops.Count;
-        newAvg.societyLevel /= pops.Count;
-        newAvg.industryLevel /= pops.Count;
-
-        averageTech = newAvg;
+        averageTech = new()
+        {
+            militaryLevel = newAvg.militaryLevel / pops.Count,
+            societyLevel = newAvg.societyLevel / pops.Count,
+            industryLevel = newAvg.industryLevel / pops.Count              
+        };
         
         highestPossiblePopulation = maxPopulation;
         professions = countedSocialClasss;
