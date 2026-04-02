@@ -14,7 +14,7 @@ public class NamedObject
     [Key(403)] public ulong id { get; set; }
     [Key(404)] public string name { get; set; }
     [Key(405)] public string description { get; set; }
-    [Key(406)] public List<ulong> eventIds = new List<ulong>();
+    [Key(406)] public List<ulong> eventIds = [];
     public uint TicksBetween(uint start, uint end)
     {
         return end - start;

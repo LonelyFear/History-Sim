@@ -10,7 +10,7 @@ namespace  UtilityAi
         [IgnoreMember] protected IAction currentAction = null;
         [IgnoreMember] protected IAction[] actions;
         [IgnoreMember] public Random rng = new Random();
-        [IgnoreMember] public Dictionary<string, float> utilityScores = new Dictionary<string, float>();
+        [IgnoreMember] public Dictionary<string, float> utilityScores = [];
         public AiAgent() {}
         public AiAgent(IAction[] aiActions, int rngSeed = int.MinValue)
         {

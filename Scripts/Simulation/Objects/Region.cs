@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 [MessagePackObject]
 public class Region : PopObject, ISaveable
 {
-    [Key(203)] public List<Vector2I> tiles { get; set; } = new List<Vector2I>();
+    [Key(203)] public List<Vector2I> tiles { get; set; } = [];
     [IgnoreMember] public bool conquered;
     [Key(202)] public bool habitable { get; set; }
     [Key(3)] public bool coastal { get; set; }
@@ -27,8 +27,8 @@ public class Region : PopObject, ISaveable
     [Key(16)] public float tradeIncome = 0;
     [Key(17)] public float taxIncome = 0;
     [Key(18)] public int zoneSize = 1;
-    [IgnoreMember] public Region tradeLink { get; set; } = null;
-    [Key(19)] public ulong tradeLinkID { get; set; }
+
+    [Key(19)] public ulong? tradeLinkId { get; set; }
     [Key(360)] public bool tradedUp { get; set; }
 
 
@@ -41,18 +41,58 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public Dictionary<Biome, int> biomes { get; set; }
     [Key(25)] public int landCount { get; set; }
     [Key(26)] public TerrainType terrainType { get; set; }
-    [IgnoreMember] public State occupier { get; set; } = null;
-    [Key(27)] public ulong occupierID { get; set; }
-    [IgnoreMember] public State owner { get; set; } = null;
-    [Key(28)] public ulong ownerID { get; set; }
+    
+    [Key(27)] public ulong? occupierId { get; set; }
+    
+    [Key(28)] public ulong? ownerId { get; set; }
 
     // Demographics
-    [IgnoreMember] public List<ulong?> borderingRegionIds { get; set; } = new List<ulong?>();
-    [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = new();
+    [IgnoreMember] public List<ulong?> borderingRegionIds { get; set; } = [];
+    [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
-    // Settlements
-    //[Key(31)] public Settlement settlement = new Settlement();
-    //[Key(32)] public ulong[] borderingRegionsIDs { get; set; }
+    // References
+    [IgnoreMember] Region _tradeLink;
+    [IgnoreMember] public Region tradeLink { 
+        get
+        {
+            if (_tradeLink == null && tradeLinkId != null) 
+                _tradeLink = objectManager.GetRegion(tradeLinkId);
+            return _tradeLink;
+        } 
+        set
+        {
+            tradeLinkId = value?.id;
+            _tradeLink = value;
+        } 
+    }    
+    [IgnoreMember] State _owner;
+    [IgnoreMember] public State owner { 
+        get
+        {
+            if (_owner == null && ownerId != null) 
+                _owner = objectManager.GetState(ownerId);
+            return _owner;
+        } 
+        set
+        {
+            ownerId = value?.id;
+            _owner = value;
+        } 
+    } 
+    [IgnoreMember] State _occupier;
+    [IgnoreMember] public State occupier { 
+        get
+        {
+            if (_occupier == null && occupierId != null) 
+                _occupier = objectManager.GetState(occupierId);
+            return _occupier;
+        } 
+        set
+        {
+            occupierId = value?.id;
+            _occupier = value;
+        } 
+    } 
 
     [Key(35)] public bool border { get; set; }
     [Key(36)] public bool frontier { get; set; }
@@ -66,29 +106,7 @@ public class Region : PopObject, ISaveable
             return (int)((populationDensity + (int)tradeIncome) * arableLand * Mathf.Max(averageTech.societyLevel, 1));
         }
     }
-    
-    public void UpdateMaxPopulation()
-    {
-        //maxPopulation = populationDensity * landCount;
-    }
-    public void PrepareForSave()
-    {
-        PreparePopObjectForSave();
-        //borderingRegionsIDs = borderingRegions.Select(r => r.id).ToArray();
-        ownerID = owner != null ? owner.id : 0;
-        occupierID = occupier != null ? occupier.id : 0;
-        tradeLinkID = tradeLink != null ? tradeLink.id : 0;
-    }
-    public void LoadFromSave()
-    {
-        //GD.Print(id);
-        LoadPopObjectFromSave();
-        //borderingRegions = borderingRegionsIDs.Select(r => simManager.regionIds[r]).ToArray();
-        owner = ownerID == 0 ? null : simManager.statesIds[ownerID];
-        occupier = occupierID == 0 ? null : simManager.statesIds[occupierID];
-        tradeLink = tradeLinkID == 0 ? null : simManager.regionIds[tradeLinkID];
-        //settlement.Init();
-    }
+
     public void AddTile(Tile tile)
     {
         if (tiles.Contains(tile.pos)) return;
@@ -206,7 +224,7 @@ public class Region : PopObject, ISaveable
 
     public void GetBorderingRegions()
     {
-        borderingRegionIds = new List<ulong?>();
+        borderingRegionIds = [];
         foreach (Vector2I tilePos in tiles)
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
@@ -453,7 +471,7 @@ public class Region : PopObject, ISaveable
         // The further the chain goes the less impact the higher trade weights have
         int maxDepth = 5;
 
-        List<float> tradeWeights = new List<float>();
+        List<float> tradeWeights = [];
         float multiplier = 1.0f;
         Region currentRegion = this;
         do // For each step

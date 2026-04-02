@@ -9,7 +9,7 @@ public partial class LabelManager : Node
 	[Export] PackedScene labelScene;
 	[Export] int minStateSize = 4;
 	[Export] float stateSizeScaleMult = 0.1f;
-	Dictionary<State, Label> currentLabels = new Dictionary<State, Label>();
+	Dictionary<State, Label> currentLabels = [];
 	SimManager simManager;
 
 	public override void _Ready()

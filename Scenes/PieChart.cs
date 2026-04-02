@@ -7,7 +7,7 @@ using Godot.Collections;
 [Tool] [GlobalClass]
 public partial class PieChart : Control
 {
-	[Export] Dictionary<string, float> elements = new Dictionary<string, float>();
+	[Export] Dictionary<string, float> elements = [];
 	[Export] Dictionary<string, Color> colors;
 	Random rng = new Random();
 	// Called when the node enters the scene tree for the first time.

@@ -11,8 +11,8 @@ public partial class HistoricalEvent
     [Key(401)] public ulong id;
     [Key(402)] public EventType type;
     [Key(403)] public uint tickOccured;
-    [Key(404)] public List<string> objIds = new List<string>();
-    [Key(406)] List<string> objText = new List<string>();
+    [Key(404)] public List<string> objIds = [];
+    [Key(406)] List<string> objText = [];
     public void InitEvent()
     {
         switch (type)

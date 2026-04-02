@@ -12,7 +12,7 @@ public class RiverGenerator
     public bool riverMustEndInWater = true;
     public int minRiverHeight = 1000;
     int invalidRivers = 0;
-    List<Vector2I> validPositions = new List<Vector2I>();
+    List<Vector2I> validPositions = [];
     bool[,] rivers;
     void GeneratePoints(WorldGenerator world)
     {
@@ -66,7 +66,7 @@ public class RiverGenerator
         {
 
             Vector2I pos = riverStart;
-            List<Vector2I> currentRiver = new List<Vector2I>();
+            List<Vector2I> currentRiver = [];
             bool endFound = false;
             bool waterEnd = false;
             int attempts = 0;

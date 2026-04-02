@@ -27,8 +27,8 @@ public class SimManager
     public uint tick;
 
     public Tile[,] tiles;
-    [IgnoreMember] public List<Region> habitableRegions = new List<Region>();
-    [IgnoreMember] public List<Region> paintedRegions = new List<Region>();
+    [IgnoreMember] public List<Region> habitableRegions = [];
+    [IgnoreMember] public List<Region> paintedRegions = [];
     [IgnoreMember] public static Vector2I worldSize;
     [IgnoreMember] public WorldGenerator worldGenerator;
     [IgnoreMember] public MapManager mapManager;
@@ -43,18 +43,16 @@ public class SimManager
 
     // Lists
     // Saved Data
-    [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = new Dictionary<ulong, Region>();
-    //[IgnoreMember] public List<Pop> pops { get; set; } = new List<Pop>();
-    [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = new Dictionary<ulong, Pop>();
-    [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = new Dictionary<ulong, Culture>();
-    //[IgnoreMember] public List<State> states { get; set; } = new List<State>();
-    [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = new Dictionary<ulong, State>();
-    [IgnoreMember] public List<ulong> deletedStateIds = new List<ulong>();
-    [IgnoreMember] public Dictionary<ulong, Market> marketIds { get; set; } = new Dictionary<ulong, Market>();
-    [IgnoreMember] public Dictionary<ulong, Character> characterIds { get; set; } = new Dictionary<ulong, Character>();
-    [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = new Dictionary<ulong, Alliance>();
-    [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = new Dictionary<ulong, War>();
-    [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = new Dictionary<ulong, HistoricalEvent>();
+    [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = [];
+    [IgnoreMember] public List<ulong> deletedStateIds = [];
+    [IgnoreMember] public Dictionary<ulong, Market> marketIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, Character> characterIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = [];
 
     // Misc
     public uint currentBatch = 2;
@@ -96,7 +94,9 @@ public class SimManager
     {
         regionIds.Values.ToList().ForEach(r => r.PrepareForSave());
         statesIds.Values.ToList().ForEach(r => r.PrepareForSave());
-        cultureIds.Values.ToList().ForEach(r => r.PreparePopObjectForSave());
+        cultureIds.Values.ToList().ForEach(r => r.PrepareForSave());
+        allianceIds.Values.ToList().ForEach(r => r.PrepareForSave());
+
         tick = timeManager.ticks;
 
         var resolver = CompositeResolver.Create(
@@ -151,23 +151,22 @@ public class SimManager
         sim.simLoadedFromSave = true;
         return sim;
     }
+
     public void RebuildAfterSave()
     {
         AssignSimManager();
         timeManager.ticks = tick;
         
-        foreach (var pair in regionIds)
+        regionIds.Values.ToList().ForEach(r =>
         {
-            Region region = pair.Value;
-            region.LoadFromSave();
-            region.InitRegion();
-        }
+            r.LoadFromSave();
+            r.InitRegion();
+        });
         BorderingRegions();
 
-        //pops.ForEach(r => r.LoadFromSave());
-        //wars.ForEach(r => r.LoadFromSave());
         statesIds.Values.ToList().ForEach(r => r.LoadFromSave());
-        cultureIds.Values.ToList().ForEach(r => r.LoadPopObjectFromSave());   
+        cultureIds.Values.ToList().ForEach(r => r.LoadFromSave());
+        allianceIds.Values.ToList().ForEach(r => r.LoadFromSave());
     }
 
     public void InitTerrainTiles()
@@ -318,7 +317,7 @@ public class SimManager
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if (dx == 0 && dy == 0)
+                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
                         {
                             continue;
                         }
@@ -365,7 +364,7 @@ public class SimManager
             {
                 for (int dy = -1; dy < 2; dy++)
                 {
-                    if (dx == 0 && dy == 0)
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0))
                     {
                         continue;
                     }
@@ -386,7 +385,7 @@ public class SimManager
 
         GD.Print("Micro-Regions Tiles: " + unassignedTiles.Count);
         // Creates Final Micro-Regions (Islands, Small Glaciers)
-        Dictionary<Vector2I, Vector2I> microRegions = new Dictionary<Vector2I, Vector2I>();
+        Dictionary<Vector2I, Vector2I> microRegions = [];
         foreach (Tile tile in unassignedTiles)
         {
             microRegions.Add(tile.pos, tile.pos);
@@ -635,7 +634,6 @@ public class SimManager
             var partitioner = Partitioner.Create(habitableRegions);
             Parallel.ForEach(partitioner, (region) =>
             {
-                region.UpdateMaxPopulation();
                 region.UpdateWealth();
                 if (region.pops.Count > 0)
                 {

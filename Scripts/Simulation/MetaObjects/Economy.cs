@@ -5,7 +5,7 @@ using System.Linq;
 
 public class Economy
 {
-    Dictionary<BaseResource, double> resources = new Dictionary<BaseResource, double>();
+    Dictionary<BaseResource, double> resources = [];
     public float maxFoodStorage = 20000;
 
     public double ChangeResourceAmount(BaseResource resource, double amount)

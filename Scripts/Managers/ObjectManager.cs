@@ -112,10 +112,11 @@ public class ObjectManager
             {
                 pop.region.owner.rulingPop = null;
             }
-        }
+            
 
-        pop.region.RemovePop(pop, pop.region);
-        pop.culture.RemovePop(pop, pop.culture);
+        }
+        pop.region?.RemovePop(pop, pop.region);
+        pop.culture?.RemovePop(pop, pop.culture);
         simManager.popsIds.Remove(pop.id);
     }
     public Pop GetPop(ulong? id)

@@ -51,7 +51,7 @@ namespace  BehaviorTrees
             RUNNING,
         }
         public readonly string name;
-        protected readonly List<Node> children = new List<Node>();
+        protected readonly List<Node> children = [];
         protected int currentChild = 0;
 
         public Node(string name = "Node")

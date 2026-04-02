@@ -21,16 +21,14 @@ public class Pop
     [Key(10)] public double loyalty { get; set; } = 1;
     [Key(11)] public double politicalPower { get; set; } = 1;
     
-    [IgnoreMember] public Region region;
-    [Key(12)] public ulong regionId { get; set; }
-    [IgnoreMember] public Culture culture { get; set; }
-    [Key(13)] public ulong cultureId { get; set; }
+    [Key(12)] public ulong? regionId { get; set; }
+
+    [Key(13)] public ulong? cultureId { get; set; }
     [Key(14)] public SocialClass profession { get; set; } = SocialClass.FARMER;
 
     [Key(15)] public Tech tech { get; set; } = new Tech();
     [Key(16)] public uint batchId { get; set; } = 1;
 
-    [Key(17)] public List<Character> characters { get; set; } = new List<Character>();
     //[IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] public static Random rng = new Random();
@@ -39,18 +37,36 @@ public class Pop
     [Key(20)] public bool shipborne { get; set; } = false;
     [Key(21)] public Direction lastDirection = Direction.RIGHT;
 
-    public void PrepareForSave()
-    {
-        regionId = region.id;
-        cultureId = culture.id;
+    // Reference Types
+    [IgnoreMember] Culture _culture;
+    [IgnoreMember] public Culture culture { 
+        get
+        {
+            if (_culture == null) 
+                _culture = objectManager.GetCulture(cultureId);
+            return _culture;
+        }
+        set
+        {
+            cultureId = value?.id;
+            _culture = value;
+        }
     }
-    public void LoadFromSave()
-    {
-        //GD.Print(regionId);
-        //GD.Print(simManager.GetRegion(regionId));
-        region = objectManager.GetRegion(regionId);
-        culture = objectManager.GetCulture(cultureId);
+    [IgnoreMember] Region _region;
+    [IgnoreMember] public Region region { 
+        get
+        {
+            if (_region == null) 
+                _region = objectManager.GetRegion(regionId);
+            return _region;
+        }
+        set
+        {
+            regionId = value?.id;
+            _region = value;
+        }
     }
+
     public void ChangePopulation(int wfChange, int dfChange)
     {
         wfChange = Math.Max(wfChange, -workforce);

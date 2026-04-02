@@ -104,7 +104,7 @@ public class BiomeGenerator
                 int elevation = world.cells[x, y].elevation;
                 float seaLevel = world.SeaLevel * WorldGenerator.WorldHeight;
                 float moist = world.cells[x,y].GetAnnualRainfall();
-                Dictionary<Biome, float> candidates = new Dictionary<Biome, float>();
+                Dictionary<Biome, float> candidates = [];
 
                 foreach (Biome biome in AssetManager.biomes.Values)
                 {

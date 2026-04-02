@@ -9,7 +9,7 @@ public partial class SavesPanel : Panel
 	VBoxContainer saveButtonContainer;
 	[Export] PackedScene saveButtonScene;
 	public string selectedSave = null;
-	Dictionary<string, SaveButton> saves = new Dictionary<string, SaveButton>();
+	Dictionary<string, SaveButton> saves = [];
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{

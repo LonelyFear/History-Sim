@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public partial class TabManager : TabBar
 {
-	List<Control> openTabs = new List<Control>();
+	List<Control> openTabs = [];
 	Panel panel;
 	Panel tabBarBackground;
     public override void _Ready()

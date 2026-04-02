@@ -58,7 +58,7 @@ public partial class ActionPanel : Panel
     }
     public void OpenSaveMenu()
     {
-        saveOverwritePaths = new List<string>();
+        saveOverwritePaths = [];
         saveNamePanel.Visible = !saveNamePanel.Visible;
         
         for (int i = 0; i < overwriteButton.ItemCount; i++)

@@ -7,7 +7,7 @@ using MessagePack;
 public class Market : NamedObject
 {
     [Key(1)] public ulong centerId { get; set; }
-    [Key(2)] public HashSet<ulong> regionIds { get; set; } = new HashSet<ulong>();
+    [Key(2)] public HashSet<ulong> regionIds { get; set; } = [];
     [Key(3)] public Color color { get; set; }
     [Key(4)]  public ulong? controllerId { get; set; } = null;
 

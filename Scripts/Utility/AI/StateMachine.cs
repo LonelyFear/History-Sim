@@ -7,7 +7,7 @@ namespace StateMachines
     public abstract class StateMachine<EState> where EState : Enum
     {
         [Key(2000)] BaseState<EState> currentState;
-        [Key(2001)] Dictionary<EState, BaseState<EState>> states = new Dictionary<EState, BaseState<EState>>();
+        [Key(2001)] Dictionary<EState, BaseState<EState>> states = [];
         public void Tick()
         {
             EState nextState = currentState.GetNextState();

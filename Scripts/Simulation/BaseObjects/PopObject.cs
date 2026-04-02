@@ -12,8 +12,8 @@ public abstract class PopObject : NamedObject
     [Key(105)] public long workforce { get; set; } = 0;
     [Key(1070)] public Color color { get; set; }
 
-    [IgnoreMember] public HashSet<Pop> pops = new HashSet<Pop>();
-    [Key(106)] public List<ulong> popsIds;
+    [IgnoreMember] public HashSet<Pop> pops = [];
+    [Key(106)] public HashSet<ulong> popsIds;
     [IgnoreMember] public static TimeManager timeManager;
     [Key(107)] public Dictionary<SocialClass, long> professions = new Dictionary<SocialClass, long>()
     {
@@ -24,23 +24,27 @@ public abstract class PopObject : NamedObject
         {SocialClass.SOLDIER, 0},
     };
     
-    [Key(108)] public Dictionary<ulong, long> cultureIds = new Dictionary<ulong, long>();
+    [Key(108)] public Dictionary<ulong, long> cultureIds = [];
     [Key(109)] public ulong? largestCultureId = null;
     [Key(1090)] public Tech averageTech;
     [IgnoreMember] public static Random rng = new Random();
     
+    public virtual void PrepareForSave()
+    {
+        PopObjectSave();
+    }
+    public virtual void LoadFromSave()
+    {
+        PopObjectLoad();
+    }
 
-    public void PreparePopObjectForSave()
+    public void PopObjectSave()
     {
         popsIds = pops.Count > 0 ? [.. pops.Select(p => p.id)] : null;
-        //largestCultureId = largestCulture == null ? 0 : largestCulture.id;
-        //culturesIds = cultures.Count > 0 ? cultures.ToDictionary(kv => kv.Key.id, kv => kv.Value) : null;
     }
-    public void LoadPopObjectFromSave()
+    public void PopObjectLoad()
     {
-        pops = popsIds == null ? new HashSet<Pop>() : [.. popsIds.Select(p => objectManager.GetPop(p))];
-        //largestCulture = largestCultureId == 0 ? null : objectManager.GetCulture(largestCultureId);
-        //cultures = culturesIds == null ? new Dictionary<Culture, long>() : culturesIds.ToDictionary(kv => objectManager.GetCulture(kv.Key), kv => kv.Value);
+        pops = popsIds == null ? [] : [.. popsIds.Select(p => objectManager.GetPop(p))];
     }
 
     public virtual void GetAverageTech()
@@ -67,7 +71,7 @@ public abstract class PopObject : NamedObject
         long countedDependents = 0;
         long countedWorkforce = 0;
 
-        Dictionary<Culture, long> countedCultures = new Dictionary<Culture, long>();
+        Dictionary<Culture, long> countedCultures = [];
         Dictionary<SocialClass, long> countedSocialClasss = new Dictionary<SocialClass, long>()
         {
             {SocialClass.FARMER, 0},

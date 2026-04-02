@@ -10,7 +10,7 @@ public class Alliance : Polity
 {
     [Key(0)] public AllianceType type;
     [Key(2)] public ulong? leadStateId;
-    [Key(1)] public List<ulong> memberStateIds = new List<ulong>();
+    [Key(1)] public List<ulong> memberStateIds = [];
     [Key(3)] public bool exclusive = true;
 
     //[IgnoreMember] List<Region> regions = new List<Region>();

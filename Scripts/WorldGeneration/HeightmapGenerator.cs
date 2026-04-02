@@ -14,10 +14,10 @@ public class HeightmapGenerator
     int ppcx;
     int ppcy;
     TerrainCell[,] tiles;
-    List<Vector2I> offshore = new List<Vector2I>();
-    List<Plate> plates = new List<Plate>();
-    List<VoronoiRegion> continentalRegions = new List<VoronoiRegion>();
-    List<VoronoiRegion> voronoiRegions = new List<VoronoiRegion>();
+    List<Vector2I> offshore = [];
+    List<Plate> plates = [];
+    List<VoronoiRegion> continentalRegions = [];
+    List<VoronoiRegion> voronoiRegions = [];
     Vector2I worldSize;
     float worldMult;
     float seaLevel;
@@ -798,7 +798,7 @@ public class HeightmapGenerator
     {
         ppcx = Mathf.RoundToInt(worldSize.X / (float)gridSizeX);
         ppcy = Mathf.RoundToInt(worldSize.Y / (float)gridSizeY);
-        Dictionary<Vector2I, VoronoiRegion> point = new Dictionary<Vector2I, VoronoiRegion>();
+        Dictionary<Vector2I, VoronoiRegion> point = [];
         for (int i = 0; i < gridSizeX; i++) {
             for (int j = 0; j < gridSizeY; j++)
             {
@@ -922,7 +922,7 @@ public class HeightmapGenerator
         });
 
         // Makes sure regions are connected 
-        List<(VoronoiRegion, List<Vector2I>)> enclaves = new();
+        List<(VoronoiRegion, List<Vector2I>)> enclaves = [];
         foreach (VoronoiRegion region in voronoiRegions)
         {
             HashSet<Vector2I> remainingCells;
@@ -953,7 +953,7 @@ public class HeightmapGenerator
                     }
                 }
             }
-            Dictionary<VoronoiRegion, int> potenitalMergers = new Dictionary<VoronoiRegion, int>();
+            Dictionary<VoronoiRegion, int> potenitalMergers = [];
             // Removes Disconnected
             foreach (Vector2I pos in remainingCells)
             {
@@ -1160,11 +1160,11 @@ public class VoronoiRegion
     public TerrainContinent continent = null;
     public bool coastal = false;
     public Plate plate;
-    public List<Vector2I> cells = new List<Vector2I>();
-    public List<Vector2I> coastalTiles = new List<Vector2I>();
-    public List<Vector2I> boundaryTiles = new List<Vector2I>();
-    public List<VoronoiRegion> borderingRegions = new List<VoronoiRegion>();
-    public List<Vector2I> edges = new List<Vector2I>();
+    public List<Vector2I> cells = [];
+    public List<Vector2I> coastalTiles = [];
+    public List<Vector2I> boundaryTiles = [];
+    public List<VoronoiRegion> borderingRegions = [];
+    public List<Vector2I> edges = [];
     //public Dictionary<VoronoiRegion, Vector2I> edges = Dictionary<VoronoiRegion, Vector2I>();
     public bool IsContinental()
     {
@@ -1212,7 +1212,7 @@ public class TerrainCell
     public float boundaryDist = Mathf.Inf;
     public TerrainCell nearestBoundary = null;
     public TerrainCell nearestCoast = null;
-    public Dictionary<Vector2I, float> edgeDistancesSquared = new Dictionary<Vector2I, float>();
+    public Dictionary<Vector2I, float> edgeDistancesSquared = [];
     public float pressure = 0f;
     public bool collisionContinental = false;
     public bool convergent;

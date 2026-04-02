@@ -17,7 +17,7 @@ public partial class EncyclopediaManager : CanvasLayer
 	[Export] Button closeEncyclopediaButton;
 	public SimManager simManager;
 	public ObjectManager objectManager;
-	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = new Dictionary<ulong, BaseEncyclopediaTab>();
+	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = [];
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()

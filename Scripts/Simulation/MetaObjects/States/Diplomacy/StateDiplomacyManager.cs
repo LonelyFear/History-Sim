@@ -17,8 +17,8 @@ public partial class StateDiplomacyManager
     [Key(0)] ulong stateId;
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     //[IgnoreMember] ulong realmId;
-    [Key(12)] public List<ulong> allianceIds = new List<ulong>();
-    [Key(17)] public List<ulong?> vassalIds { get; set; } = new List<ulong?>();
+    [Key(12)] public List<ulong> allianceIds = [];
+    [Key(17)] public List<ulong?> vassalIds { get; set; } = [];
     [IgnoreMember] State state;
     [IgnoreMember] public Random rng = PopObject.rng;
 

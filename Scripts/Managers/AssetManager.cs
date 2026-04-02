@@ -10,11 +10,11 @@ public static class AssetManager
     public const string modsFolderPath = "Mods/";
     public static List<string> loadedModIds;
     public static List<string> foundModPaths;
-    public static Dictionary<string, Biome> biomes = new Dictionary<string, Biome>();
-    public static List<PlantType> plantTypes = new List<PlantType>();
-    public static Dictionary<string, Building> buildings = new Dictionary<string, Building>();
-    public static Dictionary<string, Crop> crops = new Dictionary<string, Crop>();
-    public static Dictionary<string, BaseResource> resources = new Dictionary<string, BaseResource>();
+    public static Dictionary<string, Biome> biomes = [];
+    public static List<PlantType> plantTypes = [];
+    public static Dictionary<string, Building> buildings = [];
+    public static Dictionary<string, Crop> crops = [];
+    public static Dictionary<string, BaseResource> resources = [];
     public static void LoadBiomes(string modPath)
     {
         string biomesPath = modPath + "/Biomes/biomes.json";
@@ -58,7 +58,7 @@ public static class AssetManager
     public static void GetLoadedMods()
     {
         GD.Print("Mod Loading Start");
-        foundModPaths = new List<string>();
+        foundModPaths = [];
         DirAccess modsDir = DirAccess.Open(modsFolderPath);
 
         if (modsDir != null)
@@ -95,11 +95,11 @@ public static class AssetManager
     }
     public static void LoadMods()
     {
-        plantTypes = new List<PlantType>();
-        biomes = new Dictionary<string, Biome>();
-        buildings = new Dictionary<string, Building>();
-        crops = new Dictionary<string, Crop>();
-        resources = new Dictionary<string, BaseResource>();
+        plantTypes = [];
+        biomes = [];
+        buildings = [];
+        crops = [];
+        resources = [];
 
         GetLoadedMods();
         foreach (string modPath in foundModPaths)
@@ -185,7 +185,7 @@ public static class AssetManager
                 string yieldIDDict = JsonSerializer.Deserialize<Dictionary<string, object>>(cropData)["yield"].ToString();
                 Dictionary<string, float> cropYieldIds = JsonSerializer.Deserialize<Dictionary<string, float>>(yieldIDDict);
 
-                crop.yields = new Dictionary<BaseResource, float>();
+                crop.yields = [];
                 foreach (string id in cropYieldIds.Keys)
                 {
                     if (GetResource(id) != null)

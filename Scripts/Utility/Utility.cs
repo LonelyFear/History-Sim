@@ -121,7 +121,7 @@ public static class Utility
     }
     public static string[] GetAsArray(this FileAccess f)
     {
-        List<string> result = new List<string>();
+        List<string> result = [];
         while (!f.EofReached())
         {
             result.Add(f.GetLine());

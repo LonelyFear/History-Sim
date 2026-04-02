@@ -4,7 +4,6 @@ using System.Linq;
 
 public partial class ObjectInfo : Control
 {
-    [Export] Panel panel;
     [Export] Label nameLabel;
     [Export] Label typeLabel;
     [Export] Label populationLabel;
@@ -36,11 +35,11 @@ public partial class ObjectInfo : Control
         try
         {
             if (!mapManager.initialized || mapManager == null || mapManager.selectedMetaObj == null) {
-                panel.Visible = false;
+                Visible = false;
             } else {
                 selectedObject = mapManager.selectedMetaObj;
 
-                panel.Visible = true;
+                Visible = true;
                 typeLabel.Text = selectedObject.GetType().ToString();
                 nameLabel.Text = selectedObject.name;
                 switch (selectedObject.GetObjectType()) {

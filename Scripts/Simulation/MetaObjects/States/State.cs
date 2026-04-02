@@ -49,22 +49,20 @@ public class State : Polity, ISaveable
     [Key(30)] public Pop rulingPop;
     [Key(31)] public ulong? lastLeaderId = null;
     [Key(32)] public ulong? leaderId = null;
-    [Key(33)] public List<ulong?> characterIds = new List<ulong?>();
+    [Key(33)] public List<ulong?> characterIds = [];
     [Key(34)] public double stability = 1;
     [Key(35)] public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
     [Key(367)] public uint timeAsVassal = 0;
-    public void PrepareForSave()
+    public override void PrepareForSave()
     {
-        PreparePopObjectForSave();
-        //regionsIDs = [.. regions.Select(r => r.id)];
+        PopObjectSave();
     }
-    public void LoadFromSave()
+    public override void LoadFromSave()
     {
         AIManager.InitAI();
-        LoadPopObjectFromSave();
-        //regions = [.. regionsIDs.Select(r => objectManager.GetRegion(r))];
+        PopObjectLoad();
         diplomacy.Init(this);
     }
     public void UpdateCapital()

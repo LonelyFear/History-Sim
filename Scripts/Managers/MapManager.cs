@@ -28,6 +28,7 @@ public partial class MapManager : Node2D
     public bool initialized = false;
     [Export] PlayerCamera playerCamera;
     [Export] OptionButton mapModeUI;
+    [Export] Button deselectMetaObjectButton;
     [Export] public CheckBox showRegionsCheckbox;
 
     [Export(PropertyHint.Range, "1,10")] int regionResolution = 4;
@@ -48,18 +49,18 @@ public partial class MapManager : Node2D
     Color[] regionColors;
     ulong[] borderValues;
     //float[] colorValues;
-    
-    List<Region> mouseToSelected = [];
 
     // NOTE: Painted regions are updated in TimeManager.cs
     public override void _Ready()
     {
         regionOverlay = GetNode<Sprite2D>("Region Map");
 		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += InitMapManager;
+        deselectMetaObjectButton.Pressed += () => SelectMetaObject(null);
 	}
     void InitMapManager() {
         // Frees dimension buffer
-        //rd.FreeRid(dimensionsBuffer);
+        if (colorsBuffer.IsValid) rd.FreeRid(colorsBuffer);
+        if (dimensionsBuffer.IsValid) rd.FreeRid(dimensionsBuffer);
         
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         timeManager = simManager.timeManager;
@@ -202,7 +203,6 @@ public partial class MapManager : Node2D
         }
 
     }
-
     void UpdateHovering()
     {
         Region lastHovered = hoveredRegion;
@@ -221,12 +221,7 @@ public partial class MapManager : Node2D
         if (lastHovered != null)
         {
             UpdateRegionColor(lastHovered.pos.X, lastHovered.pos.Y);
-        }  
-
-        if (hoveredRegion != null && selectedMetaObj != null && selectedMetaObj is Region)
-        {
-            mouseToSelected = Region.GetPath(hoveredRegion, (Region)selectedMetaObj);
-        }    
+        }
     }
 
     void UpdateRegionVisibility(bool value) {
@@ -569,10 +564,6 @@ public partial class MapManager : Node2D
         }
         if (hoveredRegion == region){
             color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.3f);
-        }
-        if (mouseToSelected.Contains(region))
-        {
-            color = new Color(0, 0, 0, 1);
         }
         return color;
     }

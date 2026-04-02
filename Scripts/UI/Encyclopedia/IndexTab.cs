@@ -11,7 +11,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 	[Export] PackedScene resultScene;
 	[Export] Label resultsLabel;
 	public ObjectType type;
-	Dictionary<string, Button> resultDictionary = new Dictionary<string, Button>();
+	Dictionary<string, Button> resultDictionary = [];
 	public static SimManager sim;
 	public static EncyclopediaManager encyclopediaManager;
 	int currentIdentifier = 0;

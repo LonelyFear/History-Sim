@@ -23,9 +23,9 @@ public partial class Character : NamedObject
     [Key(-3)] public string lastName;
     [Key(6)] public ulong? stateId = null;
     [Key(7)] public CharacterRole role = CharacterRole.DEAD;
-    [Key(8)] public List<ulong> parentIds = new List<ulong>();
-    [Key(9)] public List<ulong?> childIds = new List<ulong?>();
-    [Key(10)] public Dictionary<ulong, int> relationsIds = new Dictionary<ulong, int>();
+    [Key(8)] public List<ulong> parentIds = [];
+    [Key(9)] public List<ulong?> childIds = [];
+    [Key(10)] public Dictionary<ulong, int> relationsIds = [];
     // Health
     [Key(11)] public int health = 100;
     [Key(12)] public float healthDecreaseChance = 0.075f;
