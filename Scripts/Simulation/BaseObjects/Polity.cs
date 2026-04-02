@@ -16,8 +16,29 @@ public abstract class Polity : PopObject
     [IgnoreMember] public HashSet<ulong> independentBorderIds { get; set; } = [];
     // Economy
     [Key(11)] public float totalWealth { get; set; }
+    [IgnoreMember] public HashSet<Region> regions = [];
     [Key(700)] public HashSet<ulong> regionIds { get; set; } = [];
-    
+
+    public override void PrepareForSave()
+    {
+        PopObjectSave();
+        PolitySave();
+    }
+    public override void LoadFromSave()
+    {
+        PopObjectSave();
+        PolityLoad();
+    }
+
+    public void PolitySave()
+    {
+        regionIds = regions.Count > 0 ? [.. regions.Select(r => r.id)] : null;
+    }
+    public void PolityLoad()
+    {
+        regions = regionIds == null ? [] : [.. regionIds.Select(p => objectManager.GetRegion(p))];
+    }
+
     public override void CountPopulation()
     {
         long countedP = 0;
@@ -38,12 +59,12 @@ public abstract class Polity : PopObject
         int occRegions = 0;
         Tech newAvg = new();
 
-        foreach (ulong regionId in regionIds.ToArray())
+        foreach (Region region in regions)
         {
-            Region region = objectManager.GetRegion(regionId);
+            //Region region = objectManager.GetRegion(regionId);
 
             if (region == null) {
-                regionIds.Remove(regionId);
+                regions.Remove(region);
                 continue;
             }
 
@@ -67,12 +88,10 @@ public abstract class Polity : PopObject
 
                 //List<State> checkedBordersForRegion = new List<State>();
                 // Gets the states bordering this region
-                foreach (ulong borderId in region.borderingRegionIds)
+                foreach (Region border in region.borderingRegions)
                 {
-                    Region border = objectManager.GetRegion(borderId); 
-
                     // Makes sure the state is real and not us (If this org is alliance we make sure the state doesnt have membership)
-                    if (border.owner == null || border.owner == this/* || (this is Alliance alliance && alliance.HasMember(borderState))*/)
+                    if (border == null || border.owner == null || border.owner == this/* || (this is Alliance alliance && alliance.HasMember(borderState))*/)
                     {
                         continue;
                     }
@@ -81,6 +100,8 @@ public abstract class Polity : PopObject
                     State[] statesToEvaluate = [border.owner, border.owner.diplomacy.GetOverlord()];
                     foreach (State state in statesToEvaluate)
                     {
+                        if (state == null) continue;
+                        
                         borders.Add(state.id);  
                         if (border.owner.sovereignty == Sovereignty.INDEPENDENT)
                         {
@@ -137,9 +158,9 @@ public abstract class Polity : PopObject
         armyPower = GetArmyPower();
 
         // Tech
-        newAvg.militaryLevel /= Mathf.Max(regionIds.Count, 1);
-        newAvg.societyLevel /= Mathf.Max(regionIds.Count, 1);
-        newAvg.industryLevel /= Mathf.Max(regionIds.Count, 1);
+        newAvg.militaryLevel /= Mathf.Max(regions.Count, 1);
+        newAvg.societyLevel /= Mathf.Max(regions.Count, 1);
+        newAvg.industryLevel /= Mathf.Max(regions.Count, 1);
         averageTech = newAvg;
     }
     public int GetArmyPower()

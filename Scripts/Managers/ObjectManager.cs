@@ -176,7 +176,7 @@ public class ObjectManager
                 id = GetId(),
                 baseName = NameGenerator.GenerateNationName(),
                 color = new Color(r, g, b),
-                capitalId = region.id,
+                capital = region,
                 tickCreated = timeManager.ticks,
                 
             };
@@ -184,9 +184,8 @@ public class ObjectManager
             simManager.statesIds.Add(state.id, state);      
                   
             state.diplomacy = new StateDiplomacyManager(state);
-
             // Init ai manager after vassal and diplo
-            state.AIManager = new StateAIManager([new DeclareWarsAction()],state);
+            state.AIManager = new StateAIManager(state);
 
 
         }
@@ -212,9 +211,9 @@ public class ObjectManager
             State vassal = GetState(vassalId);
             deletedState.diplomacy.RemoveVassal(vassal);
         }
-        foreach (ulong regionId in deletedState.regionIds.ToArray())
+        foreach (Region region in deletedState.regions.ToArray())
         {
-            deletedState.RemoveRegion(GetRegion(regionId));
+            deletedState.RemoveRegion(region);
         }
         foreach (ulong characterId in deletedState.characterIds.ToArray())
         {
@@ -293,7 +292,7 @@ public class ObjectManager
         }
         // Adds character to state and gives it role
         character.name = $"{character.firstName} {character.lastName}";
-        character.JoinState(state.id);
+        character.JoinState(state);
         character.SetRole(role);
         // Documents character
         simManager.characterIds.Add(character.id, character);
@@ -328,16 +327,16 @@ public class ObjectManager
             exclusive = exclusive
         };
         alliance.AddMember(founder);
-        alliance.SetLeader(founder.id);
+        alliance.SetLeader(founder);
 
         simManager.allianceIds.Add(alliance.id, alliance);
         return alliance;
     }
     public void DeleteAlliance(Alliance alliance)
     {
-        foreach (ulong memberId in alliance.memberStateIds.ToArray())
+        foreach (State member in alliance.memberStates)
         {
-            alliance.RemoveMember(GetState(memberId));
+            alliance.RemoveMember(member);
         }
         simManager.objectDeleted.Invoke(alliance.id);
         simManager.allianceIds.Remove(alliance.id);

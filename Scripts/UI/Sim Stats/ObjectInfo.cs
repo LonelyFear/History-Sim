@@ -78,8 +78,8 @@ public partial class ObjectInfo : Control
                         specialLabel.Text += "\n" + "Total Wealth: " + polity.totalWealth.ToString("#,###0");
                         specialLabel.Text += "\n" + "Military Power: " + polity.GetArmyPower().ToString("#,###0") + "\n";                                   
 
-                        if (state.leaderId != null) {
-                            Character leader = objectManager.GetCharacter(state.leaderId);
+                        if (state.leader != null) {
+                            Character leader = state.leader;
                             specialLabel.Text += "\n" + $"Leader: {state.leaderTitle} {leader.firstName + " " + leader.lastName}";
                             specialLabel.Text += "\n" + $"Leader Age: {timeManager.GetYear(leader.GetAge())} year(s)" + "\n";
                         } else {

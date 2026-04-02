@@ -29,11 +29,11 @@ public abstract class PopObject : NamedObject
     [Key(1090)] public Tech averageTech;
     [IgnoreMember] public static Random rng = new Random();
     
-    public virtual void PrepareForSave()
+    public override void PrepareForSave()
     {
         PopObjectSave();
     }
-    public virtual void LoadFromSave()
+    public override void LoadFromSave()
     {
         PopObjectLoad();
     }

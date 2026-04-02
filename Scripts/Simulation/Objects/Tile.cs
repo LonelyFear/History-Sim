@@ -6,7 +6,6 @@ public class Tile : Cell
 {
 	public ulong? regionId;
 	public Vector2I pos;
-	public Biome biome;
 	public float navigability;
 	public float arability;
 	public float survivalbility;
@@ -30,20 +29,19 @@ public class Tile : Cell
 		julyDaylight = cell.julyDaylight;
 		januaryDaylight = cell.januaryDaylight;
 		continentiality = cell.continentiality;
-
-		biome = AssetManager.GetBiome(cell.biomeId);
+		biomeId = cell.biomeId;
 		
-		arability = biome.arability;
-		navigability = biome.navigability;
-		survivalbility = biome.survivability;
+		arability = GetBiome().arability;
+		navigability = GetBiome().navigability;
+		survivalbility = GetBiome().survivability;
 
-		switch (biome.type)
+		switch (GetBiome().type)
 		{
 			case "land":
 				terrainType = TerrainType.LAND;
 				break;
 			case "water":
-				if (biome.id == "river")
+				if (biomeId == "river")
 				{
 					terrainType = TerrainType.RIVER;
 					break;
@@ -77,6 +75,10 @@ public class Tile : Cell
 				terrainType = TerrainType.HILLS;
 			}
 		}
+	}
+	public Biome GetBiome()
+	{
+		return AssetManager.GetBiome(biomeId);
 	}
 	public bool IsLand()
 	{

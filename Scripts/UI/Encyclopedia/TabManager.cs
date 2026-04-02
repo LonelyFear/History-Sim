@@ -19,7 +19,6 @@ public partial class TabManager : TabBar
 				OpenTab((Control)node);
             }
 		}
-		GD.Print("Readied Menu");
     }
 	public void OpenTab(Control tab)
 	{

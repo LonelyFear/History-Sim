@@ -12,9 +12,13 @@ public partial class StateAIManager : UtilityAi.AiAgent
 {
     [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] public static SimManager simManager;
-    [Key(0)] public ulong stateId;
-    [IgnoreMember] public State state;
-    [IgnoreMember] public StateDiplomacyManager diplomacyManager;
+    [Key(0)] public ulong? stateId;  
+    [IgnoreMember] public StateDiplomacyManager diplomacyManager {
+        get
+        {
+            return state.diplomacy;
+        }
+    }
     [Key(2)] int ticks = 0;
     [Key(3)] List<ulong> endedWarIds;
 
@@ -26,19 +30,27 @@ public partial class StateAIManager : UtilityAi.AiAgent
     // Curves
     [IgnoreMember] Curve threatConfidenceCurve = GD.Load<Curve>("res://Curves/Simulation/ThreatConfidenceCurve.tres");
 
+    [IgnoreMember] State _state;
+    [IgnoreMember] public State state { 
+        get
+        {
+            if (_state == null && stateId != null) 
+                _state = objectManager.GetState(stateId);
+            return _state;
+        } 
+        set
+        {
+            stateId = value?.id;
+            _state = value;
+        } 
+    }
+
     public StateAIManager () {}
-    public StateAIManager (UtilityAi.IAction[] aiActions, State sta)
+    public StateAIManager (State sta)
     {
-        actions = aiActions;
         stateId = sta.id;
         state = sta;
-        InitAI();
     }
-    public void InitAI()
-    {
-        state = objectManager.GetState(stateId);
-        diplomacyManager = state.diplomacy;
-    }  
     public float NormalizeNegative(float value) {return (value - 50) / 50f;}
     public float Normalize(float value) {return value / 100f;}
 
@@ -107,7 +119,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         {
             State potentialEnemy = objectManager.GetState(pair.Key);
             Relation relations = pair.Value;
-            Character leader = objectManager.GetCharacter(state.leaderId);
+            Character leader = state.leader;
             if (potentialEnemy == null || relations == null || leader == null || relations.opinion > 0.5 || !diplomacyManager.CanFightState(potentialEnemy)) continue;
 
             float animosity = 1f - (relations.opinion/0.5f);
@@ -127,7 +139,8 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
             State target = objectManager.GetState(pair.Key);
             Relation relations = pair.Value;
-            Character leader = objectManager.GetCharacter(state.leaderId);
+            Character leader = state.leader;
+            
             if (target == null || relations == null || leader == null) continue;
 
             float diplomacyScore = rng.NextSingle();

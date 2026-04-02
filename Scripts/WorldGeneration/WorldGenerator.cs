@@ -15,7 +15,7 @@ public class WorldGenerator
     public const float MaxRainfall = 3500;
     public const float MinRainfall = 50;
     public const int WorldHeight = 10000;
-    [IgnoreMember] CompressedTexture2D earthHeightmap = GD.Load<CompressedTexture2D>("res://Sprites/earth_heightmap.jpg");
+    
     [Key(0)]
     public Vector2I WorldSize { get; set; } = new Vector2I(360, 180) ;
     [IgnoreMember]
@@ -212,10 +212,7 @@ public class WorldGenerator
         {
             loaded = MessagePackSerializer.Deserialize<WorldGenerator>(save.GetBuffer((long)save.GetLength()), moptions);
             //loaded = JsonSerializer.Deserialize<WorldGenerator>(save.GetAsText(true), options);
-            if (loaded != null)
-            {
-                loaded.InitAfterLoad();
-            }
+            loaded?.InitAfterLoad();
         }
         catch (Exception e)
         {

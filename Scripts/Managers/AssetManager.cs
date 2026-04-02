@@ -26,8 +26,6 @@ public static class AssetManager
             foreach (Biome biome in JsonSerializer.Deserialize<Biome[]>(biomeData))
             {
                 biomes.Add(biome.id, biome);
-                GD.Print(biome.name);
-                GD.Print(biome.arability);
             }
             GD.Print("Loaded " + biomes.Count + " biomes");
         }
@@ -57,7 +55,7 @@ public static class AssetManager
     }
     public static void GetLoadedMods()
     {
-        GD.Print("Mod Loading Start");
+        GD.Print("Asset Loading Start");
         foundModPaths = [];
         DirAccess modsDir = DirAccess.Open(modsFolderPath);
 

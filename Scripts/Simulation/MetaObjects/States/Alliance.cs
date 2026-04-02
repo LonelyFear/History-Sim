@@ -1,34 +1,60 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Godot;
 using MessagePack;
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 // Alliances
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
-public class Alliance : Polity
+public partial class Alliance : Polity
 {
     [Key(0)] public AllianceType type;
-    [Key(2)] public ulong? leadStateId;
-    [Key(1)] public List<ulong> memberStateIds = [];
+    [Key(2)] ulong? leadStateId;
+    [Key(1)] List<ulong> memberStateIds = [];
     [Key(3)] public bool exclusive = true;
 
-    //[IgnoreMember] List<Region> regions = new List<Region>();
+    // References
+    [IgnoreMember] public List<State> memberStates = [];
 
-    public void SetLeader(ulong? leaderId)
-    {
-        if (memberStateIds.Contains((ulong)leaderId))
+    // Reference Variables
+    [IgnoreMember] State _leadState;
+    [IgnoreMember] public State leadState { 
+        get
         {
-            leadStateId = leaderId;
-        }
-    }
-    public State GetAllianceLeader()
+            if (_leadState == null && leadStateId != null) 
+                _leadState = objectManager.GetState(leadStateId);
+            return _leadState;
+        } 
+        set
+        {
+            leadStateId = value?.id;
+            _leadState = value;
+        } 
+    } 
+
+    public override void PrepareForSave()
     {
-        return objectManager.GetState(leadStateId);
+        memberStateIds = [..memberStates.Select(s => s.id)];
+        PopObjectSave();
+        PolitySave();
+    }
+    public override void LoadFromSave()
+    {
+        memberStates = [..memberStateIds.Select(i => objectManager.GetState(i))];
+        PopObjectSave();
+        PolityLoad();
+    }
+    public void SetLeader(State newLeader)
+    {
+        if (memberStates.Contains(newLeader))
+        {
+            leadState = newLeader;
+        }
     }
     public void AddMember(State newMember)
     {
-        if (memberStateIds.Contains(newMember.id)) return;
+        if (memberStates.Contains(newMember)) return;
 
         if (exclusive)
         {
@@ -36,16 +62,16 @@ public class Alliance : Polity
         }
 
         newMember.diplomacy.allianceIds.Add(id);
-        memberStateIds.Add(newMember.id);
+        memberStates.Add(newMember);
     }
     public void RemoveMember(State member)
     {
-        if (!memberStateIds.Contains(member.id)) return;
+        if (!memberStates.Contains(member)) return;
 
         member.diplomacy.allianceIds.Remove(id);
-        memberStateIds.Remove(member.id);  
+        memberStates.Remove(member);  
 
-        if (memberStateIds.Count < 1 || member.id == leadStateId)
+        if (memberStates.Count < 1 || member == leadState)
         {
             Die();
             objectManager.DeleteAlliance(this);
@@ -53,39 +79,36 @@ public class Alliance : Polity
     }
     public void UpdateRegions()
     {
-        HashSet<ulong> countedIds = [];
-        foreach (ulong stateId in memberStateIds)
+        HashSet<Region> countedRegions = [];
+        foreach (State member in memberStates)
         {
-            State memberState = objectManager.GetState(stateId);
-            foreach (ulong regionId in memberState.regionIds)
+            foreach (Region region in member.regions)
             {
-                countedIds.Add(regionId);
+                countedRegions.Add(region);
             }
         }
-        regionIds = countedIds;
-        //GD.Print(regionIds.Count);
+        regions = countedRegions;
     }
     public bool HasMember(State state)
     {
-        return memberStateIds.Contains(state.id);
+        return memberStates.Contains(state);
     }
     public override void Die()
     {
         dead = true;
         tickDestroyed = simManager.timeManager.ticks;
-        foreach (ulong memberId in memberStateIds.ToArray())
+        foreach (State member in memberStates.ToArray())
         {
-            RemoveMember(objectManager.GetState(memberId));
+            RemoveMember(member);
         }
-        leadStateId = null;
+        leadState = null;
     }
     public override int GetManpower()
     {
         int mp = 0;
-        foreach (ulong stateId in memberStateIds.ToArray())
+        foreach (State member in memberStates.ToArray())
         {
-            State memberState = objectManager.GetState(stateId);
-            mp += memberState.manpower;
+            mp += member.manpower;
         }
         return mp;
     }

@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Net.Quic;
 using Godot;
 using MessagePack;
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public partial class Character : NamedObject
 {
     // Constants
     [IgnoreMember] const float hdChanceAnnualGrowth = 0.02f;
     [IgnoreMember] const int agingHealthDecrease = 3; 
-    [IgnoreMember] const int educationMinAge = 5;
-    [IgnoreMember] const int educationMaxAge = 18;
     [IgnoreMember] public const int dieHealthThreshold = 40; 
     
     // Ignored Members   
@@ -22,28 +20,13 @@ public partial class Character : NamedObject
     [Key(-2)] public string firstName;
     [Key(-3)] public string lastName;
     [Key(6)] public ulong? stateId = null;
-    [Key(7)] public CharacterRole role = CharacterRole.DEAD;
+    [Key(7)] public CharacterRole role {get; private set; } = CharacterRole.CIVILIAN;
     [Key(8)] public List<ulong> parentIds = [];
     [Key(9)] public List<ulong?> childIds = [];
     [Key(10)] public Dictionary<ulong, int> relationsIds = [];
     // Health
     [Key(11)] public int health = 100;
     [Key(12)] public float healthDecreaseChance = 0.075f;
-
-    // Character Skills
-    // Skills provide buffs/debuffs
-    // Some skills like charisma and intellect can interact like personality
-    /*
-    [Key(31)] public Dictionary<string, float> skills {get; private set;} = new Dictionary<string, float>
-    {
-        {"charisma", 50 },
-        {"intellect", 50 },
-        {"military", 50 },
-        {"empathy", 50 },
-        {"stewardship", 50 },
-        {"combat", 50 }
-    };
-    */
 
     // Character Personality
     // Personality changes interaction/actions
@@ -53,67 +36,60 @@ public partial class Character : NamedObject
         {"agression", 0.5f},
     };
     [Key(40)] public Gender gender = Gender.MALE;
+
+    // References
+    [IgnoreMember] State _state;
+    [IgnoreMember] public State state { 
+        get
+        {
+            if (_state == null && stateId != null) 
+                _state = objectManager.GetState(stateId);
+            return _state;
+        } 
+        set
+        {
+            stateId = value?.id;
+            _state = value;
+        } 
+    }   
     
-    public void JoinState(ulong stateJoinId)
+    public void JoinState(State target)
     {
-        State state = sim.statesIds[stateJoinId];
-        if (stateId != null)
+        if (state != null)
         {
             LeaveState();
         }
-        stateId = stateJoinId;
+        state = target;
         state.characterIds.Add(id);
     }
     public void LeaveState()
     {
-        if (stateId == null) return;
-        State state = sim.statesIds[(ulong)stateId];
-        if (state.leaderId == id)
+        if (state == null) return;
+
+        if (state.leader == this)
         {
             state.RemoveLeader();
         }
         state.characterIds.Remove(id);
-        stateId = null;
+        state = null;
     }    
     public void SetRole(CharacterRole newRole)
     {
-        try
-        {
-            // Makes sure we are changing role
-            if (role == newRole)
-            {
-               return; 
-            } 
-
-            // Changing leadership
-            if (stateId != null)
-            {
-                State state = sim.statesIds[(ulong)stateId];
-                // Removes the leader of the state if the leader is changing roles
-                if (state.leaderId == id)
-                {
-                    state.RemoveLeader();
-                }         
-                // Makes character the leader if that is their new role
-                if (newRole == CharacterRole.LEADER)
-                {
-                    state.SetLeader(id);
-                }   
-            }
-            role = newRole;            
-        } catch (Exception e)
-        {
-            GD.Print(e);
-        }
-
+        role = newRole;
     }
     public override void Die()
     {
+
         dead = true;
         tickDestroyed = sim.timeManager.ticks;
-        objectManager.CreateHistoricalEvent([this, role == CharacterRole.LEADER ? objectManager.GetState(stateId) : null], EventType.DEATH);
-        SetRole(CharacterRole.DEAD);
-        //sim.DeleteCharacter(this);
+        objectManager.CreateHistoricalEvent([this, role == CharacterRole.LEADER ? state : null], EventType.DEATH);
+
+        if (state == null) return;
+        
+        if (state.leader == this)
+        {
+            state.RemoveLeader();
+        }
     }
     public void CharacterAging()
     {
@@ -166,12 +142,12 @@ public partial class Character : NamedObject
         // Role
         desc += role switch
         {
-            CharacterRole.LEADER => $"{w} the {objectManager.GetState(stateId).leaderTitle.ToLower()} of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
-            CharacterRole.HEIR => $"{w} the heir to the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
-            CharacterRole.COMMANDER => $"{w} a general in the army of the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
-            CharacterRole.POLITICIAN => $"{w} a politician in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
-            CharacterRole.NOBLE => $"{w} a noble in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
-            _ => $"{(dead ? "lived" : "is living")} in the {GenerateUrlText(objectManager.GetState(stateId), objectManager.GetState(stateId).name)}",
+            CharacterRole.LEADER => $"{w} the {state.leaderTitle.ToLower()} of the {GenerateUrlText(state, state.name)}",
+            CharacterRole.HEIR => $"{w} the heir to the {GenerateUrlText(state, state.name)}",
+            CharacterRole.COMMANDER => $"{w} a general in the army of the {GenerateUrlText(state, state.name)}",
+            CharacterRole.POLITICIAN => $"{w} a politician in the {GenerateUrlText(state, state.name)}",
+            CharacterRole.NOBLE => $"{w} a noble in the {GenerateUrlText(state, state.name)}",
+            _ => $"{(dead ? "lived" : "is living")} in the {GenerateUrlText(state, state.name)}",
         };
 
         desc += $", and {pronoun} {w} {sim.timeManager.GetYear(GetAge())} years old" 
@@ -197,8 +173,7 @@ public enum CharacterRole
     COMMANDER,
     POLITICIAN,
     CIVILIAN,
-    FORMER_LEADER,
-    DEAD,
+    FORMER_LEADER
 }
 
 public enum Gender

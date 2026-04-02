@@ -20,21 +20,6 @@ public partial class TerrainMap : Node2D
     {
         Scale = new Vector2(1, 1) * 80f / world.WorldSize.X;
     }
-    public override void _Process(double delta)
-    {
-        if (switchMap && world != null && world.WorldExists)
-        {
-            switchMap = false;
-            if (isBiomeMap)
-            {
-                isBiomeMap = false;
-                SetMapImageTexture(world.GetTerrainImage(TerrainMapMode.HEIGHTMAP_REALISTIC));
-            } else {
-                isBiomeMap = true;
-                SetMapImageTexture(world.GetTerrainImage(TerrainMapMode.HEIGHTMAP));
-            }
-        }
-    }
 
     public void SetMapImageTexture(Image newTexture)
     {

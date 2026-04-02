@@ -27,6 +27,7 @@ public class SimManager
     public uint tick;
 
     public Tile[,] tiles;
+
     [IgnoreMember] public List<Region> habitableRegions = [];
     [IgnoreMember] public List<Region> paintedRegions = [];
     [IgnoreMember] public static Vector2I worldSize;
@@ -105,22 +106,34 @@ public class SimManager
         );
 
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
+
         FileAccess simSave = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Write);
         simSave.StoreBuffer(MessagePackSerializer.Serialize(this, options));
+
         FileAccess regionsSave = FileAccess.Open($"{path}/regions.pxsave", FileAccess.ModeFlags.Write);
         regionsSave.StoreBuffer(MessagePackSerializer.Serialize(regionIds, options));
+
         FileAccess popsSave = FileAccess.Open($"{path}/pops.pxsave", FileAccess.ModeFlags.Write);
         popsSave.StoreBuffer(MessagePackSerializer.Serialize(popsIds, options));
+
         FileAccess statesSave = FileAccess.Open($"{path}/states.pxsave", FileAccess.ModeFlags.Write);
         statesSave.StoreBuffer(MessagePackSerializer.Serialize(statesIds, options));
+
+        FileAccess alliancesSave = FileAccess.Open($"{path}/alliances.pxsave", FileAccess.ModeFlags.Write);
+        alliancesSave.StoreBuffer(MessagePackSerializer.Serialize(allianceIds, options));
+
         FileAccess cultureSave = FileAccess.Open($"{path}/cultures.pxsave", FileAccess.ModeFlags.Write);
         cultureSave.StoreBuffer(MessagePackSerializer.Serialize(cultureIds, options));
+
         FileAccess tradeSave = FileAccess.Open($"{path}/markets.pxsave", FileAccess.ModeFlags.Write);
         tradeSave.StoreBuffer(MessagePackSerializer.Serialize(marketIds, options));
+
         FileAccess charactersSave = FileAccess.Open($"{path}/characters.pxsave", FileAccess.ModeFlags.Write);
         charactersSave.StoreBuffer(MessagePackSerializer.Serialize(characterIds, options));
+
         FileAccess warsSave = FileAccess.Open($"{path}/wars.pxsave", FileAccess.ModeFlags.Write);
         warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
+
         FileAccess eventsSave = FileAccess.Open($"{path}/events.pxsave", FileAccess.ModeFlags.Write);
         eventsSave.StoreBuffer(MessagePackSerializer.Serialize(historicalEventIds, options));
     }
@@ -143,6 +156,7 @@ public class SimManager
         sim.regionIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Region>>(FileAccess.GetFileAsBytes($"{path}/regions.pxsave"), options);
         sim.popsIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Pop>>(FileAccess.GetFileAsBytes($"{path}/pops.pxsave"), options);
         sim.statesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, State>>(FileAccess.GetFileAsBytes($"{path}/states.pxsave"), options);
+        sim.allianceIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Alliance>>(FileAccess.GetFileAsBytes($"{path}/alliances.pxsave"), options);
         sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/cultures.pxsave"), options);
         sim.marketIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Market>>(FileAccess.GetFileAsBytes($"{path}/markets.pxsave"), options);
         sim.characterIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
@@ -192,7 +206,7 @@ public class SimManager
                         }
                         int nx = Mathf.PosMod(x + dx, worldSize.X);
                         int ny = Mathf.PosMod(y + dy, worldSize.Y);
-                        if (newTile.biome.type == "water")
+                        if (newTile.GetBiome().type == "water")
                         {
                             newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
                             newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);
@@ -459,17 +473,15 @@ public class SimManager
             if (region.tiles.Count < 4)
             {
                 // Loops over borders
-                foreach (ulong borderId in region.borderingRegionIds.ToArray())
+                foreach (Region border in region.borderingRegions.ToArray())
                 {
-                    // Border we can potentially merge with
-                    Region border = objectManager.GetRegion(borderId);
                     // Checks conditions
                     if (border.tiles.Count > 0 && border.tiles.Count < 20 && border.terrainType == region.terrainType)
                     {
                         // Removes references to us
-                        foreach (ulong otherBorders in region.borderingRegionIds)
+                        foreach (Region otherBorders in region.borderingRegions)
                         {
-                            objectManager.GetRegion(otherBorders).borderingRegionIds.Remove(region.id);
+                            otherBorders.borderingRegions.Remove(region);
                         }
 
                         // Merges us with border
@@ -545,9 +557,8 @@ public class SimManager
             Region region = pair.Value;
             region.GetBorderingRegions();
 
-            foreach (ulong? borderId in region.borderingRegionIds)
+            foreach (Region r in region.borderingRegions)
             {
-                Region r = objectManager.GetRegion(borderId);
                 if (r.habitable || region.habitable && !paintedRegions.Contains(region))
                 {
                     paintedRegions.Add(region);
@@ -733,7 +744,7 @@ public class SimManager
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
-            if (state.regionIds.Count < 1 || state.StateCollapse() || state.rulingPop == null || objectManager.GetRegion(state.capitalId) == null)
+            if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
             {
                 objectManager.DeleteState(state);
                 continue;
@@ -747,7 +758,7 @@ public class SimManager
 
             try
             {
-                if (state.leaderId == null)
+                if (state.leader == null)
                 {
                     state.SuccessionUpdate();
                 }
@@ -818,7 +829,7 @@ public class SimManager
                 continue;
             }
 
-            if (alliance.leadStateId == null || alliance.memberStateIds.Count < 2)
+            if (alliance.leadState == null)
             {
                 alliance.Die();
                 continue;

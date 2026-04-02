@@ -5,12 +5,11 @@ using Godot;
 using MessagePack;
 
 [MessagePackObject(AllowPrivate = true)]
-
-public class State : Polity, ISaveable
+public partial class State : Polity, ISaveable
 {
-    [IgnoreMember] public string baseName = "Nation";
-    [IgnoreMember] public string govtName;
-    [IgnoreMember] public string leaderTitle { get; set; } = "King";
+    [Key(88)] public string baseName = "Nation";
+    [Key(77)] public string govtName;
+    [Key(99)] public string leaderTitle { get; set; } = "King";
     [Key(1)] public StateAIManager AIManager;
     [Key(3)] public Color displayColor;
     [Key(4)] public Color capitalColor;
@@ -20,7 +19,7 @@ public class State : Polity, ISaveable
     
     //[IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
     //[Key(7)] public HashSet<ulong> regionsIds { get; set; } = new HashSet<ulong>();
-    [Key(8)] public ulong capitalId;
+    
     
     // Taxes & Wealth
     [Key(12)] public float mobilizationRate { get; set; } = 0.3f;
@@ -28,42 +27,91 @@ public class State : Polity, ISaveable
     [Key(14)] public float middleTaxRate { get; set; } = 0.1f;
     [Key(15)] public float richTaxRate { get; set; } = 0.05f;
     [Key(16)] public float tributeRate { get; set; } = 0.1f;
-    // Lieges & Vassals
-    /*
-    [IgnoreMember] public List<State> vassals { get; set; } = new List<State>();
-    [Key(17)] public List<ulong> vassalsIDs { get; set; }
-    [IgnoreMember] public State liege { get; set; } = null;
-    [Key(18)] public ulong liegeID;
-    */
+
     // Alliances
     [Key(21)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
-    [Key(36)] public ulong? realmId;
-    [Key(40)] public StateDiplomacyManager diplomacy = new StateDiplomacyManager();
-    //[Key(41)] public StateVassalManager vassalManager = new StateVassalManager();
-    //[Key(22)] public Dictionary<ulong, int> borderingStatesIDs { get; set; }
+    [Key(40)] public StateDiplomacyManager diplomacy;
 
     [Key(27)] public Tech tech = new Tech();
-
     [Key(28)] public int maxSize = 1;
-    // Government
-    [Key(30)] public Pop rulingPop;
-    [Key(31)] public ulong? lastLeaderId = null;
-    [Key(32)] public ulong? leaderId = null;
+
+    // Government   
     [Key(33)] public List<ulong?> characterIds = [];
     [Key(34)] public double stability = 1;
     [Key(35)] public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
     [Key(367)] public uint timeAsVassal = 0;
-    public override void PrepareForSave()
-    {
-        PopObjectSave();
+
+    // Reference IDs
+    [Key(31)] ulong? lastLeaderId = null;
+    [Key(32)] ulong? leaderId = null;
+    [Key(67)] ulong? rulingPopId;
+    [Key(8)] ulong? capitalId;
+    // References
+    [IgnoreMember] Pop _rulingPop;
+    [IgnoreMember] public Pop rulingPop { 
+        get
+        {
+            if (_rulingPop == null && rulingPopId != null) 
+                _rulingPop = objectManager.GetPop(rulingPopId);
+            return _rulingPop;
+        } 
+        set
+        {
+            rulingPopId = value?.id;
+            _rulingPop = value;
+        } 
+    } 
+
+    [IgnoreMember] Character _leader;
+    [IgnoreMember] Character _lastLeader;
+    [IgnoreMember] public Character leader { 
+        get
+        {
+            if (_leader == null && leaderId != null) 
+                _leader = objectManager.GetCharacter(leaderId);
+            return _leader;
+        } 
+        set
+        {
+            leaderId = value?.id;
+            _leader = value;
+        } 
     }
+    
+    [IgnoreMember] public Character lastLeader { 
+        get
+        {
+            if (_lastLeader == null && lastLeaderId != null) 
+                _lastLeader = objectManager.GetCharacter(lastLeaderId);
+            return _lastLeader;
+        } 
+        set
+        {
+            lastLeaderId = value?.id;
+            _lastLeader = value;
+        } 
+    }
+    [IgnoreMember] Region _capital;
+    [IgnoreMember] public Region capital { 
+        get
+        {
+            if (_capital == null && capitalId != null) 
+                _capital = objectManager.GetRegion(capitalId);
+            return _capital;
+        } 
+        set
+        {
+            capitalId = value?.id;
+            _capital = value;
+        } 
+    }    
     public override void LoadFromSave()
     {
-        AIManager.InitAI();
+        diplomacy.state = this;
+        PolityLoad();
         PopObjectLoad();
-        diplomacy.Init(this);
     }
     public void UpdateCapital()
     {
@@ -85,16 +133,14 @@ public class State : Polity, ISaveable
     }
     public void Capitualate()
     {
-        Region capital = objectManager.GetRegion(capitalId);
         if (capital == null) return;
 
         if (capital.occupier != null)
         {
             if (!capitualated)
             {
-                foreach (ulong regionId in regionIds)
+                foreach (Region region in regions)
                 {
-                    Region region = objectManager.GetRegion(regionId);
                     if (capital.occupier != this && capital.occupier != null)
                     {
                         region.occupier = capital.occupier;
@@ -111,7 +157,7 @@ public class State : Polity, ISaveable
     public State GetOccupier()
     {
         if (!capitualated) return null;
-        return objectManager.GetRegion(capitalId).occupier;
+        return capital.occupier;
     }      
     public bool StateCollapse()
     {
@@ -131,8 +177,6 @@ public class State : Polity, ISaveable
     }
     public void SuccessionUpdate()
     {
-        Character lastLeader = objectManager.GetCharacter(lastLeaderId);
-        Character leader = objectManager.GetCharacter(leaderId);
         Character newLeader = null;
         switch (government)
         {
@@ -143,10 +187,10 @@ public class State : Polity, ISaveable
                 // Monarchy
                 // TODO: Make it relate to families
                 // Right now just has a character with the same last name of the last guy
-                if (lastLeader != null && lastLeader.dead)
-                {
-                    newLeader = objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastLeader.lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
-                }
+                string lastName = lastLeader == null ? NameGenerator.GenerateCharacterName() : lastLeader.lastName;
+
+                newLeader = objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
+                
                 break;
             case GovernmentType.AUTOCRACY:
                 // Autocracy TODO
@@ -154,32 +198,32 @@ public class State : Polity, ISaveable
         }
         if (newLeader != null)
         {
-            SetLeader(newLeader.id);
+            SetLeader(newLeader);
             objectManager.CreateHistoricalEvent([this, newLeader], EventType.SUCCESSION);
         }
     }
-    public void SetLeader(ulong? characterId)
+    public void SetLeader(Character character)
     {
-        if (leaderId != null)
+        if (leader != null)
         {
             RemoveLeader();
         }
-        leaderId = characterId;
+        character.SetRole(CharacterRole.LEADER);
+        leader = character;
     }
     public void RemoveLeader()
     {
-         
-        if (leaderId != null)
-        {
-            lastLeaderId = leaderId;
-            Character lastLeader = objectManager.GetCharacter(lastLeaderId);
-            lastLeader.role = CharacterRole.FORMER_LEADER;             
-        }
-        leaderId = null;
+        if (leader == null) return;
+
+        leader.SetRole(CharacterRole.FORMER_LEADER);       
+        lastLeader = leader;
+
+        leader = null;
     }
     public void UpdateDisplayColor()
     {
         displayColor = color;
+
         switch (sovereignty)
         {
             case Sovereignty.COLONY:
@@ -195,12 +239,12 @@ public class State : Polity, ISaveable
     }
     public void AddRegion(Region region)
     {
-        if (region == null || regionIds.Contains(region.id)) return;
+        if (region == null || regions.Contains(region)) return;
 
         region.owner?.RemoveRegion(region);
         region.owner = this;
 
-        regionIds.Add(region.id);
+        regions.Add(region);
 
         foreach (Pop pop in region.pops)
         {
@@ -210,7 +254,7 @@ public class State : Polity, ISaveable
     }
     public void RemoveRegion(Region region)
     {
-        if (region == null || !regionIds.Remove(region.id)) return;
+        if (region == null || !regions.Remove(region)) return;
 
         region.owner = null;
 
@@ -224,22 +268,6 @@ public class State : Polity, ISaveable
     public override int GetManpower()
     {
         return (int)(workforce * 0.05f);
-    }
-
-    public int GetSize(bool includeRealm)
-    {
-        int size = regionIds.Count;
-        if (realmId != null && sovereignty == Sovereignty.INDEPENDENT && includeRealm)
-        {
-            size = 0;
-            Alliance realm = objectManager.GetAlliance(realmId);
-            foreach (ulong memberId in realm.memberStateIds)
-            {
-                State memberState = objectManager.GetState(memberId);
-                size += memberState.regionIds.Count;
-            }
-        }
-        return size;
     }
     public int GetMaxRegionsCount()
     {
@@ -258,7 +286,6 @@ public class State : Polity, ISaveable
     }
     public override string GenerateDescription()
     {
-        Region capital = objectManager.GetRegion(capitalId);
         string desc = $"The {name} is a {govtName.ToLower()} in the simulation. It is ";
         if ("aeiou".Contains(govtName[0]))
         {
@@ -273,7 +300,7 @@ public class State : Polity, ISaveable
                 desc += $"a vassal of the {GenerateUrlText(diplomacy.GetLiege(), diplomacy.GetLiege().name)}";
                 break;
         }
-        desc += $" lead by {GenerateUrlText(objectManager.GetCharacter(leaderId), objectManager.GetCharacter(leaderId).name)}. "
+        desc += $" lead by {(leader == null ? "nobody" : GenerateUrlText(leader, leader.name))}. "
         + $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
         return desc;
     }

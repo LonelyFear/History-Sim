@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Godot;
 using MessagePack;
 using System.Text.RegularExpressions;
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public class Region : PopObject, ISaveable
 {
     [Key(203)] public List<Vector2I> tiles { get; set; } = [];
@@ -47,7 +47,7 @@ public class Region : PopObject, ISaveable
     [Key(28)] public ulong? ownerId { get; set; }
 
     // Demographics
-    [IgnoreMember] public List<ulong?> borderingRegionIds { get; set; } = [];
+    [IgnoreMember] public List<Region> borderingRegions { get; set; } = [];
     [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
     // References
@@ -138,12 +138,9 @@ public class Region : PopObject, ISaveable
     }
     void RemoveInvalidBorders()
     {
-        foreach (ulong regionId in borderingRegionIds.ToArray())
+        foreach (Region border in borderingRegions.ToArray())
         {
-            if (objectManager.GetRegion(regionId) == null)
-            {
-                borderingRegionIds.Remove(regionId);
-            }
+            borderingRegions.Remove(border);
         }
     }
     void CalcAverages()
@@ -171,11 +168,11 @@ public class Region : PopObject, ISaveable
                 terrainTypes[tile.terrainType]++;
             }
 
-            if (!biomes.ContainsKey(tile.biome))
+            if (!biomes.ContainsKey(tile.GetBiome()))
             {
-                biomes.Add(tile.biome, 0);
+                biomes.Add(tile.GetBiome(), 0);
             }
-            biomes[tile.biome]++;
+            biomes[tile.GetBiome()]++;
 
             if (tile.IsWater())
             {
@@ -224,7 +221,7 @@ public class Region : PopObject, ISaveable
 
     public void GetBorderingRegions()
     {
-        borderingRegionIds = [];
+        borderingRegions = [];
         foreach (Vector2I tilePos in tiles)
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
@@ -235,10 +232,11 @@ public class Region : PopObject, ISaveable
                     if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
                     Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
                     Tile border = simManager.tiles[nPos.X, nPos.Y];
+                    Region borderRegion = objectManager.GetRegion(border.regionId);
 
-                    if (border.regionId != null && border.regionId != id && !borderingRegionIds.Contains(border.regionId))
+                    if (border.regionId != null && border.regionId != id && !borderingRegions.Contains(borderRegion))
                     {
-                        borderingRegionIds.Add(border.regionId);
+                        borderingRegions.Add(borderRegion);
                     }
                 }
             }
@@ -277,9 +275,8 @@ public class Region : PopObject, ISaveable
     {
         border = false;
         frontier = false;
-        foreach (ulong regionId in borderingRegionIds)
+        foreach (Region region in borderingRegions)
         {     
-            Region region = objectManager.GetRegion(regionId);
             if (region.owner == null)
             {
                 frontier = true;
@@ -307,7 +304,7 @@ public class Region : PopObject, ISaveable
     {
         Region region = PickRandomBorder();
         bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
-        if (!checks || owner.regionIds.Count >= owner.GetMaxRegionsCount()) return;
+        if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
         attackerPower = owner.GetArmyPower();
@@ -389,9 +386,8 @@ public class Region : PopObject, ISaveable
         bool newMarketCenterStatus = true;
 
         // Loops over borders
-        foreach (ulong regionId in borderingRegionIds)
+        foreach (Region region in borderingRegions)
         {
-            Region region = objectManager.GetRegion(regionId);
 
             // If we have an equal or lower weight to a region then we cant be market leader
             if (region.tradeWeight >= tradeWeight)
@@ -562,9 +558,9 @@ public class Region : PopObject, ISaveable
         }
 
         float politySizeTradeWeight = 0f;
-        if (owner != null && owner.capitalId == id)
+        if (owner != null && owner.capital == this)
         {
-            politySizeTradeWeight = owner.regionIds.Count * 0.5f;
+            politySizeTradeWeight = owner.regions.Count;
         }
 
         return (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
@@ -632,14 +628,14 @@ public class Region : PopObject, ISaveable
     }
     public Region PickRandomBorder(bool mustBeLiveable = false)
     {
-        int index = rng.Next(0, borderingRegionIds.Count); 
-        Region region = objectManager.GetRegion(borderingRegionIds[index]);
+        int index = rng.Next(0, borderingRegions.Count); 
+        Region region = borderingRegions[index];
         if (mustBeLiveable)
         {
             while (!region.habitable)
             {
-                index = rng.Next(0, borderingRegionIds.Count);
-                region = objectManager.GetRegion(borderingRegionIds[index]);
+                index = rng.Next(0, borderingRegions.Count);
+                region = borderingRegions[index];
             }
         }
         return region;
@@ -668,7 +664,7 @@ public class Region : PopObject, ISaveable
                 }
             }
             // If it is the capital add to description
-            if (owner != null && owner.capitalId == id)
+            if (owner != null && owner.capital == this)
             {
                 desc += $" It is the capital of the {GenerateUrlText(owner, owner.name)}";
             }             
@@ -757,9 +753,8 @@ public class Region : PopObject, ISaveable
                 break;
             }
 
-            foreach (ulong? borderId in current.borderingRegionIds)
+            foreach (Region next in current.borderingRegions)
             {
-                Region next = objectManager.GetRegion(borderId);
                 if (next == null || !next.habitable || (mustBeInhabited && next.population < 1))
                 {
                     continue;

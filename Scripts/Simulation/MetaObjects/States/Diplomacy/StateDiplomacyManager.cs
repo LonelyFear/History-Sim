@@ -14,26 +14,37 @@ public partial class StateDiplomacyManager
     // Diplomacy
     [Key(19)] public Dictionary<ulong?, Relation> relationIds { get; set; } = [];
     [Key(20)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
-    [Key(0)] ulong stateId;
+    
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     //[IgnoreMember] ulong realmId;
     [Key(12)] public List<ulong> allianceIds = [];
     [Key(17)] public List<ulong?> vassalIds { get; set; } = [];
-    [IgnoreMember] State state;
     [IgnoreMember] public Random rng = PopObject.rng;
 
     // Constants
     [IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
+
+    [Key(0)] ulong stateId;
+    [IgnoreMember] State _state;
+    [IgnoreMember] public State state { 
+        get
+        {
+            if (_state == null) 
+                _state = objectManager.GetState(stateId);
+            return _state;
+        } 
+        set
+        {
+            stateId = value.id;
+            _state = value;
+        } 
+    }
+
     public StateDiplomacyManager(){}
     public StateDiplomacyManager(State selectedState)
     {
-        selectedState.diplomacy = this;
-        stateId = selectedState.id;
         state = selectedState;
-    }
-    public void Init(State state)
-    {
-        this.state = state;
+        state.diplomacy = this;
     }
 
     // Wars
@@ -112,7 +123,7 @@ public partial class StateDiplomacyManager
         // Establishes relations
         foreach (State target in relationStates)
         {
-            if (target != null && !relationIds.ContainsKey(target.id) && target.id != stateId)
+            if (target != null && !relationIds.ContainsKey(target.id) && target != state)
             {
                 EstablishRelations(target);
             } 
@@ -128,8 +139,10 @@ public partial class StateDiplomacyManager
             float newThreat = 0.5f;
 
             // Calc Percieved Threat (0 to 1)
-            int stateSize = state.GetSize(true);
-            float relativeSizeRatio = (stateSize - relationState.GetSize(true))/(float)stateSize;
+            int stateSize = state.diplomacy.GetPolity().regions.Count;
+            int targetSize = relationState.diplomacy.GetPolity().regions.Count;
+
+            float relativeSizeRatio = (stateSize - targetSize)/(float)stateSize;
 
             newThreat += relativeSizeRatio * 0.5f;
 
@@ -301,7 +314,7 @@ public partial class StateDiplomacyManager
     {
         if (GetRealm() != null)
         {
-            return GetRealm().GetAllianceLeader();
+            return GetRealm().leadState;
         }
         return state;
     }

@@ -87,8 +87,8 @@ public partial class MapManager : Node2D
 		dimensionsBuffer = rd.StorageBufferCreate((uint)dimensionBytes.Length, dimensionBytes);  
 
         // Creates image buffer
-        GD.Print(worldSize);
-        GD.Print(regionImage.GetSize());
+        //GD.Print(worldSize);
+        //GD.Print(regionImage.GetSize());
         RDTextureView textureView = new();
 		RDTextureFormat textureFormat = new()
 		{
@@ -123,16 +123,23 @@ public partial class MapManager : Node2D
 
     public void PrepBuffers()
     {
-		byte[] colorsBytes = MemoryMarshal.AsBytes(regionColors.AsSpan()).ToArray();
-		colorsBuffer = rd.StorageBufferCreate((uint)colorsBytes.Length, colorsBytes);  
+        try
+        {
+            byte[] colorsBytes = MemoryMarshal.AsBytes(regionColors.AsSpan()).ToArray();
+            colorsBuffer = rd.StorageBufferCreate((uint)colorsBytes.Length, colorsBytes);  
 
-		byte[] borderBytes = MemoryMarshal.AsBytes(borderValues.AsSpan()).ToArray();
-		bordersBuffer = rd.StorageBufferCreate((uint)borderBytes.Length, borderBytes); 
+            byte[] borderBytes = MemoryMarshal.AsBytes(borderValues.AsSpan()).ToArray();
+            bordersBuffer = rd.StorageBufferCreate((uint)borderBytes.Length, borderBytes); 
 
-        float[] cameraData = [playerCamera.Zoom.X];
+            float[] cameraData = [playerCamera.Zoom.X];
 
-        byte[] cameraBytes = MemoryMarshal.AsBytes(cameraData.AsSpan()).ToArray();
-        cameraBuffer = rd.StorageBufferCreate((uint)cameraBytes.Length, cameraBytes); 
+            byte[] cameraBytes = MemoryMarshal.AsBytes(cameraData.AsSpan()).ToArray();
+            cameraBuffer = rd.StorageBufferCreate((uint)cameraBytes.Length, cameraBytes);             
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+ 
     }
     public void RunShader()
     {
@@ -360,7 +367,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (regionOwner.capitalId == region.id && regionOwner.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
+                        if (regionOwner.capital == region && regionOwner.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }
@@ -402,7 +409,7 @@ public partial class MapManager : Node2D
                         {
                             color = region.occupier.displayColor;
                         }
-                        if (region.owner.capitalId == region.id && includeCapital)
+                        if (region.owner.capital == region && includeCapital)
                         {
                             color = region.owner.capitalColor;
                         }

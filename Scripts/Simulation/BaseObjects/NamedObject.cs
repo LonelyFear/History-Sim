@@ -15,6 +15,15 @@ public class NamedObject
     [Key(404)] public string name { get; set; }
     [Key(405)] public string description { get; set; }
     [Key(406)] public List<ulong> eventIds = [];
+    public virtual void PrepareForSave()
+    {
+
+    }
+    public virtual void LoadFromSave()
+    {
+
+    }
+
     public uint TicksBetween(uint start, uint end)
     {
         return end - start;

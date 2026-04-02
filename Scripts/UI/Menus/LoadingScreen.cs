@@ -13,8 +13,8 @@ public partial class LoadingScreen : Control
     Label splash;
     PlayerCamera camera;
 
-    bool textureGenerated;
-    bool firstFrame = false;
+    bool textureGenerated = false;
+    bool firstFrameDone = false;
     public string savePath = null;
     TerrainMap map;
     
@@ -36,7 +36,7 @@ public partial class LoadingScreen : Control
     {
         try
         {
-            if (!firstFrame)
+            if (!firstFrameDone)
             {
                 if (savePath != null && DirAccess.Open(savePath) != null)
                 {
@@ -52,7 +52,7 @@ public partial class LoadingScreen : Control
                         }                    
                     }
                 }
-                firstFrame = true;
+                firstFrameDone = true;
 
                 simNodeManager.simManager = sim;
                 sim.node = simNodeManager;
@@ -90,24 +90,26 @@ public partial class LoadingScreen : Control
             //splash.Text = "Generating World";
 
 
-            if ((task == null || task.IsCompleted) && generator.WorldExists && !textureGenerated)
+            if ((task == null || task.IsCompleted) && !textureGenerated)
             {
                 textureGenerated = true;
                 splash.Text = "Finishing Up...";
                 map.Init();
+
                 try
                 {
                     map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
-                    streamlineRenderer.world = generator;
-                    streamlineRenderer.QueueRedraw();
                 } catch (Exception e)
                 {
                     GD.PushError(e);
                 }
-                
+                    
+                streamlineRenderer.world = generator;
+                streamlineRenderer.QueueRedraw();  
             }
             else if (task == null || task.IsCompleted)
             {
+                
                 generator.FinishWorldgen();
                 camera.controlEnabled = true;
                 ui.forceHide = false;

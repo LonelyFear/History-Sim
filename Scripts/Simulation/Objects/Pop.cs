@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Godot;
 using MessagePack;
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public class Pop
 {
     [Key(0)] public ulong id;
