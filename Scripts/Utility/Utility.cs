@@ -100,11 +100,11 @@ public static class Utility
     {
         if (DirAccess.Open(path) != null)
         {
-            bool saveDataExists = FileAccess.FileExists(path + "/save_data.json");
-            bool terrainDataExists = FileAccess.FileExists(path + "/terrain_data.pxsave");
-            bool simDataExists = FileAccess.FileExists(path + "/sim_data.pxsave");
-            bool dataWritingFinished = FileAccess.Open(path + "/save_data.json", FileAccess.ModeFlags.Read).GetAsText(true).Length > 0;
-            return saveDataExists && terrainDataExists && simDataExists && dataWritingFinished;
+            bool saveDataExists = FileAccess.FileExists(path.PathJoin("save_data.json"));
+            bool terrainDataExists = FileAccess.FileExists(path.PathJoin("terrain_data.pxsave"));
+            bool simDataExists = FileAccess.FileExists(path.PathJoin("sim_data.pxsave"));
+            //bool dataWritingFinished = FileAccess.Open(path + "/save_data.json", FileAccess.ModeFlags.Read).GetAsText(true).Length > 0;
+            return saveDataExists && terrainDataExists && simDataExists;// && dataWritingFinished;
         }
         return false;
     }

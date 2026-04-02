@@ -8,21 +8,28 @@ public partial class SavesPanel : Panel
 {
 	VBoxContainer saveButtonContainer;
 	[Export] PackedScene saveButtonScene;
-	public string selectedSave = null;
+	Button loadButton;
+	Button deleteButton;
+	public string selectedSave = "";
 	Dictionary<string, SaveButton> saves = [];
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		saveButtonContainer = GetNode<VBoxContainer>("ScrollContainer/SaveButtonContainer");
-		GetNode<Button>("Buttons/Back").Pressed += OnBackClicked;
-		GetNode<Button>("Buttons/Load").Pressed += OnLoadSaveClicked;
-		GetNode<Button>("Buttons/Delete").Pressed += OnDeleteSaveClicked;
-	}
+		loadButton = GetNode<Button>("Buttons/Load");
+		deleteButton = GetNode<Button>("Buttons/Delete");
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+		GetNode<Button>("Buttons/Back").Pressed += OnBackClicked;
+		loadButton.Pressed += OnLoadSaveClicked;
+		deleteButton.Pressed += OnDeleteSaveClicked;
+
+		RefreshSaveButtons();
+	}
+	public void RefreshSaveButtons()
 	{
-		List<string> savePaths = DirAccess.Open("user://saves").GetDirectories().Select(dir => "user://saves/" + dir).ToList();
+		DirAccess saveDirectory = DirAccess.Open("user://saves");
+
+		List<string> savePaths = saveDirectory.GetDirectories().Select(dir => "user://saves/" + dir).ToList();
 		foreach (string path in saves.Keys.ToArray())
 		{
 			if (!savePaths.Contains(path))
@@ -31,9 +38,10 @@ public partial class SavesPanel : Panel
 				saves.Remove(path);
 				button.QueueFree();
 			}
-
-		}		
-		foreach (string saveName in DirAccess.Open("user://saves").GetDirectories())
+		}	
+		
+		FileAccess saveDataFile = null;
+		foreach (string saveName in saveDirectory.GetDirectories())
 		{
 			string savePath = "user://saves/" + saveName;
 			if (saves.ContainsKey(savePath))
@@ -41,57 +49,98 @@ public partial class SavesPanel : Panel
 				continue;
 			}
 
+			SaveButton save = saveButtonScene.Instantiate<SaveButton>();
+			save.savePath = savePath;
+			save.systemSavePath = OS.GetUserDataDir() + "/saves/" + saveName;
+			save.displayPath = "User/saves/" + saveName;
+			save.saves = this;
+
+			saveButtonContainer.AddChild(save);
+			saves.Add(savePath, save);
+
 			if (Utility.IsSaveValid(savePath))
 			{
-				FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
+				saveDataFile = FileAccess.Open(savePath.PathJoin("save_data.json"), FileAccess.ModeFlags.Read);
 				string saveText = saveDataFile.GetAsText(true);
 				saveDataFile.Dispose();
 
 				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveText);
-				SaveButton save = saveButtonScene.Instantiate<SaveButton>();
 				save.saveData = saveData;
-				save.saves = this;
-				save.displayPath = OS.GetUserDataDir() + "/saves/" + saveName;
-				save.savePath = savePath;
 
-				saveButtonContainer.AddChild(save);
-				saves.Add(savePath, save);
+				bool outdated = saveData.saveVersion != SaveData.validSaveVersion;
+				save.outdated = outdated;
+				save.displayPath = $"{save.displayPath} | Format: {saveData.saveVersion}{(outdated ? " [Outdated]" : "")}";
 			}
 			else
 			{
-				SaveButton save = saveButtonScene.Instantiate<SaveButton>();
-				save.saveData = null;
-				save.displayPath = OS.GetUserDataDir() + "/saves/" + saveName;
-				save.saves = this;
-				save.savePath = savePath;
-
-				save.GetNode<Label>("SaveName").Modulate = new Color(1, 0, 0);
-				save.GetNode<Label>("SaveStatus").Modulate = new Color(1, 0, 0);
-
-				saveButtonContainer.AddChild(save);
-				saves.Add(savePath, save);
+				save.invalid = true;
 			}
 		}
+	}
+
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	public override void _Process(double delta)
+	{
+		loadButton.Disabled = selectedSave.Length == 0;
+		deleteButton.Disabled = selectedSave.Length == 0;
 	}
 
 	public void SaveSelected(SaveButton save)
 	{
+		// Old
+		saves.TryGetValue(selectedSave, out SaveButton oldButton);
+
+		if (oldButton != null)
+		{
+			DeselectSave(oldButton);
+		}
+		
+		// Reassign
 		selectedSave = save.savePath;
+		save.selected = true;
 	}
 
 	public void OnDeleteSaveClicked()
 	{
-		if (selectedSave != null)
+		if (selectedSave.Length > 0)
 		{
-			//OS.MoveToTrash
-			OS.MoveToTrash(saves[selectedSave].displayPath);
-			selectedSave = null;
+			DeleteDirectory(saves[selectedSave].savePath);
+			DeselectSave(saves[selectedSave]);
+			RefreshSaveButtons();
 		}
+	}
+
+	void DeleteDirectory(string path)
+	{
+		if (!DirAccess.DirExistsAbsolute(path)) return;
+
+		DirAccess dir = DirAccess.Open(path);
+		dir.ListDirBegin();
+		string fileName = dir.GetNext();
+
+		while (fileName != "")
+		{
+			if (dir.CurrentIsDir())
+			{
+				DeleteDirectory(path.PathJoin(fileName));
+			} else
+			{
+				dir.Remove(fileName);
+			}
+			fileName = dir.GetNext();
+		}
+		DirAccess.RemoveAbsolute(path);
+	}
+
+	public void DeselectSave(SaveButton saveButton)
+	{
+		saveButton.selected = false;
+		selectedSave = "";		
 	}
 
 	public void OnLoadSaveClicked()
 	{
-		if (selectedSave != null && !saves[selectedSave].invalid)
+		if (selectedSave.Length > 0  && !saves[selectedSave].invalid)
 		{
 			Node2D game = GD.Load<PackedScene>("res://Scenes/game.tscn").Instantiate<Node2D>();
 			LoadingScreen loadingScreen = game.GetNode<LoadingScreen>("Loading/Loading Screen");

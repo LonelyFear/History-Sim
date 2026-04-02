@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bsxkj4ns68l28"]
+[gd_scene format=3 uid="uid://bsxkj4ns68l28"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_ts4s4"]
 [ext_resource type="Script" uid="uid://bgunjnlv3hg16" path="res://Scripts/UI/Saving/SavesPanel.cs" id="2_fw0v8"]
@@ -24,7 +24,7 @@ content_margin_top = 10.0
 content_margin_right = 20.0
 content_margin_bottom = 0.0
 
-[node name="Save Selection" type="Control"]
+[node name="Save Selection" type="Control" unique_id=1515102004]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,10 +32,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MenuBG" parent="." instance=ExtResource("1_ts4s4")]
+[node name="MenuBG" parent="." unique_id=208159049 instance=ExtResource("1_ts4s4")]
 layout_mode = 1
 
-[node name="SavesPanel" type="Panel" parent="."]
+[node name="SavesPanel" type="Panel" parent="." unique_id=1652525838]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -52,7 +52,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_qb7vq")
 script = ExtResource("2_fw0v8")
 saveButtonScene = ExtResource("3_morf0")
 
-[node name="Game Title" type="Label" parent="SavesPanel"]
+[node name="Game Title" type="Label" parent="SavesPanel" unique_id=1476540286]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -68,7 +68,7 @@ text = "Select A Save"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ScrollContainer" type="ScrollContainer" parent="SavesPanel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="SavesPanel" unique_id=94043520]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -82,16 +82,18 @@ offset_bottom = 283.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxEmpty_qb7vq")
+follow_focus = true
+draw_focus_border = true
 horizontal_scroll_mode = 0
 
-[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/ScrollContainer"]
+[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/ScrollContainer" unique_id=908031561]
 custom_minimum_size = Vector2(855, 100)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="Buttons" type="HBoxContainer" parent="SavesPanel"]
+[node name="Buttons" type="HBoxContainer" parent="SavesPanel" unique_id=9823877]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -106,7 +108,7 @@ grow_vertical = 0
 theme_override_constants/separation = 18
 alignment = 1
 
-[node name="Back" type="Button" parent="SavesPanel/Buttons"]
+[node name="Back" type="Button" parent="SavesPanel/Buttons" unique_id=1361612061]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
@@ -114,7 +116,7 @@ theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Back"
 
-[node name="Load" type="Button" parent="SavesPanel/Buttons"]
+[node name="Load" type="Button" parent="SavesPanel/Buttons" unique_id=29527614]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
@@ -122,7 +124,7 @@ theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Load Save"
 
-[node name="Delete" type="Button" parent="SavesPanel/Buttons"]
+[node name="Delete" type="Button" parent="SavesPanel/Buttons" unique_id=130567379]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_qasot")

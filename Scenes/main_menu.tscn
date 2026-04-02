@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bbnm5jqp5n32i"]
+[gd_scene format=3 uid="uid://bbnm5jqp5n32i"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_1ehe0"]
 [ext_resource type="Script" uid="uid://dtoolr558r5vr" path="res://Scripts/UI/Menus/MainMenu.cs" id="1_n45e2"]
@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://duckoy5enxdge" path="res://Scripts/UI/button_holder.gd" id="2_48xlc"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="3_ce3w2"]
 
-[node name="Main Menu" type="Control"]
+[node name="Main Menu" type="Control" unique_id=2070841023]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,14 +15,14 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_n45e2")
 
-[node name="TextureRect" parent="." instance=ExtResource("1_1ehe0")]
+[node name="TextureRect" parent="." unique_id=1024992066 instance=ExtResource("1_1ehe0")]
 layout_mode = 1
 offset_left = -838.0
 offset_top = -417.5
 offset_right = 838.0
 offset_bottom = 417.5
 
-[node name="Game Title" type="Label" parent="."]
+[node name="Game Title" type="Label" parent="." unique_id=1554609763]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -39,7 +39,7 @@ theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 140
 text = "Pixel History"
 
-[node name="Game Version" type="Label" parent="."]
+[node name="Game Version" type="Label" parent="." unique_id=575277459]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 1.0
@@ -57,11 +57,11 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 100
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 30
-text = "a0.1.0"
+text = "Tester-Preview"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Its ME" type="Label" parent="."]
+[node name="Its ME" type="Label" parent="." unique_id=1877266528]
 layout_mode = 1
 anchors_preset = -1
 anchor_top = 1.0
@@ -79,7 +79,7 @@ theme_override_font_sizes/font_size = 30
 text = "LonelyFear Games"
 vertical_alignment = 1
 
-[node name="Button Holder" type="VBoxContainer" parent="."]
+[node name="Button Holder" type="VBoxContainer" parent="." unique_id=549707145]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -95,7 +95,7 @@ scale = Vector2(2, 2)
 alignment = 2
 script = ExtResource("2_48xlc")
 
-[node name="Start" type="Button" parent="Button Holder"]
+[node name="Start" type="Button" parent="Button Holder" unique_id=881217347]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
@@ -104,7 +104,7 @@ action_mode = 0
 text = "New Simulation"
 alignment = 0
 
-[node name="Load" type="Button" parent="Button Holder"]
+[node name="Load" type="Button" parent="Button Holder" unique_id=1908724142]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
@@ -113,7 +113,7 @@ action_mode = 0
 text = "Load Simulation"
 alignment = 0
 
-[node name="Options" type="Button" parent="Button Holder"]
+[node name="Options" type="Button" parent="Button Holder" unique_id=440930513]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
@@ -123,7 +123,7 @@ action_mode = 0
 text = "Options"
 alignment = 0
 
-[node name="Exit Game" type="Button" parent="Button Holder"]
+[node name="Exit Game" type="Button" parent="Button Holder" unique_id=1354809499]
 layout_mode = 2
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")

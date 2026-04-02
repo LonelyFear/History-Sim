@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://dpy6hp4i3relw"]
+[gd_scene format=3 uid="uid://dpy6hp4i3relw"]
 
 [ext_resource type="Script" uid="uid://ccdhr40nqphb2" path="res://Scripts/UI/Saving/SaveButton.cs" id="1_f0tub"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="1_lhjyg"]
 
-[node name="SaveButton" type="Button"]
+[node name="SaveButton" type="Button" unique_id=884757274]
 custom_minimum_size = Vector2(480, 64)
 anchors_preset = -1
 anchor_left = 0.006
@@ -15,9 +15,10 @@ offset_top = -7.92
 offset_right = -97.0
 offset_bottom = -650.0
 grow_vertical = 2
+theme_override_constants/outline_size = 50
 script = ExtResource("1_f0tub")
 
-[node name="SaveName" type="Label" parent="."]
+[node name="SaveName" type="Label" parent="." unique_id=1922909464]
 layout_mode = 1
 offset_left = 4.0
 offset_top = 6.0
@@ -27,7 +28,7 @@ theme = ExtResource("1_lhjyg")
 theme_override_font_sizes/font_size = 47
 text = "Invalid Save"
 
-[node name="SaveStatus" type="Label" parent="."]
+[node name="SaveStatus" type="Label" parent="." unique_id=2018204547]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
