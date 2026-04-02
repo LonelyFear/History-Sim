@@ -204,13 +204,14 @@ public class SimManager
             }
         }
     }
-    public void PlaceRegionSeeds(int size, Dictionary<Vector2I,Vector2I> dict, TerrainType[] acceptedTerrain)
+    public Dictionary<Vector2I,Vector2I> PlaceRegionSeeds(int size, TerrainType[] acceptedTerrain)
     {
+        Dictionary<Vector2I,Vector2I> dict = [];
         for (int gx = 0; gx < worldSize.X/size; gx++)
         {
             for (int gy = 0; gy < worldSize.Y/size; gy++)
             {
-                Vector2I gridPos = new Vector2I(gx, gy);
+                Vector2I gridPos = new(gx, gy);
                 Vector2I pos = (gridPos * size) + new Vector2I(rng.Next(0, size), rng.Next(0, size));
 
                 int attempts = 500;
@@ -223,18 +224,21 @@ public class SimManager
                 dict.Add(gridPos, pos);
                 objectManager.CreateRegion(pos.X, pos.Y).terrainType = tiles[pos.X, pos.Y].terrainType;
             }            
-        }        
+        }  
+        return dict;      
     }
     public void CreateRegions()
     {
-        int landRegionSize = 4;
-        int seaRegionSize = 16;
-        Dictionary<Vector2I, Vector2I> landGridSeeds = [];
-        Dictionary<Vector2I, Vector2I> seaGridSeeds = [];
+        Dictionary<TerrainType[], (Dictionary<Vector2I, Vector2I>, int)> gridSeeds = [];
 
-        // Creates region seeds
-        PlaceRegionSeeds(landRegionSize, landGridSeeds, [TerrainType.LAND, TerrainType.HILLS, TerrainType.MOUNTAINS]);
-        PlaceRegionSeeds(seaRegionSize, seaGridSeeds, [TerrainType.SHALLOW_WATER, TerrainType.DEEP_WATER, TerrainType.ICE]);
+        TerrainType[] acceptedTerrain = [TerrainType.LAND];
+        gridSeeds.Add(acceptedTerrain, (PlaceRegionSeeds(4,acceptedTerrain), 4));
+
+        acceptedTerrain = [TerrainType.HILLS, TerrainType.MOUNTAINS];
+        gridSeeds.Add(acceptedTerrain, (PlaceRegionSeeds(4,acceptedTerrain), 4));
+
+        acceptedTerrain = [TerrainType.SHALLOW_WATER, TerrainType.DEEP_WATER, TerrainType.ICE];
+        gridSeeds.Add(acceptedTerrain, (PlaceRegionSeeds(16,acceptedTerrain), 16));
 
         // Region voronoi Diagrams
         for (int x = 0; x < worldSize.X; x++)
@@ -242,13 +246,19 @@ public class SimManager
             for (int y = 0; y < worldSize.Y; y++)
             {
                 Tile tile = tiles[x,y];
-                Vector2I gridSize = worldSize/landRegionSize;
-                Vector2I gridPos = new Vector2I(x,y)/landRegionSize;
-                // Switches grid used if land
-                if (!tile.IsLand())
+                Vector2I gridSize = worldSize;
+                Vector2I gridPos = new Vector2I(x,y);
+
+                Dictionary<Vector2I,Vector2I> usedGridSeeds = [];
+                foreach (var pair in gridSeeds)
                 {
-                    gridSize = worldSize/seaRegionSize;
-                    gridPos = new Vector2I(x,y)/seaRegionSize;                    
+                    if (pair.Key.Contains(tile.terrainType))
+                    {
+                        usedGridSeeds = pair.Value.Item1;
+                        gridSize /= pair.Value.Item2;
+                        gridPos /= pair.Value.Item2;
+                        break;
+                    }
                 }
                  
                 ulong? closestId = null;
@@ -260,13 +270,13 @@ public class SimManager
                     {
                         // Gets distance to seed
                         Vector2I samplePos = new Vector2I(Mathf.PosMod(gridPos.X + dx, gridSize.X), Mathf.PosMod(gridPos.Y + dy, gridSize.Y));
-                        float dist = tile.pos.DistanceTo(!tile.IsLand() ? seaGridSeeds[samplePos] : landGridSeeds[samplePos]);
+                        float dist = tile.pos.DistanceTo(usedGridSeeds[samplePos]);
 
                         if (dist < closestDist)
                         {   
                             // Gets seed position
-                            int rx = !tile.IsLand() ? seaGridSeeds[samplePos].X : landGridSeeds[samplePos].X;
-                            int ry = !tile.IsLand() ? seaGridSeeds[samplePos].Y : landGridSeeds[samplePos].Y;
+                            int rx = usedGridSeeds[samplePos].X;
+                            int ry = usedGridSeeds[samplePos].Y;
                             // Checks if we can be close to this seed
                             if (tile.IsLand() == tiles[rx, ry].IsLand() && (tile.IsLand() || tile.terrainType == tiles[rx,ry].terrainType))
                             {
@@ -644,7 +654,8 @@ public class SimManager
                 region.linkUpdateCountdown--;
                 if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
                 {
-                    region.GetTradeWeight();                
+                    region.GetTradeWeight();
+                    region.ZoneTrade();         
                 }                
             });
 
@@ -652,6 +663,7 @@ public class SimManager
             {
                 //region.GetBaseTradeWeight();
                 region.UpdateTradeIncome();
+                
             }
 
             regionPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;

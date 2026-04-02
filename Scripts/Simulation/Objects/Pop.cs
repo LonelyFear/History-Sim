@@ -105,15 +105,15 @@ public class Pop
         Tech t = tech;
         if (rng.NextSingle() < militaryTechChance)
         {
-            t.militaryLevel++;
+            t.militaryLevel += 1;
         }
         if (rng.NextSingle() < societyTechChance)
         {
-            t.societyLevel++;
+            t.societyLevel += 1;
         }
         if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && rng.NextSingle() < industryTechChance)
         {
-            t.industryLevel++;
+            t.industryLevel += 1;
         }
         tech = t;
     }

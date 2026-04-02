@@ -21,7 +21,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
     [IgnoreMember] const float warChanceMultiplier = 0.01f;
-    [IgnoreMember] const float diploChangeChance = 0.1f;
+    [IgnoreMember] const float diploChangeChance = 0.01f;
 
     // Curves
     [IgnoreMember] Curve threatConfidenceCurve = GD.Load<Curve>("res://Curves/Simulation/ThreatConfidenceCurve.tres");
@@ -129,58 +129,22 @@ public partial class StateAIManager : UtilityAi.AiAgent
             Relation relations = pair.Value;
             Character leader = objectManager.GetCharacter(state.leaderId);
             if (target == null || relations == null || leader == null) continue;
-            
-            Character otherLeader = objectManager.GetCharacter(target.leaderId);
-            if (otherLeader == null) continue;
-
-            float positiveChance = 0f;
-            float neutralChance = 1f;
 
             float diplomacyScore = rng.NextSingle();
+            float positiveChance = 0f;
 
-            // Agressive leader vs Agressive leader
-            TraitLevel otherLeaderAgression = otherLeader.GetPersonalityLevel("agression");
+            positiveChance = leader.GetPersonalityLevel("agression") switch
+            {
+                TraitLevel.HIGH => 0.8f,
+                TraitLevel.MEDIUM => 0.5f,
+                TraitLevel.LOW => 0.2f,
+                _ => 1f,
+            };
 
-            switch (leader.GetPersonalityLevel("agression"))
-            {
-                case TraitLevel.HIGH:
-                    positiveChance = 0.2f;
-                    neutralChance = 0.4f;
-                    // agressiveChance = 0.4               
-                    break;
-                case TraitLevel.MEDIUM:
-                    positiveChance = 0.3f;
-                    neutralChance = 0.4f;
-                    // agressiveChance = 0.3
-                    break;
-                case TraitLevel.LOW:
-                    positiveChance = 0.4f;
-                    neutralChance = 0.4f;
-                    // agressiveChance = 0.2
-                    break;
-            }
-
-            if (diplomacyScore < positiveChance)
-            {
-                // Positive outcome
-                if (!relations.rival)
-                {
-                    diplomacyManager.ChangeOpinion(target, 0.05f);
-                } else
-                {
-                    if (rng.NextSingle() < 0.1f)
-                    {
-                        // Ends rivalry
-                        diplomacyManager.SetRivalry(target, false);
-                    };
-                }                
-            } else if (diplomacyScore < neutralChance + positiveChance)
-            {
-                // Neutral outcome
-                // Just nothing :)
-            } else
-            {
-                // Negative outcome
+            positiveChance = Mathf.Clamp(positiveChance, 0, 1);
+            if (diplomacyScore < positiveChance) {
+                diplomacyManager.ChangeOpinion(target, 0.05f);              
+            } else {
                 diplomacyManager.ChangeOpinion(target, -0.05f);
             }
         }

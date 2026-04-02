@@ -245,7 +245,7 @@ public class State : Polity, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 10 + (int)(tech.societyLevel * 2);
+        return 5 + (tech.societyLevel * 2);
     }
     public int GetMaxVassals() {
         return 5;

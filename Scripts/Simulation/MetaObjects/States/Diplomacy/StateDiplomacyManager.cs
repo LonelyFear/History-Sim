@@ -40,7 +40,7 @@ public partial class StateDiplomacyManager
     public void DeclareWar(State target, WarType type = WarType.CONQUEST)
     {
         //GD.Print($"Trying to start a war between {state.name} and {target.name}");
-        objectManager.StartWar([state], [target], type, state, target);
+        objectManager.StartWar(type, state, target);
     }
 
     public void LeaveWarsWithState(State target)

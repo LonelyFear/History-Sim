@@ -378,13 +378,13 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(tradeZone.id);
         simManager.marketIds.Remove(tradeZone.id);     
     }
-    public War StartWar(List<State> atk, List<State> def, WarType warType, State agressorLeader, State defenderLeader)
+    public War StartWar(WarType warType, State agressorLeader, State defenderLeader)
     {
         if (agressorLeader == defenderLeader || agressorLeader == null || defenderLeader == null)
         {
             return null;
         }
-        War war = new War()
+        War war = new()
         {
             id = GetId(),
             warType = warType,

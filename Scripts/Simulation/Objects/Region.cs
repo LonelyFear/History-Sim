@@ -48,6 +48,7 @@ public class Region : PopObject, ISaveable
 
     // Demographics
     [IgnoreMember] public List<ulong?> borderingRegionIds { get; set; } = new List<ulong?>();
+    [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = new();
 
     // Settlements
     //[Key(31)] public Settlement settlement = new Settlement();
@@ -62,7 +63,7 @@ public class Region : PopObject, ISaveable
     {
         get
         {
-            return (int)((populationDensity + (int)tradeIncome) * arableLand);
+            return (int)((populationDensity + (int)tradeIncome) * arableLand * Mathf.Max(averageTech.societyLevel, 1));
         }
     }
     
@@ -107,24 +108,25 @@ public class Region : PopObject, ISaveable
         tiles.Remove(tile.pos);
         tile.regionId = null;
     }
-    public void GetCentralTile()
-    {
-        Vector2 average = new();
-        foreach (Vector2I tilePos in tiles)
-        {
-            average += tilePos;
-        }
-        average /= tiles.Count;
-        pos = (Vector2I)average.Round();
-    }
     public void InitRegion()
     {
         CalcAverages();
         CheckHabitability();
+        RemoveInvalidBorders();
     }
     public void NameRegion()
     {
         name = NameGenerator.GenerateRegionName(this);
+    }
+    void RemoveInvalidBorders()
+    {
+        foreach (ulong regionId in borderingRegionIds.ToArray())
+        {
+            if (objectManager.GetRegion(regionId) == null)
+            {
+                borderingRegionIds.Remove(regionId);
+            }
+        }
     }
     void CalcAverages()
     {
@@ -173,6 +175,8 @@ public class Region : PopObject, ISaveable
             }            
         }
         navigability /= landCount;
+        navigability = Mathf.Clamp(navigability, 0, 1);
+
         avgTemperature /= tiles.Count;
         avgRainfall /= tiles.Count;
         avgElevation /= tiles.Count;
@@ -231,7 +235,7 @@ public class Region : PopObject, ISaveable
     }
     public void RandomStateFormation()
     {
-        if (rng.NextDouble() < 0.0001 * navigability && population > 1000)
+        if (rng.NextDouble() < 0.0001f * Mathf.Max(averageTech.societyLevel, 1) * navigability && population > 1000)
         {
             objectManager.CreateState(this);
 
@@ -290,7 +294,7 @@ public class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        if (Battle.CalcBattle(region, attackerPower, 2000000 + region.population))
+        if (Battle.CalcBattle(region, attackerPower, 30000))
         {
             owner.AddRegion(region);
         }
@@ -370,7 +374,6 @@ public class Region : PopObject, ISaveable
         foreach (ulong regionId in borderingRegionIds)
         {
             Region region = objectManager.GetRegion(regionId);
-
 
             // If we have an equal or lower weight to a region then we cant be market leader
             if (region.tradeWeight >= tradeWeight)
@@ -485,6 +488,48 @@ public class Region : PopObject, ISaveable
             tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
         }
     }
+    public void ZoneTrade()
+    {
+        if (!isMarketCenter || objectManager.GetMarket(marketId)?.centerId != id)
+        {
+            return;
+        }
+
+        foreach (var pair in simManager.marketIds)
+        {
+            Market otherMarket = pair.Value;
+            Region marketCenter = objectManager.GetRegion(otherMarket.centerId);
+            if (marketCenter == null) continue;
+
+            if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
+            {
+                path = GetPath(this, marketCenter, true);
+
+                lock (regionPaths)
+                {
+                    regionPaths[marketCenter] = path;
+                }
+                lock (marketCenter.regionPaths)
+                {
+                    marketCenter.regionPaths[this] = path;
+                }
+                
+            }
+
+
+            if (path.Count < 20)
+            {
+                foreach (Region tradeRoute in path)
+                {
+                    lock (tradeRoute)
+                    {
+                        tradeRoute.tradeIncome = Mathf.Min(tradeIncome, marketCenter.tradeIncome);
+                    }
+                    
+                }
+            }
+        }
+    }
     public int GetBaseTradeWeight()
     {
         
@@ -515,7 +560,7 @@ public class Region : PopObject, ISaveable
     {
         foreach (Pop pop in pops)
         {
-            pop.wealth = (tradeIncome + taxIncome) * (pop.ownedLand / (float)landCount);
+            pop.wealth = (tradeIncome + taxIncome) * (pop.population / (float)population);
         }
     }
 
@@ -672,5 +717,62 @@ public class Region : PopObject, ISaveable
             */  
         }
         return text;
+    }
+    public static List<Region> GetPath(Region start, Region target, bool mustBeInhabited = false)
+    {
+        PriorityQueue<Region, float> frontier = new();
+        Dictionary<Region, float> costSoFar = [];
+        Dictionary<Region, Region> cameFrom = [];
+        List<Region> path = [];
+
+        frontier.Enqueue(start, 0);
+        costSoFar[start] = 0;
+        cameFrom[start] = null;
+
+
+        while (frontier.Count > 0)
+        {
+            Region current = frontier.Dequeue();
+
+            if (current == target)
+            {
+                break;
+            }
+
+            foreach (ulong? borderId in current.borderingRegionIds)
+            {
+                Region next = objectManager.GetRegion(borderId);
+                if (next == null || !next.habitable || (mustBeInhabited && next.population < 1))
+                {
+                    continue;
+                }
+
+                float newCost = costSoFar[current] + (1.1f - next.navigability);
+                if (!costSoFar.TryGetValue(next, out float value) || newCost < value)
+                {
+                    costSoFar[next] = newCost;
+                    frontier.Enqueue(next, newCost + Heuristic(target, next));
+                    cameFrom[next] = current;
+                }
+            }
+        }
+
+        if (cameFrom.ContainsKey(target))
+        {
+            Region nextInPath = target;
+            while (nextInPath != null)
+            {
+                path.Add(nextInPath);
+                nextInPath = cameFrom[nextInPath];
+            }            
+        }
+
+
+        return path;
+    }
+
+    static float  Heuristic(Region source, Region target)
+    {
+        return source.pos.DistanceSquaredTo(target.pos);
     }
 }   
