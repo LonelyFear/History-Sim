@@ -1,16 +1,5 @@
 # History Sim
-Simulate history for thousands of years with simulated economies, populations, and leaders!
-
-# Features
-The simulation goes in depth with the following features:
-- Population simulations
-- Federal States
-- Trade
-- Warfare
-- Technology
-- Cultures
-- Leaders
-- Even More!
+Simulate history for thousands of years with simulated economies, populations, and empires!
 
 # Credits
 Huge thanks to NFB for inspiration and the people over in his discord for help on this project. 
@@ -19,7 +8,7 @@ Including:
 - ElementlHero
 - PyskeDoesStuff
 - Catenium
-- Fella4Socks
+- Sire
 - Raccoon
 - FoxAtreides
 
