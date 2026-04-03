@@ -226,7 +226,7 @@ public class WorldGenerator
         {
             return null;
         }
-        Image image = Image.CreateEmpty(WorldSize.X, WorldSize.Y, false, Image.Format.Rgb8);
+        Image image = Image.CreateEmpty(WorldSize.X, WorldSize.Y, false, Image.Format.Rgbaf);
         float seaLevelElevation = SeaLevel * WorldHeight;
         for (int x = 0; x < WorldSize.X; x++)
         {

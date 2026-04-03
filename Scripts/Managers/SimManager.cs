@@ -84,12 +84,12 @@ public class SimManager
     [IgnoreMember] public Vector2 terrainMapScale;
     public Vector2I GlobalToTilePos(Vector2 pos)
     {
-        return (Vector2I)(pos / (terrainMapScale * regionGlobalWidth));
+        return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth));
     }
 
     public Vector2 TileToGlobalPos(Vector2 regionPos)
     {
-        return regionPos * (terrainMapScale * regionGlobalWidth);
+        return regionPos * (terrainMap.Scale * regionGlobalWidth);
     }
     public void SaveSimToFile(string path)
     {

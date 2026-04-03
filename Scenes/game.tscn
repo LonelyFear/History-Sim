@@ -77,7 +77,6 @@ playerCamera = NodePath("../PlayerCamera")
 mapModeUI = NodePath("../UI/Action Panel/ActionBarMargins/ActionBar/MapModeHolder/MapMode")
 deselectMetaObjectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/CloseInfoButton")
 showRegionsCheckbox = NodePath("../UI/Action Panel/ActionBarMargins/ActionBar/ShowRegionsCheckbox")
-regionResolution = 6
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
 scale = Vector2(16, 16)
@@ -250,7 +249,7 @@ Regions Time:
 States Time: "
 script = ExtResource("12_ewbju")
 
-[node name="InfoHolder" type="Control" parent="UI" unique_id=213025015 node_paths=PackedStringArray("panel", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
+[node name="InfoHolder" type="Control" parent="UI" unique_id=213025015 node_paths=PackedStringArray("nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
 clip_contents = true
 layout_mode = 3
 anchors_preset = 0
@@ -258,7 +257,6 @@ offset_top = 247.0
 offset_right = 387.0
 offset_bottom = 639.0
 script = ExtResource("15_ewbju")
-panel = NodePath("InfoPanel")
 nameLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType/Name")
 typeLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType/Type")
 populationLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/Population")
@@ -657,6 +655,9 @@ limit_left = 0
 limit_top = 0
 limit_right = 1280
 limit_bottom = 720
+limit_smoothed = true
 position_smoothing_enabled = true
+position_smoothing_speed = 10.0
+editor_draw_limits = true
 zoomSpeed = 5.0
 minZoom = 25.0

@@ -3,7 +3,7 @@ using System;
 
 public partial class TerrainMap : Node2D
 {
-    Sprite2D terrainMap;
+    public Sprite2D terrainMap;
     public WorldGenerator world;
     [Export] bool switchMap;
     bool isBiomeMap = false;

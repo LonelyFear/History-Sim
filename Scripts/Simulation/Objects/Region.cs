@@ -326,7 +326,7 @@ public class Region : PopObject, ISaveable
         if (GetController() == null || targetRegion.GetController() == null) return;
         
         long attackerPower = GetPolity().GetArmyPower();
-        long defenderPower = GetPolity().GetArmyPower();
+        long defenderPower = targetRegion.GetPolity().GetArmyPower();
 
         if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
         {
@@ -517,7 +517,7 @@ public class Region : PopObject, ISaveable
 
             if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
             {
-                path = GetPath(this, marketCenter, true);
+                path = GetPath(this, marketCenter, true, 20);
 
                 lock (regionPaths)
                 {
@@ -732,7 +732,7 @@ public class Region : PopObject, ISaveable
         }
         return text;
     }
-    public static List<Region> GetPath(Region start, Region target, bool mustBeInhabited = false)
+    public static List<Region> GetPath(Region start, Region target, bool mustBeInhabited = false, int maxDist = -1)
     {
         PriorityQueue<Region, float> frontier = new();
         Dictionary<Region, float> costSoFar = [];
@@ -748,7 +748,7 @@ public class Region : PopObject, ISaveable
         {
             Region current = frontier.Dequeue();
 
-            if (current == target)
+            if (current == target || (maxDist > 0 && Heuristic(start, target) > maxDist * maxDist))
             {
                 break;
             }
@@ -784,7 +784,7 @@ public class Region : PopObject, ISaveable
         return path;
     }
 
-    static float  Heuristic(Region source, Region target)
+    static float Heuristic(Region source, Region target)
     {
         return source.pos.DistanceSquaredTo(target.pos);
     }
