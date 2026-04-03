@@ -39,7 +39,8 @@ public partial class TimeManager : Node
     public bool debuggerMode = false;
     double waitTime;
     double currentTime;
-    [Export] public GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
+    [Export] GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
+    GameSpeed lastSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
     [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
     public override void _Ready()
@@ -51,17 +52,40 @@ public partial class TimeManager : Node
 
     public void OnSimStart()
     {
-        
         simStart = true;
         simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         TickGame();
 	}
-
-    public override void _Process(double delta)
+    public void ForceGameSpeed(GameSpeed desiredSpeed)
+    {
+        lastSpeed = gameSpeed;
+        gameSpeed = desiredSpeed;
+        gameSpeedUI.Selected = (int)desiredSpeed;
+        UpdateGameSpeed();
+    }
+    void UpdateGameSpeed()
     {
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
+    }
+    public override void _Process(double delta)
+    {
+        if (!mapManager.initialized) return;
+
+        if (Input.IsActionJustPressed("Pause"))
+        {
+            if (gameSpeed == GameSpeed.PAUSED)
+            {
+                ForceGameSpeed(lastSpeed);
+            } else
+            {
+                ForceGameSpeed(GameSpeed.PAUSED);
+            }
+        }
+
+        UpdateGameSpeed();
         GetWaitTime();
         currentTime += delta;
+
         if (forcePause)
         {
             return;
@@ -106,12 +130,9 @@ public partial class TimeManager : Node
                 }
             }
         }
-        if (mapManager.initialized)
-        {
-            RenderGame();
-        }
+        RenderGame();
     }
-    public void RenderGame()
+    void RenderGame()
     {
         bool drawDone = drawTask == null || drawTask.IsCompleted;
         // Hides region overlay 
@@ -150,7 +171,7 @@ public partial class TimeManager : Node
         double monthTime = (double)ticksPerMonth / ticksPerDay;
         switch (gameSpeed)
         {
-            case GameSpeed.ONE_WEEK_PER_SECOND:
+            case GameSpeed.PAUSED:
                 waitTime = float.MaxValue;
                 break;
             case GameSpeed.ONE_MONTH_PER_SECOND:
@@ -174,7 +195,7 @@ public partial class TimeManager : Node
         }        
     }
 
-    private void TickGame(){
+    void TickGame(){
         tickStartTime = Time.GetTicksMsec();   
 
         ticks += ticksPerDay;
@@ -209,7 +230,7 @@ public partial class TimeManager : Node
     }
 
     public enum GameSpeed{
-        ONE_WEEK_PER_SECOND,
+        PAUSED,
         ONE_MONTH_PER_SECOND,
         SIX_MONTHS_PER_SECOND,
         ONE_YEAR_PER_SECOND,

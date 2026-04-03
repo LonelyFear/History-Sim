@@ -16,25 +16,25 @@ public partial class Character : NamedObject
     [IgnoreMember] public static SimManager sim;
 
     // Character Stats
-    [Key(2)] public string firstName;
-    [Key(3)] public string lastName;
-    [Key(6)] public ulong? stateId = null;
-    [Key(7)] public CharacterRole role {get; private set; } = CharacterRole.CIVILIAN;
-    [Key(8)] public List<ulong> parentIds = [];
-    [Key(9)] public List<ulong?> childIds = [];
-    [Key(10)] public Dictionary<ulong, int> relationsIds = [];
+    [Key(7)] public string firstName;
+    [Key(8)] public string lastName;
+    [Key(9)] public ulong? stateId = null;
+    [Key(10)] public CharacterRole role {get; private set; } = CharacterRole.CIVILIAN;
+    [Key(11)] public List<ulong> parentIds = [];
+    [Key(12)] public List<ulong?> childIds = [];
+    [Key(13)] public Dictionary<ulong, int> relationsIds = [];
     // Health
-    [Key(11)] public int health = 100;
-    [Key(12)] public float healthDecreaseChance = 0.075f;
+    [Key(14)] public int health = 100;
+    [Key(15)] public float healthDecreaseChance = 0.075f;
 
     // Character Personality
     // Personality changes interaction/actions
-    [Key(30)]
+    [Key(16)]
     public Dictionary<string, float> personality {get; private set;} = new Dictionary<string, float>
     {
         {"agression", 0.5f},
     };
-    [Key(40)] public Gender gender = Gender.MALE;
+    [Key(17)] public Gender gender = Gender.MALE;
 
     // References
     [IgnoreMember] State _state;

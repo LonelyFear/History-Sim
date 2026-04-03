@@ -223,7 +223,7 @@ public class ObjectManager
         {
             State relation = GetState(relationId);
             relation.diplomacy.RemoveRelations(deletedState.id);
-            relation.borderingStateIds.Remove(deletedState.id);
+            //relation.borderingStates.Remove(deletedState);
         }
         foreach (ulong allianceId in deletedState.diplomacy.allianceIds.ToArray())
         {

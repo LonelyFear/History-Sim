@@ -4,20 +4,26 @@ using System.Linq;
 using Godot;
 using MessagePack;
 
-public abstract class Polity : PopObject
+[Union(0, typeof(State))]
+[Union(1, typeof(Alliance))]
+[MessagePackObject(AllowPrivate = true)]
+public abstract partial class Polity : PopObject
 {
     // Military
-    [Key(710)] public int manpower;
-    [Key(720)] public int armyPower;
+    [Key(17)] public int manpower { get; set; }
+    [Key(18)] public int armyPower { get; set; }
     // Political
-    [Key(10)] public int occupiedLand { get; set; }
-    [IgnoreMember] public HashSet<ulong> borderingAllianceIds { get; set; } = [];
-    [IgnoreMember] public HashSet<ulong> borderingStateIds { get; set; } = [];
-    [IgnoreMember] public HashSet<ulong> independentBorderIds { get; set; } = [];
+    [Key(19)] public int occupiedLand { get; set; }
+    [Key(20)] public HashSet<ulong> borderingAllianceIds { get; set; } = [];
+    [Key(21)] public HashSet<ulong> borderingStateIds { get; set; } = [];
+    [Key(22)] public HashSet<ulong> independentBorderIds { get; set; } = [];
+    [IgnoreMember] public HashSet<Alliance> borderingAlliances { get; set; } = [];
+    [IgnoreMember] public HashSet<State> borderingStates { get; set; } = [];
+    [IgnoreMember] public HashSet<State> independentBorders { get; set; } = [];
     // Economy
-    [Key(11)] public float totalWealth { get; set; }
+    [Key(23)] public float totalWealth { get; set; }
     [IgnoreMember] public HashSet<Region> regions = [];
-    [Key(700)] public HashSet<ulong> regionIds { get; set; } = [];
+    [Key(24)] public HashSet<ulong> regionIds { get; set; } = [];
 
     public override void PrepareForSave()
     {
@@ -32,11 +38,17 @@ public abstract class Polity : PopObject
 
     public void PolitySave()
     {
-        regionIds = regions.Count > 0 ? [.. regions.Select(r => r.id)] : null;
+        regionIds = [.. regions.Select(r => r.id)];
+        borderingStateIds = [.. borderingStates.Select(r => r.id)];
+        independentBorderIds = [.. independentBorders.Select(r => r.id)];
+        borderingAllianceIds = [.. borderingAlliances.Select(r => r.id)];
     }
     public void PolityLoad()
     {
-        regions = regionIds == null ? [] : [.. regionIds.Select(p => objectManager.GetRegion(p))];
+        regions = [.. regionIds.Select(p => objectManager.GetRegion(p))];
+        borderingStates = [..borderingStateIds.Select(p => objectManager.GetState(p))];
+        independentBorders = [..independentBorderIds.Select(p => objectManager.GetState(p))];
+        borderingAlliances = [..borderingAllianceIds.Select(p => objectManager.GetAlliance(p))];
     }
 
     public override void CountPopulation()
@@ -44,9 +56,9 @@ public abstract class Polity : PopObject
         long countedP = 0;
         long countedW = 0;
 
-        HashSet<ulong> allianceBorders = [];
-        HashSet<ulong> borders = [];
-        HashSet<ulong> independentBorders = [];
+        HashSet<Alliance> allianceBorders = [];
+        HashSet<State> borders = [];
+        HashSet<State> independentBorders = [];
         Dictionary<SocialClass, long> countedSocialClasses = [];
 
         foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
@@ -102,10 +114,10 @@ public abstract class Polity : PopObject
                     {
                         if (state == null) continue;
                         
-                        borders.Add(state.id);  
+                        borders.Add(state);  
                         if (border.owner.sovereignty == Sovereignty.INDEPENDENT)
                         {
-                            independentBorders.Add(state.id);                   
+                            independentBorders.Add(state);                   
                         }                          
                     }
 
@@ -121,7 +133,7 @@ public abstract class Polity : PopObject
                             continue;
                         }           
                         // Extends our border with the alliance
-                        allianceBorders.Add(borderingAlliance.id);                                    
+                        allianceBorders.Add(borderingAlliance);                                    
                     }
                 }
             }
@@ -145,9 +157,9 @@ public abstract class Polity : PopObject
         
         // Updates values
         occupiedLand = occRegions;
-        borderingStateIds = borders;
-        independentBorderIds = independentBorders;
-        borderingAllianceIds = allianceBorders;
+        borderingStates = borders;
+        this.independentBorders = independentBorders;
+        borderingAlliances = allianceBorders;
         totalWealth = countedWealth;
         professions = countedSocialClasses;
         cultureIds = cCultures;

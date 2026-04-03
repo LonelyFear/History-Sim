@@ -9,10 +9,10 @@ using MessagePack;
 // Versatile, can represent unions and realms. Use this class for anything involving collections of states
 public partial class Alliance : Polity
 {
-    [Key(0)] public AllianceType type;
-    [Key(2)] ulong? leadStateId;
-    [Key(1)] HashSet<ulong> memberStateIds = [];
-    [Key(3)] public bool exclusive = true;
+    [Key(25)] public AllianceType type;
+    [Key(26)] ulong? leadStateId;
+    [Key(27)] HashSet<ulong> memberStateIds = [];
+    [Key(28)] public bool exclusive = true;
 
     // References
     [IgnoreMember] public HashSet<State> memberStates = [];

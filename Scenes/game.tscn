@@ -358,12 +358,20 @@ Wealth:"
 fit_content = true
 scroll_active = false
 
+[node name="ButtonSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=2042874959]
+layout_mode = 2
+size_flags_vertical = 8
+
 [node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=342721538]
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
 text = "View In Encyclopedia"
+
+[node name="ContianerEdge" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=876529723]
+layout_mode = 2
+size_flags_vertical = 8
 
 [node name="Action Panel" type="Panel" parent="UI" unique_id=934192393 node_paths=PackedStringArray("menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit", "encyclopediaButton", "encyclopediaManager")]
 anchors_preset = 2

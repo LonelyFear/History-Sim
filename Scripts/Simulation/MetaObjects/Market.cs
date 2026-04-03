@@ -6,10 +6,10 @@ using MessagePack;
 [MessagePackObject]
 public class Market : NamedObject
 {
-    [Key(1)] public ulong centerId { get; set; }
-    [Key(2)] public HashSet<ulong> regionIds { get; set; } = [];
-    [Key(3)] public Color color { get; set; }
-    [Key(4)]  public ulong? controllerId { get; set; } = null;
+    [Key(7)] public ulong centerId { get; set; }
+    [Key(8)] public HashSet<ulong> regionIds { get; set; } = [];
+    [Key(9)] public Color color { get; set; }
+    [Key(10)]  public ulong? controllerId { get; set; } = null;
 
     public void AddRegion(Region region)
     {

@@ -4,18 +4,22 @@ using System.Linq;
 using Godot;
 using MessagePack;
 
+[Union(0, typeof(Culture))]
+[Union(1, typeof(Region))]
+[Union(2, typeof(Polity))]
+[MessagePackObject(keyAsPropertyName: true)]
 public abstract class PopObject : NamedObject
 {
-    [Key(102)] public long population { get; set; } = 0;
-    [Key(103)] public long highestPossiblePopulation { get; set; } = 0;
-    [Key(104)] public long dependents { get; set; } = 0;
-    [Key(105)] public long workforce { get; set; } = 0;
-    [Key(1070)] public Color color { get; set; }
+    [Key(7)] public long population { get; set; } = 0;
+    [Key(8)] public long highestPossiblePopulation { get; set; } = 0;
+    [Key(9)] public long dependents { get; set; } = 0;
+    [Key(10)] public long workforce { get; set; } = 0;
+    [Key(11)] public Color color { get; set; }
 
     [IgnoreMember] public HashSet<Pop> pops = [];
-    [Key(106)] public HashSet<ulong> popsIds;
+    [Key(12)] public HashSet<ulong> popsIds { get; set; }
     [IgnoreMember] public static TimeManager timeManager;
-    [Key(107)] public Dictionary<SocialClass, long> professions = new Dictionary<SocialClass, long>()
+    [Key(13)] public Dictionary<SocialClass, long> professions { get; set; } = new Dictionary<SocialClass, long>()
     {
         {SocialClass.FARMER, 0},
         {SocialClass.MERCHANT, 0},
@@ -24,9 +28,9 @@ public abstract class PopObject : NamedObject
         {SocialClass.SOLDIER, 0},
     };
     
-    [Key(108)] public Dictionary<ulong, long> cultureIds = [];
-    [Key(109)] public ulong? largestCultureId = null;
-    [Key(1090)] public Tech averageTech;
+    [Key(14)] public Dictionary<ulong, long> cultureIds { get; set; } = [];
+    [Key(15)] public ulong? largestCultureId { get; set; } = null;
+    [Key(16)] public Tech averageTech { get; set; }
     [IgnoreMember] public static Random rng = new Random();
     
     public override void PrepareForSave()

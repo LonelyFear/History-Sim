@@ -363,22 +363,22 @@ public class WorldGenerator
 [MessagePackObject(AllowPrivate = true)]
 public class Cell  
 {
-    [Key(100)] public float januaryDaylight;
-    [Key(101)] public float julyDaylight;
-    [Key(102)] public float continentiality;
-    [Key(1)] public int elevation;
-    [Key(2)] public float januaryTemp;
-    [Key(3)] public float julyTemp;
-    [Key(4)] public float januaryPET;
-    [Key(5)] public float julyPET;
-    [Key(6)] public int januaryRainfall;
-    [Key(7)] public int julyRainfall;
-    [Key(8)] public Vector2 januaryWindVel;
-    [Key(9)] public Vector2 julyWindVel;
-    [Key(10)] public float coastDist;
-    [Key(11)] public string biomeId = "rock";
-    [Key(12)] public string classification;
-    [Key(13)] public Color heightmapRegionColor;
+    [Key(0)] public float januaryDaylight;
+    [Key(1)] public float julyDaylight;
+    [Key(2)] public float continentiality;
+    [Key(3)] public int elevation;
+    [Key(4)] public float januaryTemp;
+    [Key(5)] public float julyTemp;
+    [Key(6)] public float januaryPET;
+    [Key(7)] public float julyPET;
+    [Key(8)] public int januaryRainfall;
+    [Key(9)] public int julyRainfall;
+    [Key(10)] public Vector2 januaryWindVel;
+    [Key(11)] public Vector2 julyWindVel;
+    [Key(12)] public float coastDist;
+    [Key(13)] public string biomeId = "rock";
+    [Key(14)] public string classification;
+    [Key(15)] public Color heightmapRegionColor;
     [IgnoreMember] public float januaryWindOffset;
     [IgnoreMember] public float julyWindOffset;
     public float GetTempForMonth(int month)

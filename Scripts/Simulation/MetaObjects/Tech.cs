@@ -1,12 +1,12 @@
 using System;
 using MessagePack;
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public struct Tech
 {
-    public int militaryLevel { get; set; } = 0;
-    public int scienceLevel { get; set; } = 0;
-    public int societyLevel { get; set; } = 0;
-    public int industryLevel { get; set; } = 0;
+    [Key(0)] public int militaryLevel { get; set; } = 0;
+    [Key(1)] public int scienceLevel { get; set; } = 0;
+    [Key(2)] public int societyLevel { get; set; } = 0;
+    [Key(3)] public int industryLevel { get; set; } = 0;
 
     public Tech() { }
     public Tech(int milLevel, int sciLevel, int socLevel, int indLevel)

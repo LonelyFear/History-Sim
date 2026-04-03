@@ -537,6 +537,7 @@ public class SimManager
         {
             RebuildAfterSave();
             BorderingRegions();
+            timeManager.ForceGameSpeed(TimeManager.GameSpeed.PAUSED);
         }
         else
         {

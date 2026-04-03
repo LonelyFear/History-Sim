@@ -7,7 +7,7 @@ using MessagePack;
 [MessagePackObject(AllowPrivate = true)]
 public class Pop
 {
-    [Key(0)] public ulong id;
+    [Key(1)] public ulong id;
     [Key(2)] public int population { get; set; } = 0;
     [Key(3)] public int workforce { get; set; } = 0;
     [Key(4)] public int dependents { get; set; } = 0;

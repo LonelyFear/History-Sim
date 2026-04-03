@@ -1,18 +1,18 @@
 using Godot;
 using MessagePack;
 
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public class Tile : Cell
 {
-	public ulong? regionId;
-	public Vector2I pos;
-	public float navigability;
-	public float arability;
-	public float survivalbility;
-	public bool coastal;
-	public bool renderOverlay = true;
-	public SettlementTypes settlementType = SettlementTypes.NONE;
-	public TerrainType terrainType;
+	[Key(16)] public ulong? regionId;
+	[Key(17)] public Vector2I pos;
+	[Key(18)] public float navigability;
+	[Key(19)] public float arability;
+	[Key(20)] public float survivalbility;
+	[Key(21)] public bool coastal;
+	[Key(22)] public bool renderOverlay = true;
+	[Key(23)] public SettlementTypes settlementType = SettlementTypes.NONE;
+	[Key(24)] public TerrainType terrainType;
 
 	public Tile() {}
 	public Tile(Cell cell)

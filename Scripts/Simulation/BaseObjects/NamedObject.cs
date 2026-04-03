@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Godot;
 using MessagePack;
-[MessagePackObject]
-public class NamedObject
+
+public abstract class NamedObject
 {
-    [Key(401)] public uint tickCreated { get; set; }
-    [Key(402)] public uint tickDestroyed { get; set; } = 0;
-    [Key(410)] public bool dead = false;
+    [Key(0)] public uint tickCreated { get; set; }
+    [Key(1)] public uint tickDestroyed { get; set; } = 0;
+    [Key(2)] public bool dead = false;
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static ObjectManager objectManager;
-    [Key(403)] public ulong id { get; set; }
-    [Key(404)] public string name { get; set; }
-    [Key(405)] public string description { get; set; }
-    [Key(406)] public List<ulong> eventIds = [];
+    [Key(3)] public ulong id { get; set; }
+    [Key(4)] public string name { get; set; }
+    [Key(5)] public string description { get; set; }
+    [Key(6)] public List<ulong> eventIds = [];
     public virtual void PrepareForSave()
     {
 

@@ -12,15 +12,14 @@ public partial class StateAIManager : UtilityAi.AiAgent
 {
     [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] public static SimManager simManager;
-    [Key(0)] public ulong? stateId;  
+    [Key(0)] public ulong? stateId { get; set; }  
     [IgnoreMember] public StateDiplomacyManager diplomacyManager {
         get
         {
             return state.diplomacy;
         }
     }
-    [Key(2)] int ticks = 0;
-    [Key(3)] List<ulong> endedWarIds;
+    [Key(2)] int ticks { get; set; } = 0;
 
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
@@ -79,7 +78,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 enemyWarLead.AIManager.CalcWarVictory(war, enemySide);
             }
             // Ends war because we dont even know who we are fightin
-            if (!state.diplomacy.HasRelations(enemyWarLead) || !state.borderingStateIds.Contains(enemyWarLead.id))
+            if (!state.diplomacy.HasRelations(enemyWarLead) || !state.borderingStates.Contains(enemyWarLead))
             {
                 objectManager.EndWar(war);
             }

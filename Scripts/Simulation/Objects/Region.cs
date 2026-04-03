@@ -7,29 +7,29 @@ using System.Text.RegularExpressions;
 [MessagePackObject(AllowPrivate = true)]
 public class Region : PopObject, ISaveable
 {
-    [Key(203)] public List<Vector2I> tiles { get; set; } = [];
+    [Key(17)] public List<Vector2I> tiles { get; set; } = [];
     [IgnoreMember] public bool conquered;
-    [Key(202)] public bool habitable { get; set; }
-    [Key(3)] public bool coastal { get; set; }
-    [Key(300)] public bool isWater { get; set; }
-    [Key(4)] public int tradeWeight { get; set; } = 0;
+    [Key(18)] public bool habitable { get; set; }
+    [Key(19)] public bool coastal { get; set; }
+    [Key(20)] public bool isWater { get; set; }
+    [Key(21)] public int tradeWeight { get; set; } = 0;
     //[Key(5)] public int baseTradeWeight { get; set; } = 0;
-    [Key(8)] public float lastWealth { get; set; } = 0;
-    [Key(9)] public float lastBaseWealth { get; set; } = 0;
-    [Key(11)] public float baseWealth { get; set; }
-    [Key(12)] public float wealth { get; set; }
-    [Key(13)] public int linkUpdateCountdown { get; set; } = 12;
-    [Key(20)] public Vector2I pos;
+    [Key(22)] public float lastWealth { get; set; } = 0;
+    [Key(23)] public float lastBaseWealth { get; set; } = 0;
+    [Key(24)] public float baseWealth { get; set; }
+    [Key(25)] public float wealth { get; set; }
+    [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
+    [Key(28)] public Vector2I pos;
 
     // trade
-    [Key(14)] public ulong? marketId { get; set; } = null;
-    [Key(15)] public bool isMarketCenter { get; set; } = false;    
-    [Key(16)] public float tradeIncome = 0;
-    [Key(17)] public float taxIncome = 0;
-    [Key(18)] public int zoneSize = 1;
+    [Key(29)] public ulong? marketId { get; set; } = null;
+    [Key(30)] public bool isMarketCenter { get; set; } = false;    
+    [Key(31)] public float tradeIncome = 0;
+    [Key(32)] public float taxIncome = 0;
+    [Key(33)] public int zoneSize = 1;
 
-    [Key(19)] public ulong? tradeLinkId { get; set; }
-    [Key(360)] public bool tradedUp { get; set; }
+    [Key(34)] public ulong? tradeLinkId { get; set; }
+    [Key(35)] public bool tradedUp { get; set; }
 
 
     [IgnoreMember] public float navigability { get; set; }
@@ -39,12 +39,12 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float[] avgMonthlyRainfall { get; set; } = new float[12];
     [IgnoreMember] public float avgElevation { get; set; }
     [IgnoreMember] public Dictionary<Biome, int> biomes { get; set; }
-    [Key(25)] public int landCount { get; set; }
-    [Key(26)] public TerrainType terrainType { get; set; }
+    [Key(36)] public int landCount { get; set; }
+    [Key(37)] public TerrainType terrainType { get; set; }
     
-    [Key(27)] public ulong? occupierId { get; set; }
+    [Key(38)] public ulong? occupierId { get; set; }
     
-    [Key(28)] public ulong? ownerId { get; set; }
+    [Key(39)] public ulong? ownerId { get; set; }
 
     // Demographics
     [IgnoreMember] public List<Region> borderingRegions { get; set; } = [];
@@ -94,12 +94,12 @@ public class Region : PopObject, ISaveable
         } 
     } 
 
-    [Key(35)] public bool border { get; set; }
-    [Key(36)] public bool frontier { get; set; }
+    [Key(40)] public bool border { get; set; }
+    [Key(41)] public bool frontier { get; set; }
     [IgnoreMember] public float arableLand { get; set; }
 
-    [Key(37)] public int populationDensity = 1000;
-    [Key(38)] public long maxPopulation 
+    [Key(42)] public int populationDensity = 1000;
+    [Key(43)] public long maxPopulation 
     {
         get
         {

@@ -7,47 +7,47 @@ using MessagePack;
 [MessagePackObject(AllowPrivate = true)]
 public partial class State : Polity, ISaveable
 {
-    [Key(88)] public string baseName = "Nation";
-    [Key(77)] public string govtName;
-    [Key(99)] public string leaderTitle { get; set; } = "King";
-    [Key(1)] public StateAIManager AIManager;
-    [Key(3)] public Color displayColor;
-    [Key(4)] public Color capitalColor;
-    [Key(5)] public bool capitualated = false;
+    [Key(25)] public string baseName = "Nation";
+    [Key(26)] public string govtName;
+    [Key(27)] public string leaderTitle { get; set; } = "King";
+    [Key(28)] public StateAIManager AIManager;
+    [Key(29)] public Color displayColor;
+    [Key(30)] public Color capitalColor;
+    [Key(31)] public bool capitualated = false;
 
-    [Key(6)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
+    [Key(32)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     
     //[IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
     //[Key(7)] public HashSet<ulong> regionsIds { get; set; } = new HashSet<ulong>();
     
     
     // Taxes & Wealth
-    [Key(12)] public float mobilizationRate { get; set; } = 0.3f;
-    [Key(13)] public float poorTaxRate { get; set; } = 0.3f;
-    [Key(14)] public float middleTaxRate { get; set; } = 0.1f;
-    [Key(15)] public float richTaxRate { get; set; } = 0.05f;
-    [Key(16)] public float tributeRate { get; set; } = 0.1f;
+    [Key(33)] public float mobilizationRate { get; set; } = 0.3f;
+    [Key(34)] public float poorTaxRate { get; set; } = 0.3f;
+    [Key(35)] public float middleTaxRate { get; set; } = 0.1f;
+    [Key(36)] public float richTaxRate { get; set; } = 0.05f;
+    [Key(37)] public float tributeRate { get; set; } = 0.1f;
 
     // Alliances
-    [Key(21)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
-    [Key(40)] public StateDiplomacyManager diplomacy;
+    [Key(38)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
+    [Key(39)] public StateDiplomacyManager diplomacy;
 
-    [Key(27)] public Tech tech = new Tech();
-    [Key(28)] public int maxSize = 1;
+    [Key(40)] public Tech tech = new Tech();
+    [Key(41)] public int maxSize = 1;
 
     // Government   
-    [Key(33)] public List<ulong?> characterIds = [];
-    [Key(34)] public double stability = 1;
-    [Key(35)] public double loyalty = 1;
+    [Key(42)] public List<ulong?> characterIds = [];
+    [Key(43)] public double stability = 1;
+    [Key(44)] public double loyalty = 1;
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
-    [Key(367)] public uint timeAsVassal = 0;
+    [Key(45)] public uint timeAsVassal = 0;
 
     // Reference IDs
-    [Key(31)] ulong? lastLeaderId = null;
-    [Key(32)] ulong? leaderId = null;
-    [Key(67)] ulong? rulingPopId;
-    [Key(8)] ulong? capitalId;
+    [Key(46)] ulong? lastLeaderId = null;
+    [Key(47)] ulong? leaderId = null;
+    [Key(48)] ulong? rulingPopId;
+    [Key(49)] ulong? capitalId;
     // References
     [IgnoreMember] Pop _rulingPop;
     [IgnoreMember] public Pop rulingPop { 

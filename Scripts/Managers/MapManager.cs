@@ -280,19 +280,7 @@ public partial class MapManager : Node2D
         mapMode = (MapModes)mapModeUI.Selected;
         if (mapmodeTask == null || mapmodeTask.IsCompleted )
         {
-            if (Input.IsActionJustPressed("MapMode_Polity"))
-            {
-                SetMapMode(MapModes.POLITIY);
-            }
-            else if (Input.IsActionJustPressed("MapMode_Culture"))
-            {
-                SetMapMode(MapModes.CULTURE);
-            }
-            else if (Input.IsActionJustPressed("MapMode_Population"))
-            {
-                SetMapMode(MapModes.POPULATION);
-            }
-            else if (lastMode != mapMode)
+            if (lastMode != mapMode)
             {
                 SetMapMode(mapMode);
             }

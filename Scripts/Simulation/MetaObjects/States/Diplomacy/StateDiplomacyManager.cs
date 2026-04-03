@@ -106,7 +106,7 @@ public partial class StateDiplomacyManager
     public void UpdateRelations()
     {
         // All bordering or enemy states
-        List<State> relationStates = [..GetPolity().borderingStateIds.Select(id => objectManager.GetState(id))];
+        List<State> relationStates = [..GetPolity().borderingStates];
 
         // Removes unneeded relations
         foreach (var pair in relationIds)

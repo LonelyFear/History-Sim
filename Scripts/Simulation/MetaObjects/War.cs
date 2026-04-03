@@ -7,11 +7,11 @@ using MessagePack.Formatters;
 [MessagePackObject]
 public partial class War : NamedObject
 {
-    [Key(1)] public Dictionary<WarSide, List<ulong>> sideIds = [];
-    [Key(2)] public HashSet<ulong> participantIds {get; private set;} = [];
-    [Key(22)] public List<ulong> removedIds = [];
-    [Key(3)] public Dictionary<WarSide, ulong> warLeaderIds = [];
-    [Key(5)] public WarType warType { get; set; } = WarType.CONQUEST;
+    [Key(7)] public Dictionary<WarSide, List<ulong>> sideIds = [];
+    [Key(8)] public HashSet<ulong> participantIds {get; private set;} = [];
+    [Key(9)] public List<ulong> removedIds = [];
+    [Key(10)] public Dictionary<WarSide, ulong> warLeaderIds = [];
+    [Key(11)] public WarType warType { get; set; } = WarType.CONQUEST;
     public War() {}
     public void InitWar()
     {
