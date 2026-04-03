@@ -552,7 +552,7 @@ public class Region : PopObject, ISaveable
         float populationTradeWeight = workforce * 0.001f;
         float zoneSizeTradeWeight = 0;
         
-        if (isMarketCenter)
+        if (isMarketCenter && objectManager.GetMarket(marketId) != null)
         {
             zoneSizeTradeWeight = objectManager.GetMarket(marketId).GetZoneSize();
         }

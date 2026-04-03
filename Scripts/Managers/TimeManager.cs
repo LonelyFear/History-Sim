@@ -39,8 +39,8 @@ public partial class TimeManager : Node
     public bool debuggerMode = false;
     double waitTime;
     double currentTime;
-    [Export] GameSpeed gameSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
-    GameSpeed lastSpeed = GameSpeed.ONE_YEAR_PER_SECOND;
+    GameSpeed gameSpeed = GameSpeed.UNLIMITED;
+    GameSpeed lastSpeed = GameSpeed.UNLIMITED;
     [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
     public override void _Ready()

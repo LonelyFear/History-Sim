@@ -71,16 +71,6 @@ public partial class StateDiplomacyManager
             War war = objectManager.GetWar(warId);
             war.RemoveParticipant(state);
         }
-    }
-    public void JoinLiegeWars()
-    {
-        State liege = state.diplomacy.GetLiege();
-        /*
-        foreach (War war in liege.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)))
-        {
-            war.AddParticipant(state, liege.diplomacy.warIds[war.id]);
-        }
-        */  
     } 
     // Enemy Utility
     public void SetEnemy(ulong targetId, bool isEnemy)
@@ -109,7 +99,7 @@ public partial class StateDiplomacyManager
         List<State> relationStates = [..GetPolity().borderingStates];
 
         // Removes unneeded relations
-        foreach (var pair in relationIds)
+        foreach (var pair in relationIds.ToArray())
         {
             State target = objectManager.GetState(pair.Key);
 
@@ -131,7 +121,7 @@ public partial class StateDiplomacyManager
         CalculateThreats();
     }
     void CalculateThreats(){
-        foreach (var pair in relationIds){
+        foreach (var pair in relationIds.ToArray()){
             Relation relation = pair.Value;
             State relationState = objectManager.GetState(pair.Key);
 

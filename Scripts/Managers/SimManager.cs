@@ -102,7 +102,7 @@ public class SimManager
 
         var resolver = CompositeResolver.Create(
             [new Vector2IFormatter(), new ColorFormatter()],
-            [StandardResolver.Instance]
+            [StandardResolverAllowPrivate.Instance]
         );
 
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
@@ -146,7 +146,7 @@ public class SimManager
         }
         var resolver = CompositeResolver.Create(
             [new Vector2IFormatter(), new ColorFormatter()],
-            [StandardResolver.Instance]
+            [StandardResolverAllowPrivate.Instance]
         );
         var options = MessagePackSerializerOptions.Standard.WithResolver(resolver).WithCompression(MessagePackCompression.Lz4BlockArray);
         //FileAccess save = FileAccess.Open($"{path}/sim_data.pxsave", FileAccess.ModeFlags.Read);
@@ -765,14 +765,7 @@ public class SimManager
                 }
                 if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
-                    /*
-                    if (state.vassalManager.GetLiege() == null)
-                    {
-                        GD.Print(state.vassalManager.liegeId);
-                    }
-                    */
                     state.timeAsVassal += TimeManager.ticksPerMonth;
-                    state.diplomacy.JoinLiegeWars();
                 }   
 
                 //state.vassalManager.UpdateRealm();

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using Godot;
 using Vector2 = System.Numerics.Vector2;
 public static class Utility
@@ -107,6 +108,21 @@ public static class Utility
             return saveDataExists && terrainDataExists && simDataExists;// && dataWritingFinished;
         }
         return false;
+    }
+    public static SaveData GetSaveData(string savePath)
+    {
+        DirAccess saveDirectory = DirAccess.Open(savePath);
+        if (saveDirectory.FileExists("save_data.json"))
+        {
+            FileAccess saveDataFile = FileAccess.Open(savePath.PathJoin("save_data.json"), FileAccess.ModeFlags.Read);
+            string saveText = saveDataFile.GetAsText(true); 
+
+            saveDataFile.Dispose();  
+            saveDirectory.Dispose();
+
+            return JsonSerializer.Deserialize<SaveData>(saveText);     
+        }
+        return null;
     }
     public static float CalcWeightedAverage(params (float value, float weight)[] traits)
     {

@@ -26,9 +26,6 @@ public partial class ActionPanel : Panel
     {
         menuButton.Pressed += OnMenuClick;
         mainMenuButton.Pressed += OnMainMenu;
-        saveMenuButton.Pressed += OpenSaveMenu;
-        saveButton.Pressed += OnSimSave;
-        saveCancelButton.Pressed += OpenSaveMenu;
         encyclopediaButton.Pressed += OnEncyclopediaClick;
     }
 
@@ -55,79 +52,6 @@ public partial class ActionPanel : Panel
     public void OnMenuClick()
     {
         menuPanel.Visible = !menuPanel.Visible;
-    }
-    public void OpenSaveMenu()
-    {
-        saveOverwritePaths = [];
-        saveNamePanel.Visible = !saveNamePanel.Visible;
-        
-        for (int i = 0; i < overwriteButton.ItemCount; i++)
-        {
-            overwriteButton.RemoveItem(i);
-        }
-        if (overwriteButton.ItemCount > 0)
-        {
-            overwriteButton.RemoveItem(0);
-        }
-
-        string[] directories = DirAccess.GetDirectoriesAt("user://saves");
-        overwriteButton.AddItem("Create New Save", 0);
-        overwriteButton.Select(0);
-        saveOverwritePaths.Add("New Save");
-        for (int i = 0; i < directories.Length; i++)
-        {
-            string dirName = directories[i];
-            string savePath = "user://saves/" + dirName;
-            if (Utility.IsSaveValid(savePath))
-            {
-                FileAccess saveDataFile = FileAccess.Open(savePath + "/save_data.json", FileAccess.ModeFlags.Read);
-                string saveText = saveDataFile.GetAsText(true);
-                saveDataFile.Dispose();
-                overwriteButton.AddItem($"Overwrite '{JsonSerializer.Deserialize<SaveData>(saveText).saveName}'");
-                saveOverwritePaths.Add(savePath);
-            }
-        }
-    }
-    public void OnSimSave()
-    {
-
-        string saveName = saveNameEdit.Text;
-        if (saveName == "")
-        {
-            saveName = saveOverwritePaths[overwriteButton.Selected];
-        }
-        int saveNum = DirAccess.GetDirectoriesAt("user://saves").Length + 1;
-        string saveFileName = "Save" + saveNum;
-
-        SaveData data = new SaveData()
-        {
-            saveName = saveName,
-            saveID = saveFileName,
-            saveVersion = "Alpha 1"
-        };
-
-        // Creates a new save folder
-        string saveDir = $"user://saves/{saveFileName}";
-        if (saveOverwritePaths[overwriteButton.Selected] != "New Save")
-        {
-            GD.Print(saveOverwritePaths[overwriteButton.Selected]);
-            saveDir = saveOverwritePaths[overwriteButton.Selected];            
-        }
-        else
-        {
-            DirAccess.MakeDirAbsolute($"user://saves/{saveFileName}");
-        }
-        
-
-        SimManager sim = simHolder.simManager;
-        WorldGenerator world = sim.worldGenerator;
-
-        world.SaveTerrainToFile(saveDir);
-        FileAccess save = FileAccess.Open($"{saveDir}/save_data.json", FileAccess.ModeFlags.Write);
-        GD.Print(JsonSerializer.Serialize(data));
-        save.StoreString(JsonSerializer.Serialize(data));
-        sim.SaveSimToFile(saveDir);
-        save.Dispose();    
     }
 
     public void OnUiToggle(bool toggle)
