@@ -6,15 +6,16 @@ public partial class TerrainMap : Node2D
     public Sprite2D terrainMap;
     public WorldGenerator world;
     [Export] bool switchMap;
+    [Export] SimManagerHolder simHolder;
     bool isBiomeMap = false;
     public override void _Ready()
     {
         terrainMap = GetNode<Sprite2D>("Terrain Map");
-        GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+        simHolder.simStartEvent += OnSimStart;
     }
     public void OnSimStart()
     {
-        world = GetNode<SimNodeManager>("/root/Game/Simulation").simManager.worldGenerator;
+        world = simHolder.simManager.worldGenerator;
 	}
     public void Init()
     {

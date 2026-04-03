@@ -4,15 +4,15 @@ using System;
 public partial class PopulationLabel : Label
 {
     SimManager simManager;
-
+    [Export] SimManagerHolder simHolder;
     public override void _Ready()
     {
-		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+		simHolder.simStartEvent += OnSimStart;
 	}
 
     public void OnSimStart()
     {
-        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        simManager = simHolder.simManager;
 	}
 
     public override void _Process(double delta)

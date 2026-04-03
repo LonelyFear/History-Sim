@@ -5,14 +5,15 @@ using System.Linq;
 public partial class DebugLabel : Label
 {
     [Export] MapManager map;
+    [Export] SimManagerHolder simHolder;
     SimManager simManager;
     ObjectManager objectManager;
     public override void _Ready()
     {
-		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += Init;
+		simHolder.simStartEvent += Init;
 	}
     void Init() {
-        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        simManager = simHolder.simManager;
         objectManager = simManager.objectManager;
     }
     public override void _Process(double delta)

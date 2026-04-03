@@ -112,11 +112,11 @@ public partial class StateDiplomacyManager
         foreach (var pair in relationIds)
         {
             State target = objectManager.GetState(pair.Key);
-            bool cantHaveRelations = !IsEnemyWithState(target) && !relationStates.Contains(target);
-            if (target == null || cantHaveRelations)
+
+            if (target == null || (!IsEnemyWithState(target) && !relationStates.Contains(target)))
             {
                 RemoveRelations(pair.Key);
-                continue;
+                continue;                    
             }
         }
 

@@ -26,7 +26,7 @@ public partial class TimeManager : Node
     public double monthDelta = 1;
     public SimManager simManager;
     public MapManager mapManager;
-    [Export] BorderRenderer borderRenderer;
+    [Export] SimManagerHolder simHolder;
     bool simStart = false;
     Task tickTask;
     Task monthTask;
@@ -47,13 +47,13 @@ public partial class TimeManager : Node
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
         // Connection
-		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+		simHolder.simStartEvent += OnSimStart;
 	}
 
     public void OnSimStart()
     {
         simStart = true;
-        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        simManager = simHolder.simManager;
         TickGame();
 	}
     public void ForceGameSpeed(GameSpeed desiredSpeed)
@@ -264,6 +264,14 @@ public partial class TimeManager : Node
     {
         return (uint)(years * ticksPerYear);
     }
+    public string GetStringMonth(uint tick = 0)
+    {
+        if (tick == 0)
+        {
+            tick = ticks;
+        }
+        return months[GetMonth(tick) - 1];
+    }
     public string GetStringDate(uint tick = 0, bool useMonth = false){
         if (tick == 0)
         {
@@ -282,8 +290,6 @@ public partial class TimeManager : Node
             string year = GetYear(tick).ToString("0000");
             date = $"{month}/{day}/{year}";            
         }
-
-        
         return date;
     }
 }

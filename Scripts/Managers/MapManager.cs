@@ -28,6 +28,7 @@ public partial class MapManager : Node2D
     public PopObject selectedMetaObj {get; private set; }
     public MapModes selectedMode;
     public bool initialized = false;
+    [Export] SimManagerHolder simHolder;
     [Export] PlayerCamera playerCamera;
     [Export] OptionButton mapModeUI;
     [Export] Button deselectMetaObjectButton;
@@ -58,7 +59,7 @@ public partial class MapManager : Node2D
     public override void _Ready()
     {
         regionOverlay = GetNode<Sprite2D>("Region Map");
-		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += InitMapManager;
+		simHolder.simStartEvent += InitMapManager;
         deselectMetaObjectButton.Pressed += () => SelectMetaObject(null);
 	}
     void InitMapManager() {
@@ -67,7 +68,7 @@ public partial class MapManager : Node2D
         if (dimensionsBuffer.IsValid) rd.FreeRid(dimensionsBuffer);
         if (terrainTexture.IsValid) rd.FreeRid(terrainTexture);
 
-        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        simManager = simHolder.simManager;
         timeManager = simManager.timeManager;
         simManager.mapManager = this;
 
@@ -79,7 +80,6 @@ public partial class MapManager : Node2D
 
         regionImage = Image.CreateEmpty(worldSize.X*regionResolution, worldSize.Y*regionResolution, false, Image.Format.Rgbaf);
         terrainImage = ((TerrainMap)simManager.terrainMap).terrainMap.Texture.GetImage();
-        GD.Print(terrainImage.GetFormat());
 
         initialized = true;
         InitShader();

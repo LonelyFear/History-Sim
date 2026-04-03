@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 public partial class LoadingScreen : Control
 {
+    [Export] SimManagerHolder simHolder;
     [Export] StreamlineRenderer streamlineRenderer;
     Task task;
-    SimNodeManager simNodeManager;
     SimManager sim = new SimManager();
     TimeManager time;
     GameUI ui;
@@ -23,7 +23,6 @@ public partial class LoadingScreen : Control
     {
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
         time = GetNode<TimeManager>("/root/Game/Time Manager");
-        simNodeManager = GetNode<SimNodeManager>("/root/Game/Simulation");
         ui = GetNode<GameUI>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
         camera = GetNode<PlayerCamera>("/root/Game/PlayerCamera");
@@ -54,8 +53,8 @@ public partial class LoadingScreen : Control
                 }
                 firstFrameDone = true;
 
-                simNodeManager.simManager = sim;
-                sim.node = simNodeManager;
+                simHolder.simManager = sim;
+                sim.simHolder = simHolder;
                 sim.terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
                 sim.timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
                 // Connection

@@ -21,7 +21,7 @@ public class SimManager
     [Export][IgnoreMember] public TimeManager timeManager;
     
     // Not Exported
-    [IgnoreMember] public SimNodeManager node;
+    [IgnoreMember] public SimManagerHolder simHolder;
     [IgnoreMember] public Node2D terrainMap;
     public ObjectManager objectManager = new ObjectManager();
     public uint tick;
@@ -547,7 +547,7 @@ public class SimManager
             MergeRegions();
             InitPops();
         }
-        node.InvokeEvent();
+        simHolder.InvokeEvent();
     }
     
 

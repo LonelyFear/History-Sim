@@ -4,6 +4,7 @@ using System.Linq;
 
 public partial class ObjectInfo : Control
 {
+    [Export] SimManagerHolder simHolder;
     [Export] Label nameLabel;
     [Export] Label typeLabel;
     [Export] Label populationLabel;
@@ -18,7 +19,7 @@ public partial class ObjectInfo : Control
 
     public override void _Ready()
     {
-        GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += GetSimManager;
+        simHolder.simStartEvent += GetSimManager;
         mapManager = GetNode<MapManager>("/root/Game/Map Manager"); 
         timeManager = GetNode<TimeManager>("/root/Game/Time Manager");
         specialLabel.MetaClicked += OnMetaClicked;
@@ -26,7 +27,7 @@ public partial class ObjectInfo : Control
     }
     public void GetSimManager()
     {
-        simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        simManager = simHolder.simManager;
         objectManager = simManager.objectManager;
     }
 

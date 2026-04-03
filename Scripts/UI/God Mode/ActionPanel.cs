@@ -7,6 +7,7 @@ using System.Text.Json;
 
 public partial class ActionPanel : Panel
 {
+    [Export] SimManagerHolder simHolder;
     [Export] public Button menuButton;
     [Export] public Button mainMenuButton;
     [Export] public Button saveMenuButton;
@@ -44,7 +45,6 @@ public partial class ActionPanel : Panel
 
     public void OnMainMenu()
     {
-        SimManager sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
         GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
         GetNode<Game>("/root/Game").QueueFree();        
     }
@@ -119,7 +119,7 @@ public partial class ActionPanel : Panel
         }
         
 
-        SimManager sim = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+        SimManager sim = simHolder.simManager;
         WorldGenerator world = sim.worldGenerator;
 
         world.SaveTerrainToFile(saveDir);

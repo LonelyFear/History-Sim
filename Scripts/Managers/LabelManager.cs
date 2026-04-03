@@ -11,15 +11,16 @@ public partial class LabelManager : Node
 	[Export] float stateSizeScaleMult = 0.1f;
 	Dictionary<State, Label> currentLabels = [];
 	SimManager simManager;
+	[Export] SimManagerHolder simHolder;
 
 	public override void _Ready()
 	{
-		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+		simHolder.simStartEvent += OnSimStart;
 	}
 
 	public void OnSimStart()
 	{
-		simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+		simManager = simHolder.simManager;
 	}
 
 	public override void _Process(double delta)

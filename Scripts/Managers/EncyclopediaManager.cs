@@ -15,6 +15,7 @@ public partial class EncyclopediaManager : CanvasLayer
 	[Export] GameUI gameUi;
 	[Export] PlayerCamera playerCamera;
 	[Export] Button closeEncyclopediaButton;
+	[Export] SimManagerHolder simHolder;
 	public SimManager simManager;
 	public ObjectManager objectManager;
 	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = [];
@@ -24,14 +25,14 @@ public partial class EncyclopediaManager : CanvasLayer
 	{
 		IndexTab.encyclopediaManager = this;
 		InfoTab.manager = this;
-		GetNode<SimNodeManager>("/root/Game/Simulation").simStartEvent += OnSimStart;
+		simHolder.simStartEvent += OnSimStart;
 		encyclopediaMenu.TabClosePressed += CloseTab;
 		closeEncyclopediaButton.Pressed += CloseEncyclopedia;
 		mainMenuText.MetaClicked += OnMetaClicked;
     }
 	public void OnSimStart()
 	{
-		simManager = GetNode<SimNodeManager>("/root/Game/Simulation").simManager;
+		simManager = simHolder.simManager;
 		objectManager = simManager.objectManager;
 		simManager.objectDeleted += OnObjectDeleted;
 	}
