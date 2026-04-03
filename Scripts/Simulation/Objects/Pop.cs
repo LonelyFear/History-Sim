@@ -26,7 +26,7 @@ public class Pop
     [Key(13)] public ulong? cultureId { get; set; }
     [Key(14)] public SocialClass profession { get; set; } = SocialClass.FARMER;
 
-    [Key(15)] public Tech tech { get; set; } = new Tech();
+    [Key(15)] public Tech tech = new();
     [Key(16)] public uint batchId { get; set; } = 1;
 
     //[IgnoreMember] public static SimManager simManager;
@@ -115,23 +115,21 @@ public class Pop
 
     public void TechnologyUpdate()
     {
-        float militaryTechChance = 0.002f;
-        float societyTechChance = 0.002f;
-        float industryTechChance = 0.01f;
-        Tech t = tech;
-        if (rng.NextSingle() < militaryTechChance)
+        float militaryTechChance = 0.005f;
+        float societyTechChance = 0.005f;
+        float industryTechChance = 0.1f;
+        if (rng.NextSingle() < militaryTechChance && tech.militaryLevel < 20)
         {
-            t.militaryLevel += 1;
+            tech.militaryLevel += 1;
         }
-        if (rng.NextSingle() < societyTechChance)
+        if (rng.NextSingle() < societyTechChance && tech.societyLevel < 20)
         {
-            t.societyLevel += 1;
+            tech.societyLevel += 1;
         }
-        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && rng.NextSingle() < industryTechChance)
+        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && tech.industryLevel < 20 && rng.NextSingle() < industryTechChance)
         {
-            t.industryLevel += 1;
+            tech.industryLevel += 1;
         }
-        tech = t;
     }
     /*
     public void SocialClassTransitions()

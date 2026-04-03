@@ -3,7 +3,12 @@ using System;
 
 public partial class TopPanel : Panel
 {
+    [ExportCategory("Top Bar")]
 	[Export] Label dateLabel;
+    [Export] Label ageLabel;
+    [ExportCategory("Bottom Bar")]
+    [Export] Label populationLabel;
+    [ExportCategory("References")]
 	[Export] SimManagerHolder simHolder;
 	SimManager simManager;
     [Export] TimeManager timeManager;
@@ -22,9 +27,24 @@ public partial class TopPanel : Panel
     {
         if (!update) return;
 
-        if (dateLabel != null)
+        dateLabel.Text = $"Year {timeManager.GetYear()}";
+        ageLabel.Text = $"{GetAgeName()}";
+
+        populationLabel.Text = $"World Population: {simManager.worldPopulation:#,##0}";
+    }
+    string GetAgeName()
+    {
+        string currentAge = "Age of Tribes";
+
+        if (simManager.highestTech.industryLevel > 0)
         {
-            dateLabel.Text = $"Year {timeManager.GetYear()}";
+            currentAge = "Birth of Industry";
         }
+        if (simManager.averageTech.fIndustryLevel > 0.2)
+        {
+            currentAge = "Age of Industry";
+        }
+
+        return currentAge;
     }
 }

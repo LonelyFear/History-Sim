@@ -41,6 +41,8 @@ public class SimManager
     public uint populatedRegions;
     public float maxWealth = 0;
     public float maxTradeWeight = 0;
+    public Tech highestTech;
+    public Tech averageTech;
 
     // Lists
     // Saved Data
@@ -594,6 +596,7 @@ public class SimManager
         popsPerformanceInfo["Parallel Time"] = 0;
 
         Stopwatch stopwatch = Stopwatch.StartNew();
+        Tech techAvg = new();
         foreach (var pair in popsIds.ToArray())
         {
             Pop pop = pair.Value;
@@ -622,8 +625,25 @@ public class SimManager
             if (isInBatch || pop.shipborne)
             {
                 pop.Migrate();
-            }            
+            }   
+            lock (this)
+            {
+                if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())
+                {
+                    highestTech = pop.tech;
+                }                
+            }    
+            lock (this)
+            {
+                techAvg = techAvg.AddTech(pop.tech); 
+            }
         });
+
+        averageTech.fIndustryLevel = techAvg.industryLevel / (float)popsIds.Count;
+        averageTech.fMilitaryLevel = techAvg.militaryLevel / (float)popsIds.Count;
+        averageTech.fScienceLevel = techAvg.scienceLevel / (float)popsIds.Count;
+        averageTech.fSocietyLevel = techAvg.societyLevel / (float)popsIds.Count;
+
         popsPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
     }
     public void UpdateRegions()

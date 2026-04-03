@@ -35,6 +35,17 @@ content_margin_bottom = 0.0
 color = Color(0.5, 0.5, 0.5, 1)
 thickness = 4
 
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_fkdbe"]
+content_margin_left = 1.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+color = Color(0.5, 0.5, 0.5, 1)
+grow_begin = -8.0
+grow_end = -8.0
+thickness = 2
+vertical = true
+
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fkdbe"]
 
 [sub_resource type="DPITexture" id="DPITexture_vm72l"]
@@ -198,7 +209,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
 
-[node name="TopPanel" type="Panel" parent="UI/Bars" unique_id=1976200673 node_paths=PackedStringArray("dateLabel", "simHolder", "timeManager")]
+[node name="TopPanel" type="Panel" parent="UI/Bars" unique_id=1976200673 node_paths=PackedStringArray("dateLabel", "ageLabel", "populationLabel", "simHolder", "timeManager")]
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -207,7 +218,9 @@ grow_horizontal = 2
 mouse_force_pass_scroll_events = false
 theme = ExtResource("4_exi56")
 script = ExtResource("16_22asu")
-dateLabel = NodePath("TopBarMargins/TopBar/YearLabel")
+dateLabel = NodePath("TopBarMargins/TopBar/TopTopBar/YearLabel")
+ageLabel = NodePath("TopBarMargins/TopBar/TopTopBar/AgeLabel")
+populationLabel = NodePath("TopBarMargins/TopBar/BottomTopBar/PopulationLabel")
 simHolder = NodePath("../../../Simulation")
 timeManager = NodePath("../../../Time Manager")
 
@@ -219,15 +232,43 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
 
-[node name="TopBar" type="HBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins" unique_id=779299235]
+[node name="TopBar" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins" unique_id=1658274548]
 layout_mode = 2
+alignment = 1
 
-[node name="YearLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=293517647]
+[node name="TopTopBar" type="HBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=779299235]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="YearLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopTopBar" unique_id=293517647]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "Year 47"
+
+[node name="HSeparator" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopTopBar" unique_id=84700209]
+layout_mode = 2
+theme_override_constants/separation = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
+
+[node name="AgeLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopTopBar" unique_id=83723147]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 40
+text = "Age of Tribes"
+
+[node name="BottomTopBar" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=1860589352]
+layout_mode = 2
+alignment = 2
+
+[node name="PopulationLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/BottomTopBar" unique_id=1046299775]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "World Population: 17 Bajillion"
 
 [node name="Action Panel" type="Panel" parent="UI/Bars" unique_id=934192393 node_paths=PackedStringArray("simHolder", "menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit", "encyclopediaButton", "encyclopediaManager")]
 layout_mode = 1

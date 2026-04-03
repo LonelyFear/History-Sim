@@ -512,7 +512,7 @@ public class Region : PopObject, ISaveable
         foreach (var pair in simManager.marketIds)
         {
             Market otherMarket = pair.Value;
-            Region marketCenter = objectManager.GetRegion(otherMarket.centerId);
+            Region marketCenter = objectManager.GetRegion(otherMarket?.centerId);
             if (marketCenter == null) continue;
 
             if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
