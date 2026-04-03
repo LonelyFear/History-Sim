@@ -217,10 +217,11 @@ public partial class MapManager : Node2D
 		rd.ComputeListDispatch(computeList, (uint)regionImage.GetSize().X/16, (uint)regionImage.GetSize().Y/16, 1);
 		rd.ComputeListEnd();
 
-		rd.FreeRid(uniformSet);
-        rd.FreeRid(colorsBuffer);
-        rd.FreeRid(bordersBuffer);
-        rd.FreeRid(cameraBuffer);
+		if (uniformSet.IsValid) rd.FreeRid(uniformSet);
+        if (colorsBuffer.IsValid) rd.FreeRid(colorsBuffer);
+        if (bordersBuffer.IsValid) rd.FreeRid(bordersBuffer);
+        if (cameraBuffer.IsValid) rd.FreeRid(cameraBuffer);
+        if (dimensionsBuffer.IsValid) rd.FreeRid(dimensionsBuffer);
     }
     public override void _Process(double delta)
     {
@@ -379,6 +380,7 @@ public partial class MapManager : Node2D
             MapModes.POLITIY => 0.8f,
             MapModes.CULTURE => 0.8f,
             MapModes.TRADE_WEIGHT => 0.8f,
+            MapModes.ALLIANCE => 0.8f,
             _ => 1f,
         };
     }
@@ -488,6 +490,33 @@ public partial class MapManager : Node2D
                     }
                 }
 
+                break;
+            case MapModes.ALLIANCE:
+                if (region.owner != null)
+                {
+                    color = new Color(0.4f, 0.4f, 0.4f, 1);
+                    State overlord = region.owner.diplomacy.GetOverlord();
+                    borderId = overlord.id;
+
+                    Alliance alliance = overlord.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE);
+                    if (alliance != null)
+                    {
+                        borderId = overlord.id;
+                        color = alliance.leadState.displayColor;
+                    }   
+                                      
+                    if (overlord.capital == region && includeCapital)
+                    {
+                        color = overlord.capitalColor;
+                    }
+
+                                       
+                }            
+                else if (region.habitable)
+                {
+                    borderId = 1;
+                    color = new Color(0, 0, 0, 1);
+                }
                 break;
             case MapModes.POPULATION:
                 colorData.opacity = 1f;
@@ -679,6 +708,7 @@ public partial class MapManager : Node2D
 public enum MapModes {
     REALM,
     POLITIY,
+    ALLIANCE,
     CULTURE,
     POPULATION,
     TECH,

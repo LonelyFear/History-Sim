@@ -25,7 +25,8 @@ public partial class StateAIManager : UtilityAi.AiAgent
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
     [IgnoreMember] const float warChanceMultiplier = 0.01f;
-    [IgnoreMember] const float diploChangeChance = 0.01f;
+    [IgnoreMember] const float allyChanceMultiplier = 0.01f;
+    [IgnoreMember] const float diploChangeChance = 0.25f;
 
     // Curves
     [IgnoreMember] Curve threatConfidenceCurve = GD.Load<Curve>("res://Curves/Simulation/ThreatConfidenceCurve.tres");
@@ -60,7 +61,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
             TickChangeRelations();
-            TickDiplomaticAgression();
+            TickDiplomacy();
             TickEndWars();
         }
     }
@@ -77,8 +78,8 @@ public partial class StateAIManager : UtilityAi.AiAgent
             {
                 enemyWarLead.AIManager.CalcWarVictory(war, enemySide);
             }
-            // Ends war because we dont even know who we are fighting
-            if (!state.diplomacy.HasRelations(enemyWarLead))
+            // Ends war because we dont even know who we are fightin
+            if (!state.diplomacy.HasRelations(enemyWarLead) || !state.borderingStateIds.Contains(enemyWarLead.id))
             {
                 objectManager.EndWar(war);
             }
@@ -111,25 +112,79 @@ public partial class StateAIManager : UtilityAi.AiAgent
         }
         objectManager.EndWar(war);
     }
-    public void TickDiplomaticAgression()
+    public void TickDiplomacy()
     {
         if (state.sovereignty != Sovereignty.INDEPENDENT) return;
 
         foreach (var pair in diplomacyManager.relationIds)
         {
-            State potentialEnemy = objectManager.GetState(pair.Key);
+            State target = objectManager.GetState(pair.Key);
             Relation relations = pair.Value;
             Character leader = state.leader;
-            if (potentialEnemy == null || relations == null || leader == null || relations.opinion > 0.5 || !diplomacyManager.CanFightState(potentialEnemy)) continue;
+            if (target == null || relations == null || leader == null) continue;
 
-            float animosity = 1f - (relations.opinion/0.5f);
-            float confidence = threatConfidenceCurve.Sample(relations.opinion);
-
-            if (rng.NextSingle() < animosity * confidence * warChanceMultiplier)
+            if (relations.opinion > 0 && !diplomacyManager.IsEnemyWithState(target))
             {
-                diplomacyManager.DeclareWar(potentialEnemy);
+                // Positive
+                float goodwill = relations.opinion;
+
+                Alliance ourAlliance = diplomacyManager.GetAllianceOfType(AllianceType.ALLIANCE);
+                Alliance otherAlliance = target.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE);
+
+                if (rng.NextSingle() < goodwill * allyChanceMultiplier)
+                {
+                    if (ourAlliance == null && otherAlliance == null)
+                    {
+                        Alliance newAlliance = objectManager.CreateAlliance(state, AllianceType.ALLIANCE);
+                        newAlliance.AddMember(target);
+                        GD.Print($"Alliance between {state.baseName} and {target.baseName}");
+                    } 
+                    else if (ourAlliance == null)
+                    {
+                        TryJoinAlliance(otherAlliance);
+                        GD.Print($"Alliance between {state.baseName} and {target.baseName}");
+                    }
+                }
+            } else
+            {
+                // Negative
+                float animosity = Math.Abs(relations.opinion);
+
+                if (diplomacyManager.CanFightState(target))
+                {
+                    // Wars
+                    float confidence = threatConfidenceCurve.Sample(relations.opinion);
+
+                    if (rng.NextSingle() < animosity * confidence * warChanceMultiplier)
+                    {
+                        diplomacyManager.DeclareWar(target);
+                    }                     
+                } else
+                {
+                    // Other Forms of Agression
+                    if (diplomacyManager.IsAlliedToState(target) && rng.NextSingle() < animosity * warChanceMultiplier)
+                    {
+                        diplomacyManager.GetAllianceOfType(AllianceType.ALLIANCE)?.RemoveMember(state);
+                    }
+                }
             }
         }     
+    }
+    public void TryJoinAlliance(Alliance alliance)
+    {
+        foreach (State member in alliance.memberStates)
+        {
+            if (diplomacyManager.HasRelations(member))
+            {
+                float opinion = Mathf.InverseLerp(diplomacyManager.GetRelationsWithState(member).opinion, -1, 1);
+                if (rng.NextSingle() > opinion)
+                {
+                    // We are blocked
+                    return;
+                }
+            }
+        }
+        alliance.AddMember(state);
     }
     public void TickChangeRelations()
     {
@@ -156,9 +211,9 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
             positiveChance = Mathf.Clamp(positiveChance, 0, 1);
             if (diplomacyScore < positiveChance) {
-                diplomacyManager.ChangeOpinion(target, 0.05f);              
+                diplomacyManager.ChangeOpinion(target, 0.1f);              
             } else {
-                diplomacyManager.ChangeOpinion(target, -0.05f);
+                diplomacyManager.ChangeOpinion(target, -0.1f);
             }
         }
     }

@@ -34,7 +34,7 @@ public partial class DebugLabel : Label
                         State relationState = objectManager.GetState(pair.Key);
                         if (relationState.sovereignty != Sovereignty.INDEPENDENT) continue;
                         Relation relation = pair.Value;
-                        AddLine(relationState.name + ": " + Math.Round(Mathf.Lerp(-100, 100, relation.opinion)));
+                        AddLine(relationState.name + ": " + Math.Round(relation.opinion * 100));
                     }                    
                 } catch
                 {

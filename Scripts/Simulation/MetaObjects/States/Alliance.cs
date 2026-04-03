@@ -11,11 +11,11 @@ public partial class Alliance : Polity
 {
     [Key(0)] public AllianceType type;
     [Key(2)] ulong? leadStateId;
-    [Key(1)] List<ulong> memberStateIds = [];
+    [Key(1)] HashSet<ulong> memberStateIds = [];
     [Key(3)] public bool exclusive = true;
 
     // References
-    [IgnoreMember] public List<State> memberStates = [];
+    [IgnoreMember] public HashSet<State> memberStates = [];
 
     // Reference Variables
     [IgnoreMember] State _leadState;
@@ -71,7 +71,7 @@ public partial class Alliance : Polity
         member.diplomacy.allianceIds.Remove(id);
         memberStates.Remove(member);  
 
-        if (memberStates.Count < 1 || member == leadState)
+        if (memberStates.Count < 2 || member == leadState)
         {
             Die();
             objectManager.DeleteAlliance(this);

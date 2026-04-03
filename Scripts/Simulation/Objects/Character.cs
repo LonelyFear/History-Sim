@@ -16,9 +16,8 @@ public partial class Character : NamedObject
     [IgnoreMember] public static SimManager sim;
 
     // Character Stats
-    [Key(-1)] public int significance;
-    [Key(-2)] public string firstName;
-    [Key(-3)] public string lastName;
+    [Key(2)] public string firstName;
+    [Key(3)] public string lastName;
     [Key(6)] public ulong? stateId = null;
     [Key(7)] public CharacterRole role {get; private set; } = CharacterRole.CIVILIAN;
     [Key(8)] public List<ulong> parentIds = [];

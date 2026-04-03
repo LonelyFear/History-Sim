@@ -46,6 +46,10 @@ public partial class ObjectInfo : Control
                     case ObjectType.STATE:
                         
                         State state = (State)selectedObject;
+                        if (state.name.Length > 20)
+                        {
+                            nameLabel.Text = state.baseName;
+                        }
                         Polity polity = state.diplomacy.GetPolity();
                         Alliance realm = state.sovereignty == Sovereignty.INDEPENDENT ? state.diplomacy.GetRealm() : null;
 

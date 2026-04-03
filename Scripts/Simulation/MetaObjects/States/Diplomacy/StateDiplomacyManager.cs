@@ -136,15 +136,15 @@ public partial class StateDiplomacyManager
             State relationState = objectManager.GetState(pair.Key);
 
             if (relationState == null) continue;          
-            float newThreat = 0.5f;
+            float newThreat = 0;
 
-            // Calc Percieved Threat (0 to 1)
+            // Calc Percieved Threat (-1 to 1)
             int stateSize = state.diplomacy.GetPolity().regions.Count;
             int targetSize = relationState.diplomacy.GetPolity().regions.Count;
 
             float relativeSizeRatio = (stateSize - targetSize)/(float)stateSize;
 
-            newThreat += relativeSizeRatio * 0.5f;
+            newThreat += relativeSizeRatio;
 
             if (relationState.sovereignty != Sovereignty.INDEPENDENT)
             {
@@ -153,7 +153,7 @@ public partial class StateDiplomacyManager
             
             // Moves threat for realistic adjustment
             // Eg: If we feared a nation for a while then we wont just immediatly like them when they fall 
-            relation.threat = Mathf.MoveToward(relation.threat, Mathf.Clamp(newThreat, 0, 1), threatAdjustmentRate);
+            relation.threat = Mathf.MoveToward(relation.threat, Mathf.Clamp(newThreat, -1, 1), threatAdjustmentRate);
         }
     }
     public void RemoveRelations(ulong? targetId)
@@ -180,8 +180,8 @@ public partial class StateDiplomacyManager
     {
         GetMutualRelations(target, out Relation usThem, out Relation themUs);
 
-        usThem.opinion = Math.Clamp(usThem.opinion + value, 0, 1);
-        themUs.opinion = Math.Clamp(themUs.opinion + value, 0, 1); 
+        usThem.opinion = Math.Clamp(usThem.opinion + value, -1, 1);
+        themUs.opinion = Math.Clamp(themUs.opinion + value, -1, 1); 
     }
     public void SetRivalry(State target, bool value)
     {
@@ -284,9 +284,16 @@ public partial class StateDiplomacyManager
         vassal.diplomacy.liegeId = state.id;
         vassalIds.Add(vassal.id);
 
+        // Updates our realm
         UpdateRealm();
         GetRealm().AddMember(vassal);
+
+        // Gives our vassal NO AUTHORITY ehehhe
+        vassal.diplomacy.RemoveAllVassals();        
         vassal.diplomacy.UpdateRealm();
+
+        // Removes vassal from alliance
+        vassal.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE)?.RemoveMember(vassal);
     }
     public void RemoveVassal(State vassal)
     {
