@@ -26,6 +26,7 @@ public class Region : PopObject, ISaveable
     [Key(30)] public bool isMarketCenter { get; set; } = false;    
     [Key(31)] public float tradeIncome = 0;
     [Key(32)] public float taxIncome = 0;
+    [Key(44)] public HashSet<Region> linkedRegions = [];
     [Key(33)] public int zoneSize = 1;
 
     [Key(34)] public ulong? tradeLinkId { get; set; }
@@ -257,7 +258,7 @@ public class Region : PopObject, ISaveable
                     Tile border = simManager.tiles[nPos.X, nPos.Y];
                     Region borderRegion = objectManager.GetRegion(border.regionId);
 
-                    if (border.regionId != null && border.regionId != id && !borderingRegions.Contains(borderRegion))
+                    if (borderRegion != null && borderRegion != this && !borderingRegions.Contains(borderRegion))
                     {
                         borderingRegions.Add(borderRegion);
                     }
@@ -395,6 +396,7 @@ public class Region : PopObject, ISaveable
 
     public void CalcBaseWealth()
     {
+        /*
         lastBaseWealth = baseWealth;
         lastWealth = wealth;
 
@@ -402,7 +404,8 @@ public class Region : PopObject, ISaveable
         long nonFarmers = workforce - professions[SocialClass.FARMER];
 
         float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
-        baseWealth = baseProduction * (arableLand / landCount);
+        */
+        baseWealth = population * 0.01f;
     }
     public void LinkTrade()
     {
@@ -415,7 +418,6 @@ public class Region : PopObject, ISaveable
         // Loops over borders
         foreach (Region region in borderingRegions)
         {
-
             // If we have an equal or lower weight to a region then we cant be market leader
             if (region.tradeWeight >= tradeWeight)
             {
@@ -467,19 +469,25 @@ public class Region : PopObject, ISaveable
         }
         
         // Finally updates our trade link
-        tradeLink = selectedLink;
+        SetTradeLink(selectedLink);
     }
-    public void UpdateTradeIncome()
+    public void SetTradeLink(Region link)
     {
-        // If our link isnt to no one, give our trade link some extra income
-        if (tradeLink != null)
-        {               
-            lock (tradeLink)
-            {
-                tradeLink.tradeIncome += (baseWealth * 0.1f) + tradeIncome;
-            }
-        }          
+        tradeLink?.linkedRegions.Remove(this);
+        tradeLink = link;
+        tradeLink?.linkedRegions.Add(this);
     }
+    public float GetTradeIncome()
+    {
+        float newIncome = baseWealth * 0.1f;
+        foreach (Region linkedRegion in linkedRegions)
+        {
+            newIncome += linkedRegion.GetTradeIncome();
+        }       
+        tradeIncome = newIncome;
+        return tradeIncome;
+    }
+    
     // Trade weight
     // Trade works almost like gravity, more trade weight means that more tiles link to you
     public void GetTradeWeight()
@@ -544,7 +552,7 @@ public class Region : PopObject, ISaveable
 
             if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
             {
-                path = GetPath(this, marketCenter, true, 20);
+                path = GetPath(this, marketCenter, true, 30);
 
                 lock (regionPaths)
                 {
@@ -556,17 +564,11 @@ public class Region : PopObject, ISaveable
                 }
                 
             }
-
-
-            if (path.Count < 20)
+            foreach (Region tradeRoute in path)
             {
-                foreach (Region tradeRoute in path)
+                lock (tradeRoute)
                 {
-                    lock (tradeRoute)
-                    {
-                        tradeRoute.tradeIncome = Mathf.Min(tradeIncome, marketCenter.tradeIncome);
-                    }
-                    
+                    tradeRoute.tradeIncome = Mathf.Max(tradeRoute.tradeIncome, Mathf.Min(tradeIncome, marketCenter.tradeIncome)* 0.5f);
                 }
             }
         }
@@ -605,6 +607,10 @@ public class Region : PopObject, ISaveable
         }
     }
 
+    public bool CanUpdateTrade()
+    {
+        return linkUpdateCountdown < 0 || pops.Count < 0 || tradeLink == null;
+    }
     public void MergePops()
     {
         if (pops.Count < 2)
@@ -775,7 +781,7 @@ public class Region : PopObject, ISaveable
         {
             Region current = frontier.Dequeue();
 
-            if (current == target || (maxDist > 0 && Heuristic(start, target) > maxDist * maxDist))
+            if (current == target || (maxDist > 0 && Heuristic(start, target) > Mathf.Pow(maxDist * 4, 2)))
             {
                 break;
             }

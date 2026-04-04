@@ -629,13 +629,8 @@ public partial class MapManager : Node2D
         Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
-        Color color = GetRegionColor(r, out ulong borderId, simManager.regionStyle == RegionStyle.Square);
-        Color? centralColor = null;
-        if (simManager.regionStyle == RegionStyle.Voronoi)
-        {
-           centralColor = GetRegionColor(r, out ulong _, true);
-        }
-         
+        Color color = GetRegionColor(r, out ulong borderId, false);
+        Color? centralColor = GetRegionColor(r, out ulong _, true);;
 
         int month = (int)(timeManager.GetMonth() - 1);
 

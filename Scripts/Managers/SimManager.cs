@@ -682,6 +682,9 @@ public class SimManager
     }
     public void UpdateRegions()
     {
+        float newMaxWealth = 0;
+        int newMaxTradeWeight = 0;
+
         regionPerformanceInfo["Parallel Time"] = 0;
         regionPerformanceInfo["Pop Merging Time"] = 0;
         regionPerformanceInfo["Economy Time"] = 0;
@@ -694,13 +697,21 @@ public class SimManager
         long worldPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
+
         try
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
+            foreach (Region region in habitableRegions)
+            {
+                region.UpdateWealth();
+                region.taxIncome = 0;
+                region.tradeIncome = -1;
+            }
+            
             var partitioner = Partitioner.Create(habitableRegions);
             Parallel.ForEach(partitioner, (region) =>
             {
-                region.UpdateWealth();
+                region.conquered = false;
                 if (region.pops.Count > 0)
                 {
                     region.MergePops();
@@ -711,24 +722,13 @@ public class SimManager
                         region.StateBordering();
                     }
                 }
-                region.conquered = false;
-                region.taxIncome = 0;
-                region.tradeIncome = 0;
-                
+
                 region.linkUpdateCountdown--;
-                if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
-                {
-                    region.GetTradeWeight();
-                    region.ZoneTrade();         
-                }                
+                region.GetTradeWeight();
+                if (region.tradeLink == null) region.GetTradeIncome();
             });
 
-            foreach (Region region in habitableRegions)
-            {
-                //region.GetBaseTradeWeight();
-                region.UpdateTradeIncome();
-                
-            }
+
 
             regionPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();  
@@ -743,9 +743,11 @@ public class SimManager
                 }
                 
                 // Economy
+                if (region.tradeLink == null) region.ZoneTrade();
+            
                 region.CalcBaseWealth();
                 
-                if (region.linkUpdateCountdown < 1 || region.tradeLink == null)
+                if (region.CanUpdateTrade())
                 {
                     region.LinkTrade();
                     region.linkUpdateCountdown = 12;
@@ -781,8 +783,8 @@ public class SimManager
             foreach (Region region in habitableRegions)
             {
                 highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
-                maxWealth = Mathf.Max(maxWealth, region.wealth);
-                maxTradeWeight = Mathf.Max(region.tradeWeight, maxTradeWeight);
+                newMaxWealth = Mathf.Max(newMaxWealth, region.wealth);
+                newMaxTradeWeight = Mathf.Max(region.tradeWeight, newMaxTradeWeight);
             }
             regionPerformanceInfo["Trade Weight Time"] = stopwatch.Elapsed.TotalMilliseconds;
         }
@@ -790,6 +792,10 @@ public class SimManager
         {
             GD.PushError(e);
         }
+
+        maxWealth = newMaxWealth;
+        maxTradeWeight = newMaxTradeWeight;
+
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
     }
