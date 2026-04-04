@@ -60,7 +60,12 @@ public partial class StateAIManager : UtilityAi.AiAgent
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
             TickChangeRelations();
-            TickDiplomacy();
+            if (state.sovereignty == Sovereignty.INDEPENDENT)
+            {
+                
+                TickDiplomacy();                
+            }
+
             TickEndWars();
         }
     }
@@ -72,8 +77,11 @@ public partial class StateAIManager : UtilityAi.AiAgent
             War.WarSide side = pair.Value;
             War.WarSide enemySide = War.GetOtherSide(side);
             State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
+
+            if (war.warLeaderIds[side] != state.id) continue;
+
             // Surrender Via Capitulation
-            if (state.capitualated && war.warLeaderIds[side] == state.id)
+            if (state.capitualated)
             {
                 enemyWarLead.AIManager.CalcWarVictory(war, enemySide);
             }
@@ -113,14 +121,12 @@ public partial class StateAIManager : UtilityAi.AiAgent
     }
     public void TickDiplomacy()
     {
-        if (state.sovereignty != Sovereignty.INDEPENDENT) return;
-
         foreach (var pair in diplomacyManager.relationIds)
         {
             State target = objectManager.GetState(pair.Key);
             Relation relations = pair.Value;
             Character leader = state.leader;
-            if (target == null || relations == null || leader == null) continue;
+            if (target == null || relations == null || leader == null || target.sovereignty != Sovereignty.INDEPENDENT) continue;
 
             if (relations.opinion > 0 && !diplomacyManager.IsEnemyWithState(target))
             {
@@ -136,12 +142,10 @@ public partial class StateAIManager : UtilityAi.AiAgent
                     {
                         Alliance newAlliance = objectManager.CreateAlliance(state, AllianceType.ALLIANCE);
                         newAlliance.AddMember(target);
-                        GD.Print($"Alliance between {state.baseName} and {target.baseName}");
                     } 
                     else if (ourAlliance == null)
                     {
                         TryJoinAlliance(otherAlliance);
-                        GD.Print($"Alliance between {state.baseName} and {target.baseName}");
                     }
                 }
             } else

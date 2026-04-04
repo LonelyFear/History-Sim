@@ -765,6 +765,8 @@ public class SimManager
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
+            if (state.rulingPop == null) state.FindNewRulingPop();
+
             if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
             {
                 objectManager.DeleteState(state);
@@ -773,7 +775,8 @@ public class SimManager
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
-                state.maxSize = 6 + (int)state.rulingPop.tech.societyLevel;
+                state.maxSize = 6 + state.rulingPop.tech.societyLevel;
+                state.culture = state.rulingPop.culture;
             }
             state.Capitualate();
 
@@ -786,9 +789,10 @@ public class SimManager
                 if (state.sovereignty != Sovereignty.INDEPENDENT)
                 {
                     state.timeAsVassal += TimeManager.ticksPerMonth;
-                }   
-
-                //state.vassalManager.UpdateRealm();
+                } else
+                {
+                    state.diplomacy.JoinAllyWars();
+                }
                 state.UpdateCapital();
                 state.diplomacy.UpdateRelations();
   
@@ -797,7 +801,7 @@ public class SimManager
                 GD.PushError(e);
             }
         }
-        // Updates Character Ai
+        // Updates State Ai
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;

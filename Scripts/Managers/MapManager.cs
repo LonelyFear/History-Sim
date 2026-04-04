@@ -483,7 +483,7 @@ public partial class MapManager : Node2D
                 if (region.owner != null)
                 {
                     color = new Color(0.4f, 0.4f, 0.4f, 1);
-                    State overlord = region.owner.diplomacy.GetOverlord();
+                    State overlord = region.GetController();
                     borderId = overlord.id;
 
                     Alliance alliance = overlord.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE);

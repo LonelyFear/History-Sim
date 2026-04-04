@@ -9,7 +9,6 @@ public partial class War : NamedObject
 {
     [Key(7)] public Dictionary<WarSide, List<ulong>> sideIds = [];
     [Key(8)] public HashSet<ulong> participantIds {get; private set;} = [];
-    [Key(9)] public List<ulong> removedIds = [];
     [Key(10)] public Dictionary<WarSide, ulong> warLeaderIds = [];
     [Key(11)] public WarType warType { get; set; } = WarType.CONQUEST;
     public War() {}
@@ -98,7 +97,16 @@ public partial class War : NamedObject
             objectManager.EndWar(this);
         }
     }
-
+    public int GetSideArmyPower(WarSide side)
+    {
+        int power = 0;
+        foreach (ulong parcipant in sideIds[side])
+        {
+            State state = objectManager.GetState(parcipant);
+            power += state.armyPower;
+        }
+        return power;
+    }
     public enum WarSide
     {
         AGRESSOR,

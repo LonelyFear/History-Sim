@@ -46,6 +46,8 @@ grow_end = -8.0
 thickness = 2
 vertical = true
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_81klo"]
+
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fkdbe"]
 
 [sub_resource type="DPITexture" id="DPITexture_vm72l"]
@@ -83,7 +85,7 @@ timeManager = NodePath("../Time Manager")
 [node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder", "gameSpeedUI")]
 script = ExtResource("7_ewbju")
 simHolder = NodePath("../Simulation")
-gameSpeedUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/TimeSpeedHolder/TimeSpeed")
+gameSpeedUI = NodePath("../UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar/TimeSpeed")
 
 [node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("simHolder", "playerCamera", "mapModeUI", "deselectMetaObjectButton", "showRegionsCheckbox")]
 z_index = 2
@@ -218,9 +220,9 @@ grow_horizontal = 2
 mouse_force_pass_scroll_events = false
 theme = ExtResource("4_exi56")
 script = ExtResource("16_22asu")
-dateLabel = NodePath("TopBarMargins/TopBar/TopTopBar/YearLabel")
-ageLabel = NodePath("TopBarMargins/TopBar/TopTopBar/AgeLabel")
-populationLabel = NodePath("TopBarMargins/TopBar/BottomTopBar/PopulationLabel")
+dateLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/TopTopBar/YearLabel")
+ageLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/TopTopBar/AgeLabel")
+populationLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/BottomTopBar/PopulationLabel")
 simHolder = NodePath("../../../Simulation")
 timeManager = NodePath("../../../Time Manager")
 
@@ -232,43 +234,84 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 0
+theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 5
 
-[node name="TopBar" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins" unique_id=1658274548]
+[node name="TopBar" type="HBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins" unique_id=1714607178]
+layout_mode = 2
+
+[node name="TopBarInfo" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=1658274548]
 layout_mode = 2
 alignment = 1
 
-[node name="TopTopBar" type="HBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=779299235]
+[node name="TopTopBar" type="HBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=779299235]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="YearLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopTopBar" unique_id=293517647]
+[node name="YearLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=293517647]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "Year 47"
 
-[node name="HSeparator" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopTopBar" unique_id=84700209]
+[node name="HSeparator" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=84700209]
 layout_mode = 2
 theme_override_constants/separation = 2
 theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
 
-[node name="AgeLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopTopBar" unique_id=83723147]
+[node name="AgeLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=83723147]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 40
 text = "Age of Tribes"
 
-[node name="BottomTopBar" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=1860589352]
+[node name="HSeparator2" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=1257996594]
+layout_mode = 2
+theme_override_constants/separation = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
+
+[node name="Label" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=171896645]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+text = "Speed:"
+
+[node name="TimeSpeed" type="OptionButton" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=1829450767]
+layout_mode = 2
+focus_mode = 0
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+selected = 6
+item_count = 7
+popup/item_0/text = "Paused"
+popup/item_0/id = 0
+popup/item_1/text = "1 Month Per Second"
+popup/item_1/id = 1
+popup/item_2/text = "6 Months Per Second"
+popup/item_2/id = 2
+popup/item_3/text = "1 Year Per Second"
+popup/item_3/id = 3
+popup/item_4/text = "5 Years Per Second"
+popup/item_4/id = 4
+popup/item_5/text = "10 Years Per Second"
+popup/item_5/id = 5
+popup/item_6/text = "Unlimited"
+popup/item_6/id = 6
+
+[node name="BottomTopBar" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=1860589352]
 layout_mode = 2
 alignment = 2
 
-[node name="PopulationLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/BottomTopBar" unique_id=1046299775]
+[node name="PopulationLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/BottomTopBar" unique_id=1046299775]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "World Population: 17 Bajillion"
+
+[node name="DeadSpace" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=1620627834]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/separator = SubResource("StyleBoxEmpty_81klo")
 
 [node name="Action Panel" type="Panel" parent="UI/Bars" unique_id=934192393 node_paths=PackedStringArray("simHolder", "menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveNamePanel", "saveNameEdit", "encyclopediaButton", "encyclopediaManager")]
 layout_mode = 1
@@ -291,7 +334,7 @@ overwriteButton = NodePath("../../SaveSimPanel/PanelMargins/PanelContent/SaveOpt
 menuPanel = NodePath("../../Options Panel")
 saveNamePanel = NodePath("../../SaveSimPanel")
 saveNameEdit = NodePath("../../SaveSimPanel/PanelMargins/PanelContent/SaveNameEditor")
-encyclopediaButton = NodePath("ActionBarMargins/ActionBar/EncyclopediaButton")
+encyclopediaButton = NodePath("ActionBarMargins/ActionBar/VBoxContainer/HBoxContainer/EncyclopediaButton")
 encyclopediaManager = NodePath("../../../Encyclopedia")
 
 [node name="ActionBarMargins" type="MarginContainer" parent="UI/Bars/Action Panel" unique_id=1315838029]
@@ -307,40 +350,6 @@ theme_override_constants/margin_right = 10
 [node name="ActionBar" type="HBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins" unique_id=838619392]
 layout_mode = 2
 theme_override_constants/separation = 20
-
-[node name="TimeSpeedHolder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=107260626]
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/TimeSpeedHolder" unique_id=171896645]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-text = "Game Speed:"
-
-[node name="TimeSpeed" type="OptionButton" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/TimeSpeedHolder" unique_id=1829450767]
-layout_mode = 2
-focus_mode = 0
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-selected = 6
-item_count = 7
-popup/item_0/text = "Paused"
-popup/item_0/id = 0
-popup/item_1/text = "1 Month Per Second"
-popup/item_1/id = 1
-popup/item_2/text = "6 Months Per Second"
-popup/item_2/id = 2
-popup/item_3/text = "1 Year Per Second"
-popup/item_3/id = 3
-popup/item_4/text = "5 Years Per Second"
-popup/item_4/id = 4
-popup/item_5/text = "10 Years Per Second"
-popup/item_5/id = 5
-popup/item_6/text = "Unlimited"
-popup/item_6/id = 6
 
 [node name="MapModeHolder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=525852745]
 layout_mode = 2
@@ -380,6 +389,34 @@ popup/item_7/id = 7
 popup/item_8/text = "Terrain Type"
 popup/item_8/id = 8
 
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1951574640]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/VBoxContainer" unique_id=1563084269]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "Data"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/VBoxContainer" unique_id=2038638309]
+layout_mode = 2
+
+[node name="EncyclopediaButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/VBoxContainer/HBoxContainer" unique_id=189557080]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+text = "Encyclopedia"
+
+[node name="StatisticsButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/VBoxContainer/HBoxContainer" unique_id=636329146]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+disabled = true
+text = "Statistics"
+
 [node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=761628914]
 layout_mode = 2
 theme = ExtResource("4_exi56")
@@ -387,15 +424,7 @@ theme_override_font_sizes/font_size = 30
 button_pressed = true
 text = " Show Regions"
 
-[node name="EncyclopediaButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=189557080]
-custom_minimum_size = Vector2(82, 60)
-layout_mode = 2
-size_flags_vertical = 4
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-text = "Encyclopedia"
-
-[node name="GodModeMenuSeparator" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1661888771]
+[node name="DeadSpace" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1661888771]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/separator = SubResource("StyleBoxEmpty_fkdbe")
@@ -812,6 +841,7 @@ theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
 
 [node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("map", "simHolder")]
+visible = false
 offset_right = 40.0
 offset_bottom = 23.0
 script = ExtResource("22_vm72l")
@@ -828,6 +858,7 @@ streamlineRenderer = NodePath("../../StreamlineRenderer")
 
 [node name="PlayerCamera" parent="." unique_id=423552337 instance=ExtResource("13_rfjv2")]
 position = Vector2(640, 360)
+zoom = Vector2(2, 2)
 limit_left = 0
 limit_top = 0
 limit_right = 1280

@@ -106,9 +106,18 @@ public partial class Alliance : Polity
     public override int GetManpower()
     {
         int mp = 0;
-        foreach (State member in memberStates.ToArray())
+        if (type == AllianceType.REALM)
         {
-            mp += member.manpower;
+            foreach (State member in memberStates.ToArray())
+            {
+                mp += member.manpower;
+            }            
+        } else
+        {
+            foreach (State member in memberStates.ToArray())
+            {
+                mp += member.diplomacy.GetPolity().GetManpower();
+            }                
         }
         return mp;
     }

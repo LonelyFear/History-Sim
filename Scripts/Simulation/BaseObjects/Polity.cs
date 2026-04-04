@@ -177,7 +177,7 @@ public abstract partial class Polity : PopObject
     }
     public int GetArmyPower()
     {
-        return (int)(GetManpower() * (totalWealth/workforce) * (averageTech.militaryLevel + 1));
+        return (int)(manpower * (totalWealth/workforce) * (averageTech.militaryLevel + 1));
     }
     public abstract int GetManpower();
 }

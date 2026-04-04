@@ -53,7 +53,22 @@ public partial class StateDiplomacyManager
         //GD.Print($"Trying to start a war between {state.name} and {target.name}");
         objectManager.StartWar(type, state, target);
     }
+    public void JoinAllyWars()
+    {
+        Alliance alliance = GetAllianceOfType(AllianceType.ALLIANCE);
+        if (alliance == null) return;
 
+        foreach (State ally in alliance.memberStates)
+        {
+            foreach (var allyWarPair in ally.diplomacy.warIds)
+            {
+                if (!warIds.ContainsKey(allyWarPair.Key))
+                {
+                    objectManager.GetWar(allyWarPair.Key).AddParticipant(state, allyWarPair.Value);
+                }
+            }
+        }
+    }
     public void LeaveWarsWithState(State target)
     {
         if (!relationIds[target.id].enemy) return;
@@ -185,6 +200,18 @@ public partial class StateDiplomacyManager
         themUs = target.diplomacy.EstablishRelations(state);
     }    
     // Check utilities
+    public War GetWarWithState(State target)
+    {
+        foreach (var pair in warIds)
+        {
+            War war = objectManager.GetWar(pair.Key);
+            if (war.participantIds.Contains(target.id))
+            {
+                return war;
+            }
+        }
+        return null;
+    }
     public bool CanFightState(State target)
     {
         return state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT 

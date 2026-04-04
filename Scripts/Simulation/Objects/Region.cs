@@ -322,11 +322,13 @@ public class Region : PopObject, ISaveable
         {
             return;
         }      
+        State attacker = GetController();
+        State enemy = targetRegion.GetController();
 
-        if (GetController() == null || targetRegion.GetController() == null) return;
-        
-        long attackerPower = GetPolity().GetArmyPower();
-        long defenderPower = targetRegion.GetPolity().GetArmyPower();
+        War war = attacker.diplomacy.GetWarWithState(enemy);
+
+        long attackerPower = war.GetSideArmyPower(attacker.diplomacy.warIds[war.id]);
+        long defenderPower = war.GetSideArmyPower(enemy.diplomacy.warIds[war.id]);
 
         if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
         {

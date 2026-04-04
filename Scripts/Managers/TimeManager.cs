@@ -145,7 +145,7 @@ public partial class TimeManager : Node
             // Shows region overlat
             mapManager.regionOverlay.Visible = true;
             // Makes sure we have a buffer for the shader
-            if (drawTask != null)
+            if (drawTask != null && drawTask.IsCompletedSuccessfully)
             {
                 mapManager.RunShader();
             } 

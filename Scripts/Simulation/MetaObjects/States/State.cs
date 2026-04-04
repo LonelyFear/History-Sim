@@ -49,6 +49,7 @@ public partial class State : Polity, ISaveable
     [Key(48)] ulong? rulingPopId;
     [Key(49)] ulong? capitalId;
     // References
+    [IgnoreMember] public Culture culture;
     [IgnoreMember] Pop _rulingPop;
     [IgnoreMember] public Pop rulingPop { 
         get
@@ -129,6 +130,16 @@ public partial class State : Polity, ISaveable
             case Sovereignty.COLONY:
                 capitalColor = new Color(1, 0, 1);
                 break;
+        }
+    }
+    public void FindNewRulingPop()
+    {
+        foreach (Pop pop in capital.pops)
+        {
+            if (pop.culture == culture)
+            {
+                rulingPop = pop;
+            }
         }
     }
     public void Capitualate()
@@ -276,14 +287,6 @@ public partial class State : Polity, ISaveable
     public int GetMaxVassals() {
         return 5;
     } 
-    public Culture GetRulingCulture()
-    {
-        if (rulingPop != null)
-        {
-            return rulingPop.culture;
-        }
-        return null;
-    }
     public override string GenerateDescription()
     {
         string desc = $"The {name} is a {govtName.ToLower()} in the simulation. It is ";
@@ -327,27 +330,7 @@ public partial class State : Polity, ISaveable
                 float culturePercentage = localPopulation/(float)population;
                 text += $"({culturePercentage:P0})\n";
             }    
-            text += $"\nWorkforce: {workforce:#,###0}\n";
-            /*
-            text += $"Professions Breakdown:\n";     
-
-            foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
-            {
-                SocialClass socialClass = professionSizePair.Key;
-                long localPopulation = professionSizePair.Value;
-                
-                // Skips if the culture is too small
-                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
-                text += $"{socialClass.ToString().Capitalize()}\n";
-
-                text += $"  Workers: {Pop.FromNativePopulation(localPopulation):#,###0} ";
-                float percentage = localPopulation/(float)workforce;
-                text += $"({percentage:P0})\n";                
-                long workersNeed = Math.Max(Pop.FromNativePopulation(requiredWorkers[socialClass]), 0);
-                long maxWorkers = Pop.FromNativePopulation(maxJobs[socialClass]);
-                text += $"  Employed: {maxWorkers - Math.Max(workersNeed, 0):#,###0}/{maxWorkers:#,###0}\n";
-            }   
-            */     
+            text += $"\nWorkforce: {workforce:#,###0}\n";    
         }
         return text;
     }    
