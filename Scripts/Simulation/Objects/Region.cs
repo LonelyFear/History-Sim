@@ -26,7 +26,6 @@ public class Region : PopObject, ISaveable
     [Key(30)] public bool isMarketCenter { get; set; } = false;    
     [Key(31)] public float tradeIncome = 0;
     [Key(32)] public float taxIncome = 0;
-    [Key(44)] public HashSet<Region> linkedRegions = [];
     [Key(33)] public int zoneSize = 1;
 
     [Key(34)] public ulong? tradeLinkId { get; set; }
@@ -52,6 +51,8 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
     // References
+    [Key(44)] public HashSet<ulong> linkedRegionIds = [];
+    [IgnoreMember] public HashSet<Region> linkedRegions = [];
     [IgnoreMember] Region _tradeLink;
     [IgnoreMember] public Region tradeLink { 
         get
@@ -107,6 +108,16 @@ public class Region : PopObject, ISaveable
             int additionalPopulation = (int)(tradeIncome * Mathf.Max(averageTech.societyLevel, 1));
             return (int)((populationDensity + additionalPopulation) * arableLand);
         }
+    }
+    public override void PrepareForSave()
+    {
+        base.PrepareForSave();
+        linkedRegionIds = [..linkedRegions.Select(r => r.id)];
+    }
+    public override void LoadFromSave()
+    {
+        base.LoadFromSave();
+        linkedRegions = [..linkedRegionIds.Select(r => objectManager.GetRegion(r))];
     }
 
     public void AddTile(Tile tile)
@@ -405,7 +416,7 @@ public class Region : PopObject, ISaveable
 
         float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
         */
-        baseWealth = population * 0.01f;
+        baseWealth = population * 0.005f;
     }
     public void LinkTrade()
     {

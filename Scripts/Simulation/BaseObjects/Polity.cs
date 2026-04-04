@@ -27,24 +27,15 @@ public abstract partial class Polity : PopObject
 
     public override void PrepareForSave()
     {
-        PopObjectSave();
-        PolitySave();
-    }
-    public override void LoadFromSave()
-    {
-        PopObjectSave();
-        PolityLoad();
-    }
-
-    public void PolitySave()
-    {
+        base.PrepareForSave();
         regionIds = [.. regions.Select(r => r.id)];
         borderingStateIds = [.. borderingStates.Select(r => r.id)];
         independentBorderIds = [.. independentBorders.Select(r => r.id)];
         borderingAllianceIds = [.. borderingAlliances.Select(r => r.id)];
     }
-    public void PolityLoad()
+    public override void LoadFromSave()
     {
+        base.LoadFromSave();
         regions = [.. regionIds.Select(p => objectManager.GetRegion(p))];
         borderingStates = [..borderingStateIds.Select(p => objectManager.GetState(p))];
         independentBorders = [..independentBorderIds.Select(p => objectManager.GetState(p))];

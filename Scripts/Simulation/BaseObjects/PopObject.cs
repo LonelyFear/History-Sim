@@ -35,18 +35,9 @@ public abstract class PopObject : NamedObject
     
     public override void PrepareForSave()
     {
-        PopObjectSave();
-    }
-    public override void LoadFromSave()
-    {
-        PopObjectLoad();
-    }
-
-    public void PopObjectSave()
-    {
         popsIds = pops.Count > 0 ? [.. pops.Select(p => p.id)] : null;
     }
-    public void PopObjectLoad()
+    public override void LoadFromSave()
     {
         pops = popsIds == null ? [] : [.. popsIds.Select(p => objectManager.GetPop(p))];
     }

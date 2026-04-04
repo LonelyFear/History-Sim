@@ -111,9 +111,8 @@ public partial class State : Polity, ISaveable
     }    
     public override void LoadFromSave()
     {
+        base.LoadFromSave();
         diplomacy.state = this;
-        PolityLoad();
-        PopObjectLoad();
     }
     public void UpdateCapital()
     {

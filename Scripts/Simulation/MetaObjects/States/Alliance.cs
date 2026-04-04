@@ -36,14 +36,12 @@ public partial class Alliance : Polity
     public override void PrepareForSave()
     {
         memberStateIds = [..memberStates.Select(s => s.id)];
-        PopObjectSave();
-        PolitySave();
+        base.PrepareForSave();
     }
     public override void LoadFromSave()
     {
         memberStates = [..memberStateIds.Select(i => objectManager.GetState(i))];
-        PopObjectSave();
-        PolityLoad();
+        base.LoadFromSave();
     }
     public void SetLeader(State newLeader)
     {
