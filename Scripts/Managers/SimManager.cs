@@ -12,6 +12,12 @@ using MessagePack;
 using MessagePack.Resolvers;
 using FileAccess = Godot.FileAccess;
 
+public enum RegionStyle
+{
+    Square,
+    Voronoi
+}
+
 [MessagePackObject(keyAsPropertyName: true)]
 public class SimManager
 {
@@ -25,7 +31,7 @@ public class SimManager
     [IgnoreMember] public Node2D terrainMap;
     public ObjectManager objectManager = new ObjectManager();
     public uint tick;
-
+    public RegionStyle regionStyle = RegionStyle.Square;
     public Tile[,] tiles;
 
     [IgnoreMember] public List<Region> habitableRegions = [];
@@ -242,7 +248,27 @@ public class SimManager
         }  
         return dict;      
     }
-    public void CreateRegions()
+    public void CreateRegionsSquare()
+    {
+        for (int x = 0; x < worldSize.X/tilesPerRegion; x++)
+        {
+            for (int y = 0; y < worldSize.Y/tilesPerRegion; y++)
+            {
+                // Creates a region
+                Region newRegion = objectManager.CreateRegion(x * tilesPerRegion + 1, y * tilesPerRegion + 1);
+                for (int tx = 0; tx < tilesPerRegion; tx++)
+                {
+                    for (int ty = 0; ty < tilesPerRegion; ty++)
+                    {
+                        int tilePosX = (x * tilesPerRegion) + tx;
+                        int tilePosY = (y * tilesPerRegion) + ty;
+                        newRegion.AddTile(tiles[tilePosX, tilePosY]);
+                    }                    
+                }
+            }
+        }        
+    }
+    public void CreateRegionsVoronoi()
     {
         Dictionary<TerrainType[], (Dictionary<Vector2I, Vector2I>, int)> gridSeeds = [];
 
@@ -445,15 +471,16 @@ public class SimManager
             Region r = objectManager.GetRegion(tiles[rPos.X, rPos.Y].regionId);
             r.AddTile(tiles[pos.X, pos.Y]);
         }
-
-        // Initializes Regions
+    }
+    void InitializeRegions()
+    {
         foreach (var pair in regionIds.ToArray())
         {
             Region region = pair.Value;
             region.InitRegion();
             region.NameRegion();
         }
-        RemoveEmptyRegions();
+        RemoveEmptyRegions();        
     }
     void RemoveEmptyRegions()
     {
@@ -544,9 +571,16 @@ public class SimManager
         else
         {
             InitTerrainTiles();
-            CreateRegions();
+            
+            if (regionStyle == RegionStyle.Square) CreateRegionsSquare();
+            else CreateRegionsVoronoi();
+
+            InitializeRegions();
             BorderingRegions();
-            MergeRegions();
+
+            if (regionStyle == RegionStyle.Voronoi) MergeRegions();
+
+
             InitPops();
         }
         simHolder.InvokeEvent();
@@ -726,14 +760,13 @@ public class SimManager
                 regionPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
-                if (region.owner != null)
+                if (region.owner != null && !region.conquered)
                 {
                     if (region.frontier && region.occupier == null)
                     {
                         region.NeutralConquest();
                     }
-                    region.MilitaryConquest();
-                    
+                    region.MilitaryConquest();   
                 }  
                 regionPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
                 // Increments

@@ -98,12 +98,13 @@ public class Region : PopObject, ISaveable
     [Key(41)] public bool frontier { get; set; }
     [IgnoreMember] public float arableLand { get; set; }
 
-    [Key(42)] public int populationDensity = 1000;
+    [Key(42)] public const int populationDensity = 500;
     [Key(43)] public long maxPopulation 
     {
         get
         {
-            return (int)((populationDensity + (int)tradeIncome) * arableLand * Mathf.Max(averageTech.societyLevel, 1));
+            int additionalPopulation = (int)(tradeIncome * Mathf.Max(averageTech.societyLevel, 1));
+            return (int)((populationDensity + additionalPopulation) * arableLand);
         }
     }
 
@@ -189,7 +190,10 @@ public class Region : PopObject, ISaveable
                 coastal = true;
             }            
         }
-        navigability /= landCount;
+
+        GetTerrainType(terrainTypes);
+
+        navigability /= Mathf.Max(landCount, 1);
         navigability = Mathf.Clamp(navigability, 0, 1);
 
         avgTemperature /= tiles.Count;
@@ -202,7 +206,26 @@ public class Region : PopObject, ISaveable
             avgMonthlyRainfall[month] /= tiles.Count;
         }
     }
+    void GetTerrainType(Dictionary<TerrainType, int> terrainTypes)
+    {
+        TerrainType largestType = TerrainType.LAND;
+        int largestSize = -1;
+        foreach (var pair in terrainTypes)
+        {
+            TerrainType type = pair.Key;
+            int size = pair.Value;
 
+            if (landCount > 0 && (type == TerrainType.DEEP_WATER || type == TerrainType.SHALLOW_WATER || type == TerrainType.ICE))
+            {
+                continue;
+            }
+            if (size > largestSize)
+            {
+                largestType = type;
+            }
+        }
+        terrainType = largestType;        
+    }
     void CheckHabitability()
     {
         if (landCount > 0)
@@ -309,7 +332,7 @@ public class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        if (Battle.CalcBattle(region, attackerPower, 30000))
+        if (Battle.CalcBattle(region, attackerPower, 50000))
         {
             owner.AddRegion(region);
         }
@@ -322,17 +345,19 @@ public class Region : PopObject, ISaveable
         {
             return;
         }      
+        
         State attacker = GetController();
         State enemy = targetRegion.GetController();
 
         War war = attacker.diplomacy.GetWarWithState(enemy);
 
         long attackerPower = war.GetSideArmyPower(attacker.diplomacy.warIds[war.id]);
-        long defenderPower = war.GetSideArmyPower(enemy.diplomacy.warIds[war.id]);
+        long defenderPower = (long)(war.GetSideArmyPower(enemy.diplomacy.warIds[war.id]) / 0.1f);
 
         if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
         {
             targetRegion.occupier = GetController();
+            targetRegion.conquered = true;
         }         
     }
     

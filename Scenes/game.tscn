@@ -85,7 +85,7 @@ timeManager = NodePath("../Time Manager")
 [node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder", "gameSpeedUI")]
 script = ExtResource("7_ewbju")
 simHolder = NodePath("../Simulation")
-gameSpeedUI = NodePath("../UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar/TimeSpeed")
+gameSpeedUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/Game Speed Holder/TimeSpeed")
 
 [node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("simHolder", "playerCamera", "mapModeUI", "deselectMetaObjectButton", "showRegionsCheckbox")]
 z_index = 2
@@ -271,34 +271,6 @@ layout_mode = 2
 theme_override_constants/separation = 2
 theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
 
-[node name="Label" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=171896645]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-text = "Speed:"
-
-[node name="TimeSpeed" type="OptionButton" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=1829450767]
-layout_mode = 2
-focus_mode = 0
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-selected = 6
-item_count = 7
-popup/item_0/text = "Paused"
-popup/item_0/id = 0
-popup/item_1/text = "1 Month Per Second"
-popup/item_1/id = 1
-popup/item_2/text = "6 Months Per Second"
-popup/item_2/id = 2
-popup/item_3/text = "1 Year Per Second"
-popup/item_3/id = 3
-popup/item_4/text = "5 Years Per Second"
-popup/item_4/id = 4
-popup/item_5/text = "10 Years Per Second"
-popup/item_5/id = 5
-popup/item_6/text = "Unlimited"
-popup/item_6/id = 6
-
 [node name="BottomTopBar" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=1860589352]
 layout_mode = 2
 alignment = 2
@@ -351,6 +323,38 @@ theme_override_constants/margin_right = 10
 layout_mode = 2
 theme_override_constants/separation = 20
 
+[node name="Game Speed Holder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1731820463]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/Game Speed Holder" unique_id=171896645]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+text = "Game Speed:"
+
+[node name="TimeSpeed" type="OptionButton" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/Game Speed Holder" unique_id=1829450767]
+layout_mode = 2
+focus_mode = 0
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+selected = 6
+item_count = 7
+popup/item_0/text = "Paused"
+popup/item_0/id = 0
+popup/item_1/text = "1 Month Per Second"
+popup/item_1/id = 1
+popup/item_2/text = "6 Months Per Second"
+popup/item_2/id = 2
+popup/item_3/text = "1 Year Per Second"
+popup/item_3/id = 3
+popup/item_4/text = "5 Years Per Second"
+popup/item_4/id = 4
+popup/item_5/text = "10 Years Per Second"
+popup/item_5/id = 5
+popup/item_6/text = "Unlimited"
+popup/item_6/id = 6
+
 [node name="MapModeHolder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=525852745]
 layout_mode = 2
 size_flags_horizontal = 0
@@ -395,7 +399,7 @@ alignment = 1
 
 [node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/VBoxContainer" unique_id=1563084269]
 layout_mode = 2
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 30
 text = "Data"
 horizontal_alignment = 1
 
@@ -415,9 +419,10 @@ size_flags_vertical = 3
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 disabled = true
-text = "Statistics"
+text = "Stats"
 
 [node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=761628914]
+visible = false
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
@@ -841,7 +846,6 @@ theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
 
 [node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("map", "simHolder")]
-visible = false
 offset_right = 40.0
 offset_bottom = 23.0
 script = ExtResource("22_vm72l")

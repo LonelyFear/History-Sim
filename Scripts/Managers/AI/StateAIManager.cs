@@ -63,10 +63,11 @@ public partial class StateAIManager : UtilityAi.AiAgent
             if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
                 
-                TickDiplomacy();                
+                TickDiplomacy();  
+                TickEndWars();              
             }
 
-            TickEndWars();
+            
         }
     }
     public void TickEndWars()
@@ -180,9 +181,8 @@ public partial class StateAIManager : UtilityAi.AiAgent
             if (diplomacyManager.HasRelations(member))
             {
                 float opinion = Mathf.InverseLerp(diplomacyManager.GetRelationsWithState(member).opinion, -1, 1);
-                if (rng.NextSingle() > opinion)
+                if (rng.NextSingle() > opinion + 0.2f)
                 {
-                    // We are blocked
                     return;
                 }
             }

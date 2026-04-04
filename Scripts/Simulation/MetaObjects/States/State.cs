@@ -42,6 +42,7 @@ public partial class State : Polity, ISaveable
     [IgnoreMember] public const double minRebellionLoyalty = 0.25;
     [IgnoreMember] public const double minCollapseStability = 0.75;
     [Key(45)] public uint timeAsVassal = 0;
+    [IgnoreMember] int timeUntilCapitulation = 12;
 
     // Reference IDs
     [Key(46)] ulong? lastLeaderId = null;
@@ -148,6 +149,9 @@ public partial class State : Polity, ISaveable
 
         if (capital.occupier != null)
         {
+            timeUntilCapitulation--;
+            if (timeUntilCapitulation > 0) return;
+
             if (!capitualated)
             {
                 foreach (Region region in regions)
@@ -162,6 +166,7 @@ public partial class State : Polity, ISaveable
         }
         else
         {
+            timeUntilCapitulation = 12;
             capitualated = false;
         }
     }  
