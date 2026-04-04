@@ -629,19 +629,23 @@ public partial class MapManager : Node2D
         Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
-        ulong borderId = 0;
-        Color color = GetRegionColor(r, out borderId);
+        Color color = GetRegionColor(r, out ulong borderId, simManager.regionStyle == RegionStyle.Square);
+        Color? centralColor = null;
+        if (simManager.regionStyle == RegionStyle.Voronoi)
+        {
+           centralColor = GetRegionColor(r, out ulong _, true);
+        }
+         
 
-        Color centralColor = GetRegionColor(r, out ulong _, true);
         int month = (int)(timeManager.GetMonth() - 1);
 
         foreach (Vector2I tilePos in r.tiles)
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
             Color finalColor = color;
-            if (tilePos == r.pos)
+            if (centralColor != null && tilePos == r.pos)
             {
-                finalColor = centralColor;
+                finalColor = (Color)centralColor;
             }
             
             float opacity = 0.75f;
@@ -661,17 +665,7 @@ public partial class MapManager : Node2D
                     Mathf.InverseLerp(0, 1, tile.continentiality));
                     break;                
             }
-            /*
-            Vector2I pos = tilePos * regionResolution;
-            for (int dx = 0; dx < regionResolution; dx++)
-            {
-                for (int dy = 0; dy < regionResolution; dy++)
-                {
-                    int index = ((pos.Y + dy) * worldSize.X * regionResolution) + (pos.X + dx);
-                    regionColors[index] = finalColor;                     
-                }                
-            }
-            */
+
             int index = (tilePos.Y * worldSize.X) + tilePos.X;
             regionColors[index] = finalColor;     
             borderValues[index] = borderId;   
