@@ -105,7 +105,7 @@ public class Region : PopObject, ISaveable
     {
         get
         {
-            int additionalPopulation = (int)(tradeIncome * Mathf.Max(averageTech.societyLevel, 1));
+            int additionalPopulation = (int)((tradeIncome + taxIncome) * Mathf.Max(averageTech.societyLevel, 1));
             return (int)((populationDensity + additionalPopulation) * arableLand);
         }
     }
@@ -563,7 +563,7 @@ public class Region : PopObject, ISaveable
 
             if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
             {
-                path = GetPath(this, marketCenter, true, 30);
+                path = GetPath(this, marketCenter, true, 20);
 
                 lock (regionPaths)
                 {

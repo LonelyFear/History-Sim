@@ -28,6 +28,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
     [IgnoreMember] const float diploChangeChance = 0.25f;
 
     // Curves
+    [IgnoreMember] Curve warEndChanceCurve = GD.Load<Curve>("res://Curves/Simulation/WarEndChanceCurve.tres");
     [IgnoreMember] Curve threatConfidenceCurve = GD.Load<Curve>("res://Curves/Simulation/ThreatConfidenceCurve.tres");
 
     [IgnoreMember] State _state;
@@ -59,15 +60,12 @@ public partial class StateAIManager : UtilityAi.AiAgent
         ticks++;
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
-            TickChangeRelations();
+            ChangeRelationsOrLoyalty();
             if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
-                
                 TickDiplomacy();  
                 TickEndWars();              
-            }
-
-            
+            }       
         }
     }
     public void TickEndWars()
@@ -75,48 +73,64 @@ public partial class StateAIManager : UtilityAi.AiAgent
         foreach (var pair in state.diplomacy.warIds)
         {
             War war = objectManager.GetWar(pair.Key);
+
             War.WarSide side = pair.Value;
             War.WarSide enemySide = War.GetOtherSide(side);
+
             State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
+            Relation relations = state.diplomacy.GetRelationsWithState(enemyWarLead);
 
             if (war.warLeaderIds[side] != state.id) continue;
 
             // Surrender Via Capitulation
             if (state.capitualated)
             {
-                enemyWarLead.AIManager.CalcWarVictory(war, enemySide);
+                CalcWarEnd(war, enemySide);
             }
+
+            // Peaceful Ending
+            float warEndChance = warEndChanceCurve.Sample(relations.opinion + 0.5f);
+            if (rng.NextSingle() < warEndChance)
+            {
+                CalcWarEnd(war);
+            }
+
             // Ends war because we dont even know who we are fightin
             if (!state.diplomacy.HasRelations(enemyWarLead) || !state.borderingStates.Contains(enemyWarLead))
             {
-                objectManager.EndWar(war);
+                //objectManager.EndWar(war);
             }
         }
     }
-    public void CalcWarVictory(War war, War.WarSide side)
+    public void CalcWarEnd(War war, War.WarSide? victor = null)
     {
-        War.WarSide enemySide = War.GetOtherSide(side);
-        List<ulong> enemyIds = [..war.sideIds[enemySide]];
-        switch (war.warType)
+        foreach (War.WarSide side in war.sideIds.Keys)
         {
-            case WarType.CONQUEST:
-                foreach (ulong enemyId in enemyIds)
-                {
-                    State enemyState = objectManager.GetState(enemyId);
-                    State[] enemyVassals = [.. enemyState.diplomacy.vassalIds.Select(objectManager.GetState)];
+            if (victor != null && victor != side) continue;
 
-                    foreach (State enemyVassal in enemyVassals)
+            War.WarSide enemySide = War.GetOtherSide(side);
+            List<ulong> enemyIds = [..war.sideIds[enemySide]];
+            switch (war.warType)
+            {
+                case WarType.CONQUEST:
+                    foreach (ulong enemyId in enemyIds)
                     {
-                        enemyVassal.GetOccupier()?.diplomacy.AddVassal(enemyVassal, Sovereignty.PUPPET);
+                        State enemyState = objectManager.GetState(enemyId);
+                        State[] enemyVassals = [.. enemyState.diplomacy.vassalIds.Select(objectManager.GetState)];
+
+                        foreach (State enemyVassal in enemyVassals)
+                        {
+                            enemyVassal.GetOccupier()?.diplomacy.AddVassal(enemyVassal, Sovereignty.PUPPET);
+                        }
+
+                        if (enemyState.GetOccupier() != null && victor != null)
+                        {
+                            enemyState.diplomacy.RemoveAllVassals();
+                            enemyState.GetOccupier().diplomacy.AddVassal(enemyState, Sovereignty.PUPPET);                            
+                        }
                     }
-                    
-                    if (enemyState.GetOccupier() != null)
-                    {
-                        enemyState.diplomacy.RemoveAllVassals();
-                        enemyState.GetOccupier().diplomacy.AddVassal(enemyState, Sovereignty.PUPPET);
-                    }
-                }
                 break;
+            }            
         }
         objectManager.EndWar(war);
     }
@@ -189,7 +203,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         }
         alliance.AddMember(state);
     }
-    public void TickChangeRelations()
+    public void ChangeRelationsOrLoyalty()
     {
         foreach (var pair in diplomacyManager.relationIds)
         {
@@ -201,23 +215,51 @@ public partial class StateAIManager : UtilityAi.AiAgent
             
             if (target == null || relations == null || leader == null) continue;
 
-            float diplomacyScore = rng.NextSingle();
-            float positiveChance = 0f;
-
-            positiveChance = leader.GetPersonalityLevel("agression") switch
+            if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
-                TraitLevel.HIGH => 0.8f,
-                TraitLevel.MEDIUM => 0.5f,
-                TraitLevel.LOW => 0.2f,
-                _ => 1f,
-            };
-
-            positiveChance = Mathf.Clamp(positiveChance, 0, 1);
-            if (diplomacyScore < positiveChance) {
-                diplomacyManager.ChangeOpinion(target, 0.1f);              
-            } else {
-                diplomacyManager.ChangeOpinion(target, -0.1f);
+                TickChangeRelations(target, relations);
+            } else
+            {
+                TickChangeLoyalty(target, relations);
             }
-        }
+        }        
+    }
+    public void TickChangeRelations(State target, Relation relations)
+    {
+        Character leader = state.leader;
+        float diplomacyScore = rng.NextSingle();
+
+        float positiveChance = leader.GetPersonalityLevel("agression") switch
+        {
+            TraitLevel.HIGH => 0.25f,
+            TraitLevel.MEDIUM => 0.5f,
+            TraitLevel.LOW => 0.75f,
+            _ => 1f,
+        };
+
+        positiveChance = Mathf.Clamp(positiveChance, 0, 1);
+        if (diplomacyScore < positiveChance) 
+            diplomacyManager.ChangeOpinion(target, 0.1f);
+        else 
+            diplomacyManager.ChangeOpinion(target, -0.1f);
+    }
+    public void TickChangeLoyalty(State target, Relation relations)
+    {
+        Character leader = state.leader;
+        float unrestScore = rng.NextSingle();
+
+        float positiveChance = leader.GetPersonalityLevel("ambition") switch
+        {
+            TraitLevel.HIGH => 0.3f,
+            TraitLevel.MEDIUM => 0.5f,
+            TraitLevel.LOW => 0.7f,
+            _ => 1f,
+        };
+
+        positiveChance = Mathf.Clamp(positiveChance, 0, 1);
+        if (unrestScore < positiveChance) 
+            diplomacyManager.ChangeOpinion(target, 0.1f);
+        else 
+            diplomacyManager.ChangeOpinion(target, -0.1f);
     }
 }

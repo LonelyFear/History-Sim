@@ -22,6 +22,7 @@ public abstract partial class Polity : PopObject
     [IgnoreMember] public HashSet<State> independentBorders { get; set; } = [];
     // Economy
     [Key(23)] public float totalWealth { get; set; }
+    [Key(-1)] public float baseWealth { get; set; }
     [IgnoreMember] public HashSet<Region> regions = [];
     [Key(24)] public HashSet<ulong> regionIds { get; set; } = [];
 
@@ -59,6 +60,7 @@ public abstract partial class Polity : PopObject
 
         Dictionary<ulong, long> cCultures = [];
         float countedWealth = 0;
+        float countedBaseWealth = 0;
         int occRegions = 0;
         Tech newAvg = new();
 
@@ -80,6 +82,7 @@ public abstract partial class Polity : PopObject
             countedP += region.population;
             countedW += region.workforce;
             countedWealth += region.wealth;
+            countedBaseWealth += region.baseWealth;
 
             if (region.frontier || region.border)
             {
@@ -152,6 +155,7 @@ public abstract partial class Polity : PopObject
         this.independentBorders = independentBorders;
         borderingAlliances = allianceBorders;
         totalWealth = countedWealth;
+        baseWealth = countedBaseWealth;
         professions = countedSocialClasses;
         cultureIds = cCultures;
         population = countedP;

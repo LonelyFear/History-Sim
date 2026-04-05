@@ -62,11 +62,11 @@ public partial class FrameBreakdown : VBoxContainer
                 }	
 
 				stateTimeMenu.Text = $"States Time ({simManager.stepPerformanceInfo["States"]:#,##0.0ms})";
-				foreach (var pair in simManager.stepPerformanceInfo)
+				foreach (var pair in simManager.statePerformanceInfo)
                 {
-					int index = Array.IndexOf(simManager.stepPerformanceInfo.Keys.ToArray(), pair.Key);
+					int index = Array.IndexOf(simManager.statePerformanceInfo.Keys.ToArray(), pair.Key);
 					string newText = $"{pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
-					if (stateTimeMenu.GetPopup().ItemCount > simManager.stepPerformanceInfo.Count)
+					if (stateTimeMenu.GetPopup().ItemCount > simManager.statePerformanceInfo.Count)
 					{
 						stateTimeMenu.GetPopup().SetItemText(index, newText);
 					} else

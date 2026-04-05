@@ -430,7 +430,7 @@ public class ObjectManager
             if (obj == null) continue;
             obj.eventIds.Add(historicalEvent.id);
         }
-        simManager.historicalEventIds.Add(historicalEvent.id, historicalEvent);
+        simManager.historicalEventIds.TryAdd(historicalEvent.id, historicalEvent);
     }
     public void DeleteHistoricalEvent(HistoricalEvent historicalEvent)
     {
@@ -439,7 +439,7 @@ public class ObjectManager
             NamedObject obj = NamedObject.GetNamedObject(fullId);
             obj.eventIds.Remove(historicalEvent.id);
         }  
-        simManager.historicalEventIds.Remove(historicalEvent.id);      
+        simManager.historicalEventIds.Remove(historicalEvent.id, out HistoricalEvent _);      
     }
     public HistoricalEvent GetHistoricalEvent(ulong? id)
     {

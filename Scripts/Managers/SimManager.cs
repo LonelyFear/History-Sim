@@ -61,7 +61,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Character> characterIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
-    [IgnoreMember] public Dictionary<ulong, HistoricalEvent> historicalEventIds = [];
+    [IgnoreMember] public ConcurrentDictionary<ulong, HistoricalEvent> historicalEventIds = [];
 
     // Misc
     public uint currentBatch = 2;
@@ -89,6 +89,8 @@ public class SimManager
         
     [IgnoreMember] public Dictionary<string, double> popsPerformanceInfo = [];
     [IgnoreMember] public Dictionary<string, double> regionPerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, double> statePerformanceInfo = [];
+    [IgnoreMember] public Dictionary<string, double> miscPerformanceInfo = [];
     [IgnoreMember] public Vector2 terrainMapScale;
     public Vector2I GlobalToTilePos(Vector2 pos)
     {
@@ -169,7 +171,7 @@ public class SimManager
         sim.marketIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Market>>(FileAccess.GetFileAsBytes($"{path}/markets.pxsave"), options);
         sim.characterIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
-        sim.historicalEventIds = MessagePackSerializer.Deserialize<Dictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
+        sim.historicalEventIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
         sim.simLoadedFromSave = true;
         return sim;
     }
@@ -704,8 +706,6 @@ public class SimManager
             foreach (Region region in habitableRegions)
             {
                 region.UpdateWealth();
-                region.taxIncome = 0;
-                region.tradeIncome = -1;
             }
             
             var partitioner = Partitioner.Create(habitableRegions);
@@ -725,6 +725,21 @@ public class SimManager
 
                 region.linkUpdateCountdown--;
                 region.GetTradeWeight();
+
+                // Tax Income
+                region.taxIncome = 0;
+                State owner = region.owner;
+                if (owner != null)
+                {
+                    float taxIncome = owner.baseWealth * owner.taxRate;
+                    if (owner.capital == region)
+                    {
+                        region.taxIncome = taxIncome * 0.1f;
+                    }
+                    float taxInvestment = taxIncome * 0.9f;
+                    region.taxIncome += taxInvestment/owner.regions.Count;
+                }
+                // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
             });
 
@@ -801,16 +816,30 @@ public class SimManager
     }
     public void UpdateStates()
     {
+        statePerformanceInfo["Delete Time"] = 0;
+        statePerformanceInfo["Parallel Time"] = 0;
+        //statePerformanceInfo["Ruling Pop Time"] = 0;
+        //statePerformanceInfo["Misc Time"] = 0;  
+        statePerformanceInfo["AI Time"] = 0;
+        statePerformanceInfo["Stats Time"] = 0;
+        
+        var partitioner = Partitioner.Create(statesIds.Values);
+        Stopwatch stopwatch = Stopwatch.StartNew();
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
             if (state.rulingPop == null) state.FindNewRulingPop();
-
             if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
             {
                 objectManager.DeleteState(state);
-                continue;
-            }
+            }            
+        }
+        statePerformanceInfo["Delete Time"] = stopwatch.Elapsed.Milliseconds;
+        stopwatch.Restart();
+
+        foreach (var pair in statesIds.ToArray())
+        {
+            State state = pair.Value;
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
@@ -819,41 +848,49 @@ public class SimManager
             }
             state.Capitualate();
 
-            try
+            if (state.leader == null)
             {
-                if (state.leader == null)
-                {
-                    state.SuccessionUpdate();
-                }
-                if (state.sovereignty != Sovereignty.INDEPENDENT)
-                {
-                    state.timeAsVassal += TimeManager.ticksPerMonth;
-                } else
-                {
-                    state.diplomacy.JoinAllyWars();
-                }
-                state.UpdateCapital();
-                state.diplomacy.UpdateRelations();
-  
-            } catch (Exception e)
-            {
-                GD.PushError(e);
+                state.SuccessionUpdate();
             }
+            if (state.sovereignty != Sovereignty.INDEPENDENT)
+            {
+                state.timeAsVassal += TimeManager.ticksPerMonth;
+            } else
+            {
+                state.diplomacy.JoinAllyWars();
+            }
+            state.UpdateCapital();
+            state.diplomacy.UpdateRelations();
         }
+        /*
+        Parallel.ForEach(partitioner, (state) =>
+        {         
+
+        });
+        */
+        statePerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        stopwatch.Restart();      
+
+        stopwatch.Restart();
         // Updates State Ai
         foreach (var pair in statesIds.ToArray())
         {
             State state = pair.Value;
             state.AIManager.Tick();
         }
+        statePerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        stopwatch.Restart();
+
         // Counts State Stats
-        var partitioner = Partitioner.Create(statesIds.Values);
         Parallel.ForEach(partitioner, (state) =>
         {
             state.CountPopulation();
             state.UpdateDisplayColor();
             StateNamer.UpdateStateNames(state);
         });
+
+        statePerformanceInfo["Stats Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        stopwatch.Restart();
     }
     public void UpdateCultures()
     {

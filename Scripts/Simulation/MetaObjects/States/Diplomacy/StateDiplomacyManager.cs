@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -12,7 +13,7 @@ public partial class StateDiplomacyManager
 {
     [IgnoreMember] public static ObjectManager objectManager;
     // Diplomacy
-    [Key(19)] public Dictionary<ulong?, Relation> relationIds { get; set; } = [];
+    [Key(19)] public ConcurrentDictionary<ulong?, Relation> relationIds { get; set; } = [];
     [Key(20)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
     
     [Key(1)] public ulong? liegeId {get; private set; } = null;
@@ -64,7 +65,11 @@ public partial class StateDiplomacyManager
             {
                 if (!warIds.ContainsKey(allyWarPair.Key))
                 {
-                    objectManager.GetWar(allyWarPair.Key).AddParticipant(state, allyWarPair.Value);
+                    War war = objectManager.GetWar(allyWarPair.Key);
+                    lock (war)
+                    {
+                        war.AddParticipant(state, allyWarPair.Value);
+                    }
                 }
             }
         }
@@ -166,7 +171,7 @@ public partial class StateDiplomacyManager
         State target = objectManager.GetState(targetId);
         if (target == null) return;
 
-        if (relationIds.Remove(targetId))
+        if (relationIds.Remove(targetId, out Relation _))
         {
             target.diplomacy.RemoveRelations(state.id);
         }     

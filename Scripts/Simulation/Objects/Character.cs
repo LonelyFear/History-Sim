@@ -33,6 +33,8 @@ public partial class Character : NamedObject
     public Dictionary<string, float> personality {get; private set;} = new Dictionary<string, float>
     {
         {"agression", 0.5f},
+        {"leadership", 0.5f},
+        {"ambition", 0.5f},
     };
     [Key(17)] public Gender gender = Gender.MALE;
 
@@ -154,12 +156,31 @@ public partial class Character : NamedObject
         // Personality
         string agressionString = GetPersonalityLevel("agression") switch
         {
-            TraitLevel.HIGH => "an Agressive stance, seeking to start conflict and expand. ",
-            TraitLevel.MEDIUM => "a Neutral stance, wanting to preserve power. ",
-            TraitLevel.LOW => "a Passive stance, wanting to avoid conflict and make allies. ",
-            _ => "an Arbitrary stance, making desicions on a whim. "
+            TraitLevel.HIGH => "an Agressive stance on affairs",
+            TraitLevel.MEDIUM => "a Neutral stance on affairs",
+            TraitLevel.LOW => "a Passive stance on affairs",
+            _ => "an Arbitrary stance, making desicions on a whim"
         };
-        desc += $"{pronoun.Capitalize()} {(dead ? "had" : "has")} {agressionString}"; 
+        desc += $"{pronoun.Capitalize()} {(dead ? "had" : "has")} {agressionString}, and ";
+
+        string leadershipString = GetPersonalityLevel("leadership") switch
+        {
+            TraitLevel.HIGH => $"a brilliant leader",
+            TraitLevel.MEDIUM => $"a capable leader",
+            TraitLevel.LOW => $"a foolish leader",
+            _ => "an unpredictable leader"
+        }; 
+        desc += $"{pronoun} {(dead ? "was known as" : "is known as")} {leadershipString}. ";
+
+        string ambitionString = GetPersonalityLevel("ambition") switch
+        {
+            TraitLevel.HIGH => $"incredibly ambitious and independent",
+            TraitLevel.MEDIUM => $"idk",
+            TraitLevel.LOW => $"reserved and loyal",
+            _ => "idk"
+        };
+        if (GetPersonalityLevel("leadership") != TraitLevel.MEDIUM)
+        desc += $"{pronoun.Capitalize()} {(dead ? "was" : "is")} also {ambitionString}. ";
         return desc;
     }
     
