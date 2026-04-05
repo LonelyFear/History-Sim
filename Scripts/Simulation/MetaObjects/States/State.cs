@@ -142,29 +142,22 @@ public partial class State : Polity, ISaveable
     }
     public void Capitualate()
     {
-        if (capital == null) return;
+        if (capital == null || capital.occupier == null){
+            timeUntilCapitulation = 12;
+            capitualated = false; 
+            return;           
+        };
 
-        if (capital.occupier != null)
+        timeUntilCapitulation--;
+        if (timeUntilCapitulation > 0) return;
+
+        if (!capitualated)
         {
-            timeUntilCapitulation--;
-            if (timeUntilCapitulation > 0) return;
-
-            if (!capitualated)
+            foreach (Region region in regions)
             {
-                foreach (Region region in regions)
-                {
-                    if (capital.occupier != this && capital.occupier != null)
-                    {
-                        region.occupier = capital.occupier;
-                    }
-                }
+                region.occupier ??= capital.occupier;
             }
             capitualated = true;
-        }
-        else
-        {
-            timeUntilCapitulation = 12;
-            capitualated = false;
         }
     }  
     public State GetOccupier()

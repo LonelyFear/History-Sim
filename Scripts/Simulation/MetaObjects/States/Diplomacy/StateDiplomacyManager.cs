@@ -14,7 +14,7 @@ public partial class StateDiplomacyManager
     [IgnoreMember] public static ObjectManager objectManager;
     // Diplomacy
     [Key(19)] public ConcurrentDictionary<ulong?, Relation> relationIds { get; set; } = [];
-    [Key(20)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
+    [Key(20)] public ConcurrentDictionary<ulong, War.WarSide> warIds { get; set; } = [];
     
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     //[IgnoreMember] ulong realmId;
@@ -178,11 +178,10 @@ public partial class StateDiplomacyManager
     }
     public Relation EstablishRelations(State target)
     {
-        if (relationIds.TryAdd(target.id, new Relation()))
-        {
-            target.diplomacy.EstablishRelations(state);
-        }
-        return relationIds[target.id];
+        Relation relation = relationIds.GetOrAdd(target.id, new Relation());
+        target.diplomacy.relationIds.GetOrAdd(state.id, new Relation());
+
+        return relation;
     }
 
     // Relations Utilities

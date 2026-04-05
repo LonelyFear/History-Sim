@@ -58,7 +58,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = [];
     [IgnoreMember] public List<ulong> deletedStateIds = [];
     [IgnoreMember] public Dictionary<ulong, Market> marketIds { get; set; } = [];
-    [IgnoreMember] public Dictionary<ulong, Character> characterIds { get; set; } = [];
+    [IgnoreMember] public ConcurrentDictionary<ulong, Character> characterIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
     [IgnoreMember] public ConcurrentDictionary<ulong, HistoricalEvent> historicalEventIds = [];
@@ -169,7 +169,7 @@ public class SimManager
         sim.allianceIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Alliance>>(FileAccess.GetFileAsBytes($"{path}/alliances.pxsave"), options);
         sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/cultures.pxsave"), options);
         sim.marketIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Market>>(FileAccess.GetFileAsBytes($"{path}/markets.pxsave"), options);
-        sim.characterIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
+        sim.characterIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
         sim.simLoadedFromSave = true;
@@ -787,21 +787,18 @@ public class SimManager
                 }  
                 regionPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
                 // Increments
+                stopwatch.Restart();
                 lock (this)
                 {
                     countedPoppedRegions += 1;
                     worldPop += region.population;
+                    highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
+                    newMaxWealth = Mathf.Max(newMaxWealth, region.wealth);
+                    newMaxTradeWeight = Mathf.Max(region.tradeWeight, newMaxTradeWeight);                    
                 }
+                regionPerformanceInfo["Trade Weight Time"] += stopwatch.Elapsed.TotalMilliseconds;
             }
-
-            stopwatch.Restart();
-            foreach (Region region in habitableRegions)
-            {
-                highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
-                newMaxWealth = Mathf.Max(newMaxWealth, region.wealth);
-                newMaxTradeWeight = Mathf.Max(region.tradeWeight, newMaxTradeWeight);
-            }
-            regionPerformanceInfo["Trade Weight Time"] = stopwatch.Elapsed.TotalMilliseconds;
+            
         }
         catch (Exception e)
         {
@@ -837,9 +834,8 @@ public class SimManager
         statePerformanceInfo["Delete Time"] = stopwatch.Elapsed.Milliseconds;
         stopwatch.Restart();
 
-        foreach (var pair in statesIds.ToArray())
-        {
-            State state = pair.Value;
+        Parallel.ForEach(partitioner, (state) =>
+        {         
             if (state.rulingPop != null)
             {
                 state.tech = state.rulingPop.tech;
@@ -861,13 +857,8 @@ public class SimManager
             }
             state.UpdateCapital();
             state.diplomacy.UpdateRelations();
-        }
-        /*
-        Parallel.ForEach(partitioner, (state) =>
-        {         
-
         });
-        */
+
         statePerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();      
 
@@ -928,9 +919,13 @@ public class SimManager
                 alliance.Die();
                 continue;
             }
-            alliance.UpdateRegions();
-            alliance.CountPopulation();
         }
+        Partitioner<Alliance> partitioner = Partitioner.Create(allianceIds.Values);
+        Parallel.ForEach(partitioner, alliance =>
+        {
+            alliance.UpdateRegions();
+            alliance.CountPopulation();            
+        });
     }
     public void UpdateCharacters()
     {

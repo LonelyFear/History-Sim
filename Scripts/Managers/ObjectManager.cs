@@ -295,8 +295,11 @@ public class ObjectManager
         character.JoinState(state);
         character.SetRole(role);
         // Documents character
-        simManager.characterIds.Add(character.id, character);
-        return character;
+        if (simManager.characterIds.TryAdd(character.id, character))
+        {
+            return character;
+        }
+        return null;
     }
     public void DeleteCharacter(Character character)
     {
@@ -315,7 +318,7 @@ public class ObjectManager
             parent.childIds.Remove(character.id);
         }
         simManager.objectDeleted.Invoke(character.id);
-        simManager.characterIds.Remove(character.id);
+        simManager.characterIds.Remove(character.id, out _);
     }
     public Alliance CreateAlliance(State founder, AllianceType type = AllianceType.ALLIANCE, bool exclusive = true)
     {
@@ -424,7 +427,9 @@ public class ObjectManager
             id = GetId(),
             type = eventType
         };
+
         historicalEvent.InitEvent();
+        
         foreach (NamedObject obj in relevantObjects)
         {
             if (obj == null) continue;

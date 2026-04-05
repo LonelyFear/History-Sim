@@ -88,7 +88,7 @@ public partial class War : NamedObject
             }
         }
         // Removes from participants list
-        state.diplomacy.warIds.Remove(id);
+        state.diplomacy.warIds.Remove(id, out _);
 
         // Checks if we can end the war
         bool warEndConditions = sideIds[WarSide.AGRESSOR].Count < 1 || sideIds[WarSide.DEFENDER].Count < 1 || warLeaderIds[side] == state.id;
