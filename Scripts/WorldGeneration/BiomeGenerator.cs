@@ -6,63 +6,7 @@ using Godot;
 public class BiomeGenerator
 {
     public string[,] map;
-    public List<string>[,] plantTypes;
     WorldGenerator world;
-    public List<string>[,] GeneratePlantTypes()
-    {
-        List<string>[,] output = new List<string>[world.WorldSize.X, world.WorldSize.Y];
-        int divisions = 8;
-
-        PlantType[] plantTypes = [.. AssetManager.plantTypes.OrderBy(type => type.dominance)];
-        Parallel.For(1, divisions + 1, (i) =>
-        {
-            for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
-            {
-                for (int y = 0; y < world.WorldSize.Y; y++)
-                {
-                    float[] tempValues = [world.cells[x,y].GetTempForMonth(0), world.cells[x,y].GetTempForMonth(6)];
-                    float[] aValues = [CalcA(x,y,0), CalcA(x,y,6)];
-                    int currentDominance = int.MaxValue;
-                    float a = aValues.Sum() / aValues.Length;
-
-                    foreach (PlantType plantType in plantTypes)
-                    {
-                        bool addedPlant = false;
-                        if (plantType.dominance > currentDominance)
-                        {
-                            continue;
-                        }
-                        addedPlant = tempValues.Min() >= plantType.minColdTemp;
-                        if (!addedPlant) continue;
-                        addedPlant = tempValues.Min() <= plantType.maxColdTemp;
-                        if (!addedPlant) continue;
-                        addedPlant = GetGDD(x,y) >= plantType.minGDD;
-                        if (!addedPlant) continue;
-                        addedPlant = GetGDD(x,y,true) >= plantType.minGDDz;
-                        if (!addedPlant) continue;
-                        addedPlant = tempValues.Max() >= plantType.minWarmTemp;
-                        if (!addedPlant) continue;
-                        addedPlant = a >= plantType.minA;
-                        if (!addedPlant) continue;
-                        addedPlant = a <= plantType.maxA;
-                        if (!addedPlant) continue;
-
-                        if (addedPlant)
-                        {
-                            currentDominance = plantType.dominance;
-                            if (output[x,y] == null)
-                            {
-                            output[x,y] = []; 
-                            }
-                            //GD.Print(plantType.id);
-                            output[x,y].Add(plantType.id);
-                        }
-                    }
-                }
-            }
-        });     
-        return output;
-    }
     public float CalcA(int x, int y, int month)
     {
         float PET = world.cells[x,y].GetPETForMonth(month);
@@ -84,14 +28,9 @@ public class BiomeGenerator
         }
         return GDD; 
     }
-    public void GenerateBiomes(WorldGenerator world, bool useBIOME = false)
+    public void GenerateBiomes(WorldGenerator world)
     {
         this.world = world;
-
-        if (useBIOME)
-        {
-            plantTypes = GeneratePlantTypes();
-        }
 
         map = new string[world.WorldSize.X, world.WorldSize.Y];
 
@@ -108,25 +47,6 @@ public class BiomeGenerator
 
                 foreach (Biome biome in AssetManager.biomes.Values)
                 {
-                    if (useBIOME)
-                    {
-                        //if (plantTypes[x,y] != null) GD.Print(plantTypes[x,y].ToString());
-                        if (elevation < 0)
-                        {
-                            //GD.Print(elevation);
-                            selectedBiome = AssetManager.GetBiome("ocean");
-                            if (temp < -5)
-                            {
-                                selectedBiome = AssetManager.GetBiome("ice_sheet");
-                                world.cells[x, y].elevation = 0;
-                            }                       
-                        }
-                        else if (plantTypes[x,y] != null && plantTypes[x,y].OrderBy(s => s).SequenceEqual(biome.plantTypes.OrderBy(s => s)))
-                        {
-                            selectedBiome = biome;
-                        }
-                        continue;
-                    }
                     bool tempInRange = temp >= biome.minTemperature && temp <= biome.maxTemperature;
                     bool moistInRange = moist >= biome.minMoisture && moist <= biome.maxMoisture;
 

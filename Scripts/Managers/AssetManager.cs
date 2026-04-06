@@ -11,13 +11,9 @@ public static class AssetManager
     public static List<string> loadedModIds;
     public static List<string> foundModPaths;
     public static Dictionary<string, Biome> biomes = [];
-    public static List<PlantType> plantTypes = [];
-    public static Dictionary<string, Building> buildings = [];
-    public static Dictionary<string, Crop> crops = [];
-    public static Dictionary<string, BaseResource> resources = [];
-    public static void LoadBiomes(string modPath)
+    public static void LoadBiomes()
     {
-        string biomesPath = modPath + "/Biomes/biomes.json";
+        string biomesPath = "Data/biomes.json";
         FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
         if (bio != null)
         {
@@ -32,25 +28,6 @@ public static class AssetManager
         else
         {
             GD.PushError("biomes.json not found at path '" + biomesPath + "'");
-        }
-    }
-    public static void LoadPlantTypes(string modPath)
-    {
-        string plantTypePath = modPath + "/Plants/plantTypes.json";
-        FileAccess bio = FileAccess.Open(plantTypePath, FileAccess.ModeFlags.Read);
-        if (bio != null)
-        {
-            string plantData = bio.GetAsText();
-
-            foreach (PlantType plantType in JsonSerializer.Deserialize<PlantType[]>(plantData))
-            {
-                plantTypes.Add(plantType);
-            }
-            GD.Print("Loaded " + plantTypes.Count + " plant types");
-        }
-        else
-        {
-            GD.PushError("biomes.json not found at path '" + plantTypePath + "'");
         }
     }
     public static void GetLoadedMods()
@@ -91,150 +68,11 @@ public static class AssetManager
 
         GD.Print(foundModPaths.Count + " Mod(s) Found");
     }
-    public static void LoadMods()
+    public static void LoadAssets()
     {
-        plantTypes = [];
         biomes = [];
-        buildings = [];
-        crops = [];
-        resources = [];
 
-        GetLoadedMods();
-        foreach (string modPath in foundModPaths)
-        {
-            LoadFood(modPath);
-            LoadResources(modPath);
-        }
-        foreach (string modPath in foundModPaths)
-        {
-            LoadPlantTypes(modPath);
-            LoadCrops(modPath);
-            LoadBiomes(modPath);
-            LoadBuildings(modPath);
-        }
-    }
-    public static void LoadBuildings(string modPath)
-    {
-        string buildingsPath = modPath + "/Buildings/buildings.json";
-        FileAccess buildingFile = FileAccess.Open(buildingsPath, FileAccess.ModeFlags.Read);
-        if (buildingFile != null)
-        {
-            string buildingData = buildingFile.GetAsText();
-
-            foreach (Building building in JsonSerializer.Deserialize<Building[]>(buildingData))
-            {
-                buildings.Add(building.id, building);
-            }
-            GD.Print("Loaded " + buildings.Count+ " buildings");
-        }
-    }
-    public static void LoadFood(string modPath)
-    {
-        string foodDirPath = modPath + "/Food/";
-
-        DirAccess foodDir = DirAccess.Open(foodDirPath);
-        if (foodDir != null)
-        {
-            foreach (string localFoodPath in foodDir.GetFiles())
-            {
-                string foodPath = foodDirPath + localFoodPath;
-
-                string foodData = FileAccess.Open(foodPath, FileAccess.ModeFlags.Read).GetAsText();
-                FoodResouce food = JsonSerializer.Deserialize<FoodResouce>(foodData);
-
-                resources.Add(food.id, food);
-            }
-
-        }        
-    }
-    public static void LoadResources(string modPath)
-    {
-        string resourcesPath = modPath + "/Resources/";
-
-        DirAccess resourcesDir = DirAccess.Open(resourcesPath);
-        if (resourcesDir != null)
-        {
-            foreach (string resourcesFile in resourcesDir.GetFiles())
-            {
-                string path = resourcesPath + resourcesFile;
-
-                string resourceData = FileAccess.Open(path, FileAccess.ModeFlags.Read).GetAsText();
-                BaseResource resource = JsonSerializer.Deserialize<BaseResource>(resourceData);
-
-                resources.Add(resource.id, resource);
-            }
-
-        }
-    }
-    public static void LoadCrops(string modPath)
-    {
-        string cropsDirPath = modPath + "/Crops/";
-
-        DirAccess cropsDir = DirAccess.Open(cropsDirPath);
-        if (cropsDir != null)
-        {
-            foreach (string localCropPath in cropsDir.GetFiles())
-            {
-                string cropPath = cropsDirPath + localCropPath;
-
-                string cropData = FileAccess.Open(cropPath, FileAccess.ModeFlags.Read).GetAsText();
-                Crop crop = JsonSerializer.Deserialize<Crop>(cropData);
-
-                string yieldIDDict = JsonSerializer.Deserialize<Dictionary<string, object>>(cropData)["yield"].ToString();
-                Dictionary<string, float> cropYieldIds = JsonSerializer.Deserialize<Dictionary<string, float>>(yieldIDDict);
-
-                crop.yields = [];
-                foreach (string id in cropYieldIds.Keys)
-                {
-                    if (GetResource(id) != null)
-                    {
-                        crop.yields.Add(GetResource(id), cropYieldIds[id]);
-                    }
-                }
-                crops.Add(crop.id, crop);
-            }
-
-        }
-    }
-    public static Building GetBuilding(string id)
-    {
-        if (buildings.ContainsKey(id))
-        {
-            return buildings[id];
-        }
-        else
-        {
-            GD.PushError("Building not found with ID '" + id + "'");
-            return null;
-        }        
-    }
-    public static BaseResource GetResource(string id)
-    {
-        if (resources.ContainsKey(id))
-        {
-            return resources[id];
-        }
-        else
-        {
-            GD.PushError("Resource not found with ID '" + id + "'");
-            return null;
-        }
-    }
-    public static Crop GetCrop(string id)
-    {
-        if (crops.ContainsKey(id))
-        {
-            return crops[id];
-        }
-        else
-        {
-            GD.PushError("Resource not found with ID '" + id + "'");
-            return null;
-        }
-    }
-    public static PlantType GetPlantType(string id)
-    {
-        return plantTypes.Single(type => type.id == id);
+        LoadBiomes();
     }
     public static Biome GetBiome(string id)
     {

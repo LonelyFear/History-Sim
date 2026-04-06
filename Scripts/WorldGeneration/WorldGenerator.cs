@@ -60,7 +60,6 @@ public class WorldGenerator
     }
     void Init()
     {
-        AssetManager.LoadMods();
         Stage = 0;
         WorldExists = false;
         WorldSize = new Vector2I(Mathf.RoundToInt(360 * WorldMult), Mathf.RoundToInt(180 * WorldMult));
@@ -131,7 +130,7 @@ public class WorldGenerator
 
         try
         {
-            new BiomeGenerator().GenerateBiomes(this, false);
+            new BiomeGenerator().GenerateBiomes(this);
         } catch (Exception e)
         {
             GD.PushError(e);

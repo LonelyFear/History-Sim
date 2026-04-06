@@ -29,7 +29,7 @@ public partial class LoadingScreen : Control
         ui.forceHide = true;
         Visible = true;
         GetNode<TextureProgressBar>("ProgressBar").Value = 0;
-        AssetManager.LoadMods();
+        AssetManager.LoadAssets();
 	}
     public override void _Process(double delta)
     {

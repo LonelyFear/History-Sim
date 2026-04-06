@@ -1,11 +1,11 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mutex = System.Threading.Mutex;
 using Vector2 = System.Numerics.Vector2;
+using FileAccess = Godot.FileAccess;
 public class HeightmapGenerator
 {
     float[,] heightmap;
@@ -49,7 +49,7 @@ public class HeightmapGenerator
         float pixelPerX = 4320 / (float)worldSize.X;
         float pixelPerY = 2160 / (float)worldSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
-        int[,] realElevation = ReadBinaryHeightModel("Sprites/Earth2014.SUR2014.5min.geod.bin", 4320, 2160);
+        int[,] realElevation = ReadBinaryHeightModel("Data/Earth2014.SUR2014.5min.geod.bin", 4320, 2160);
         tiles = new TerrainCell[worldSize.X, worldSize.Y];
 
         for (int x = 0; x < worldSize.X; x++)
@@ -109,16 +109,15 @@ public class HeightmapGenerator
     public static int[,] ReadBinaryHeightModel(string path, int width, int height)
     {
         int[,] heightData = new int[width,height];
-
-        FileStream fileStream = new(path, FileMode.Open, System.IO.FileAccess.Read);
-        BinaryReader binaryReader = new BinaryReader(fileStream);
+        FileAccess binaryFile = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+        
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                    byte[] bytes = binaryReader.ReadBytes(sizeof(short));
+                    byte[] bytes = binaryFile.GetBuffer(sizeof(short));
                     
-                    Array.Reverse(bytes);
+                    bytes = [..bytes.Reverse()];
                     short value = BitConverter.ToInt16(bytes, 0);
                     heightData[x, y] = value;                
             }
