@@ -13,15 +13,16 @@ public partial class StateDiplomacyManager
 {
     [IgnoreMember] public static ObjectManager objectManager;
     // Diplomacy
-    [Key(19)] public ConcurrentDictionary<ulong?, Relation> relationIds { get; set; } = [];
-    [Key(20)] public ConcurrentDictionary<ulong, War.WarSide> warIds { get; set; } = [];
+    [Key(5)] public ConcurrentDictionary<ulong?, Relation> relationIds { get; set; } = [];
+    [Key(4)] public ConcurrentDictionary<ulong, War.WarSide> warIds { get; set; } = [];
     
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     //[IgnoreMember] ulong realmId;
-    [Key(12)] public List<ulong> allianceIds = [];
-    [Key(17)] public List<ulong?> vassalIds { get; set; } = [];
+    [Key(2)] public List<ulong> allianceIds = [];
+    [Key(3)] public List<ulong?> vassalIds { get; set; } = [];
     [IgnoreMember] public Random rng = PopObject.rng;
 
+    [Key(6)] public int relationUpdateTime = 12;
     // Constants
     [IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
 
@@ -116,7 +117,7 @@ public partial class StateDiplomacyManager
     public void UpdateRelations()
     {
         // All bordering or enemy states
-        List<State> relationStates = [..GetPolity().borderingStates];
+        HashSet<State> relationStates = GetPolity().borderingStates;
 
         // Removes unneeded relations
         foreach (var pair in relationIds.ToArray())

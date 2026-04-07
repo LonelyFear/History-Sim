@@ -8,6 +8,8 @@ public partial class TopPanel : Panel
     [Export] Label ageLabel;
     [ExportCategory("Bottom Bar")]
     [Export] Label populationLabel;
+    [Export] Label warsLabel;
+    [Export] Label statesLabel;
     [ExportCategory("References")]
 	[Export] SimManagerHolder simHolder;
 	SimManager simManager;
@@ -31,6 +33,8 @@ public partial class TopPanel : Panel
         ageLabel.Text = $"{GetAgeName()}";
 
         populationLabel.Text = $"World Population: {simManager.worldPopulation:#,##0}";
+        warsLabel.Text = $"Wars: {simManager.warIds.Count:#,##0}";
+        statesLabel.Text = $"States: {simManager.statesIds.Count:#,##0}";
     }
     string GetAgeName()
     {

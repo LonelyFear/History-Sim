@@ -17,10 +17,6 @@ public partial class State : Polity, ISaveable
 
     [Key(32)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
     
-    //[IgnoreMember] public HashSet<Region> regions { get; set; } = new HashSet<Region>();
-    //[Key(7)] public HashSet<ulong> regionsIds { get; set; } = new HashSet<ulong>();
-    
-    
     // Taxes & Wealth
     [Key(33)] public float mobilizationRate { get; set; } = 0.3f;
     [Key(34)] public float taxRate { get; set; } = 0.3f;

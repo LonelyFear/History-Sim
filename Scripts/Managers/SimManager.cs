@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Godot;
 using MessagePack;
 using MessagePack.Resolvers;
+using TracyWrapper;
 using FileAccess = Godot.FileAccess;
 
 public enum RegionStyle
@@ -833,7 +834,6 @@ public class SimManager
         }
         statePerformanceInfo["Delete Time"] = stopwatch.Elapsed.Milliseconds;
         stopwatch.Restart();
-
         Parallel.ForEach(partitioner, (state) =>
         {         
             if (state.rulingPop != null)
@@ -842,6 +842,7 @@ public class SimManager
                 state.maxSize = 6 + state.rulingPop.tech.societyLevel;
                 state.culture = state.rulingPop.culture;
             }
+            state.diplomacy.relationUpdateTime--;
             state.Capitualate();
 
             if (state.leader == null)
@@ -855,21 +856,24 @@ public class SimManager
             {
                 state.diplomacy.JoinAllyWars();
             }
-            state.UpdateCapital();
+            
             state.diplomacy.UpdateRelations();
         });
 
         statePerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
-        stopwatch.Restart();      
+        stopwatch.Restart();    
 
-        stopwatch.Restart();
-        // Updates State Ai
-        foreach (var pair in statesIds.ToArray())
+        using (new ProfileScope("Tilemap update", ZoneC.RED))
         {
-            State state = pair.Value;
-            state.AIManager.Tick();
+            // Updates State Ai
+            foreach (var pair in statesIds.ToArray())
+            {
+                State state = pair.Value;
+                state.AIManager.Tick();
+            }
+            statePerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            
         }
-        statePerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
 
         // Counts State Stats
@@ -877,6 +881,7 @@ public class SimManager
         {
             state.CountPopulation();
             state.UpdateDisplayColor();
+            state.UpdateCapital();
             StateNamer.UpdateStateNames(state);
         });
 

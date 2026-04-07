@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Security.Claims;
 using Godot;
 using MessagePack;
 [MessagePackObject(AllowPrivate = true)]
@@ -13,7 +10,7 @@ public class Pop
     [Key(4)] public int dependents { get; set; } = 0;
 
     [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
-    [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
+    [Key(6)] public float baseDeathRate { get; set; } = 0.29f - 0.05f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.6f;
     [Key(8)] public float netIncome { get; set; } = 0f;
@@ -115,9 +112,9 @@ public class Pop
 
     public void TechnologyUpdate()
     {
-        float militaryTechChance = 0.005f;
-        float societyTechChance = 0.005f;
-        float industryTechChance = 0.1f;
+        float militaryTechChance = 0.0025f;
+        float societyTechChance = 0.0025f;
+        float industryTechChance = 0.05f;
         if (rng.NextSingle() < militaryTechChance && tech.militaryLevel < 20)
         {
             tech.militaryLevel += 1;
