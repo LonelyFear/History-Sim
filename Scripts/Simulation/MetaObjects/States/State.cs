@@ -31,13 +31,12 @@ public partial class State : Polity, ISaveable
 
     // Government   
     [Key(42)] public List<ulong?> characterIds = [];
-    [Key(43)] public double stability = 1;
-    [Key(44)] public double loyalty = 1;
-    [IgnoreMember] public const double minRebellionLoyalty = 0.25;
-    [IgnoreMember] public const double minCollapseStability = 0.75;
+    [Key(43)] public float stability = 1;
     [Key(45)] public uint timeAsVassal = 0;
     [IgnoreMember] int timeUntilCapitulation = 12;
-
+    [IgnoreMember] const float stabChangeChance = 0.01f;
+    [IgnoreMember] const float baseCollapseChance = 0.001f;
+    [IgnoreMember] Curve collapseChanceCurve = GD.Load<Curve>("res://Curves/Simulation/CollapseChanceCurve.tres");
     // Reference IDs
     [Key(46)] ulong? lastLeaderId = null;
     [Key(47)] ulong? leaderId = null;
@@ -163,19 +162,45 @@ public partial class State : Polity, ISaveable
     }      
     public bool StateCollapse()
     {
-        if (stability > minCollapseStability)
+        if (rng.NextSingle() < collapseChanceCurve.Sample(stability) * baseCollapseChance)
         {
-            return false;
-        }
-        double stabilityFactor = 1d - (stability / minCollapseStability);
-        if (rng.NextDouble() < stabilityFactor * 0.1)
-        {
-            if (rng.NextDouble() < 0.001)
+            if (diplomacy.vassalIds.Count < 1)
             {
-                //return true;
+                return true;
+            }
+            
+            if (!diplomacy.InWarOfType(WarType.CIVIL_WAR) && !diplomacy.InWarOfType(WarType.REVOLT))
+            {
+                // TODO: Civil Wars
             }
         }
         return false;
+    }
+    public void UpdateStability()
+    {
+        if (rng.NextSingle() >= stabChangeChance) return;
+
+        float stabilityScore = rng.NextSingle();
+
+        float positiveChance = 0.2f;
+        if (leader != null)
+        {
+            positiveChance = leader.GetPersonalityLevel("agression") switch
+            {
+                TraitLevel.HIGH => 0.75f,
+                TraitLevel.MEDIUM => 0.5f,
+                TraitLevel.LOW => 0.25f,
+                _ => 1f,
+            };            
+        }
+
+        if (stabilityScore < positiveChance)
+        {
+            stability += 0.05f;
+        } else
+        {
+            stability -= 0.05f;
+        }
     }
     public void SuccessionUpdate()
     {
@@ -235,6 +260,9 @@ public partial class State : Polity, ISaveable
                 displayColor = diplomacy.GetOverlord().color;
                 break;
             case Sovereignty.PUPPET:
+                displayColor = diplomacy.GetOverlord().color;
+                break;
+            case Sovereignty.REBELLIOUS:
                 displayColor = diplomacy.GetOverlord().color;
                 break;
         }
@@ -328,6 +356,7 @@ public partial class State : Polity, ISaveable
 }   
 public enum Sovereignty
 {
+    REBELLIOUS = 20,
     INDEPENDENT = 3,
     PUPPET = 2,
     COLONY = 1,

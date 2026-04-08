@@ -844,6 +844,7 @@ public class SimManager
             }
             state.diplomacy.relationUpdateTime--;
             state.Capitualate();
+            state.UpdateStability();
 
             if (state.leader == null)
             {

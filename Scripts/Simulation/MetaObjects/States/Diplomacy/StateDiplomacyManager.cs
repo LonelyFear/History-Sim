@@ -217,6 +217,17 @@ public partial class StateDiplomacyManager
         }
         return null;
     }
+    public bool InWarOfType(WarType type)
+    {
+        foreach (var pair in warIds)
+        {
+            if (objectManager.GetWar(pair.Key).warType == type)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     public bool CanFightState(State target)
     {
         return state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT 

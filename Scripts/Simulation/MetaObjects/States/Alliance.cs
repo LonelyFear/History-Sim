@@ -108,9 +108,10 @@ public partial class Alliance : Polity
         {
             foreach (State member in memberStates.ToArray())
             {
-                mp += member.manpower;
+               if (member.sovereignty != Sovereignty.REBELLIOUS) mp += member.manpower;
             }            
-        } else
+        } 
+        else
         {
             foreach (State member in memberStates.ToArray())
             {

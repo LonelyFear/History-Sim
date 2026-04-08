@@ -217,14 +217,14 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
             if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
-                TickChangeRelations(target, relations);
+                TickChangeRelations(target);
             } else
             {
-                TickChangeLoyalty(target, relations);
+                TickChangeLoyalty(target);
             }
         }        
     }
-    public void TickChangeRelations(State target, Relation relations)
+    public void TickChangeRelations(State target)
     {
         Character leader = state.leader;
         float diplomacyScore = rng.NextSingle();
@@ -243,7 +243,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         else 
             diplomacyManager.ChangeOpinion(target, -0.1f);
     }
-    public void TickChangeLoyalty(State target, Relation relations)
+    public void TickChangeLoyalty(State target)
     {
         Character leader = state.leader;
         float unrestScore = rng.NextSingle();

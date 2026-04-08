@@ -92,11 +92,6 @@ public partial class ObjectInfo : Control
                         }
 
                         specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("##0%");
-                        if (state.diplomacy.liegeId != null)
-                        {
-                            specialLabel.Text += "\n" + "Loyalty: " + state.loyalty.ToString("##0%");
-                        }
-
                         // Wars text
                         specialLabel.Text += "\n" + "Wars: ";
                         if (state.diplomacy.warIds.Count > 0)
