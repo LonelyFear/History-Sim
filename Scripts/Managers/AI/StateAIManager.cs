@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO.Compression;
 using System.Linq;
 using System.Linq.Expressions;
@@ -61,18 +62,20 @@ public partial class StateAIManager : UtilityAi.AiAgent
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
             ChangeRelationsOrLoyalty();
+
             if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
-                TickDiplomacy();  
-                TickEndWars();              
+                TickDiplomacy();               
             }       
+            TickEndWars();
+            //ReevaluateCivilWarSiding();
         }
     }
     public void TickEndWars()
     {
-        foreach (var pair in state.diplomacy.warIds)
+        foreach (var pair in state.diplomacy.wars)
         {
-            War war = objectManager.GetWar(pair.Key);
+            War war = pair.Key;
 
             War.WarSide side = pair.Value;
             War.WarSide enemySide = War.GetOtherSide(side);
@@ -82,18 +85,43 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
             if (war.warLeaderIds[side] != state.id) continue;
 
-            // Surrender Via Capitulation
-            if (state.capitualated)
+            switch (war.warType)
             {
-                CalcWarEnd(war, enemySide);
+                case WarType.CONQUEST:
+                    // Conquest Wars
+                    if (state.capitualated)
+                    {
+                        CalcWarEnd(war, enemySide);
+                    }
+
+                    // Peaceful Ending
+                    float warEndChance = warEndChanceCurve.Sample(relations.opinion + 0.5f);
+                    if (rng.NextSingle() < warEndChance)
+                    {
+                        CalcWarEnd(war);
+                    }
+                    break;
+                case WarType.CIVIL_WAR:
+
+                    bool surrender = state.capitualated;
+                    if (side == War.WarSide.AGRESSOR)
+                    {
+                        // Rebel
+                        foreach (State rebel in war.sideIds[side].Select(i => objectManager.GetState(i)))
+                        {
+                            if (!rebel.capitualated) surrender = false;
+                            break;
+                        }
+                        surrender = surrender || state.sovereignty != Sovereignty.REBELLIOUS;
+                    }
+
+                    if (surrender)
+                    {
+                        CalcWarEnd(war, enemySide);
+                    }
+                    break;
             }
 
-            // Peaceful Ending
-            float warEndChance = warEndChanceCurve.Sample(relations.opinion + 0.5f);
-            if (rng.NextSingle() < warEndChance)
-            {
-                CalcWarEnd(war);
-            }
 
             // Ends war because we dont even know who we are fightin
             if (!state.diplomacy.HasRelations(enemyWarLead) || !state.borderingStates.Contains(enemyWarLead))
@@ -110,13 +138,14 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
             War.WarSide enemySide = War.GetOtherSide(side);
             List<ulong> enemyIds = [..war.sideIds[enemySide]];
+
             switch (war.warType)
             {
                 case WarType.CONQUEST:
                     foreach (ulong enemyId in enemyIds)
                     {
                         State enemyState = objectManager.GetState(enemyId);
-                        State[] enemyVassals = [.. enemyState.diplomacy.vassalIds.Select(objectManager.GetState)];
+                        State[] enemyVassals = [.. enemyState.diplomacy.vassals];
 
                         foreach (State enemyVassal in enemyVassals)
                         {
@@ -129,6 +158,26 @@ public partial class StateAIManager : UtilityAi.AiAgent
                             enemyState.GetOccupier().diplomacy.AddVassal(enemyState, Sovereignty.PUPPET);                            
                         }
                     }
+                break;
+                case WarType.CIVIL_WAR:
+                    
+                    if (side == War.WarSide.AGRESSOR)
+                    {
+                        // Rebels
+                        foreach (ulong enemyId in enemyIds)
+                        {
+                            State enemyState = objectManager.GetState(enemyId);
+                            enemyState.diplomacy.RemoveAllVassals(); 
+                        } 
+                    } else
+                    {
+                        foreach (ulong enemyId in enemyIds)
+                        {
+                            State enemyState = objectManager.GetState(enemyId);
+                            if (enemyState.sovereignty == Sovereignty.REBELLIOUS) enemyState.sovereignty = Sovereignty.PROVINCE;
+                        } 
+                        state.stability += 0.3f;
+                    }                                        
                 break;
             }            
         }

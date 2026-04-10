@@ -148,7 +148,7 @@
 		"textureX": 1,
 		"textureY": 2,
 		"navigability":0.5,
-		"arability":0.15,
+		"arability":0.1,
 		"survivability":0.3
 	},	
 	{
@@ -164,7 +164,7 @@
 		"textureX": 3,
 		"textureY": 0,
 		"navigability":0.2,
-		"arability":0.15,
+		"arability":0.3,
 		"survivability":0.6
 	}
 ]

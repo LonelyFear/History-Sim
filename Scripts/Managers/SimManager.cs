@@ -850,13 +850,12 @@ public class SimManager
             {
                 state.SuccessionUpdate();
             }
+            
             if (state.sovereignty != Sovereignty.INDEPENDENT)
             {
                 state.timeAsVassal += TimeManager.ticksPerMonth;
-            } else
-            {
-                state.diplomacy.JoinAllyWars();
             }
+            state.diplomacy.JoinObligateWars();
             
             state.diplomacy.UpdateRelations();
         });

@@ -94,9 +94,9 @@ public partial class ObjectInfo : Control
                         specialLabel.Text += "\n" + "Stability: " + state.stability.ToString("##0%");
                         // Wars text
                         specialLabel.Text += "\n" + "Wars: ";
-                        if (state.diplomacy.warIds.Count > 0)
+                        if (state.diplomacy.wars.Count > 0)
                         {
-                            foreach (War war in state.diplomacy.warIds.Keys.Select(id => objectManager.GetWar(id)).ToArray())
+                            foreach (War war in state.diplomacy.wars.Keys.ToArray())
                             {
                                 if (war == null) continue;
                                 yearAge = timeManager.GetYear(war.GetAge());

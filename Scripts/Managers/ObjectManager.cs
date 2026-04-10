@@ -201,14 +201,12 @@ public class ObjectManager
             State liege = GetState(deletedState.diplomacy.liegeId);
             liege.diplomacy.RemoveVassal(deletedState);
         }
-        foreach (ulong warId in deletedState.diplomacy.warIds.Keys.ToArray())
+        foreach (War war in deletedState.diplomacy.wars.Keys.ToArray())
         {
-            War war = GetWar(warId);
             war.RemoveParticipant(deletedState);
         }
-        foreach (ulong vassalId in deletedState.diplomacy.vassalIds.ToArray())
+        foreach (State vassal in deletedState.diplomacy.vassals.ToArray())
         {
-            State vassal = GetState(vassalId);
             deletedState.diplomacy.RemoveVassal(vassal);
         }
         foreach (Region region in deletedState.regions.ToArray())

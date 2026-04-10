@@ -59,14 +59,14 @@ public partial class Alliance : Polity
             newMember.diplomacy.GetAllianceOfType(type)?.RemoveMember(newMember);
         }
 
-        newMember.diplomacy.allianceIds.Add(id);
+        newMember.diplomacy.alliances.Add(this);
         memberStates.Add(newMember);
     }
     public void RemoveMember(State member)
     {
         if (!memberStates.Contains(member)) return;
 
-        member.diplomacy.allianceIds.Remove(id);
+        member.diplomacy.alliances.Remove(this);
         memberStates.Remove(member);  
 
         if (memberStates.Count < 2 || member == leadState)

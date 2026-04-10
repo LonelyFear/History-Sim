@@ -117,10 +117,8 @@ public abstract partial class Polity : PopObject
 
 
                     // Gets the alliances this state is in
-                    foreach (ulong allianceId in border.owner.diplomacy.allianceIds)
+                    foreach (Alliance borderingAlliance in border.owner.diplomacy.alliances)
                     {
-                        Alliance borderingAlliance = objectManager.GetAlliance(allianceId);
-
                         // Makes sure the alliance is real and not us (If this org is a state then we make sure we dont have membership)
                         if (borderingAlliance == null || borderingAlliance == this || (this is State && borderingAlliance.HasMember((State)this)))
                         {

@@ -3,6 +3,9 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
+using System.ComponentModel.Design.Serialization;
+using System.Security.Cryptography;
+using System.Collections.Concurrent;
 
 [MessagePackObject(AllowPrivate = true)]
 public partial class State : Polity, ISaveable
@@ -35,7 +38,7 @@ public partial class State : Polity, ISaveable
     [Key(45)] public uint timeAsVassal = 0;
     [IgnoreMember] int timeUntilCapitulation = 12;
     [IgnoreMember] const float stabChangeChance = 0.01f;
-    [IgnoreMember] const float baseCollapseChance = 0.001f;
+    [IgnoreMember] const float baseCollapseChance = 0.01f;
     [IgnoreMember] Curve collapseChanceCurve = GD.Load<Curve>("res://Curves/Simulation/CollapseChanceCurve.tres");
     // Reference IDs
     [Key(46)] ulong? lastLeaderId = null;
@@ -101,11 +104,22 @@ public partial class State : Polity, ISaveable
             capitalId = value?.id;
             _capital = value;
         } 
-    }    
+    }
+    public override void PrepareForSave()
+    {
+        base.PrepareForSave();
+        diplomacy.vassalIds = [..diplomacy.vassals.Select(v => v.id)];
+        diplomacy.allianceIds = [..diplomacy.alliances.Select(v => v.id)];
+        diplomacy.warIds = new ConcurrentDictionary<ulong, War.WarSide>(diplomacy.wars.Select(pair => new KeyValuePair<ulong, War.WarSide>(pair.Key.id, pair.Value)).ToDictionary());
+    }
+
     public override void LoadFromSave()
     {
         base.LoadFromSave();
         diplomacy.state = this;
+        diplomacy.vassals = [..diplomacy.vassalIds.Select(objectManager.GetState)];
+        diplomacy.alliances = [..diplomacy.allianceIds.Select(objectManager.GetAlliance)];
+        diplomacy.wars = new ConcurrentDictionary<War, War.WarSide>(diplomacy.warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
     }
     public void UpdateCapital()
     {
@@ -164,15 +178,30 @@ public partial class State : Polity, ISaveable
     {
         if (rng.NextSingle() < collapseChanceCurve.Sample(stability) * baseCollapseChance)
         {
-            if (diplomacy.vassalIds.Count < 1)
+            List<State> potentialRebels = GetRebelliousVassals();
+            bool inCivilConflict = diplomacy.InWarOfType(WarType.CIVIL_WAR) || diplomacy.InWarOfType(WarType.REVOLT);
+
+            if (potentialRebels.Count < 1 && !inCivilConflict)
             {
                 return true;
             }
-            
-            if (!diplomacy.InWarOfType(WarType.CIVIL_WAR) && !diplomacy.InWarOfType(WarType.REVOLT))
+
+            if (!inCivilConflict)
             {
-                // TODO: Civil Wars
-            }
+                // Starts a civil war
+                State leadRebel = potentialRebels[0];
+                leadRebel.sovereignty = Sovereignty.REBELLIOUS;
+                War civilWar = leadRebel.diplomacy.DeclareWar(this, WarType.CIVIL_WAR);
+
+                foreach (State rebel in potentialRebels)
+                {
+                    if (rebel == leadRebel) continue;
+                    rebel.sovereignty = Sovereignty.REBELLIOUS;
+                    civilWar.AddParticipant(rebel, War.WarSide.AGRESSOR);
+                }
+                //GD.Print(leadRebel.diplomacy.IsEnemyWithState(this));
+            }                
+
         }
         return false;
     }
@@ -201,6 +230,20 @@ public partial class State : Polity, ISaveable
         {
             stability -= 0.05f;
         }
+        stability = Math.Clamp(stability, 0, 1);
+    }
+    public List<State> GetRebelliousVassals()
+    {
+        List<State> rebels = [];
+        foreach (State vassal in diplomacy.vassals)
+        {
+            Relation relationsWithUs = vassal.diplomacy.GetRelationsWithState(this);
+            if (relationsWithUs.opinion < 0)
+            {
+                rebels.Add(vassal);
+            }
+        }
+        return rebels;
     }
     public void SuccessionUpdate()
     {
@@ -263,7 +306,7 @@ public partial class State : Polity, ISaveable
                 displayColor = diplomacy.GetOverlord().color;
                 break;
             case Sovereignty.REBELLIOUS:
-                displayColor = diplomacy.GetOverlord().color;
+                displayColor = Utility.MultiColourLerp([diplomacy.GetOverlord().color, new Color(0, 0, 0)], 0.5f);
                 break;
         }
     }

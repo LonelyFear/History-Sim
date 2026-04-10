@@ -279,14 +279,14 @@ public class Region : PopObject, ISaveable
     }
     public void UpdateOccupation()
     {
-        if (owner == null || occupier == null || !owner.diplomacy.GetOverlord().diplomacy.IsEnemyWithState(occupier))
+        if (owner == null || occupier == null || !GetController(false).diplomacy.IsEnemyWithState(occupier))
         {
             occupier = null;
         }
     }
     public void RandomStateFormation()
     {
-        if (rng.NextDouble() < 0.0001f * Mathf.Max(averageTech.societyLevel, 1) * navigability && population > 1000)
+        if (rng.NextDouble() < 0.00025f * Mathf.Max(averageTech.societyLevel, 1) * navigability && population > 1000)
         {
             objectManager.CreateState(this);
 
@@ -322,19 +322,15 @@ public class Region : PopObject, ISaveable
             }
         }  
     }
-    public State GetController()
+    public State GetController(bool includeOccupier = true)
     {
-        State controller = null;
+        State controller = owner;
         
-        if (occupier != null) {
+        if (occupier != null && includeOccupier) {
             controller = occupier;
         }
-        if (owner != null)
-        {
-            controller = owner;
-        } 
 
-        if (controller?.sovereignty != Sovereignty.REBELLIOUS)
+        if (controller != null && controller.sovereignty != Sovereignty.REBELLIOUS)
         {
             return controller.diplomacy.GetOverlord();
         }        
@@ -350,7 +346,7 @@ public class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        if (Battle.CalcBattle(region, attackerPower, 30000))
+        if (Battle.CalcBattle(region, attackerPower, 3000))
         {
             owner.AddRegion(region);
         }
@@ -369,8 +365,8 @@ public class Region : PopObject, ISaveable
 
         War war = attacker.diplomacy.GetWarWithState(enemy);
 
-        long attackerPower = war.GetSideArmyPower(attacker.diplomacy.warIds[war.id]);
-        long defenderPower = (long)(war.GetSideArmyPower(enemy.diplomacy.warIds[war.id]) / 0.1f);
+        long attackerPower = war.GetSideArmyPower(attacker.diplomacy.wars[war]);
+        long defenderPower = (long)(war.GetSideArmyPower(enemy.diplomacy.wars[war]) / 0.1f);
 
         if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
         {
