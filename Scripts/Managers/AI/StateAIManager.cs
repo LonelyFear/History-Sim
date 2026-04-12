@@ -185,9 +185,9 @@ public partial class StateAIManager : UtilityAi.AiAgent
     }
     public void TickDiplomacy()
     {
-        foreach (var pair in diplomacyManager.relationIds)
+        foreach (var pair in diplomacyManager.relations)
         {
-            State target = objectManager.GetState(pair.Key);
+            State target = pair.Key;
             Relation relations = pair.Value;
             Character leader = state.leader;
             if (target == null || relations == null || leader == null || target.sovereignty != Sovereignty.INDEPENDENT) continue;
@@ -254,11 +254,11 @@ public partial class StateAIManager : UtilityAi.AiAgent
     }
     public void ChangeRelationsOrLoyalty()
     {
-        foreach (var pair in diplomacyManager.relationIds)
+        foreach (var pair in diplomacyManager.relations)
         {
             if (rng.NextSingle() >= diploChangeChance) continue;
 
-            State target = objectManager.GetState(pair.Key);
+            State target = pair.Key;
             Relation relations = pair.Value;
             Character leader = state.leader;
             

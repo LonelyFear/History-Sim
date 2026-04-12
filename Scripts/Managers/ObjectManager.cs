@@ -220,7 +220,7 @@ public class ObjectManager
         foreach (ulong relationId in simManager.statesIds.Keys)
         {
             State relation = GetState(relationId);
-            relation.diplomacy.RemoveRelations(deletedState.id);
+            relation.diplomacy.RemoveRelations(deletedState);
             //relation.borderingStates.Remove(deletedState);
         }
         foreach (ulong allianceId in deletedState.diplomacy.allianceIds.ToArray())

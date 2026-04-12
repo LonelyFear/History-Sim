@@ -10,7 +10,7 @@ public class Pop
     [Key(4)] public int dependents { get; set; } = 0;
 
     [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
-    [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
+    [Key(6)] public float baseDeathRate { get; set; } = 0.29f - 0.05f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.6f;
     [Key(8)] public float netIncome { get; set; } = 0f;
@@ -128,51 +128,6 @@ public class Pop
             tech.industryLevel += 1;
         }
     }
-    /*
-    public void SocialClassTransitions()
-    {
-        // TODO: Social Class Transitions
-        float percentageOfRegionWorkforce = region.workforce / (float)workforce;
-        long requiredWorkersInField = 0;
-        try
-        {
-           requiredWorkersInField = region.settlement.requiredWorkers[profession];
-        } catch (Exception) {}
-        
-        switch (profession)
-        {
-            case SocialClass.ARISTOCRAT:
-                if (requiredWorkersInField < 0)
-                {
-                    ChangeSocialClass((long)Mathf.Abs(requiredWorkersInField * percentageOfRegionWorkforce), 0, SocialClass.FARMER);
-                }
-                break;
-            case SocialClass.MERCHANT:
-                if (requiredWorkersInField < 0)
-                {
-                    ChangeSocialClass((long)Mathf.Abs(requiredWorkersInField * percentageOfRegionWorkforce), 0, SocialClass.FARMER);
-                }
-                break;
-            case SocialClass.FARMER:
-                if (requiredWorkersInField > 0) break;
-
-                // If there are extra farmers
-                foreach (var classPair in region.settlement.requiredWorkers)
-                {
-                    SocialClass socialClass = classPair.Key;
-                    long requiredWorkers = classPair.Value;
-                    if (requiredWorkers < 1)
-                    {
-                        continue;
-                    }
-                    // If there is an opening
-                    long workersTransferred = (long)(Math.Clamp(requiredWorkers, 0, Math.Abs(requiredWorkersInField)) * 0.1);
-                    ChangeSocialClass(workersTransferred, 0, socialClass);
-                }
-                break;
-        }
-    }
-    */
     public double CalculatePoliticalPower()
     {
         double popSizePoliticalPower = workforce * 0.0005;

@@ -53,6 +53,7 @@ public class Region : PopObject, ISaveable
     // References
     [Key(44)] public HashSet<ulong> linkedRegionIds = [];
     [IgnoreMember] public HashSet<Region> linkedRegions = [];
+    [IgnoreMember] public List<(Region, Region)> tradeRouteLinks = new List<(Region, Region)>();
     [IgnoreMember] Region _tradeLink;
     [IgnoreMember] public Region tradeLink { 
         get
@@ -346,7 +347,7 @@ public class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        if (Battle.CalcBattle(region, attackerPower, 3000))
+        if (Battle.CalcBattle(region, attackerPower, 2000))
         {
             owner.AddRegion(region);
         }
@@ -479,6 +480,8 @@ public class Region : PopObject, ISaveable
         {
             // Then delete the market
             objectManager.DeleteTradeZone(market);
+            // And erase all trade routes
+            EraseTradeRoutes();
         }
         
         // Finally updates our trade link
@@ -575,15 +578,36 @@ public class Region : PopObject, ISaveable
                 {
                     marketCenter.regionPaths[this] = path;
                 }
-                
+
+                foreach (Region tradeRoute in path)
+                {
+                    lock (tradeRoute)
+                    {
+                        tradeRoute.tradeRouteLinks.Add((this, marketCenter));
+                    }
+                }                
             }
-            foreach (Region tradeRoute in path)
+
+        }
+    }
+    public void EraseTradeRoutes()
+    {
+        foreach (var pathPair in regionPaths)
+        {
+            foreach (Region tradeRoute in pathPair.Value)
             {
                 lock (tradeRoute)
                 {
-                    tradeRoute.tradeIncome = Mathf.Max(tradeRoute.tradeIncome, Mathf.Min(tradeIncome, marketCenter.tradeIncome)* 0.5f);
+                    tradeRoute.tradeRouteLinks.Add((this, pathPair.Key));
                 }
-            }
+            }             
+        }
+    }
+    public void GetRouteIncome()
+    {
+        foreach ((Region, Region) tradingCities in tradeRouteLinks)
+        {
+            tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingCities.Item1.tradeIncome, tradingCities.Item2.tradeIncome)* 0.5f);
         }
     }
     public int GetBaseTradeWeight()
@@ -603,6 +627,10 @@ public class Region : PopObject, ISaveable
         if (owner != null && owner.capital == this)
         {
             politySizeTradeWeight = owner.regions.Count;
+            if (owner.sovereignty == Sovereignty.INDEPENDENT)
+            {
+                politySizeTradeWeight = owner.diplomacy.GetPolity().regions.Count;
+            }
         }
 
         return (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);

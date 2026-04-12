@@ -30,9 +30,9 @@ public partial class DebugLabel : Label
                 AddLine("Relations: ");
                 try
                 {
-                    foreach (var pair in state.diplomacy.relationIds.ToArray())
+                    foreach (var pair in state.diplomacy.relations.ToArray())
                     {
-                        State relationState = objectManager.GetState(pair.Key);
+                        State relationState = pair.Key;
                         if (relationState?.sovereignty != Sovereignty.INDEPENDENT) continue;
                         Relation relation = pair.Value;
                         AddLine(relationState.name + ": " + Math.Round(relation.opinion * 100));

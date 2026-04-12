@@ -624,13 +624,14 @@ public class SimManager
     // Updating pops
     public void UpdatePops()
     {
+        Dictionary<string, double> countedPerformanceInfo = new();
         Stopwatch totalTime = Stopwatch.StartNew();
 
-        popsPerformanceInfo["Destroy Time"] = 0; 
-        popsPerformanceInfo["Economy Time"] = 0; 
-        popsPerformanceInfo["Growth Time"] = 0; 
-        popsPerformanceInfo["Migration Time"] = 0; 
-        popsPerformanceInfo["Parallel Time"] = 0;
+        countedPerformanceInfo["Destroy Time"] = 0; 
+        //countedPerformanceInfo["Economy Time"] = 0; 
+        //countedPerformanceInfo["Growth Time"] = 0; 
+        //countedPerformanceInfo["Migration Time"] = 0; 
+        countedPerformanceInfo["Parallel Time"] = 0;
 
         Stopwatch stopwatch = Stopwatch.StartNew();
         Tech techAvg = new();
@@ -643,7 +644,7 @@ public class SimManager
                 objectManager.DestroyPop(pop);
             }
         }
-        popsPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
         
         stopwatch.Restart();
 
@@ -681,20 +682,24 @@ public class SimManager
         averageTech.fScienceLevel = techAvg.scienceLevel / (float)popsIds.Count;
         averageTech.fSocietyLevel = techAvg.societyLevel / (float)popsIds.Count;
 
-        popsPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        popsPerformanceInfo = countedPerformanceInfo;
     }
     public void UpdateRegions()
     {
+        Dictionary<string, double> countedPerformanceInfo = new();
+
         float newMaxWealth = 0;
         int newMaxTradeWeight = 0;
 
-        regionPerformanceInfo["Parallel Time"] = 0;
-        regionPerformanceInfo["Pop Merging Time"] = 0;
-        regionPerformanceInfo["Economy Time"] = 0;
-        regionPerformanceInfo["State Formation Time"] = 0;
-        regionPerformanceInfo["Conquest Time"] = 0;
-        regionPerformanceInfo["Border Time"] = 0;
-        regionPerformanceInfo["Trade Weight Time"] = 0;
+        countedPerformanceInfo["Parallel Time"] = 0;
+        countedPerformanceInfo["Pop Merging Time"] = 0;
+        countedPerformanceInfo["Trade Route Time"] = 0;
+        countedPerformanceInfo["Economy Time"] = 0;
+        countedPerformanceInfo["State Formation Time"] = 0;
+        countedPerformanceInfo["Conquest Time"] = 0;
+        countedPerformanceInfo["Border Time"] = 0;
+        countedPerformanceInfo["Trade Weight Time"] = 0;
         uint countedPoppedRegions = 0;
 
         long worldPop = 0;
@@ -746,7 +751,7 @@ public class SimManager
 
 
 
-            regionPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
+            countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();  
                       
             foreach (Region region in habitableRegions)
@@ -759,23 +764,27 @@ public class SimManager
                 }
                 
                 // Economy
+                region.GetRouteIncome();
                 if (region.tradeLink == null) region.ZoneTrade();
             
                 region.CalcBaseWealth();
                 
+                countedPerformanceInfo["Trade Route Time"] += stopwatch.Elapsed.TotalMilliseconds;
+                stopwatch.Restart();
+
                 if (region.CanUpdateTrade())
                 {
                     region.LinkTrade();
                     region.linkUpdateCountdown = 12;
                 }
                 
-                regionPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
+                countedPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
                 // States
                 region.RandomStateFormation();
                 region.UpdateOccupation();
-                regionPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
+                countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
                 if (region.owner != null && !region.conquered)
@@ -786,7 +795,7 @@ public class SimManager
                     }
                     region.MilitaryConquest();   
                 }  
-                regionPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
+                countedPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
                 // Increments
                 stopwatch.Restart();
                 lock (this)
@@ -797,7 +806,7 @@ public class SimManager
                     newMaxWealth = Mathf.Max(newMaxWealth, region.wealth);
                     newMaxTradeWeight = Mathf.Max(region.tradeWeight, newMaxTradeWeight);                    
                 }
-                regionPerformanceInfo["Trade Weight Time"] += stopwatch.Elapsed.TotalMilliseconds;
+                countedPerformanceInfo["Trade Weight Time"] += stopwatch.Elapsed.TotalMilliseconds;
             }
             
         }
@@ -811,15 +820,20 @@ public class SimManager
 
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
+
+        regionPerformanceInfo = countedPerformanceInfo;
     }
     public void UpdateStates()
     {
-        statePerformanceInfo["Delete Time"] = 0;
-        statePerformanceInfo["Parallel Time"] = 0;
-        //statePerformanceInfo["Ruling Pop Time"] = 0;
-        //statePerformanceInfo["Misc Time"] = 0;  
-        statePerformanceInfo["AI Time"] = 0;
-        statePerformanceInfo["Stats Time"] = 0;
+        Dictionary<string, double> countedPerformanceInfo = new();
+        countedPerformanceInfo["Delete Time"] = 0;
+        countedPerformanceInfo["Parallel Time"] = 0;
+        countedPerformanceInfo["Ruling Pop Time"] = 0;
+        countedPerformanceInfo["Succession Time"] = 0;  
+        countedPerformanceInfo["Join Wars Time"] = 0; 
+        countedPerformanceInfo["Relations Time"] = 0; 
+        countedPerformanceInfo["AI Time"] = 0;
+        countedPerformanceInfo["Stats Time"] = 0;
         
         var partitioner = Partitioner.Create(statesIds.Values);
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -830,19 +844,19 @@ public class SimManager
             if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
             {
                 objectManager.DeleteState(state);
-            }            
-        }
-        statePerformanceInfo["Delete Time"] = stopwatch.Elapsed.Milliseconds;
-        stopwatch.Restart();
-        Parallel.ForEach(partitioner, (state) =>
-        {         
-            if (state.rulingPop != null)
-            {
-                state.tech = state.rulingPop.tech;
-                state.maxSize = 6 + state.rulingPop.tech.societyLevel;
-                state.culture = state.rulingPop.culture;
-            }
+                continue;
+            }    
+            countedPerformanceInfo["Delete Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart(); 
+
+            state.tech = state.rulingPop.tech;
+            state.maxSize = 6 + state.rulingPop.tech.societyLevel;
+            state.culture = state.rulingPop.culture;
+
             state.diplomacy.relationUpdateTime--;
+            countedPerformanceInfo["Ruling Pop Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart(); 
+
             state.Capitualate();
             state.UpdateStability();
 
@@ -850,30 +864,41 @@ public class SimManager
             {
                 state.SuccessionUpdate();
             }
-            
+            countedPerformanceInfo["Succession Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();  
+
             if (state.sovereignty != Sovereignty.INDEPENDENT)
             {
                 state.timeAsVassal += TimeManager.ticksPerMonth;
             }
             state.diplomacy.JoinObligateWars();
-            
-            state.diplomacy.UpdateRelations();
-        });
 
-        statePerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
-        stopwatch.Restart();    
-
-        using (new ProfileScope("Tilemap update", ZoneC.RED))
-        {
-            // Updates State Ai
-            foreach (var pair in statesIds.ToArray())
-            {
-                State state = pair.Value;
-                state.AIManager.Tick();
-            }
-            statePerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            countedPerformanceInfo["Join Wars Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();   
             
+            state.diplomacy.UpdateRelations(); 
+            state.diplomacy.CalculateThreats();
+            countedPerformanceInfo["Relations Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();                                 
         }
+        stopwatch.Restart();
+        /*
+        Parallel.ForEach(partitioner, (state) =>
+        {         
+
+        });
+        */
+
+        //countedPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        //stopwatch.Restart();    
+
+        // Updates State Ai
+        foreach (var pair in statesIds.ToArray())
+        {
+            State state = pair.Value;
+            state.AIManager.Tick();
+        }
+        countedPerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
 
         // Counts State Stats
@@ -885,8 +910,10 @@ public class SimManager
             StateNamer.UpdateStateNames(state);
         });
 
-        statePerformanceInfo["Stats Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["Stats Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
+
+        statePerformanceInfo = countedPerformanceInfo;
     }
     public void UpdateCultures()
     {
@@ -975,31 +1002,33 @@ public class SimManager
     public void SimMonth()
     {
         Stopwatch stepStopwatch = Stopwatch.StartNew();
+        Dictionary<string, double> countedPerformanceInfo = new();
         try
         {
             Stopwatch processStopwatch = Stopwatch.StartNew();
             UpdatePops();
-            stepPerformanceInfo["Pops"] = processStopwatch.Elapsed.TotalMilliseconds;
+            countedPerformanceInfo["Pops"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
 
             UpdateRegions();
-            stepPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
+            countedPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
 
             UpdateStates();
-            stepPerformanceInfo["States"] = processStopwatch.Elapsed.TotalMilliseconds;
+            countedPerformanceInfo["States"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
 
             UpdateCharacters();
             UpdateCultures();
             UpdateAlliances();
-            stepPerformanceInfo["Misc"] = processStopwatch.Elapsed.TotalMilliseconds;
+            countedPerformanceInfo["Misc"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
           
         } catch  (Exception e)
         {
             GD.PushError(e);
         }
+        stepPerformanceInfo = countedPerformanceInfo;
         totalStepTime = stepStopwatch.Elapsed.TotalMilliseconds;
     }
     public void SimYear()

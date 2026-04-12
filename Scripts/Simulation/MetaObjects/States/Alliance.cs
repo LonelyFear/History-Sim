@@ -11,11 +11,11 @@ public partial class Alliance : Polity
 {
     [Key(25)] public AllianceType type;
     [Key(26)] ulong? leadStateId;
-    [Key(27)] HashSet<ulong> memberStateIds = [];
-    [Key(28)] public bool exclusive = true;
+    [Key(27)] public bool exclusive = true;
 
     // References
-    [IgnoreMember] public HashSet<State> memberStates = [];
+    [Key(28)] List<ulong> memberStateIds = [];
+    [IgnoreMember] public List<State> memberStates = [];
 
     // Reference Variables
     [IgnoreMember] State _leadState;

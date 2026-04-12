@@ -533,7 +533,7 @@ public partial class MapManager : Node2D
                 if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == ObjectType.CULTURE)
                 {
                     Culture culture = (Culture)selectedMetaObj;
-                    if (region.cultureIds.ContainsKey(culture.id) && region.largestCultureId != culture.id && region.habitable)
+                    if (region.cultureIds.TryGetValue(culture.id, out long population) && population > 0 && region.largestCultureId != culture.id && region.habitable)
                     {
                         color = culture.color;
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);

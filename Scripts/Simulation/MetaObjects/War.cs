@@ -94,6 +94,8 @@ public partial class War : NamedObject
         foreach (ulong parcipant in sideIds[side])
         {
             State state = objectManager.GetState(parcipant);
+            if (state.capitualated) continue;
+            
             power += state.armyPower;
         }
         return power;
