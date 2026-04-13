@@ -604,6 +604,7 @@ public class Region : PopObject, ISaveable
     }
     public void GetRouteIncome()
     {
+        foreach ((Region, Region) tradingCities in tradeRouteLinks.ToArray())
         {
             if (!tradingCities.Item1.isMarketCenter || !tradingCities.Item2.isMarketCenter)
             {
