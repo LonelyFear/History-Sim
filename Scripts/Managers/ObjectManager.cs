@@ -425,8 +425,14 @@ public class ObjectManager
             id = GetId(),
             type = eventType
         };
-
-        historicalEvent.InitEvent();
+        try
+        {
+            historicalEvent.InitEvent();
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
+         
         
         foreach (NamedObject obj in relevantObjects)
         {

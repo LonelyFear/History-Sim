@@ -14,16 +14,15 @@ public class Region : PopObject, ISaveable
     [Key(20)] public bool isWater { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
     //[Key(5)] public int baseTradeWeight { get; set; } = 0;
-    [Key(22)] public float lastWealth { get; set; } = 0;
-    [Key(23)] public float lastBaseWealth { get; set; } = 0;
-    [Key(24)] public float baseWealth { get; set; }
-    [Key(25)] public float wealth { get; set; }
+
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
     [Key(28)] public Vector2I pos;
 
     // trade
     [Key(29)] public ulong? marketId { get; set; } = null;
-    [Key(30)] public bool isMarketCenter { get; set; } = false;    
+    [Key(30)] public bool isMarketCenter { get; set; } = false;  
+    [Key(24)] public float baseWealth { get; set; }
+    [Key(25)] public float wealth { get; set; }  
     [Key(31)] public float tradeIncome = 0;
     [Key(32)] public float taxIncome = 0;
     [Key(33)] public int zoneSize = 1;
@@ -51,7 +50,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
     // References
-    [Key(44)] public HashSet<ulong> linkedRegionIds = [];
+    [Key(45)] public HashSet<ulong> linkedRegionIds = [];
     [IgnoreMember] public HashSet<Region> linkedRegions = [];
     [IgnoreMember] public List<(Region, Region)> tradeRouteLinks = new List<(Region, Region)>();
     [IgnoreMember] Region _tradeLink;
@@ -605,8 +604,12 @@ public class Region : PopObject, ISaveable
     }
     public void GetRouteIncome()
     {
-        foreach ((Region, Region) tradingCities in tradeRouteLinks)
         {
+            if (!tradingCities.Item1.isMarketCenter || !tradingCities.Item2.isMarketCenter)
+            {
+                tradeRouteLinks.Remove(tradingCities);
+                continue;
+            }
             tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingCities.Item1.tradeIncome, tradingCities.Item2.tradeIncome)* 0.5f);
         }
     }
@@ -616,8 +619,8 @@ public class Region : PopObject, ISaveable
         //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
         //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
         float populationTradeWeight = workforce * 0.001f;
+
         float zoneSizeTradeWeight = 0;
-        
         if (isMarketCenter && objectManager.GetMarket(marketId) != null)
         {
             zoneSizeTradeWeight = objectManager.GetMarket(marketId).GetZoneSize();
@@ -633,7 +636,7 @@ public class Region : PopObject, ISaveable
             }
         }
 
-        return (int)(((navigability * 5f) + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
+        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
     }    
     public void UpdateWealth()
     {

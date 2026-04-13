@@ -608,6 +608,7 @@ public class SimManager
     }
     void InitPops()
     {
+        
         foreach (Region region in habitableRegions)
         {
             double nodeChance = 0.004;
@@ -615,8 +616,8 @@ public class SimManager
             if (rng.NextDouble() <= nodeChance && region.Migrateable())
             {
                 long startingPopulation = rng.Next(600, 1200);
+                
                 Culture culture = objectManager.CreateCulture();
-
                 objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
             }
         }
@@ -747,13 +748,18 @@ public class SimManager
                 }
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
+                
             });
-
-
-
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
-            stopwatch.Restart();  
-                      
+            stopwatch.Restart(); 
+
+            Parallel.ForEach(partitioner, (region) =>
+            {
+                region.GetRouteIncome();
+            }); 
+            countedPerformanceInfo["Trade Route Time"] += stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();        
+
             foreach (Region region in habitableRegions)
             {
                 stopwatch.Restart();
@@ -764,7 +770,6 @@ public class SimManager
                 }
                 
                 // Economy
-                region.GetRouteIncome();
                 if (region.tradeLink == null) region.ZoneTrade();
             
                 region.CalcBaseWealth();
