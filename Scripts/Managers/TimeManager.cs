@@ -154,16 +154,9 @@ public partial class TimeManager : Node
             // Draw tasks creats buffers for shaders so we dont want to run on first tick
             MapModes[] specialMapModes = [MapModes.RAINFALL, MapModes.TEMPERATURE, MapModes.CONTINENTIALITY, MapModes.DAY_LENGTH];
             // 
-            if (specialMapModes.Contains(mapManager.mapMode))
-            {
-                // Only runs on ALL regions when we need to
-                drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.regionIds.Values));
-            } else
-            {
-                // Default
-                drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.habitableRegions));
-            }
             
+            // Only runs on ALL regions when we need to
+            drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.regionIds.Values));
         }     
     }
     void GetWaitTime()

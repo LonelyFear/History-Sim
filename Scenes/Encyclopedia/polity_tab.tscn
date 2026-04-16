@@ -1,0 +1,139 @@
+[gd_scene format=3 uid="uid://8kvblrpf5g8"]
+
+[ext_resource type="Script" uid="uid://bwobde3dx2lv" path="res://Scripts/UI/Encyclopedia/PolityTab.cs" id="1_tbcit"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_0jkeo"]
+[ext_resource type="Script" uid="uid://bp5y8uk5vspts" path="res://Scripts/UI/Sim Stats/PieChart.cs" id="3_hssvn"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+color = Color(0.5, 0.5, 0.5, 1)
+thickness = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5rqtu"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+
+[node name="PolityTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist", "culturesChart")]
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
+theme_override_constants/separation = 4
+script = ExtResource("1_tbcit")
+objName = NodePath("PolityName")
+objType = NodePath("PolityType")
+objDesc = NodePath("DescScrollBar/ContentContainer/Description")
+objStats = NodePath("DescScrollBar/ContentContainer/StatsTop")
+objHist = NodePath("DescScrollBar/ContentContainer/History")
+culturesChart = NodePath("DescScrollBar/ContentContainer/PieChartsContainer/CulturesChart/CulturesChart")
+metadata/_tab_index = 1
+
+[node name="PolityName" type="Label" parent="." unique_id=602530060]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 70
+text = "Object Name"
+
+[node name="PolityType" type="Label" parent="." unique_id=1255607242]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 25
+text = "Object Type"
+
+[node name="TitleSeparator" type="HSeparator" parent="." unique_id=56924337]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="DescScrollBar" type="ScrollContainer" parent="." unique_id=404727885]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_5rqtu")
+horizontal_scroll_mode = 0
+
+[node name="ContentContainer" type="VBoxContainer" parent="DescScrollBar" unique_id=1470565023]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="DescTitle" type="Label" parent="DescScrollBar/ContentContainer" unique_id=136005221]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "Description:"
+
+[node name="Description" type="RichTextLabel" parent="DescScrollBar/ContentContainer" unique_id=1810584970]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Description Goes here"
+fit_content = true
+meta_underlined = false
+hint_underlined = false
+
+[node name="DescSeparator" type="HSeparator" parent="DescScrollBar/ContentContainer" unique_id=1698521707]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="StatsTitle" type="Label" parent="DescScrollBar/ContentContainer" unique_id=1569492835]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "Stats:"
+
+[node name="StatsTop" type="RichTextLabel" parent="DescScrollBar/ContentContainer" unique_id=741282142]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Statistics Go Here"
+fit_content = true
+autowrap_mode = 2
+
+[node name="PieChartsContainer" type="HBoxContainer" parent="DescScrollBar/ContentContainer" unique_id=950330643]
+layout_mode = 2
+
+[node name="CulturesChart" type="VBoxContainer" parent="DescScrollBar/ContentContainer/PieChartsContainer" unique_id=704069279]
+layout_mode = 2
+
+[node name="CulturesChart" type="Control" parent="DescScrollBar/ContentContainer/PieChartsContainer/CulturesChart" unique_id=1236053687]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+script = ExtResource("3_hssvn")
+colors = {}
+metadata/_custom_type_script = "uid://bp5y8uk5vspts"
+
+[node name="CulturesLabel" type="Label" parent="DescScrollBar/ContentContainer/PieChartsContainer/CulturesChart" unique_id=657919343]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "Cultures"
+horizontal_alignment = 1
+
+[node name="StatsSeparator" type="HSeparator" parent="DescScrollBar/ContentContainer" unique_id=529642687]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="HistoryTitle" type="Label" parent="DescScrollBar/ContentContainer" unique_id=1835261741]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 30
+text = "History:"
+
+[node name="History" type="RichTextLabel" parent="DescScrollBar/ContentContainer" unique_id=1816751528]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "History Goes Here"
+fit_content = true
+autowrap_mode = 2

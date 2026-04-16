@@ -4,6 +4,7 @@ using System.Linq;
 
 public partial class DebugLabel : Label
 {
+    [Export] SelectionManager selectionManager;
     [Export] MapManager map;
     [Export] SimManagerHolder simHolder;
     SimManager simManager;
@@ -21,7 +22,8 @@ public partial class DebugLabel : Label
         if (map != null)
         {
             Position = GetGlobalMousePosition();
-            Region region = map.hoveredRegion;
+            Region region = selectionManager.GetSelectedRegion();
+            //Text = "Selected Region: " + (region == null ? "null" : region.name);
             if (region != null && region.owner != null){
                 State state = region.owner;
                 //string leaderText = "Leader: None";
@@ -45,7 +47,7 @@ public partial class DebugLabel : Label
 
             } else {
                 Text = "";
-            }            
+            }          
         }
     } 
 

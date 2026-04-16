@@ -45,10 +45,8 @@ public partial class Alliance : Polity
     }
     public void SetLeader(State newLeader)
     {
-        if (memberStates.Contains(newLeader))
-        {
-            leadState = newLeader;
-        }
+        leadState = newLeader;
+        AddMember(newLeader);
     }
     public void AddMember(State newMember)
     {
@@ -61,6 +59,8 @@ public partial class Alliance : Polity
 
         newMember.diplomacy.alliances.Add(this);
         memberStates.Add(newMember);
+
+        NameGenerator.UpdateAllianceName(this);
     }
     public void RemoveMember(State member)
     {

@@ -5,35 +5,29 @@
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
+[ext_resource type="Script" uid="uid://cfr2ueilt3raf" path="res://Scenes/SelectionManager.cs" id="5_tgy6u"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
 [ext_resource type="Script" uid="uid://xqd6wvhycyt7" path="res://Scripts/Managers/SimManagerHolder.cs" id="7_22asu"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/UI/TerrainMap.cs" id="7_nnt18"]
 [ext_resource type="Script" uid="uid://ca4hg87crqxlm" path="res://Scripts/Managers/EncyclopediaManager.cs" id="8_iivbl"]
-[ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/info_tab.tscn" id="9_7nbq1"]
+[ext_resource type="PackedScene" uid="uid://bl4uuhft253r1" path="res://Scenes/Encyclopedia/info_tab.tscn" id="9_7nbq1"]
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/Menus/GameUI.cs" id="11_7nbq1"]
+[ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/Encyclopedia/polity_tab.tscn" id="11_81klo"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/Sim Stats/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/God Mode/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scripts/UI/Debug/FrameBreakdown.cs" id="12_ewbju"]
-[ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/index_tab.tscn" id="12_mg4q0"]
+[ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/Encyclopedia/index_tab.tscn" id="12_mg4q0"]
 [ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="12_vm72l"]
 [ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="13_22asu"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
-[ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scripts/UI/Encyclopedia/EncyclopediaMainMenu.cs" id="14_fkdbe"]
+[ext_resource type="PackedScene" uid="uid://5m67xih57d7m" path="res://Scenes/Encyclopedia/encyclopedia_main_menu.tscn" id="14_fkdbe"]
 [ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/Sim Stats/ObjectInfo.cs" id="15_ewbju"]
 [ext_resource type="Script" uid="uid://c1u8xh8uvrleb" path="res://Scripts/UI/TopPanel.cs" id="16_22asu"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/God Mode/ActionPanel.cs" id="17_7nbq1"]
 [ext_resource type="Script" uid="uid://d1qang7nemn0r" path="res://Scripts/UI/Debug/DebugPanel.cs" id="19_fkdbe"]
 [ext_resource type="Script" uid="uid://e41goq8da66p" path="res://Scripts/UI/Saving/SaveSimPanel.cs" id="22_22asu"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="22_vm72l"]
-
-[sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
-content_margin_left = 4.0
-content_margin_top = 0.0
-content_margin_right = 4.0
-content_margin_bottom = 0.0
-color = Color(0.5, 0.5, 0.5, 1)
-thickness = 4
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_fkdbe"]
 content_margin_left = 1.0
@@ -82,18 +76,25 @@ visible = false
 script = ExtResource("2_fkdbe")
 timeManager = NodePath("../Time Manager")
 
+[node name="SelectionManager" type="Node2D" parent="." unique_id=288866782 node_paths=PackedStringArray("simHolder", "deselectButton", "mapManager")]
+script = ExtResource("5_tgy6u")
+simHolder = NodePath("../Simulation")
+deselectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/CloseInfoButton")
+mapManager = NodePath("../Map Manager")
+
 [node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder", "gameSpeedUI")]
 script = ExtResource("7_ewbju")
 simHolder = NodePath("../Simulation")
 gameSpeedUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/Game Speed Holder/TimeSpeed")
 
-[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("simHolder", "playerCamera", "mapModeUI", "deselectMetaObjectButton", "showRegionsCheckbox")]
+[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("timeManager", "selectionManager", "simHolder", "playerCamera", "mapModeUI", "showRegionsCheckbox")]
 z_index = 2
 script = ExtResource("6_85qyi")
+timeManager = NodePath("../Time Manager")
+selectionManager = NodePath("../SelectionManager")
 simHolder = NodePath("../Simulation")
 playerCamera = NodePath("../PlayerCamera")
 mapModeUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/MapModeHolder/MapMode")
-deselectMetaObjectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/CloseInfoButton")
 showRegionsCheckbox = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/ShowRegionsCheckbox")
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
@@ -114,13 +115,14 @@ simHolder = NodePath("../Simulation")
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Encyclopedia" type="CanvasLayer" parent="." unique_id=339626827 node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenuText", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton", "simHolder")]
+[node name="Encyclopedia" type="CanvasLayer" parent="." unique_id=339626827 node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenu", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton", "simHolder")]
 script = ExtResource("8_iivbl")
 infoTabScene = ExtResource("9_7nbq1")
+polityTabScene = ExtResource("11_81klo")
 indexTabScene = ExtResource("12_mg4q0")
 timeManager = NodePath("../Time Manager")
 encyclopediaMenu = NodePath("Encyclopedia/TabManager")
-mainMenuText = NodePath("Encyclopedia/TabManager/Main Menu/EncyclopediaDesc")
+mainMenu = NodePath("Encyclopedia/TabMargins/Main Menu")
 encyclopediaHolder = NodePath("Encyclopedia")
 gameUi = NodePath("../UI")
 playerCamera = NodePath("../PlayerCamera")
@@ -154,54 +156,24 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 text = "Exit Encyclopedia"
 
-[node name="TabManager" parent="Encyclopedia/Encyclopedia" unique_id=538989815 instance=ExtResource("13_22asu")]
+[node name="TabManager" parent="Encyclopedia/Encyclopedia" unique_id=538989815 node_paths=PackedStringArray("tabHolder") instance=ExtResource("13_22asu")]
 layout_mode = 2
+tabHolder = NodePath("../TabMargins")
 
-[node name="Main Menu" type="VBoxContainer" parent="Encyclopedia/Encyclopedia/TabManager" unique_id=870040980]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 32.0
-offset_right = -10.0
-offset_bottom = 684.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 4
-script = ExtResource("14_fkdbe")
-
-[node name="Label" type="Label" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=1703519103]
+[node name="TabMargins" type="MarginContainer" parent="Encyclopedia/Encyclopedia" unique_id=2086875494]
 layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 100
-text = "Encyclopedia"
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="HSeparator" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=1671633075]
+[node name="Main Menu" parent="Encyclopedia/Encyclopedia/TabMargins" unique_id=554748121 instance=ExtResource("14_fkdbe")]
+visible = true
 layout_mode = 2
-theme_override_constants/separation = 16
-theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
-
-[node name="EncyclopediaDesc" type="RichTextLabel" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=1224873756]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/normal_font_size = 30
-bbcode_enabled = true
-text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it, or select an index below to browse the objects of your world.
-
-[url=chaIndex]Characters Index[/url]
-[url=regIndex]Regions Index[/url]
-[url=staIndex]States Index[/url]"
-fit_content = true
-autowrap_mode = 2
-
-[node name="HSeparator2" type="HSeparator" parent="Encyclopedia/Encyclopedia/TabManager/Main Menu" unique_id=113083382]
-layout_mode = 2
-theme_override_constants/separation = 16
-theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=2059065808]
+visible = false
 script = ExtResource("11_7nbq1")
 
 [node name="Bars" type="Control" parent="UI" unique_id=2084363429]
@@ -599,7 +571,7 @@ text = "Misc Time"
 flat = false
 alignment = 0
 
-[node name="InfoHolder" type="Control" parent="UI" unique_id=213025015 node_paths=PackedStringArray("simHolder", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
+[node name="InfoHolder" type="Control" parent="UI" unique_id=213025015 node_paths=PackedStringArray("selectionManager", "simHolder", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
 clip_contents = true
 layout_mode = 3
 anchors_preset = 0
@@ -607,6 +579,7 @@ offset_top = 256.0
 offset_right = 387.0
 offset_bottom = 648.0
 script = ExtResource("15_ewbju")
+selectionManager = NodePath("../../SelectionManager")
 simHolder = NodePath("../../Simulation")
 nameLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType/Name")
 typeLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType/Type")
@@ -869,10 +842,11 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
 
-[node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("map", "simHolder")]
+[node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("selectionManager", "map", "simHolder")]
 offset_right = 40.0
 offset_bottom = 23.0
 script = ExtResource("22_vm72l")
+selectionManager = NodePath("../../SelectionManager")
 map = NodePath("../../Map Manager")
 simHolder = NodePath("../../Simulation")
 

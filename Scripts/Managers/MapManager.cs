@@ -2,18 +2,16 @@ using Godot;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-
+[GlobalClass]
 public partial class MapManager : Node2D
 {
     Task mapmodeTask = null;
     SimManager simManager;
-    TimeManager timeManager;
+    [Export] TimeManager timeManager;
+    [Export] SelectionManager selectionManager;
     Vector2I worldSize;
     public Sprite2D regionOverlay;
     //ImageTexture regionTexture;
@@ -21,17 +19,11 @@ public partial class MapManager : Node2D
     Image terrainImage;
     
     public MapModes mapMode;
-    public Vector2 mousePos;
-    public Vector2I hoveredRegionPos;
-    public Region hoveredRegion = null;
-    public State hoveredState = null;
-    public PopObject selectedMetaObj {get; private set; }
     public MapModes selectedMode;
     public bool initialized = false;
     [Export] SimManagerHolder simHolder;
     [Export] PlayerCamera playerCamera;
     [Export] OptionButton mapModeUI;
-    [Export] Button deselectMetaObjectButton;
     [Export] public CheckBox showRegionsCheckbox;
 
     [Export(PropertyHint.Range, "1,10")] int regionResolution = 4;
@@ -60,7 +52,6 @@ public partial class MapManager : Node2D
     {
         regionOverlay = GetNode<Sprite2D>("Region Map");
 		simHolder.simStartEvent += InitMapManager;
-        deselectMetaObjectButton.Pressed += () => SelectMetaObject(null);
 	}
     void InitMapManager() {
         // Frees dimension buffer
@@ -69,7 +60,6 @@ public partial class MapManager : Node2D
         if (terrainTexture.IsValid) rd.FreeRid(terrainTexture);
 
         simManager = simHolder.simManager;
-        timeManager = simManager.timeManager;
         simManager.mapManager = this;
 
         Scale = simManager.terrainMap.Scale/regionResolution;
@@ -227,39 +217,12 @@ public partial class MapManager : Node2D
     {
         if (initialized)
         {
-            //UpdateRegionVisibility(showRegionsCheckbox.ButtonPressed);
-            
-            mousePos = GetGlobalMousePosition();
-            hoveredRegionPos = simManager.GlobalToTilePos(mousePos);
-
-            UpdateHovering();
-
             if (regionOverlay.Visible)
             {
                 CheckMapmodeChange();
             }
         }
 
-    }
-    void UpdateHovering()
-    {
-        Region lastHovered = hoveredRegion;
-        if (hoveredRegionPos.X >= 0 && hoveredRegionPos.X < worldSize.X && hoveredRegionPos.Y >= 0 && hoveredRegionPos.Y < worldSize.Y && regionOverlay.Visible)
-        {
-            hoveredRegion = simManager.objectManager.GetRegion(hoveredRegionPos.X, hoveredRegionPos.Y);
-            UpdateRegionColor(hoveredRegion.pos.X, hoveredRegion.pos.Y);
-            hoveredState = hoveredRegion.owner;
-        }
-        else
-        {
-            hoveredRegion = null;
-            hoveredState = null;
-        }
-
-        if (lastHovered != null)
-        {
-            UpdateRegionColor(lastHovered.pos.X, lastHovered.pos.Y);
-        }
     }
 
     void UpdateRegionVisibility(bool value) {
@@ -268,11 +231,9 @@ public partial class MapManager : Node2D
             regionOverlay.Visible = value;
             if (!value)
             {
-                hoveredRegion = null;
-                hoveredState = null;              
+                selectionManager.DeselectRegion();            
             }            
         }
-
     }
 
     void CheckMapmodeChange(){
@@ -286,76 +247,10 @@ public partial class MapManager : Node2D
             }
         }        
     }
-    public void SelectMetaObject(PopObject newObject)
-    {
-        if (newObject != selectedMetaObj)
-        {
-            selectedMetaObj = newObject;
-            UpdateRegionColors(simManager.regionIds.Values);
-        }   
-    }
-    public override void _UnhandledInput(InputEvent evnt)
-    {
-        if (evnt.IsAction("Select") && hoveredRegion != null)
-        {
-            PopObject newSelected = selectedMetaObj;
-            switch (mapMode)
-            {
-                case MapModes.REALM:
-                    if (hoveredRegion.habitable)
-                    {
-                        newSelected = hoveredRegion;
-                        if (hoveredState != null)
-                        {
-                            newSelected = hoveredState.diplomacy.GetOverlord();
-                        }
-                    }
-                    else
-                    {
-                        newSelected = null;
-                    }
-                    break;
-                case MapModes.RAINFALL:
-                    newSelected = hoveredRegion;
-                    break;
-                case MapModes.POLITIY:
-                    if (hoveredRegion.habitable)
-                    {
-                        newSelected = hoveredRegion;
-                        if (hoveredState != null)
-                        {
-                            newSelected = hoveredState;
-                        }
-                    }
-                    else
-                    {
-                        newSelected = null;
-                    }
-                    break;
-                case MapModes.CULTURE:
-                    if (hoveredRegion.cultureIds.Keys.Count > 0)
-                    {
-                        newSelected = objectManager.GetCulture(hoveredRegion.largestCultureId);
-                    }
-                    else
-                    {
-                        newSelected = null;
-                    }
-                    break;
-                case MapModes.TRADE_WEIGHT:
-                    if (hoveredRegion.pops.Count >= 0 && hoveredRegion.habitable)
-                    {
-                        newSelected = hoveredRegion;
-                    }
-                    break;
-            }
-            SelectMetaObject(newSelected);
-        }
-    }
 
     public void SetMapMode(MapModes mode)
     {
-        SelectMetaObject(null);
+        selectionManager.DeselectRegion();
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
         UpdateRegionColors(simManager.regionIds.Values);
@@ -404,25 +299,24 @@ public partial class MapManager : Node2D
                         }
                     }                 
                 }
-               
-                if (selectedMetaObj != null)
+
+                if (selectionManager.IsRegionSelected())
                 {
-                    switch (selectedMetaObj.GetObjectType())
+                    State selectedState = selectionManager.GetSelectedState();
+                    if (selectedState != null && region.owner != null)
                     {
-                        case ObjectType.REGION:
-                            if (region != selectedMetaObj)
-                            {
-                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                            }
-                            break;
-                        case ObjectType.STATE:
-                            Color cBefore = color;
-                            // Darkens Unrelated Regions
-                            if (region.owner == null || region.owner.diplomacy.GetOverlord() != ((State)selectedMetaObj).diplomacy.GetOverlord())
-                            {
-                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.7f);
-                            }                           
-                            break;
+                        // Darkens unrelated states
+                        if (region.owner != null && region.owner.diplomacy.GetOverlord() != selectedState.diplomacy.GetOverlord())
+                        {
+                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
+                        }                      
+                    }
+                    else
+                    {
+                        if (region != selectionManager.GetSelectedRegion())
+                        {
+                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
+                        }                        
                     }
                 }
                 break;
@@ -447,46 +341,37 @@ public partial class MapManager : Node2D
                     }                 
                 }
                
-                if (selectedMetaObj != null)
+                if (selectionManager.IsRegionSelected())
                 {
-                    switch (selectedMetaObj.GetObjectType())
+                    State selectedState = selectionManager.GetSelectedState();
+                    if (selectedState != null && region.owner != null)
                     {
-                        case ObjectType.REGION:
-                            if (region != selectedMetaObj)
-                            {
-                                color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                            }
-                            break;
-                        case ObjectType.STATE:
-                            Color cBefore = color;
-                            // Darkens unrelated states
-                            if (region.owner != selectedMetaObj)
-                            {
-                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], 0.7f);
-                            }
-                            if (region.owner == null || region.owner == selectedMetaObj)
-                            {
-                                break;
-                            }
-
-                            // Highlights Realms
-                            if (region.owner.diplomacy.GetOverlord() == selectedMetaObj)
-                            {
-                                color = Utility.MultiColourLerp([cBefore, new Color(0, 0, 0)], colorDarkness);
-                            }
-                            break;
+                        // Darkens unrelated states
+                        if (region.owner != selectedState)
+                        {
+                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
+                        }                      
+                    } else
+                    {
+                        if (region != selectionManager.GetSelectedRegion())
+                        {
+                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
+                        }                        
                     }
                 }
 
                 break;
             case MapModes.ALLIANCE:
+                Alliance alliance = null;
+                State overlord = null;
+
                 if (region.owner != null)
                 {
                     color = new Color(0.4f, 0.4f, 0.4f, 1);
-                    State overlord = region.GetController();
+                    overlord = region.GetController();
                     borderId = overlord.id;
 
-                    Alliance alliance = overlord.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE);
+                    alliance = overlord.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE);
                     if (alliance != null)
                     {
                         borderId = overlord.id;
@@ -504,6 +389,27 @@ public partial class MapManager : Node2D
                 {
                     borderId = 1;
                     color = new Color(0, 0, 0, 1);
+                }
+
+                if (selectionManager.IsRegionSelected())
+                {
+                    Alliance selectedAlliance = selectionManager.GetSelectedAlliance(AllianceType.ALLIANCE);
+                    
+                    if (region.owner != null)
+                    {
+                        // Darkens unrelated states
+                        if ((selectedAlliance == null && selectionManager.GetSelectedPolity() != region.owner.diplomacy.GetPolity()) || alliance != selectedAlliance)
+                        {
+                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
+                        }                      
+                    }
+                    else
+                    {
+                        if (region != selectionManager.GetSelectedRegion())
+                        {
+                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
+                        }                        
+                    }
                 }
                 break;
             case MapModes.POPULATION:
@@ -530,9 +436,9 @@ public partial class MapManager : Node2D
                     color = new Color(0, 0, 0, 1);
                 }
 
-                if (selectedMetaObj != null && selectedMetaObj.GetObjectType() == ObjectType.CULTURE)
+                if (selectionManager.IsRegionSelected())
                 {
-                    Culture culture = (Culture)selectedMetaObj;
+                    Culture culture = selectionManager.GetSelectedCulture();
                     if (region.cultureIds.TryGetValue(culture.id, out long population) && population > 0 && region.largestCultureId != culture.id && region.habitable)
                     {
                         color = culture.color;
@@ -605,7 +511,7 @@ public partial class MapManager : Node2D
                 }
                 break;
             case MapModes.NONE:
-                if (selectedMetaObj != null)
+                if (selectionManager.IsRegionSelected())
                 {
                     color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                 }
@@ -617,7 +523,8 @@ public partial class MapManager : Node2D
                 Mathf.InverseLerp(0, 24, tile.GetDaylightForMonth(month)));
                 break;
         }
-        if (hoveredRegion == region){
+
+        if (selectionManager.hoveredRegion == region){
             color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.3f);
         }
         

@@ -303,7 +303,7 @@ public class Region : PopObject, ISaveable
 
             // Sets Leader
             objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
-            StateNamer.UpdateStateNames(owner);           
+            NameGenerator.UpdateStateName(owner);           
         }
     }
     public void StateBordering()
@@ -754,7 +754,7 @@ public class Region : PopObject, ISaveable
         // If the region is populated
         $" It has a population of {population:#,###0}."
         // Otherwise
-        : " It uninhabited.";
+        : ". It is uninhabited.";
         // The rest is irrelevant if the region is unpopulated
         if (population == 0)
         {

@@ -12,8 +12,6 @@ public partial class IndexTab : BaseEncyclopediaTab
 	[Export] Label resultsLabel;
 	public ObjectType type;
 	Dictionary<string, Button> resultDictionary = [];
-	public static SimManager sim;
-	public static EncyclopediaManager encyclopediaManager;
 	int currentIdentifier = 0;
 	// Called when the node enters the scene tree for the first time.
 	public override void InitTab()
@@ -24,7 +22,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			case ObjectType.CHARACTER:
 				Name = "Character Index";
 				indexNameLabel.Text = "Character Index";
-				foreach (Character character in sim.characterIds.Values)
+				foreach (Character character in simManager.characterIds.Values)
 				{
 					CreateResultButton(character);
 				}
@@ -32,7 +30,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			case ObjectType.STATE:
 				Name = "State Index";
 				indexNameLabel.Text = "State Index";
-				foreach (State state in sim.statesIds.Values)
+				foreach (State state in simManager.statesIds.Values)
 				{
 					CreateResultButton(state);
 				}
@@ -40,7 +38,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			case ObjectType.REGION:
 				Name = "Region Index";
 				indexNameLabel.Text = "Region Index";
-				foreach (Region region in sim.regionIds.Values)
+				foreach (Region region in simManager.regionIds.Values)
 				{
 					if (!region.habitable) continue;
 					CreateResultButton(region);

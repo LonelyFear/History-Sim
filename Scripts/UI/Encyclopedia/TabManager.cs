@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public partial class TabManager : TabBar
 {
+	[Export] MarginContainer tabHolder;
 	List<Control> openTabs = [];
 	Panel panel;
 	Panel tabBarBackground;
@@ -12,24 +13,23 @@ public partial class TabManager : TabBar
 		panel = GetNode<Panel>("Panel");
 		tabBarBackground = GetNode<Panel>("TabBarBackground");
 		ClearTabs();
-		foreach (Node node in GetChildren())
+		foreach (Node node in tabHolder.GetChildren())
 		{
-			if (node != panel && node != tabBarBackground)
-            {
-				OpenTab((Control)node);
-            }
+			OpenTab((Control)node);
 		}
     }
+	
 	public void OpenTab(Control tab)
 	{
 		if (openTabs.Contains(tab)) return;
-		if (tab.GetParent() != this)
+		if (tab.GetParent() != tabHolder)
         {
-            AddChild(tab);
+            tabHolder.AddChild(tab);
         }
 		openTabs.Add(tab);
 		AddTab(tab.Name);
 	}
+
 	public void CloseTab(Control tab)
 	{
 		CallDeferred("remove_tab", [openTabs.IndexOf(tab)]);

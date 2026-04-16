@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://5m67xih57d7m"]
+
+[ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scripts/UI/Encyclopedia/EncyclopediaMainMenu.cs" id="1_ylssi"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_m007f"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+color = Color(0.5, 0.5, 0.5, 1)
+thickness = 4
+
+[node name="Main Menu" type="VBoxContainer" unique_id=554748121 node_paths=PackedStringArray("text")]
+visible = false
+theme_override_constants/separation = 4
+script = ExtResource("1_ylssi")
+text = NodePath("EncyclopediaDesc")
+
+[node name="Label" type="Label" parent="." unique_id=367353505]
+layout_mode = 2
+theme = ExtResource("2_m007f")
+theme_override_font_sizes/font_size = 100
+text = "Encyclopedia"
+
+[node name="HSeparator" type="HSeparator" parent="." unique_id=2031796464]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
+
+[node name="EncyclopediaDesc" type="RichTextLabel" parent="." unique_id=1265638918]
+layout_mode = 2
+theme = ExtResource("2_m007f")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it, or select an index below to browse the objects of your world.
+
+[url=chaIndex]Characters Index[/url]
+[url=regIndex]Regions Index[/url]
+[url=staIndex]States Index[/url]"
+fit_content = true
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="." unique_id=1738708719]
+layout_mode = 2
+theme_override_constants/separation = 16
+theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")

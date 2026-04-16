@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Godot;
 using MessagePack;
 
@@ -88,6 +89,9 @@ public abstract class NamedObject
 			case ObjectType.WAR:
 				obj = objectManager.GetWar(id);
 				break;
+			case ObjectType.ALLIANCE:
+				obj = objectManager.GetAlliance(id);
+				break;
             default:
                 obj = null;
                 break;
@@ -112,61 +116,31 @@ public abstract class NamedObject
 				return ObjectType.CHARACTER;
 			case "war":
 				return ObjectType.WAR;
+			case "all":
+				return ObjectType.ALLIANCE;
 			default:
 				return ObjectType.UNKNOWN;
         }
     }
     public string GetFullId()
     {
-        string typeId = "sta";
-        switch (this)
+        string typeId = this switch
         {
-            case State:
-                typeId = "sta";
-                break;
-            case War:
-                typeId = "war";
-                break;
-            case Character:
-                typeId = "cha";
-                break;
-            case Culture:
-                typeId = "cul";
-                break;
-            case Region:
-                typeId = "reg";
-                break;
-            default:
-                break;
-        }
+            State => "sta",
+            Region => "reg",
+            Culture => "cul",
+            Character => "cha",
+            War => "war",
+            Alliance => "all",
+            _ => "idk"
+        };
         return typeId + id;        
     }
     public static string GenerateUrlText(NamedObject obj, string text, string color = "orange")
     {
-        string typeId = "sta";
-        switch (obj)
+        if (obj != null && GetNamedObject(obj.GetFullId()) != null)
         {
-            case State:
-                typeId = "sta";
-                break;
-            case War:
-                typeId = "war";
-                break;
-            case Character:
-                typeId = "cha";
-                break;
-            case Culture:
-                typeId = "cul";
-                break;
-            case Region:
-                typeId = "reg";
-                break;
-            default:
-                break;
-        }
-        if (obj != null && GetNamedObject(typeId + obj.id) != null)
-        {
-            return $"[color={color}][url={typeId}{obj.id}]{text}[/url][/color]";
+            return $"[color={color}][url={obj.GetFullId()}]{text}[/url][/color]";
         } else
         {
             return $"{text}";
@@ -184,6 +158,7 @@ public enum ObjectType
     CULTURE,
     CHARACTER,
     WAR,
+    ALLIANCE,
     LANDFORM,
     UNKNOWN
 }

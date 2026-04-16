@@ -558,7 +558,9 @@ public class SimManager
 
         Pop.objectManager = objectManager;
         Character.sim = this;
-        IndexTab.sim = this;
+
+        BaseEncyclopediaTab.simManager = this;
+        BaseEncyclopediaTab.objectManager = objectManager;
     }
     public void OnWorldgenFinished()
     {
@@ -912,7 +914,7 @@ public class SimManager
             state.CountPopulation();
             state.UpdateDisplayColor();
             state.UpdateCapital();
-            StateNamer.UpdateStateNames(state);
+            NameGenerator.UpdateStateName(state);
         });
 
         countedPerformanceInfo["Stats Time"] += stopwatch.Elapsed.TotalMilliseconds;

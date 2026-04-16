@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
+[GlobalClass]
 public partial class EncyclopediaManager : CanvasLayer
 {
 	[Export] PackedScene infoTabScene;
+	[Export] PackedScene polityTabScene;
 	[Export] PackedScene indexTabScene;
 	[Export] TimeManager timeManager;
 	[Export] TabManager encyclopediaMenu;
-	[Export] RichTextLabel mainMenuText;
+	[Export] EncyclopediaMainMenu mainMenu;
 	[Export] Control encyclopediaHolder;
 	[Export] GameUI gameUi;
 	[Export] PlayerCamera playerCamera;
@@ -23,12 +25,12 @@ public partial class EncyclopediaManager : CanvasLayer
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		IndexTab.encyclopediaManager = this;
-		InfoTab.manager = this;
+        BaseEncyclopediaTab.encyclopediaManager = this;
+
 		simHolder.simStartEvent += OnSimStart;
 		encyclopediaMenu.TabClosePressed += CloseTab;
 		closeEncyclopediaButton.Pressed += CloseEncyclopedia;
-		mainMenuText.MetaClicked += OnMetaClicked;
+		mainMenu.text.MetaClicked += OnMetaClicked;
     }
 	public void OnSimStart()
 	{
@@ -72,40 +74,52 @@ public partial class EncyclopediaManager : CanvasLayer
 		ulong id = (ulong)objectType;
         // TODO: Implement
 		GD.Print(objectType);
-		int indexOffset = 2;
 		// If we already have a tab open for this object switch to it
 		if (infoTabs.ContainsKey(id))
 		{
-			encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;
+			encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex();
 			return;
 		}
 		IndexTab newTab = indexTabScene.Instantiate<IndexTab>();
 		newTab.type = objectType;
 		newTab.InitTab();
 		encyclopediaMenu.OpenTab(newTab);
+
 		infoTabs.Add(id, newTab);
-		encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;		
+		encyclopediaMenu.CurrentTab = newTab.GetIndex();		
     }
 	public void OpenTab(string fullId)
 	{
 		ulong id = ulong.Parse(fullId[3..]);
-		int indexOffset = 2;
+
 		// If we already have a tab open for this object switch to it
 		if (infoTabs.ContainsKey(id))
 		{
-			encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;
+			encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex();
 			return;
 		}
-		InfoTab newTab = infoTabScene.Instantiate<InfoTab>();
+		
+		BaseEncyclopediaTab newTab;
 		NamedObject obj = NamedObject.GetNamedObject(fullId);
-
-		newTab.loadedObj = obj;
-		newTab.objectId = id;
-		newTab.objectType = NamedObject.GetTypeFromString(fullId[..3]);
+		switch (obj)
+		{
+			case Polity:
+				newTab = polityTabScene.Instantiate<PolityTab>();
+				((PolityTab)newTab).polity = (Polity)obj;
+				break;
+			default:
+                newTab = infoTabScene.Instantiate<InfoTab>();
+                ((InfoTab)newTab).objectType = NamedObject.GetTypeFromString(fullId[..3]);
+				((InfoTab)newTab).loadedObj = obj;			
+				break;
+		}
+		newTab.Name = obj.name;
 		newTab.InitTab();
+
 		encyclopediaMenu.OpenTab(newTab);
 		infoTabs.Add(id, newTab);
-		encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex() - indexOffset;
+
+		encyclopediaMenu.CurrentTab = infoTabs[id].GetIndex();
 	}
 	public void CloseTab(long index)
 	{

@@ -9,16 +9,27 @@ public partial class PieChart : Control
 {
 	[Export] Dictionary<string, float> elements = [];
 	[Export] Dictionary<string, Color> colors;
+
+	[ExportToolButton("Update Chart")] 
+	public Callable updateChart => Callable.From(QueueRedraw);
 	Random rng = new Random();
 	// Called when the node enters the scene tree for the first time.
 	public void AddElement(string name, float value, Color color)
 	{
-		elements.Add(name, value);
-		colors.Add(name, color);
-		QueueRedraw();
+		elements[name] = value;
+		colors[name] = color;
 	}
 
-	void DrawCircleArcPoly( Vector2 center, float radius, float angleFrom, float angleTo, Color color){
+	public void Clear()
+	{
+		foreach (string key in elements.Keys)
+		{
+			elements.Remove(key);
+			colors.Remove(key);
+		}
+	}
+
+	void DrawCircleArcPoly(Vector2 center, float radius, float angleFrom, float angleTo, Color color){
 		int points = 32;
         Vector2[] pointVectors = [center];
 
@@ -51,7 +62,7 @@ public partial class PieChart : Control
 		{
 			float proportion = pair.Value/sum;
 
-			float newAngle = 360f * proportion;
+			float newAngle = 359.99f * proportion;
 			DrawCircleArcPoly(Size/2, Mathf.Min(Size.X, Size.Y)/2, lastAngle, lastAngle + newAngle, colors[pair.Key]);
 			lastAngle += newAngle;
 		}

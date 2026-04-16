@@ -6,6 +6,7 @@ using MessagePack;
 [MessagePackObject]
 public class ObjectManager
 {
+    [IgnoreMember] public static SelectionManager selectionManager;
     [IgnoreMember] public static SimManager simManager;
     [IgnoreMember] public static TimeManager timeManager;
     [Key(0)] public ulong currentId = 20;
@@ -192,9 +193,9 @@ public class ObjectManager
     }
     public void DeleteState(State deletedState)
     {
-        if (simManager.mapManager.selectedMetaObj == deletedState)
+        if (selectionManager.GetSelectedState() == deletedState)
         {
-            simManager.mapManager.SelectMetaObject(null);
+            //selectionManager.DeselectRegion();
         }
         if (deletedState.diplomacy.liegeId != null)
         {
@@ -223,9 +224,8 @@ public class ObjectManager
             relation.diplomacy.RemoveRelations(deletedState);
             //relation.borderingStates.Remove(deletedState);
         }
-        foreach (ulong allianceId in deletedState.diplomacy.allianceIds.ToArray())
+        foreach (Alliance alliance in deletedState.diplomacy.alliances.ToArray())
         {
-            Alliance alliance = GetAlliance(allianceId);
             alliance.RemoveMember(deletedState);
         }
 
@@ -327,8 +327,9 @@ public class ObjectManager
             type = type,
             exclusive = exclusive
         };
-        alliance.AddMember(founder);
+
         alliance.SetLeader(founder);
+        alliance.AddMember(founder);
 
         simManager.allianceIds.Add(alliance.id, alliance);
         return alliance;

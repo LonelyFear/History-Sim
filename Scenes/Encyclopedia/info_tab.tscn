@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://8kvblrpf5g8"]
+[gd_scene format=3 uid="uid://bl4uuhft253r1"]
 
-[ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_5rqtu"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_0jkeo"]
+[ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_q0aqs"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_tbcit"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
 content_margin_left = 4.0
@@ -18,14 +18,12 @@ content_margin_right = 10.0
 content_margin_bottom = 10.0
 
 [node name="InfoTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
-offset_left = 10.0
-offset_top = 32.0
-offset_right = 1270.0
-offset_bottom = 653.0
+offset_right = 1280.0
+offset_bottom = 720.0
 mouse_filter = 0
 mouse_force_pass_scroll_events = false
 theme_override_constants/separation = 4
-script = ExtResource("1_5rqtu")
+script = ExtResource("1_q0aqs")
 objName = NodePath("ObjName")
 objType = NodePath("ObjType")
 objDesc = NodePath("DescScrollBar/VBoxContainer/Description")
@@ -35,13 +33,13 @@ metadata/_tab_index = 1
 
 [node name="ObjName" type="Label" parent="." unique_id=602530060]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 70
 text = "Object Name"
 
 [node name="ObjType" type="Label" parent="." unique_id=1255607242]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 25
 text = "Object Type"
 
@@ -64,13 +62,13 @@ theme_override_constants/separation = 4
 
 [node name="DescTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=136005221]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 30
 text = "Description:"
 
 [node name="Description" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=1810584970]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
 text = "Description Goes here"
@@ -85,13 +83,13 @@ theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
 [node name="StatsTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=1569492835]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 30
 text = "Stats:"
 
 [node name="Stats" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=741282142]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
 text = "Statistics Go Here"
@@ -105,13 +103,13 @@ theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
 [node name="HistoryTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=1835261741]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 30
 text = "History:"
 
 [node name="History" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=1816751528]
 layout_mode = 2
-theme = ExtResource("2_0jkeo")
+theme = ExtResource("2_tbcit")
 theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
 text = "History Goes Here"

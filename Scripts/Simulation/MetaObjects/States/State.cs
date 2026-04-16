@@ -370,34 +370,7 @@ public partial class State : Polity, ISaveable
         desc += $" lead by {(leader == null ? "nobody" : GenerateUrlText(leader, leader.name))}. "
         + $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
         return desc;
-    }
-    public override string GenerateStatsText()
-    {
-        string text = $"Name: {name}";
-        text += $"\nPopulation: {population:#,###0}\n";
-        
-        if (population > 0)
-        {
-            text += $"Cultures Breakdown:\n";
-
-            foreach (var cultureSizePair in cultureIds.OrderByDescending(pair => pair.Value))
-            {
-                Culture culture = objectManager.GetCulture(cultureSizePair.Key);
-                long localPopulation = cultureSizePair.Value;
-                
-                // Skips if the culture is too small
-                if (localPopulation < 1) continue;
-
-                text += GenerateUrlText(culture, culture.name) + ":\n";
-                text += $"  Population: {localPopulation:#,###0} ";
-
-                float culturePercentage = localPopulation/(float)population;
-                text += $"({culturePercentage:P0})\n";
-            }    
-            text += $"\nWorkforce: {workforce:#,###0}\n";    
-        }
-        return text;
-    }    
+    }  
 }   
 public enum Sovereignty
 {
