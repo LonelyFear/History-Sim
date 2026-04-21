@@ -33,11 +33,11 @@ public class ObjectManager
     {
         return GetRegion(pos.X, pos.Y);
     }
-    public Market GetMarket(ulong? id)
+    public TradeZone GetTradeZone(ulong? id)
     {
         try
         {
-            return simManager.marketIds[(ulong)id];
+            return simManager.tradeZoneIds[(ulong)id];
         }
         catch
         {
@@ -355,21 +355,21 @@ public class ObjectManager
             return null;
         }    
     }
-    public Market CreateTradeZone(Region region)
+    public TradeZone CreateTradeZone(Region region)
     {
-        Market zone = new Market()
+        TradeZone zone = new TradeZone()
         {
             id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
             centerId = region.id,
-            name = region.name + " Market"
+            name = region.name + " TradeZone"
         };
 
         zone.AddRegion(region);
-        simManager.marketIds.Add(zone.id, zone);
+        simManager.tradeZoneIds.Add(zone.id, zone);
         return zone;
     }
-    public void DeleteTradeZone(Market tradeZone)
+    public void DeleteTradeZone(TradeZone tradeZone)
     {
         if (tradeZone == null) return;
         foreach (ulong regionId in tradeZone.regionIds.ToArray())
@@ -378,7 +378,7 @@ public class ObjectManager
             tradeZone.RemoveRegion(region);
         }
         simManager.objectDeleted.Invoke(tradeZone.id);
-        simManager.marketIds.Remove(tradeZone.id);     
+        simManager.tradeZoneIds.Remove(tradeZone.id);     
     }
     public War StartWar(WarType warType, State agressorLeader, State defenderLeader)
     {

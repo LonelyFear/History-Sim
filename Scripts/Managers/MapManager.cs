@@ -471,12 +471,12 @@ public partial class MapManager : Node2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
-                    if (region.marketId != null)
+                    if (region.tradeZoneId != null)
                     {
-                        borderId = (ulong)region.marketId;
-                        color = objectManager.GetMarket(region.marketId).color;
+                        borderId = (ulong)region.tradeZoneId;
+                        color = objectManager.GetTradeZone(region.tradeZoneId).color;
                     }
-                    if (region.isMarketCenter && includeCapital)
+                    if (region.isTradeZoneCenter && includeCapital)
                     {
                         color = new Color(1f, 1f, 0f);
                     }

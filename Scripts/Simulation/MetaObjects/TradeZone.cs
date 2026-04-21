@@ -4,7 +4,7 @@ using System.Linq;
 using Godot;
 using MessagePack;
 [MessagePackObject]
-public class Market : NamedObject
+public class TradeZone : NamedObject
 {
     [Key(7)] public ulong centerId { get; set; }
     [Key(8)] public HashSet<ulong> regionIds { get; set; } = [];
@@ -13,23 +13,23 @@ public class Market : NamedObject
 
     public void AddRegion(Region region)
     {
-        Market originalMarket = objectManager.GetMarket(region.marketId);
-        if (originalMarket != null && region.marketId != id)
+        TradeZone originalTradeZone = objectManager.GetTradeZone(region.tradeZoneId);
+        if (originalTradeZone != null && region.tradeZoneId != id)
         {
-            originalMarket.RemoveRegion(region);
+            originalTradeZone.RemoveRegion(region);
         }
         
-        if (region.marketId != id)
+        if (region.tradeZoneId != id)
         {
-            region.marketId = id;
+            region.tradeZoneId = id;
             regionIds.Add(region.id);            
         }
     }
     public void RemoveRegion(Region region)
     {
-        if (region != null && region.marketId == id)
+        if (region != null && region.tradeZoneId == id)
         {
-            region.marketId = null;
+            region.tradeZoneId = null;
             regionIds.Remove(region.id);
             if (region.id == centerId)
             {

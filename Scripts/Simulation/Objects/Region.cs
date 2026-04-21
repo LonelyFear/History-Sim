@@ -19,8 +19,8 @@ public class Region : PopObject, ISaveable
     [Key(28)] public Vector2I pos;
 
     // trade
-    [Key(29)] public ulong? marketId { get; set; } = null;
-    [Key(30)] public bool isMarketCenter { get; set; } = false;  
+    [Key(29)] public ulong? tradeZoneId { get; set; } = null;
+    [Key(30)] public bool isTradeZoneCenter { get; set; } = false;  
     [Key(24)] public float baseWealth { get; set; }
     [Key(25)] public float wealth { get; set; }  
     [Key(31)] public float tradeIncome = 0;
@@ -425,16 +425,16 @@ public class Region : PopObject, ISaveable
         // Default is that we are linked to nobody
         Region selectedLink = null;
 
-        // Default is that we are not a market center
-        bool newMarketCenterStatus = true;
+        // Default is that we are not a tradeZone center
+        bool newTradeZoneCenterStatus = true;
 
         // Loops over borders
         foreach (Region region in borderingRegions)
         {
-            // If we have an equal or lower weight to a region then we cant be market leader
+            // If we have an equal or lower weight to a region then we cant be tradeZone leader
             if (region.tradeWeight >= tradeWeight)
             {
-                newMarketCenterStatus = false;
+                newTradeZoneCenterStatus = false;
 
                 // We can only link to regions with a HIGHER trade weight
                 if (region.tradeWeight != tradeWeight)
@@ -448,37 +448,37 @@ public class Region : PopObject, ISaveable
             }
         }
 
-        // Joins market of region we linked to if it has a market
-        if (selectedLink != null && selectedLink.marketId != marketId)
+        // Joins tradeZone of region we linked to if it has a tradeZone
+        if (selectedLink != null && selectedLink.tradeZoneId != tradeZoneId)
         {
-            Market marketJoined = objectManager.GetMarket(selectedLink.marketId);
-            if (marketJoined != null)
+            TradeZone tradeZoneJoined = objectManager.GetTradeZone(selectedLink.tradeZoneId);
+            if (tradeZoneJoined != null)
             {
-                lock (marketJoined)
+                lock (tradeZoneJoined)
                 {
-                    marketJoined.AddRegion(this);
+                    tradeZoneJoined.AddRegion(this);
                 }                 
             }
  
         }
 
-        isMarketCenter = newMarketCenterStatus;
+        isTradeZoneCenter = newTradeZoneCenterStatus;
 
-        // Gets the market we will be working with below
-        Market market = objectManager.GetMarket(marketId);
+        // Gets the tradeZone we will be working with below
+        TradeZone tradeZone = objectManager.GetTradeZone(tradeZoneId);
 
-        // If we are a market center and we dont have a market or are in someone elses market
-        if (isMarketCenter && (market == null || market.centerId != id))
+        // If we are a tradeZone center and we dont have a tradeZone or are in someone elses tradeZone
+        if (isTradeZoneCenter && (tradeZone == null || tradeZone.centerId != id))
         {
-            // Then create a new market
-            market = objectManager.CreateTradeZone(this);
+            // Then create a new tradeZone
+            tradeZone = objectManager.CreateTradeZone(this);
         }
 
-        // Then, on whatever market we just created, if we are no longer a market center
-        if (!isMarketCenter && market != null && market.centerId == id)
+        // Then, on whatever tradeZone we just created, if we are no longer a tradeZone center
+        if (!isTradeZoneCenter && tradeZone != null && tradeZone.centerId == id)
         {
-            // Then delete the market
-            objectManager.DeleteTradeZone(market);
+            // Then delete the tradeZone
+            objectManager.DeleteTradeZone(tradeZone);
             // And erase all trade routes
             EraseTradeRoutes();
         }
@@ -509,11 +509,11 @@ public class Region : PopObject, ISaveable
     {
         int baseTradeWeight = GetBaseTradeWeight();
 
-        // Current depth in market expansion
+        // Current depth in tradeZone expansion
         int depth = 0;
 
-        // The maximum depth we will go before stopping, determines the growth range of markets
-        // Region in markets will traverse up the link chain, ether reaching the maximum depth or market center
+        // The maximum depth we will go before stopping, determines the growth range of tradeZones
+        // Region in tradeZones will traverse up the link chain, ether reaching the maximum depth or tradeZone center
         // The further the chain goes the less impact the higher trade weights have
         int maxDepth = 5;
 
@@ -533,7 +533,7 @@ public class Region : PopObject, ISaveable
             if (nextRegion != null)
             {
                 // Adds the weight to the chain multiplied by multiplier
-                // Note that this uses base trade weight so markets dont expand forever
+                // Note that this uses base trade weight so tradeZones dont expand forever
                 tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier);
                 // Then continues
                 currentRegion = nextRegion;
@@ -547,42 +547,42 @@ public class Region : PopObject, ISaveable
         if (tradeWeights.Count > 0)
         {
             // Our trade weight is set to the highest of the largest value in the chain and our base trade weight
-            // This simulates how a market center is going to be shipping goods to the rest of its market
+            // This simulates how a tradeZone center is going to be shipping goods to the rest of its tradeZone
             //GD.Print(tradeWeight + " vs " + baseTradeWeight);
             tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
         }
     }
     public void ZoneTrade()
     {
-        if (!isMarketCenter || objectManager.GetMarket(marketId)?.centerId != id)
+        if (!isTradeZoneCenter || objectManager.GetTradeZone(tradeZoneId)?.centerId != id)
         {
             return;
         }
 
-        foreach (var pair in simManager.marketIds)
+        foreach (var pair in simManager.tradeZoneIds)
         {
-            Market otherMarket = pair.Value;
-            Region marketCenter = objectManager.GetRegion(otherMarket?.centerId);
-            if (marketCenter == null) continue;
+            TradeZone otherTradeZone = pair.Value;
+            Region tradeZoneCenter = objectManager.GetRegion(otherTradeZone?.centerId);
+            if (tradeZoneCenter == null) continue;
 
-            if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
+            if (!regionPaths.TryGetValue(tradeZoneCenter, out List<Region> path))
             {
-                path = GetPath(this, marketCenter, true, 20);
+                path = GetPath(this, tradeZoneCenter, true, 20);
 
                 lock (regionPaths)
                 {
-                    regionPaths[marketCenter] = path;
+                    regionPaths[tradeZoneCenter] = path;
                 }
-                lock (marketCenter.regionPaths)
+                lock (tradeZoneCenter.regionPaths)
                 {
-                    marketCenter.regionPaths[this] = path;
+                    tradeZoneCenter.regionPaths[this] = path;
                 }
 
                 foreach (Region tradeRoute in path)
                 {
                     lock (tradeRoute)
                     {
-                        tradeRoute.tradeRouteLinks.Add((this, marketCenter));
+                        tradeRoute.tradeRouteLinks.Add((this, tradeZoneCenter));
                     }
                 }                
             }
@@ -606,7 +606,7 @@ public class Region : PopObject, ISaveable
     {
         foreach ((Region, Region) tradingCities in tradeRouteLinks.ToArray())
         {
-            if (!tradingCities.Item1.isMarketCenter || !tradingCities.Item2.isMarketCenter)
+            if (!tradingCities.Item1.isTradeZoneCenter || !tradingCities.Item2.isTradeZoneCenter)
             {
                 tradeRouteLinks.Remove(tradingCities);
                 continue;
@@ -622,9 +622,9 @@ public class Region : PopObject, ISaveable
         float populationTradeWeight = workforce * 0.001f;
 
         float zoneSizeTradeWeight = 0;
-        if (isMarketCenter && objectManager.GetMarket(marketId) != null)
+        if (isTradeZoneCenter && objectManager.GetTradeZone(tradeZoneId) != null)
         {
-            zoneSizeTradeWeight = objectManager.GetMarket(marketId).GetZoneSize();
+            zoneSizeTradeWeight = objectManager.GetTradeZone(tradeZoneId).GetZoneSize();
         }
 
         float politySizeTradeWeight = 0f;
