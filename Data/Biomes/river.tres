@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://dx4o6sohihmyb"]
+
+[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_5665a"]
+
+[resource]
+script = ExtResource("1_5665a")
+name = "River"
+type = 1
+maxElevation = -10000.0
+minElevation = -100000.0
+color = Color(0.23529412, 0.6627451, 0.8862745, 1)
+metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://b4ga5pfideea1"]
+
+[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_odv6a"]
+
+[resource]
+script = ExtResource("1_odv6a")
+name = "Grassland"
+type = 2
+minElevation = 0.0
+maxMoisture = 600.0
+minMoisture = 300.0
+maxTemperature = 35.0
+minTemperature = 5.0
+navigability = 1.0
+arability = 1.0
+survivability = 1.0
+color = Color(0.654902, 0.7882353, 0.34117648, 1)
+metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"

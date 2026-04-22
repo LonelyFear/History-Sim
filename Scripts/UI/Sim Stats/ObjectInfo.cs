@@ -128,7 +128,7 @@ public partial class ObjectInfo : Control
         specialLabel.Text += "Biomes: \n";
         foreach (var pair in region.biomes.OrderByDescending(bp => bp.Value))
         {
-            Biome biome = pair.Key;
+            Biome biome = AssetManager.GetBiome(pair.Key);
             int amount = pair.Value;
             specialLabel.Text += $"  {biome.name}: " + amount.ToString("#,###0\n");
         }        

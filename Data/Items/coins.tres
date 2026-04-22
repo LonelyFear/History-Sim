@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://b8qg2ih0vw1da"]
+
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_aubfv"]
+
+[resource]
+script = ExtResource("1_aubfv")
+name = "Coins"
+description = "An abstract unit of currency"
+baseCost = 1.0
+tags = PackedStringArray("wealth")
+metadata/_custom_type_script = "uid://6q2gt72gh7yk"

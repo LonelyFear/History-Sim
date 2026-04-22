@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://cgk60gro6f2ph"]
+
+[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_b1quk"]
+
+[resource]
+script = ExtResource("1_b1quk")
+name = "Rock"
+type = 2
+maxTemperature = -5.0
+color = Color(0.4745098, 0.4745098, 0.4745098, 1)
+metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"

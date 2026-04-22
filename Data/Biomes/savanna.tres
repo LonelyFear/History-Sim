@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://b26ct85kyvie2"]
+
+[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_x0v3v"]
+
+[resource]
+script = ExtResource("1_x0v3v")
+name = "Savanna"
+type = 2
+minElevation = 0.0
+maxMoisture = 800.0
+minMoisture = 500.0
+maxTemperature = 35.0
+minTemperature = 20.0
+navigability = 0.9
+arability = 0.7
+survivability = 0.8
+color = Color(0.83137256, 0.72156864, 0.3647059, 1)
+metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"

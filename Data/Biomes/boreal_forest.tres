@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://cmjudmru88sji"]
+
+[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_1dg3d"]
+
+[resource]
+script = ExtResource("1_1dg3d")
+name = "Boreal Forest"
+type = 2
+minElevation = 0.0
+minMoisture = 300.0
+maxTemperature = 5.0
+minTemperature = -5.0
+navigability = 0.7
+arability = 0.3
+survivability = 0.6
+color = Color(0.2, 0.40392157, 0.23137255, 1)
+metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"

@@ -1,78 +1,35 @@
 using Godot;
-using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text.Json;
 public static class AssetManager
 {
     // Saved Stuff
-    public const string modsFolderPath = "Mods/";
-    public static List<string> loadedModIds;
-    public static List<string> foundModPaths;
     public static Dictionary<string, Biome> biomes = [];
-    public static void LoadBiomes()
+
+    public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output, bool deepSearch = true) where ResType : Resource
     {
-        string biomesPath = "Data/biomes.json";
-        FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
-        if (bio != null)
-        {
-            string biomeData = bio.GetAsText();
+        DirAccess dir = DirAccess.Open(resPath);
 
-            foreach (Biome biome in JsonSerializer.Deserialize<Biome[]>(biomeData))
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+
+        while (fileName != "")
+        {
+            if (dir.CurrentIsDir() && deepSearch)
             {
-                biomes.Add(biome.id, biome);
-            }
-            GD.Print("Loaded " + biomes.Count + " biomes");
-        }
-        else
-        {
-            GD.PushError("biomes.json not found at path '" + biomesPath + "'");
-        }
-    }
-    public static void GetLoadedMods()
-    {
-        GD.Print("Asset Loading Start");
-        foundModPaths = [];
-        DirAccess modsDir = DirAccess.Open(modsFolderPath);
-
-        if (modsDir != null)
-        {
-            foreach (string localModPath in modsDir.GetDirectories())
+                LoadResources(resPath.PathJoin(fileName), output, true);
+            } else
             {
-                string modPath = modsFolderPath + localModPath;
-                if (DirAccess.Open(modPath).GetFiles().Contains("mod.json"))
-                {
-                    foreach (string dataPath in DirAccess.Open(modPath).GetFiles())
-                    {
-                        if (dataPath == "mod.json")
-                        {
-                            string modInfoJson = FileAccess.Open(modPath + "/" + dataPath, FileAccess.ModeFlags.Read).GetAsText();
-                            Dictionary<string, string> modData = JsonSerializer.Deserialize<Dictionary<string, string>>(modInfoJson);
-
-                            if (modData.ContainsKey("name") && modData.ContainsKey("description") && modData.ContainsKey("author") && modData.ContainsKey("version"))
-                            {
-                                GD.Print("Found Mod '" + modData["name"] + "' by " + modData["author"]);
-                                foundModPaths.Add(modPath);
-                            }
-                            else
-                            {
-                                GD.Print("Mod at path '" + modPath + "' mod.json lacks information. Mod loading skipped");
-                            }
-                            break;
-                        }
-                    }
-                }
+                ResType res = GD.Load<ResType>(resPath.PathJoin(fileName));
+                output.Add(fileName[..^5], res);                
             }
-        }
-
-        GD.Print(foundModPaths.Count + " Mod(s) Found");
+            fileName = dir.GetNext();
+        }     
     }
     public static void LoadAssets()
     {
         biomes = [];
 
-        LoadBiomes();
+        LoadResources("res://Data/Biomes", biomes);
     }
     public static Biome GetBiome(string id)
     {

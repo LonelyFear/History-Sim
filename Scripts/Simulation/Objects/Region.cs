@@ -37,7 +37,7 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float avgRainfall { get; set; }
     [IgnoreMember] public float[] avgMonthlyRainfall { get; set; } = new float[12];
     [IgnoreMember] public float avgElevation { get; set; }
-    [IgnoreMember] public Dictionary<Biome, int> biomes { get; set; }
+    [IgnoreMember] public Dictionary<string, int> biomes { get; set; }
     [Key(36)] public int landCount { get; set; }
     [Key(37)] public TerrainType terrainType { get; set; }
     
@@ -181,11 +181,11 @@ public class Region : PopObject, ISaveable
                 terrainTypes[tile.terrainType]++;
             }
 
-            if (!biomes.ContainsKey(tile.GetBiome()))
+            if (!biomes.ContainsKey(tile.biomeId))
             {
-                biomes.Add(tile.GetBiome(), 0);
+                biomes.Add(tile.biomeId, 0);
             }
-            biomes[tile.GetBiome()]++;
+            biomes[tile.biomeId]++;
 
             if (tile.IsWater())
             {

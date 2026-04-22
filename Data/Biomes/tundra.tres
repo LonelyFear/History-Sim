@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://bwb0asudd0ql7"]
+
+[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_v3h0v"]
+
+[resource]
+script = ExtResource("1_v3h0v")
+name = "Tundra"
+type = 2
+minElevation = 0.0
+maxMoisture = 300.0
+minMoisture = 0.0
+maxTemperature = 10.0
+minTemperature = -5.0
+navigability = 0.8
+arability = 0.15
+survivability = 0.4
+color = Color(0.6627451, 0.63529414, 0.56078434, 1)
+metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"
