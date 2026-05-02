@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://xqd6wvhycyt7" path="res://Scripts/Managers/SimManagerHolder.cs" id="7_22asu"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/UI/TerrainMap.cs" id="7_nnt18"]
+[ext_resource type="Shader" uid="uid://qmdpy6hf1r20" path="res://Shaders/world_wrapping.gdshader" id="8_cwurv"]
 [ext_resource type="Script" uid="uid://ca4hg87crqxlm" path="res://Scripts/Managers/EncyclopediaManager.cs" id="8_iivbl"]
 [ext_resource type="PackedScene" uid="uid://bl4uuhft253r1" path="res://Scenes/Encyclopedia/info_tab.tscn" id="9_7nbq1"]
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/Menus/GameUI.cs" id="11_7nbq1"]
@@ -28,6 +29,10 @@
 [ext_resource type="Script" uid="uid://d1qang7nemn0r" path="res://Scripts/UI/Debug/DebugPanel.cs" id="19_fkdbe"]
 [ext_resource type="Script" uid="uid://e41goq8da66p" path="res://Scripts/UI/Saving/SaveSimPanel.cs" id="22_22asu"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="22_vm72l"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mucmn"]
+shader = ExtResource("8_cwurv")
+shader_parameter/horizontalPos = 0.1
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_fkdbe"]
 content_margin_left = 1.0
@@ -76,8 +81,9 @@ visible = false
 script = ExtResource("2_fkdbe")
 timeManager = NodePath("../Time Manager")
 
-[node name="SelectionManager" type="Node2D" parent="." unique_id=288866782 node_paths=PackedStringArray("simHolder", "deselectButton", "mapManager")]
+[node name="SelectionManager" type="Node2D" parent="." unique_id=288866782 node_paths=PackedStringArray("playerCamera", "simHolder", "deselectButton", "mapManager")]
 script = ExtResource("5_tgy6u")
+playerCamera = NodePath("../PlayerCamera")
 simHolder = NodePath("../Simulation")
 deselectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/CloseInfoButton")
 mapManager = NodePath("../Map Manager")
@@ -87,17 +93,20 @@ script = ExtResource("7_ewbju")
 simHolder = NodePath("../Simulation")
 gameSpeedUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/Game Speed Holder/TimeSpeed")
 
-[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("timeManager", "selectionManager", "simHolder", "playerCamera", "mapModeUI", "showRegionsCheckbox")]
+[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("timeManager", "selectionManager", "regionOverlay", "terrainSprite", "simHolder", "playerCamera", "mapModeUI", "showRegionsCheckbox")]
 z_index = 2
 script = ExtResource("6_85qyi")
 timeManager = NodePath("../Time Manager")
 selectionManager = NodePath("../SelectionManager")
+regionOverlay = NodePath("Region Map")
+terrainSprite = NodePath("../Terrain Map/Terrain Map")
 simHolder = NodePath("../Simulation")
 playerCamera = NodePath("../PlayerCamera")
 mapModeUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/MapModeHolder/MapMode")
 showRegionsCheckbox = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/ShowRegionsCheckbox")
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
+material = SubResource("ShaderMaterial_mucmn")
 scale = Vector2(16, 16)
 centered = false
 
@@ -112,6 +121,7 @@ switchMap = true
 simHolder = NodePath("../Simulation")
 
 [node name="Terrain Map" type="Sprite2D" parent="Terrain Map" unique_id=1473226301]
+material = SubResource("ShaderMaterial_mucmn")
 scale = Vector2(16, 16)
 centered = false
 

@@ -131,7 +131,16 @@ public partial class ObjectInfo : Control
             Biome biome = AssetManager.GetBiome(pair.Key);
             int amount = pair.Value;
             specialLabel.Text += $"  {biome.name}: " + amount.ToString("#,###0\n");
-        }        
+        } 
+        specialLabel.Text += "\nResources: \n";
+        foreach (var pair in region.economy.prices.OrderByDescending(bp => bp.Value))
+        {
+            Item item = AssetManager.GetItem(pair.Key);
+            float price = pair.Value;
+            specialLabel.Text += $"  {item.name}: " + price.ToString("$#,###0.00\n");
+            specialLabel.Text += $"     Supply: " + region.economy.supply[item.id].ToString("#,###0\n");
+            specialLabel.Text += $"     Demand: " + region.economy.demand[item.id].ToString("#,###0\n");
+        }       
     }
     public void DisplayPolityText(Polity polity, State state)
     {

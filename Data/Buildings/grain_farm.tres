@@ -1,10 +1,12 @@
 [gd_resource type="Resource" script_class="Building" format=3 uid="uid://2uanqwk6qdsu"]
 
+[ext_resource type="Resource" uid="uid://b5uv733wtfsk5" path="res://Data/Items/grain.tres" id="1_5gahl"]
 [ext_resource type="Script" uid="uid://108o3rkltf1c" path="res://Scripts/Resources/Building.cs" id="1_xne25"]
 [ext_resource type="Script" uid="uid://ccfih2hgmcp88" path="res://Scripts/Resources/BuildingOutput.cs" id="2_rrxi7"]
 
 [sub_resource type="Resource" id="Resource_jmw6s"]
 script = ExtResource("2_rrxi7")
+output = ExtResource("1_5gahl")
 inputs = null
 weight = 1.0
 metadata/_custom_type_script = "uid://ccfih2hgmcp88"
@@ -12,6 +14,10 @@ metadata/_custom_type_script = "uid://ccfih2hgmcp88"
 [resource]
 script = ExtResource("1_xne25")
 name = "Grain Farm"
+type = 1
 employees = 100
-outputs = Array[Object]([SubResource("Resource_jmw6s")])
+requiredNaturalResources = [ExtResource("1_5gahl")]
+minOutput = 1
+maxOutput = 1
+outputs = [SubResource("Resource_jmw6s")]
 metadata/_custom_type_script = "uid://108o3rkltf1c"

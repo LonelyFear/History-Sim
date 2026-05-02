@@ -8,7 +8,7 @@ void vertex() {
 
 void fragment() {
 	float offset = texture(noiseTexture,UV + TIME/5.0).r;
-	vec4 screenColor = texture(screenTexture,SCREEN_UV + offset * 0.03);
+	vec4 screenColor = texture(TEXTURE,UV + offset * 0.2);
 	float uvClip = (sin(UV.x*2.0 + TIME + offset)) * 0.04;
 	
 	if (UV.y - uvClip > 0.04)

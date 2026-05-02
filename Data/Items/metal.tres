@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://brkavc6rqjc5"]
+
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_7of66"]
+
+[resource]
+script = ExtResource("1_7of66")
+name = "Metal"
+description = "Metal, used for smithing and construction."
+basePrice = 20.0
+tags = PackedStringArray("tradeable")
+metadata/_custom_type_script = "uid://6q2gt72gh7yk"

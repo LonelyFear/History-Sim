@@ -5,8 +5,7 @@
 [resource]
 script = ExtResource("1_cd43d")
 name = "Grain"
-description = "An edible cereal, cultivated for consumption"
-tradeWeight = 1.0
-baseCost = 5.0
-tags = PackedStringArray("food")
+description = "An edible grain, cultivated for consumption."
+basePrice = 5.0
+tags = PackedStringArray("tradeable")
 metadata/_custom_type_script = "uid://6q2gt72gh7yk"

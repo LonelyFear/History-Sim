@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://clsxv78dh2b1u"]
 
-[ext_resource type="Script" uid="uid://cg7fsl8w5jl7r" path="res://Scripts/Misc/Biome.cs" id="1_5ip1w"]
+[ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_5ip1w"]
 
 [resource]
 script = ExtResource("1_5ip1w")
@@ -8,7 +8,6 @@ name = "Desert"
 type = 2
 minElevation = 0.0
 maxMoisture = 300.0
-minMoisture = 0.0
 maxTemperature = 35.0
 minTemperature = 5.0
 navigability = 0.5

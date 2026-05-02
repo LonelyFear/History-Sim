@@ -482,6 +482,7 @@ public class SimManager
             Region region = pair.Value;
             region.InitRegion();
             region.NameRegion();
+            region.economy.InitEconomy();
         }
         RemoveEmptyRegions();        
     }
@@ -750,7 +751,10 @@ public class SimManager
                 }
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
-                
+
+                region.CalcSupply();
+                region.CalcDemand();
+                region.economy.CalculatePrices();
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
@@ -764,6 +768,8 @@ public class SimManager
 
             foreach (Region region in habitableRegions)
             {
+                region.TradeFlow();
+
                 stopwatch.Restart();
                 if (region.pops.Count <= 0)
                 {
@@ -789,7 +795,7 @@ public class SimManager
                 stopwatch.Restart();
 
                 // States
-                region.RandomStateFormation();
+                //region.RandomStateFormation();
                 region.UpdateOccupation();
                 countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();

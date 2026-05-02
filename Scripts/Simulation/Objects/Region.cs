@@ -13,7 +13,10 @@ public class Region : PopObject, ISaveable
     [Key(19)] public bool coastal { get; set; }
     [Key(20)] public bool isWater { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
-    //[Key(5)] public int baseTradeWeight { get; set; } = 0;
+    [Key(22)] public Economy economy = new();
+    [Key(23)] public Dictionary<ulong, TradeConnection> tradeConnections = new();
+    [IgnoreMember] public List<Building> buildings;
+    [IgnoreMember] public List<string> buildingIds;
 
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
     [Key(28)] public Vector2I pos;
@@ -113,11 +116,15 @@ public class Region : PopObject, ISaveable
     {
         base.PrepareForSave();
         linkedRegionIds = [..linkedRegions.Select(r => r.id)];
+        buildingIds = [..buildings.Select(b => b.id)];
+        //economy.PrepareForSave();
     }
     public override void LoadFromSave()
     {
         base.LoadFromSave();
         linkedRegions = [..linkedRegionIds.Select(r => objectManager.GetRegion(r))];
+        buildings = [..buildingIds.Select(AssetManager.GetBuilding)];
+        //economy.LoadFromSave();
     }
 
     public void AddTile(Tile tile)
@@ -153,8 +160,45 @@ public class Region : PopObject, ISaveable
     {
         foreach (Region border in borderingRegions.ToArray())
         {
-            borderingRegions.Remove(border);
+            if (!simManager.regionIds.ContainsKey(border.id)){
+                RemoveBorder(border);
+            }
         }
+    }
+    public void GetBorderingRegions()
+    {
+        borderingRegions = [];
+        tradeConnections = [];
+        foreach (Vector2I tilePos in tiles)
+        {
+            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
+                    Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
+                    Tile border = simManager.tiles[nPos.X, nPos.Y];
+                    Region borderRegion = objectManager.GetRegion(border.regionId);
+                    AddBorder(borderRegion);
+                }
+            }
+        }
+    }
+    public void AddBorder(Region region)
+    {
+        if (region != null && region != this && !borderingRegions.Contains(region))
+        {
+            borderingRegions.Add(region);
+            tradeConnections[region.id] = new();
+        }        
+    }
+    public void RemoveBorder(Region region)
+    {
+        if (borderingRegions.Remove(region))
+        {
+            tradeConnections.Remove(region.id);
+        }            
     }
     void CalcAverages()
     {
@@ -251,30 +295,6 @@ public class Region : PopObject, ISaveable
         else
         {
             habitable = false;
-        }
-    }
-
-    public void GetBorderingRegions()
-    {
-        borderingRegions = [];
-        foreach (Vector2I tilePos in tiles)
-        {
-            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
-                    Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
-                    Tile border = simManager.tiles[nPos.X, nPos.Y];
-                    Region borderRegion = objectManager.GetRegion(border.regionId);
-
-                    if (borderRegion != null && borderRegion != this && !borderingRegions.Contains(borderRegion))
-                    {
-                        borderingRegions.Add(borderRegion);
-                    }
-                }
-            }
         }
     }
     public void UpdateOccupation()
@@ -656,6 +676,46 @@ public class Region : PopObject, ISaveable
     {
         return linkUpdateCountdown < 0 || pops.Count < 0 || tradeLink == null;
     }
+    // Economy V2
+    public void CalcSupply()
+    {
+        float fertility = arableLand/landCount;
+        float productivity = professions[SocialClass.FARMER] * 3.5f;
+
+        economy.supply["grain"] = productivity * fertility;
+
+        foreach (string itemId in economy.supply.Keys)
+        {
+            economy.supply[itemId] = Mathf.Max(economy.supply[itemId] + economy.flowBuffer[itemId], 0);
+            economy.flowBuffer[itemId] = 0;
+        }
+    }
+    public void CalcDemand()
+    {
+        economy.demand["grain"] = population;
+    }
+    public void TradeFlow()
+    {
+        foreach (Region border in borderingRegions)
+        {
+            if (border.population < 1) continue;
+
+            foreach (string itemId in economy.supply.Keys)
+            {
+                Item item = AssetManager.GetItem(itemId);
+                float usableSupply = economy.supply[itemId] - economy.flowBuffer[itemId];
+                float priceDifference = (border.economy.prices[itemId] - economy.prices[itemId])/item.basePrice;
+
+                float flow = Mathf.Clamp(priceDifference * 100, 0, Mathf.Max(usableSupply, 0));
+
+                tradeConnections[border.id].flow[itemId] = flow;
+
+                economy.flowBuffer[itemId] -= flow;
+                border.economy.flowBuffer[itemId] += flow;
+                //GD.Print(actualFlow);
+            }
+        }
+    }
     public void MergePops()
     {
         if (pops.Count < 2)
@@ -867,3 +927,10 @@ public class Region : PopObject, ISaveable
         return source.pos.DistanceSquaredTo(target.pos);
     }
 }   
+[MessagePackObject]
+public struct TradeConnection
+{
+    public TradeConnection() {}
+    [Key(0)] public float capacity = 10000;
+    [Key(1)] public Dictionary<string, float> flow = new();
+}

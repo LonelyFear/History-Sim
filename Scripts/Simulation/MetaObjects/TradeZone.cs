@@ -10,6 +10,18 @@ public class TradeZone : NamedObject
     [Key(8)] public HashSet<ulong> regionIds { get; set; } = [];
     [Key(9)] public Color color { get; set; }
     [Key(10)]  public ulong? controllerId { get; set; } = null;
+    //[Key(11)] public Economy economy = new();
+
+    public override void PrepareForSave()
+    {
+        base.PrepareForSave();
+        //economy.PrepareForSave();
+    }
+    public override void LoadFromSave()
+    {
+        base.LoadFromSave();
+        //economy.LoadFromSave();
+    }
 
     public void AddRegion(Region region)
     {

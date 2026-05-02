@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_aubfv")
 name = "Coins"
-description = "An abstract unit of currency"
-baseCost = 1.0
+description = "An abstract unit of currency."
+basePrice = 1.0
 tags = PackedStringArray("wealth")
 metadata/_custom_type_script = "uid://6q2gt72gh7yk"

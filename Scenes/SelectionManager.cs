@@ -4,6 +4,7 @@ using System;
 [GlobalClass]
 public partial class SelectionManager : Node2D
 {
+	[Export] PlayerCamera playerCamera;
 	[Export] SimManagerHolder simHolder;
 	[Export] Button deselectButton;
 	[Export] MapManager mapManager;
@@ -36,7 +37,8 @@ public partial class SelectionManager : Node2D
     {
 		if (simManager == null) return;
 
-		mousePos = GetGlobalMousePosition();
+		
+		mousePos = new Vector2(GetGlobalMousePosition().X + (playerCamera.CameraPos.X - (GetViewportRect().Size.X/2f)), GetGlobalMousePosition().Y);
 		hoveredPos = simManager.GlobalToTilePos(mousePos);
 
         lastHoveredRegion = hoveredRegion;
