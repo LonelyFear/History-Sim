@@ -372,9 +372,8 @@ public class ObjectManager
     public void DeleteTradeZone(TradeZone tradeZone)
     {
         if (tradeZone == null) return;
-        foreach (ulong regionId in tradeZone.regionIds.ToArray())
+        foreach (Region region in tradeZone.regions.ToArray())
         {
-            Region region = GetRegion(regionId);
             tradeZone.RemoveRegion(region);
         }
         simManager.objectDeleted.Invoke(tradeZone.id);

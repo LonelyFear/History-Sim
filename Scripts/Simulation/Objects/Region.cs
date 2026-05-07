@@ -429,15 +429,6 @@ public class Region : PopObject, ISaveable
 
     public void CalcBaseWealth()
     {
-        /*
-        lastBaseWealth = baseWealth;
-        lastWealth = wealth;
-
-        long farmers = professions[SocialClass.FARMER];
-        long nonFarmers = workforce - professions[SocialClass.FARMER];
-
-        float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
-        */
         baseWealth = population * 0.005f;
     }
     public void LinkTrade()
@@ -535,7 +526,7 @@ public class Region : PopObject, ISaveable
         // The maximum depth we will go before stopping, determines the growth range of tradeZones
         // Region in tradeZones will traverse up the link chain, ether reaching the maximum depth or tradeZone center
         // The further the chain goes the less impact the higher trade weights have
-        int maxDepth = 5;
+        int maxDepth = 7;
 
         List<float> tradeWeights = [];
         float multiplier = 1.0f;
@@ -572,6 +563,31 @@ public class Region : PopObject, ISaveable
             tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
         }
     }
+    public int GetBaseTradeWeight()
+    {
+        
+        //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
+        //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
+        float populationTradeWeight = population * 0.001f;
+
+        float zoneSizeTradeWeight = 0;
+        if (isTradeZoneCenter && objectManager.GetTradeZone(tradeZoneId) != null)
+        {
+            zoneSizeTradeWeight = objectManager.GetTradeZone(tradeZoneId).GetZoneSize();
+        }
+
+        float politySizeTradeWeight = 0f;
+        if (owner != null && owner.capital == this)
+        {
+            politySizeTradeWeight = owner.regions.Count;
+            if (owner.sovereignty == Sovereignty.INDEPENDENT)
+            {
+                politySizeTradeWeight = owner.diplomacy.GetPolity().regions.Count;
+            }
+        }
+
+        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
+    } 
     public void ZoneTrade()
     {
         if (!isTradeZoneCenter || objectManager.GetTradeZone(tradeZoneId)?.centerId != id)
@@ -634,36 +650,10 @@ public class Region : PopObject, ISaveable
             tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingCities.Item1.tradeIncome, tradingCities.Item2.tradeIncome)* 0.5f);
         }
     }
-    public int GetBaseTradeWeight()
-    {
-        
-        //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
-        //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
-        float populationTradeWeight = workforce * 0.001f;
-
-        float zoneSizeTradeWeight = 0;
-        if (isTradeZoneCenter && objectManager.GetTradeZone(tradeZoneId) != null)
-        {
-            zoneSizeTradeWeight = objectManager.GetTradeZone(tradeZoneId).GetZoneSize();
-        }
-
-        float politySizeTradeWeight = 0f;
-        if (owner != null && owner.capital == this)
-        {
-            politySizeTradeWeight = owner.regions.Count;
-            if (owner.sovereignty == Sovereignty.INDEPENDENT)
-            {
-                politySizeTradeWeight = owner.diplomacy.GetPolity().regions.Count;
-            }
-        }
-
-        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
-    }    
     public void UpdateWealth()
     {
         wealth = baseWealth + taxIncome + tradeIncome;
     }
-
     public void DistributeWealth()
     {
         foreach (Pop pop in pops)
@@ -671,51 +661,33 @@ public class Region : PopObject, ISaveable
             pop.wealth = (tradeIncome + taxIncome) * (pop.population / (float)population);
         }
     }
-
     public bool CanUpdateTrade()
     {
         return linkUpdateCountdown < 0 || pops.Count < 0 || tradeLink == null;
     }
     // Economy V2
+    [IgnoreMember] public bool debugProducer = false;
     public void CalcSupply()
     {
         float fertility = arableLand/landCount;
-        float productivity = professions[SocialClass.FARMER] * 3.5f;
-
+        float productivity = professions[SocialClass.FARMER] * 3f;
+        if (debugProducer)
+        {
+            productivity *= 1;
+        }
         economy.supply["grain"] = productivity * fertility;
 
         foreach (string itemId in economy.supply.Keys)
         {
-            economy.supply[itemId] = Mathf.Max(economy.supply[itemId] + economy.flowBuffer[itemId], 0);
-            economy.flowBuffer[itemId] = 0;
+            economy.tradeFlow[itemId] = 0;
         }
+        
     }
     public void CalcDemand()
     {
         economy.demand["grain"] = population;
     }
-    public void TradeFlow()
-    {
-        foreach (Region border in borderingRegions)
-        {
-            if (border.population < 1) continue;
 
-            foreach (string itemId in economy.supply.Keys)
-            {
-                Item item = AssetManager.GetItem(itemId);
-                float usableSupply = economy.supply[itemId] - economy.flowBuffer[itemId];
-                float priceDifference = (border.economy.prices[itemId] - economy.prices[itemId])/item.basePrice;
-
-                float flow = Mathf.Clamp(priceDifference * 100, 0, Mathf.Max(usableSupply, 0));
-
-                tradeConnections[border.id].flow[itemId] = flow;
-
-                economy.flowBuffer[itemId] -= flow;
-                border.economy.flowBuffer[itemId] += flow;
-                //GD.Print(actualFlow);
-            }
-        }
-    }
     public void MergePops()
     {
         if (pops.Count < 2)

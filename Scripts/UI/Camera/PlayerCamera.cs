@@ -13,6 +13,7 @@ public partial class PlayerCamera : Camera2D
     bool dragging;
     Vector2 draggingStartMousePos;
     Vector2 draggingStartPos;
+    public Vector2 mousePos;
     public Vector2 CameraPos = new(640, 360);
     public float HorizontalFactor {get
         {
@@ -21,6 +22,9 @@ public partial class PlayerCamera : Camera2D
     }
     public override void _Process(double delta)
     {
+		float mx = GetGlobalMousePosition().X + (CameraPos.X - (GetViewportRect().Size.X/2f));
+		mousePos = new Vector2(Mathf.PosMod(mx, GetViewportRect().Size.X), GetGlobalMousePosition().Y);
+
         CameraPos = new Vector2(Mathf.PosMod(CameraPos.X, GetViewportRect().Size.X), CameraPos.Y);
         if (controlEnabled)
         {
@@ -49,7 +53,7 @@ public partial class PlayerCamera : Camera2D
         float oldZoom = Zoom.X;
         Zoom = Zoom.Slerp(zoomTarget, (float)(zoomSpeed * delta));
 
-        Vector2 zoomDir = GetGlobalMousePosition() - CameraPos;
+        Vector2 zoomDir = mousePos - CameraPos;
         CameraPos += zoomDir - (zoomDir / (Zoom.X / oldZoom));
     }
 

@@ -483,6 +483,10 @@ public class SimManager
             region.InitRegion();
             region.NameRegion();
             region.economy.InitEconomy();
+            if (rng.NextSingle() < 0.01f)
+            {
+                region.debugProducer = true;
+            }
         }
         RemoveEmptyRegions();        
     }
@@ -768,8 +772,6 @@ public class SimManager
 
             foreach (Region region in habitableRegions)
             {
-                region.TradeFlow();
-
                 stopwatch.Restart();
                 if (region.pops.Count <= 0)
                 {
@@ -795,7 +797,7 @@ public class SimManager
                 stopwatch.Restart();
 
                 // States
-                //region.RandomStateFormation();
+                region.RandomStateFormation();
                 region.UpdateOccupation();
                 countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
@@ -835,6 +837,13 @@ public class SimManager
         worldPopulation = worldPop;
 
         regionPerformanceInfo = countedPerformanceInfo;
+    }
+    public void UpdateTradeZones()
+    {
+        foreach (TradeZone tradeZone in tradeZoneIds.Values)
+        {
+            tradeZone.AggregateEconomies();
+        }
     }
     public void UpdateStates()
     {
@@ -1025,6 +1034,10 @@ public class SimManager
 
             UpdateRegions();
             countedPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
+            UpdateTradeZones();
+            countedPerformanceInfo["Trade Zones"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
 
             UpdateStates();

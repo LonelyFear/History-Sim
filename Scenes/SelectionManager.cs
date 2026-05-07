@@ -37,9 +37,7 @@ public partial class SelectionManager : Node2D
     {
 		if (simManager == null) return;
 
-		
-		mousePos = new Vector2(GetGlobalMousePosition().X + (playerCamera.CameraPos.X - (GetViewportRect().Size.X/2f)), GetGlobalMousePosition().Y);
-		hoveredPos = simManager.GlobalToTilePos(mousePos);
+		hoveredPos = simManager.GlobalToTilePos(playerCamera.mousePos);
 
         lastHoveredRegion = hoveredRegion;
         if (hoveredPos.X >= 0 && hoveredPos.X < worldSize.X && hoveredPos.Y >= 0 && hoveredPos.Y < worldSize.Y && selectionEnabled)
