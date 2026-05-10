@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Godot;
 using MessagePack;
 
@@ -36,6 +37,24 @@ public class Economy
             float priceMultiplier = demand[itemId] / Mathf.Max(supply[itemId], 1f);
             float targetPrice = item.basePrice * Mathf.Clamp(priceMultiplier, 0f, 4f);
             prices[itemId] = Mathf.Lerp(prices[itemId], targetPrice, 0.1f);
+        }
+    }
+    public static float GetLocalPrice(Region region, string itemId)
+    {
+        float localPrice = region.economy.prices[itemId];
+        if (region.tradeZone != null)
+        {
+            float marketPrice = region.tradeZone.economy.prices[itemId];
+            if (region.isTradeZoneCenter)
+            {
+                return marketPrice;
+            }
+
+            float marketPriceRatio = 0.7f;
+            return (marketPrice * marketPriceRatio) + (localPrice * (1f - marketPriceRatio));
+        } else
+        {
+            return localPrice;
         }
     }
 }

@@ -5,7 +5,7 @@ using Godot;
 using MessagePack;
 using System.Text.RegularExpressions;
 [MessagePackObject(AllowPrivate = true)]
-public class Region : PopObject, ISaveable
+public partial class Region : PopObject, ISaveable
 {
     [Key(17)] public List<Vector2I> tiles { get; set; } = [];
     [IgnoreMember] public bool conquered;
@@ -22,7 +22,7 @@ public class Region : PopObject, ISaveable
     [Key(28)] public Vector2I pos;
 
     // trade
-    [Key(29)] public ulong? tradeZoneId { get; set; } = null;
+    [Key(29)] ulong? tradeZoneId { get; set; } = null;
     [Key(30)] public bool isTradeZoneCenter { get; set; } = false;  
     [Key(24)] public float baseWealth { get; set; }
     [Key(25)] public float wealth { get; set; }  
@@ -56,6 +56,21 @@ public class Region : PopObject, ISaveable
     [Key(45)] public HashSet<ulong> linkedRegionIds = [];
     [IgnoreMember] public HashSet<Region> linkedRegions = [];
     [IgnoreMember] public List<(Region, Region)> tradeRouteLinks = new List<(Region, Region)>();
+    [IgnoreMember] TradeZone _tradeZone;
+    [IgnoreMember] public TradeZone tradeZone
+    {
+        get
+        {
+            if (_tradeZone == null && tradeZoneId != null) 
+                _tradeZone = objectManager.GetTradeZone(tradeZoneId);
+            return _tradeZone;
+        } 
+        set
+        {
+            tradeZoneId = value?.id;
+            _tradeZone = value;
+        }         
+    }
     [IgnoreMember] Region _tradeLink;
     [IgnoreMember] public Region tradeLink { 
         get
@@ -460,9 +475,9 @@ public class Region : PopObject, ISaveable
         }
 
         // Joins tradeZone of region we linked to if it has a tradeZone
-        if (selectedLink != null && selectedLink.tradeZoneId != tradeZoneId)
+        if (selectedLink != null && selectedLink.tradeZone != tradeZone)
         {
-            TradeZone tradeZoneJoined = objectManager.GetTradeZone(selectedLink.tradeZoneId);
+            TradeZone tradeZoneJoined = selectedLink.tradeZone;
             if (tradeZoneJoined != null)
             {
                 lock (tradeZoneJoined)
@@ -474,9 +489,6 @@ public class Region : PopObject, ISaveable
         }
 
         isTradeZoneCenter = newTradeZoneCenterStatus;
-
-        // Gets the tradeZone we will be working with below
-        TradeZone tradeZone = objectManager.GetTradeZone(tradeZoneId);
 
         // If we are a tradeZone center and we dont have a tradeZone or are in someone elses tradeZone
         if (isTradeZoneCenter && (tradeZone == null || tradeZone.centerId != id))
@@ -571,9 +583,9 @@ public class Region : PopObject, ISaveable
         float populationTradeWeight = population * 0.001f;
 
         float zoneSizeTradeWeight = 0;
-        if (isTradeZoneCenter && objectManager.GetTradeZone(tradeZoneId) != null)
+        if (isTradeZoneCenter && tradeZone != null)
         {
-            zoneSizeTradeWeight = objectManager.GetTradeZone(tradeZoneId).GetZoneSize();
+            zoneSizeTradeWeight = tradeZone.GetZoneSize();
         }
 
         float politySizeTradeWeight = 0f;
@@ -590,7 +602,7 @@ public class Region : PopObject, ISaveable
     } 
     public void ZoneTrade()
     {
-        if (!isTradeZoneCenter || objectManager.GetTradeZone(tradeZoneId)?.centerId != id)
+        if (!isTradeZoneCenter || tradeZone?.centerId != id)
         {
             return;
         }

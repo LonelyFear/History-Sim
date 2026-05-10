@@ -364,7 +364,7 @@ public class ObjectManager
             centerId = region.id,
             name = region.name + " TradeZone"
         };
-
+        zone.economy.InitEconomy();
         zone.AddRegion(region);
         simManager.tradeZoneIds.Add(zone.id, zone);
         return zone;

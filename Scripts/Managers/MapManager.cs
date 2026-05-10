@@ -462,7 +462,7 @@ public partial class MapManager : Node2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     //float factor = region.wealth / simManager.maxWealth;
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], region.economy.prices["grain"]/20f);
+                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], Economy.GetLocalPrice(region, "grain")/20f);
                 }
                 else if (region.habitable)
                 {
@@ -473,10 +473,10 @@ public partial class MapManager : Node2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
-                    if (region.tradeZoneId != null)
+                    if (region.tradeZone != null)
                     {
-                        borderId = (ulong)region.tradeZoneId;
-                        color = objectManager.GetTradeZone(region.tradeZoneId).color;
+                        borderId = region.tradeZone.id;
+                        color = region.tradeZone.color;
                     }
                     if (region.isTradeZoneCenter && includeCapital)
                     {

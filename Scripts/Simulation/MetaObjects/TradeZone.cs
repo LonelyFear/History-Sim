@@ -11,7 +11,7 @@ public class TradeZone : NamedObject
     [IgnoreMember] public HashSet<Region> regions { get; set; } = [];
     [Key(9)] public Color color { get; set; }
     [Key(10)]  public ulong? controllerId { get; set; } = null;
-    [Key(11)] public Economy economy = new();
+    [Key(11)] public Economy economy = new Economy();
 
     public override void PrepareForSave()
     {
@@ -26,15 +26,15 @@ public class TradeZone : NamedObject
 
     public void AddRegion(Region region)
     {
-        if (region.tradeZoneId == id) return;
+        if (region.tradeZone == this) return;
 
-        TradeZone originalTradeZone = objectManager.GetTradeZone(region.tradeZoneId);
+        TradeZone originalTradeZone = region.tradeZone;
 
         bool isTradeZoneCapital = originalTradeZone != null && originalTradeZone.centerId == region.id;
         Region[] originalRegions = originalTradeZone != null ? [..originalTradeZone.regions] : null;
 
         originalTradeZone?.RemoveRegion(region);
-        region.tradeZoneId = id;
+        region.tradeZone = this;
         regions.Add(region);            
 
         if (isTradeZoneCapital)
@@ -47,9 +47,9 @@ public class TradeZone : NamedObject
     }
     public void RemoveRegion(Region region)
     {
-        if (region != null && region.tradeZoneId == id)
+        if (region != null && region.tradeZone == this)
         {
-            region.tradeZoneId = null;
+            region.tradeZone = null;
             
             regions.Remove(region);
             if (region.id == centerId)
@@ -89,7 +89,7 @@ public class TradeZone : NamedObject
                 economy.demand[itemId] += region.economy.demand[itemId];
             }            
         }
-
+        economy.CalculatePrices();
     }
 
     public int GetZoneSize()
