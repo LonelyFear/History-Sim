@@ -756,8 +756,9 @@ public class SimManager
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
 
-                region.CalcSupply();
+                region.CalcProduction();
                 region.CalcDemand();
+                region.CalcSupply();
                 region.economy.CalculatePrices();
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
@@ -797,7 +798,7 @@ public class SimManager
                 stopwatch.Restart();
 
                 // States
-                region.RandomStateFormation();
+                //region.RandomStateFormation();
                 region.UpdateOccupation();
                 countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
@@ -840,9 +841,14 @@ public class SimManager
     }
     public void UpdateTradeZones()
     {
-        foreach (TradeZone tradeZone in tradeZoneIds.Values)
+        try {
+            foreach (TradeZone tradeZone in tradeZoneIds.Values)
+            {
+                tradeZone.AggregateEconomies();
+            }            
+        } catch (Exception e)
         {
-            tradeZone.AggregateEconomies();
+            GD.PushError(e);
         }
     }
     public void UpdateStates()

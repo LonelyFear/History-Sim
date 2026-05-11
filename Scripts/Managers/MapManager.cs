@@ -462,7 +462,7 @@ public partial class MapManager : Node2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     //float factor = region.wealth / simManager.maxWealth;
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], Economy.GetLocalPrice(region, "grain")/20f);
+                    color = Utility.MultiColourLerp([new Color("black"), new Color("yellow")], region.economy.prices["grain"]/20f);
                 }
                 else if (region.habitable)
                 {

@@ -7,10 +7,10 @@ using MessagePack;
 [MessagePackObject]
 public class Economy
 {
-    [Key(0)] public Dictionary<string, float> demand = new();
-    [Key(1)] public Dictionary<string, float> supply = new();
-    [Key(3)] public Dictionary<string, float> prices = new();
-    [IgnoreMember] public Dictionary<string, float> tradeFlow = new();
+    [Key(0)] public Dictionary<string, float> demand = [];
+    [Key(1)] public Dictionary<string, float> supply = [];
+    [Key(2)] public Dictionary<string, float> production = [];
+    [Key(3)] public Dictionary<string, float> prices = [];
     public void InitEconomy()
     {
         foreach (var pair in AssetManager.items)
@@ -19,14 +19,10 @@ public class Economy
             {
                 demand[pair.Key] = 0;
                 supply[pair.Key] = 0;
-                prices[pair.Key] = pair.Value.basePrice;    
-                tradeFlow[pair.Key] = 0;           
+                production[pair.Key] = 0;
+                prices[pair.Key] = pair.Value.basePrice;               
             }
         }
-    }
-    public float GetSupply(string itemId)
-    {
-        return supply[itemId] + tradeFlow[itemId];
     }
     public void CalculatePrices()
     {
@@ -39,6 +35,7 @@ public class Economy
             prices[itemId] = Mathf.Lerp(prices[itemId], targetPrice, 0.1f);
         }
     }
+    /*
     public static float GetLocalPrice(Region region, string itemId)
     {
         float localPrice = region.economy.prices[itemId];
@@ -57,4 +54,11 @@ public class Economy
             return localPrice;
         }
     }
+    */
+}
+public enum SupplyStatus
+{
+    SURPLUS,
+    NORMAL,
+    SHORTAGE
 }

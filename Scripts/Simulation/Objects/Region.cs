@@ -679,7 +679,7 @@ public partial class Region : PopObject, ISaveable
     }
     // Economy V2
     [IgnoreMember] public bool debugProducer = false;
-    public void CalcSupply()
+    public void CalcProduction()
     {
         float fertility = arableLand/landCount;
         float productivity = professions[SocialClass.FARMER] * 3f;
@@ -687,19 +687,61 @@ public partial class Region : PopObject, ISaveable
         {
             productivity *= 1;
         }
-        economy.supply["grain"] = productivity * fertility;
-
-        foreach (string itemId in economy.supply.Keys)
+        economy.production["grain"] = productivity * fertility;
+    }
+    public void CalcSupply()
+    {
+        foreach (var pair in economy.production)
         {
-            economy.tradeFlow[itemId] = 0;
+            string itemId = pair.Key;
+            float production = pair.Value;
+
+            if (tradeZone == null)
+            {
+                economy.supply[pair.Key] = production;
+                continue;
+            }
+
+            float marketAccess = GetMarketAccess();
+            float localWeight = 1f - marketAccess;
+            float availableMarketSupply = tradeZone.economy.supply[itemId] * Mathf.Min(GetMarketWeight() / tradeZone.totalMarketWeight, 1f);
+
+            //if (isTradeZoneCenter) GD.Print(tradeZone.economy.supply[itemId]);
+
+            economy.supply[pair.Key] = (production * localWeight) + (availableMarketSupply * marketAccess);
         }
-        
     }
     public void CalcDemand()
     {
         economy.demand["grain"] = population;
     }
+    public float GetMarketAccess()
+    {
+        if (isTradeZoneCenter)
+        {
+            return 1f;
+        }
+        return 0.75f + Mathf.Lerp(-0.5f, 0f, navigability);
+    }
+    public float GetMarketWeight()
+    {
+        // More goods if we have good terrain
+        float weight = 1f + Mathf.Lerp(-1f, 0f, navigability);
 
+        // More goods if we are on a trade route
+        if (tradeRouteLinks.Count > 0)
+        {
+            weight *= 2f;
+        }
+
+        // If we are market center we have most of the goods in store
+        if (isTradeZoneCenter)
+        {
+            weight = 4f;
+        }
+
+        return weight * landCount;
+    }
     public void MergePops()
     {
         if (pops.Count < 2)
