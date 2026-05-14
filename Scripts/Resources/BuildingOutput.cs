@@ -1,5 +1,6 @@
 using Godot;
 
+[GlobalClass]
 public partial class BuildingOutput : Resource
 {
     [Export] public Item output;

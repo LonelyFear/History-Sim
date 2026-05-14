@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Profession" format=3 uid="uid://bwfqm3a2a728n"]
+
+[ext_resource type="Script" uid="uid://b6b2susnlkj86" path="res://Scripts/Resources/PopNeeds.cs" id="1_1j4jl"]
+[ext_resource type="Script" uid="uid://73uiaq3cxeju" path="res://Scripts/Resources/Profession.cs" id="1_p4evr"]
+
+[sub_resource type="Resource" id="Resource_nra28"]
+script = ExtResource("1_1j4jl")
+demandPerWorker = 1.0
+demandPerDependent = 0.75
+metadata/_custom_type_script = "uid://b6b2susnlkj86"
+
+[resource]
+script = ExtResource("1_p4evr")
+needs = [SubResource("Resource_nra28")]
+metadata/_custom_type_script = "uid://73uiaq3cxeju"

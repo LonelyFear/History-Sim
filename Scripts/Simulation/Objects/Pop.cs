@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using MessagePack;
 [MessagePackObject(AllowPrivate = true)]
@@ -308,6 +309,17 @@ public class Pop
         }
 
         ChangePopulation(workforceChange, dependentChange);
+    }
+
+    public float GetDemand(string itemId)
+    {
+        float demand = 0;
+        Item item = AssetManager.GetItem(itemId);
+        if (!item.IsTradeable()) return demand;
+
+        // TODO
+        
+        return demand;
     }
 }
 public enum SocialClass

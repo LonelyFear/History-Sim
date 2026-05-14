@@ -3,7 +3,6 @@ using Godot;
 [GlobalClass]
 public partial class Biome : SimResource
 {
-    [Export] public string name = "Ice Sheet";
     [Export] public BiomeType type;
 
     [ExportCategory("Constraints")]

@@ -3,7 +3,6 @@ using Godot;
 [GlobalClass]
 public partial class Building : SimResource
 {
-    [Export] public string name = "Building";
     [Export] public BuildingType type;
 
     [ExportCategory("Employment")]

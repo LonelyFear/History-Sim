@@ -7,5 +7,5 @@ script = ExtResource("1_vypgh")
 name = "Lumber"
 description = "Wood, harvested from trees and used for construction or heating."
 basePrice = 5.0
-tags = PackedStringArray("tradeable")
+tags = PackedStringArray("tradeable", "need_heating")
 metadata/_custom_type_script = "uid://6q2gt72gh7yk"
