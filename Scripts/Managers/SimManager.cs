@@ -846,7 +846,7 @@ public class SimManager
         try {
             foreach (TradeZone tradeZone in tradeZoneIds.Values)
             {
-                tradeZone.AggregateEconomies();
+                tradeZone?.AggregateEconomies();
             }            
         } catch (Exception e)
         {

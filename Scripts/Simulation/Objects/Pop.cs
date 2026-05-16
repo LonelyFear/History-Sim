@@ -87,6 +87,8 @@ public partial class Pop
         }
     }
 
+    [IgnoreMember] public const float maxGoodMarketShare = 0.75f;
+
     public void ChangePopulation(int wfChange, int dfChange)
     {
         wfChange = Math.Max(wfChange, -workforce);
@@ -323,27 +325,45 @@ public partial class Pop
             string stringNeedsType = need.type.ToString().ToLower();
 
             float totalSupply = 0;
-            List<Item> itemsPresentInMarket = [];
+            Dictionary<Item, float> itemsPresentInMarket = [];
 
             if (AssetManager.itemTags.TryGetValue(stringNeedsType, out List<Item> itemsInTag))
             {
                 foreach (Item item in itemsInTag)
                 {
+                    float supply = Mathf.Max(region.economy.supply[item.id], 1);
                     if (itemsPresentInMarket.Count == 0|| region.economy.supply[item.id] > 0)
                     {
-                        itemsPresentInMarket.Add(item);
-                        totalSupply += Mathf.Max(region.economy.supply[item.id], 1);
+                        itemsPresentInMarket.Add(item, supply);
+                        totalSupply += supply;
                     }
                 }                
             }
 
-            foreach (Item item in itemsPresentInMarket)
+            float remainingMarketShare = 1f;
+
+            foreach (var pair in itemsPresentInMarket.OrderByDescending(x => x.Value))
             {
-                float marketShare = Mathf.Max(region.economy.supply[item.id], 1)/totalSupply;
+                Item item = pair.Key;
+
+                // Calculates market share
+                float marketShare = Mathf.Max(pair.Value, 1)/totalSupply * remainingMarketShare;
+
+                // Makes sure demand isnt fully proportional
+                if (marketShare < 1f && marketShare > maxGoodMarketShare)
+                {
+                    marketShare = maxGoodMarketShare;
+                    remainingMarketShare = 1f - maxGoodMarketShare;
+                    totalSupply -= pair.Value;
+                }
+                
+                // Makes sure demand logging has items
                 if (!goodsDemands.ContainsKey(item.id))
                 {
                     goodsDemands[item.id] = 0;
                 }
+
+                // Adds item to demand
                 goodsDemands[item.id] = demandForNeed * marketShare/item.basePrice;
             }
         }

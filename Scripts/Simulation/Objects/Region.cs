@@ -688,6 +688,7 @@ public partial class Region : PopObject, ISaveable
             productivity *= 1;
         }
         economy.production["grain"] = productivity * fertility;
+        economy.production["lumber"] = productivity * fertility * 0.05f;
     }
     public void CalcSupply()
     {

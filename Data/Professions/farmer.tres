@@ -18,6 +18,7 @@ metadata/_custom_type_script = "uid://b6b2susnlkj86"
 
 [resource]
 script = ExtResource("1_p4evr")
-description = "The base social class."
+name = "Farmer"
+description = "Simple farmers, they farm grain, handle livestock, and produce furniture and tools at home. They can become any other profession should the demand arise."
 needs = [SubResource("Resource_nra28"), SubResource("Resource_0ytuf")]
 metadata/_custom_type_script = "uid://73uiaq3cxeju"
