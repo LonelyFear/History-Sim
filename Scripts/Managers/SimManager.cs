@@ -625,7 +625,7 @@ public class SimManager
                 long startingPopulation = rng.Next(600, 1200);
                 
                 Culture culture = objectManager.CreateCulture();
-                objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
+                objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, "farmer");
             }
         }
     }
@@ -666,12 +666,14 @@ public class SimManager
             if (isInBatch)
             {
                 pop.GrowPop();
-                pop.TechnologyUpdate(); 
-            }    
+                pop.TechnologyUpdate();   
+            } 
             if (isInBatch || pop.shipborne)
             {
                 pop.Migrate();
             }   
+            if (isInBatch) pop.GetDemands();
+                      
             lock (this)
             {
                 if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())

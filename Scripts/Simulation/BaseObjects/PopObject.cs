@@ -11,7 +11,6 @@ using MessagePack;
 public abstract class PopObject : NamedObject
 {
     [Key(7)] public long population { get; set; } = 0;
-    [Key(8)] public long highestPossiblePopulation { get; set; } = 0;
     [Key(9)] public long dependents { get; set; } = 0;
     [Key(10)] public long workforce { get; set; } = 0;
     [Key(11)] public Color color { get; set; }
@@ -19,20 +18,18 @@ public abstract class PopObject : NamedObject
     [IgnoreMember] public HashSet<Pop> pops = [];
     [Key(12)] public HashSet<ulong> popsIds { get; set; }
     [IgnoreMember] public static TimeManager timeManager;
-    [Key(13)] public Dictionary<SocialClass, long> professions { get; set; } = new Dictionary<SocialClass, long>()
-    {
-        {SocialClass.FARMER, 0},
-        {SocialClass.MERCHANT, 0},
-        {SocialClass.ARISTOCRAT, 0},
-        {SocialClass.LABOURER, 0},
-        {SocialClass.SOLDIER, 0},
-    };
-    
+    [Key(13)] public Dictionary<string, long> professions { get; set; } = new Dictionary<string, long>();
     [Key(14)] public Dictionary<ulong, long> cultureIds { get; set; } = [];
     [Key(15)] public ulong? largestCultureId { get; set; } = null;
     [Key(16)] public Tech averageTech { get; set; }
     [IgnoreMember] public static Random rng = new Random();
-    
+    public PopObject()
+    {
+        foreach (string professionId in AssetManager.professions.Keys)
+        {
+            professions[professionId] = 0;
+        }
+    }
     public override void PrepareForSave()
     {
         popsIds = pops.Count > 0 ? [.. pops.Select(p => p.id)] : null;
@@ -61,20 +58,13 @@ public abstract class PopObject : NamedObject
     }
     public virtual void CountPopulation()
     {
-        long maxPopulation = 0;
         long countedPopulation = 0;
         long countedDependents = 0;
         long countedWorkforce = 0;
 
         Dictionary<Culture, long> countedCultures = [];
-        Dictionary<SocialClass, long> countedSocialClasss = new Dictionary<SocialClass, long>()
-        {
-            {SocialClass.FARMER, 0},
-            {SocialClass.MERCHANT, 0},
-            {SocialClass.LABOURER, 0},
-            { SocialClass.SOLDIER, 0},
-            { SocialClass.ARISTOCRAT, 0},
-        };
+        Dictionary<string, long> countedProfessions = [];
+
         Tech newAvg = new();
         //Culture currentLargest = null;
         foreach (Pop pop in pops)
@@ -90,7 +80,7 @@ public abstract class PopObject : NamedObject
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
 
-            countedSocialClasss[pop.profession] += pop.workforce;
+            countedProfessions[pop.profession.id] += pop.workforce;
             if (!countedCultures.ContainsKey(pop.culture))
             {
                 countedCultures.Add(pop.culture, pop.population);
@@ -107,8 +97,10 @@ public abstract class PopObject : NamedObject
             industryLevel = newAvg.industryLevel / pops.Count              
         };
         
-        highestPossiblePopulation = maxPopulation;
-        professions = countedSocialClasss;
+        foreach (var pair in countedProfessions)
+        {
+            professions[pair.Key] = pair.Value;
+        }
         population = countedPopulation;
         dependents = countedDependents;
         workforce = countedWorkforce;
@@ -136,13 +128,13 @@ public abstract class PopObject : NamedObject
                     pop.region = (Region)popObject;
                     break;
             }
-            ChangePopulation(pop.workforce, pop.dependents, pop.profession, pop.culture);
+            ChangePopulation(pop.workforce, pop.dependents, pop.profession.id, pop.culture);
         }
     }
     public void RemovePop(Pop pop, PopObject popObject)
     {
         pops.Remove(pop);
-        ChangePopulation(-pop.workforce, -pop.dependents, pop.profession, pop.culture);
+        ChangePopulation(-pop.workforce, -pop.dependents, pop.profession.id, pop.culture);
         switch (popObject)
         {     
             case Culture:
@@ -153,7 +145,7 @@ public abstract class PopObject : NamedObject
                 break;    
         } 
     }
-    public void ChangePopulation(long workforceChange, long dependentChange, SocialClass socialClass, Culture culture)
+    public void ChangePopulation(long workforceChange, long dependentChange, string professionId, Culture culture)
     {
         // Updates numbers
         lock (this)
@@ -163,14 +155,14 @@ public abstract class PopObject : NamedObject
             population += workforceChange + dependentChange;            
         }
         // Updates Demographics
-        lock (professions)
+        lock (professionId)
         {
-            if (!professions.ContainsKey(socialClass))
+            if (!professions.ContainsKey(professionId))
             {
-                professions.Add(socialClass, workforceChange);
+                professions.Add(professionId, workforceChange);
             } else
             {
-                professions[socialClass] += workforceChange;
+                professions[professionId] += workforceChange;
             }            
         }
 

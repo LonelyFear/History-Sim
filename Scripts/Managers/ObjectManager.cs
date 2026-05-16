@@ -71,7 +71,7 @@ public class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
-    public Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, SocialClass profession = SocialClass.FARMER)
+    public Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string professionId)
     {
         simManager.currentBatch++;
         if (simManager.currentBatch > 12)
@@ -82,13 +82,14 @@ public class ObjectManager
         {
             id = GetId(),
             batchId = simManager.currentBatch,
-            profession = profession,
+            profession = AssetManager.GetProfession(professionId),
             tech = tech,
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
             shipborne = region.isWater
         };
+
         lock (simManager.popsIds)
         {
             simManager.popsIds.Add(pop.id, pop);

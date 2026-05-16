@@ -4,6 +4,7 @@ using Godot;
 [GlobalClass]
 public partial class Item : SimResource
 {
+    [Export] public string name = "New Sim Resource";
     [Export(PropertyHint.MultilineText)] public string description = "A base item";
     [ExportCategory("Trade")]
     [Export] public float tradeValue;

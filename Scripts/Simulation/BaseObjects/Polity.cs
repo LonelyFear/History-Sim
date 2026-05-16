@@ -51,12 +51,7 @@ public abstract partial class Polity : PopObject
         HashSet<Alliance> allianceBorders = [];
         HashSet<State> borders = [];
         HashSet<State> independentBorders = [];
-        Dictionary<SocialClass, long> countedSocialClasses = [];
-
-        foreach (SocialClass profession in Enum.GetValues(typeof(SocialClass)))
-        {
-            countedSocialClasses.Add(profession, 0);
-        }
+        Dictionary<string, long> countedProfessions = [];
 
         Dictionary<ulong, long> cCultures = [];
         float countedWealth = 0;
@@ -130,10 +125,10 @@ public abstract partial class Polity : PopObject
                 }
             }
 
-            // Counts up professions
-            foreach (SocialClass profession in region.professions.Keys)
+            // Counts up socialClasss
+            foreach (string professionId in region.professions.Keys)
             {
-                countedSocialClasses[profession] += region.professions[profession];
+                countedProfessions[professionId] += region.professions[professionId];
             }
 
             // Counts up cultures
@@ -154,7 +149,12 @@ public abstract partial class Polity : PopObject
         borderingAlliances = allianceBorders;
         totalWealth = countedWealth;
         baseWealth = countedBaseWealth;
-        professions = countedSocialClasses;
+        
+        foreach (var pair in countedProfessions)
+        {
+            professions[pair.Key] = pair.Value;
+        }
+
         cultureIds = cCultures;
         population = countedP;
         workforce = countedW;

@@ -5,11 +5,19 @@
 
 [sub_resource type="Resource" id="Resource_nra28"]
 script = ExtResource("1_1j4jl")
+demandPerWorker = 5.0
+demandPerDependent = 4.0
+metadata/_custom_type_script = "uid://b6b2susnlkj86"
+
+[sub_resource type="Resource" id="Resource_0ytuf"]
+script = ExtResource("1_1j4jl")
+type = 1
 demandPerWorker = 1.0
-demandPerDependent = 0.75
+demandPerDependent = 1.0
 metadata/_custom_type_script = "uid://b6b2susnlkj86"
 
 [resource]
 script = ExtResource("1_p4evr")
-needs = [SubResource("Resource_nra28")]
+description = "The base social class."
+needs = [SubResource("Resource_nra28"), SubResource("Resource_0ytuf")]
 metadata/_custom_type_script = "uid://73uiaq3cxeju"

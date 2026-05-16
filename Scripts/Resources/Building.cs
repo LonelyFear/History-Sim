@@ -3,11 +3,12 @@ using Godot;
 [GlobalClass]
 public partial class Building : SimResource
 {
+    [Export] public string name = "New Sim Resource";
     [Export] public BuildingType type;
 
     [ExportCategory("Employment")]
     [Export] public int employees;
-    [Export] public SocialClass profession;    
+    [Export] public SocialClass socialClass;    
 
     [ExportCategory("Requirements")]
     [ExportGroup("Tech")]

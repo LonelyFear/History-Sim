@@ -578,8 +578,8 @@ public partial class Region : PopObject, ISaveable
     public int GetBaseTradeWeight()
     {
         
-        //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
-        //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
+        //long notMerchants = Pop.FromNativePopulation(workforce - socialClasss[SocialClass.MERCHANT]);
+        //long merchants = Pop.FromNativePopulation(socialClasss[SocialClass.MERCHANT]);
         float populationTradeWeight = population * 0.001f;
 
         float zoneSizeTradeWeight = 0;
@@ -682,7 +682,7 @@ public partial class Region : PopObject, ISaveable
     public void CalcProduction()
     {
         float fertility = arableLand/landCount;
-        float productivity = professions[SocialClass.FARMER] * 3f;
+        float productivity = professions["farmer"] * 3f;
         if (debugProducer)
         {
             productivity *= 1;
@@ -713,7 +713,18 @@ public partial class Region : PopObject, ISaveable
     }
     public void CalcDemand()
     {
-        economy.demand["grain"] = population;
+        foreach (var pair in economy.demand)
+        {
+            economy.demand[pair.Key] = 0;
+            foreach (Pop pop in pops)
+            {
+                if (pop.goodsDemands.TryGetValue(pair.Key, out float demand))
+                {
+                    economy.demand[pair.Key] += demand;
+                }
+            }            
+                    
+        }
     }
     public float GetMarketAccess()
     {
@@ -878,10 +889,10 @@ public partial class Region : PopObject, ISaveable
             /*
             text += $"Professions Breakdown:\n";     
 
-            foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
+            foreach (var socialClassSizePair in socialClasss.OrderByDescending(pair => pair.Key))
             {
-                SocialClass socialClass = professionSizePair.Key;
-                long localPopulation = professionSizePair.Value;
+                SocialClass socialClass = socialClassSizePair.Key;
+                long localPopulation = socialClassSizePair.Value;
                 
                 // Skips if the culture is too small
                 if (Pop.FromNativePopulation(localPopulation) < 1) continue;

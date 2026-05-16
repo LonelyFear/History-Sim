@@ -5,8 +5,10 @@ public static class AssetManager
     // Saved Stuff
     public static Dictionary<string, Biome> biomes = [];
     public static Dictionary<string, Building> buildings = [];
+    public static Dictionary<string, Profession> professions = [];
     public static Dictionary<BuildingType, List<string>> buildingTypes = [];
     public static Dictionary<string, Item> items = [];
+    public static Dictionary<string, List<Item>> itemTags = [];
 
     public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output, bool deepSearch = true) where ResType : SimResource
     {
@@ -33,13 +35,19 @@ public static class AssetManager
     public static void LoadAssets()
     {
         biomes = [];
+
         buildings = [];
         buildingTypes = [];
-        items = [];
 
+        items = [];
+        itemTags = [];
+
+        professions = [];
 
         LoadResources("Data/Biomes", biomes);
         LoadResources("Data/Buildings", buildings);
+        LoadResources("Data/Professions", professions);
+        LoadResources("Data/Items", items);
 
         foreach (var pair in buildings)
         {
@@ -47,7 +55,14 @@ public static class AssetManager
             buildingTypes[pair.Value.type].Add(pair.Key);
         }
 
-        LoadResources("Data/Items", items);
+        foreach (Item item in items.Values)
+        {
+            foreach (string tag in item.tags)
+            {
+                if (!itemTags.ContainsKey(tag)) itemTags[tag] = [];
+                itemTags[tag].Add(item);                
+            }
+        }    
     }
     public static Biome GetBiome(string id)
     {
@@ -60,5 +75,9 @@ public static class AssetManager
     public static Building GetBuilding(string id)
     {
         return buildings[id];
+    }
+    public static Profession GetProfession(string id)
+    {
+        return professions[id];
     }
 }
