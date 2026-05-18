@@ -1,13 +1,29 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://jin7ehw7xwnm"]
 
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_px8xf"]
+[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/wood.tres" id="1_una1d"]
+[ext_resource type="Script" uid="uid://bfrkeorgcmvpt" path="res://Scripts/Resources/ResourceDeposit.cs" id="2_jh1sa"]
+[ext_resource type="Resource" uid="uid://h7lq26qaeqwj" path="res://Data/Natural Resources/grain.tres" id="3_ua3h6"]
+
+[sub_resource type="Resource" id="Resource_w0wfv"]
+script = ExtResource("2_jh1sa")
+resource = ExtResource("1_una1d")
+maxAmount = 1.0
+minAmount = 1.0
+metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
+
+[sub_resource type="Resource" id="Resource_kmh2i"]
+script = ExtResource("2_jh1sa")
+resource = ExtResource("3_ua3h6")
+maxAmount = 0.3
+minAmount = 0.3
+metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 
 [resource]
 script = ExtResource("1_px8xf")
 name = "Rainforest"
 type = 2
 minElevation = 0.0
-maxMoisture = 4000.0
 minMoisture = 800.0
 maxTemperature = 35.0
 minTemperature = 5.0
@@ -15,4 +31,4 @@ navigability = 0.2
 arability = 0.3
 survivability = 0.6
 color = Color(0.11764706, 0.43529412, 0.21176471, 1)
-metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"
+naturalResources = [SubResource("Resource_w0wfv"), SubResource("Resource_kmh2i")]

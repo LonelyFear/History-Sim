@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://cxjkm86v832yy"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_1hny7"]
+
+[resource]
+script = ExtResource("1_1hny7")
+name = "Ore Deposits"
+description = "This area contains large deposits of metal ores."
+color = Color(0.76, 0.63688, 0.48639998, 1)
+metadata/_custom_type_script = "uid://1h5mxderppvp"

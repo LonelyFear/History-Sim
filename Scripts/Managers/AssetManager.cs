@@ -9,6 +9,7 @@ public static class AssetManager
     public static Dictionary<BuildingType, List<string>> buildingTypes = [];
     public static Dictionary<string, Item> items = [];
     public static Dictionary<string, List<Item>> itemTags = [];
+    public static Dictionary<string, NaturalResource> naturalResources = [];
 
     public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output, bool deepSearch = true) where ResType : SimResource
     {
@@ -44,10 +45,13 @@ public static class AssetManager
 
         professions = [];
 
+        naturalResources = [];
+
         LoadResources("Data/Biomes", biomes);
         LoadResources("Data/Buildings", buildings);
         LoadResources("Data/Professions", professions);
-        LoadResources("Data/Items", items);
+        LoadResources("Data/Items", items); 
+        LoadResources("Data/Natural Resources", naturalResources);
 
         foreach (var pair in buildings)
         {

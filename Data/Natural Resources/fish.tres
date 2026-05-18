@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://dyq612icm2abh"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_6205p"]
+
+[resource]
+script = ExtResource("1_6205p")
+name = "Fish"
+description = "This area can support industrial scale fishing."
+color = Color(7.70092e-06, 0.7402502, 0.93192625, 1)
+metadata/_custom_type_script = "uid://1h5mxderppvp"

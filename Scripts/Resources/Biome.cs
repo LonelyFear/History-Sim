@@ -1,4 +1,5 @@
 using Godot;
+using Godot.Collections;
 
 [GlobalClass]
 public partial class Biome : SimResource
@@ -22,6 +23,7 @@ public partial class Biome : SimResource
     [Export(PropertyHint.Range, "0, 1, 0.01")] public float arability = 0.0f;
     [Export(PropertyHint.Range, "0, 1, 0.01")] public float survivability = 0.0f;
     [Export] public Color color = new("FFFFFF");
+    [Export] public ResourceDeposit[] naturalResources = [];
 
     public enum BiomeType
     {

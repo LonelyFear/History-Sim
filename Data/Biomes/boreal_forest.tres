@@ -1,6 +1,23 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://cmjudmru88sji"]
 
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_1dg3d"]
+[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/wood.tres" id="1_u53f4"]
+[ext_resource type="Script" uid="uid://bfrkeorgcmvpt" path="res://Scripts/Resources/ResourceDeposit.cs" id="2_wsm6p"]
+[ext_resource type="Resource" uid="uid://h7lq26qaeqwj" path="res://Data/Natural Resources/grain.tres" id="3_jl0pm"]
+
+[sub_resource type="Resource" id="Resource_3pv42"]
+script = ExtResource("2_wsm6p")
+resource = ExtResource("1_u53f4")
+maxAmount = 1.0
+minAmount = 1.0
+metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
+
+[sub_resource type="Resource" id="Resource_7q8ja"]
+script = ExtResource("2_wsm6p")
+resource = ExtResource("3_jl0pm")
+maxAmount = 0.5
+minAmount = 0.5
+metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 
 [resource]
 script = ExtResource("1_1dg3d")
@@ -14,4 +31,4 @@ navigability = 0.7
 arability = 0.3
 survivability = 0.6
 color = Color(0.2, 0.40392157, 0.23137255, 1)
-metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"
+naturalResources = [SubResource("Resource_3pv42"), SubResource("Resource_7q8ja")]

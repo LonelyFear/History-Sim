@@ -6,13 +6,9 @@
 script = ExtResource("1_m17k2")
 name = "Forest"
 type = 2
-minElevation = 0.0
-maxMoisture = 1000.0
-minMoisture = 600.0
 maxTemperature = 20.0
 minTemperature = 5.0
 navigability = 0.7
 arability = 0.8
 survivability = 0.8
 color = Color(0.30980393, 0.5411765, 0.0627451, 1)
-metadata/_custom_type_script = "uid://cg7fsl8w5jl7r"
