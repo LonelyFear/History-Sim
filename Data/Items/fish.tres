@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://cy3nb4p30pvup"]
+
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_hr8yh"]
+
+[resource]
+script = ExtResource("1_hr8yh")
+name = "Fish"
+description = "Fish, prepared for consumption."
+basePrice = 8.0
+tags = PackedStringArray("tradeable", "need_food")
+metadata/_custom_type_script = "uid://6q2gt72gh7yk"

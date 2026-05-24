@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Building" format=3 uid="uid://dkn7nul4fjgkl"]
+
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_dlg8p"]
+[ext_resource type="Resource" uid="uid://cy3nb4p30pvup" path="res://Data/Items/fish.tres" id="2_dlg8p"]
+[ext_resource type="Script" uid="uid://ccfih2hgmcp88" path="res://Scripts/Resources/BuildingOutput.cs" id="3_x3fl4"]
+[ext_resource type="Resource" uid="uid://dyq612icm2abh" path="res://Data/Natural Resources/fish.tres" id="4_dlg8p"]
+[ext_resource type="Script" uid="uid://108o3rkltf1c" path="res://Scripts/Resources/Building.cs" id="5_3xpsk"]
+
+[sub_resource type="Resource" id="Resource_fwpq6"]
+script = ExtResource("3_x3fl4")
+output = ExtResource("2_dlg8p")
+amount = 1.0
+metadata/_custom_type_script = "uid://ccfih2hgmcp88"
+
+[resource]
+script = ExtResource("5_3xpsk")
+name = "Fishing Wharves"
+description = "Fishing wharves where fishermen fish for food."
+type = 1
+requiredNaturalResource = ExtResource("4_dlg8p")
+scalesWithResource = true
+populationFactor = 0.03
+outputs = Array[Object]([SubResource("Resource_fwpq6")])
+metadata/_custom_type_script = "uid://108o3rkltf1c"

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Godot;
 using MessagePack;
 using System.Text.RegularExpressions;
+using System.IO;
 [MessagePackObject(AllowPrivate = true)]
 public partial class Region : PopObject, ISaveable
 {
@@ -15,8 +16,6 @@ public partial class Region : PopObject, ISaveable
     [Key(21)] public int tradeWeight { get; set; } = 0;
     [Key(22)] public Economy economy = new();
     [Key(23)] public Dictionary<ulong, TradeConnection> tradeConnections = new();
-    [IgnoreMember] public List<Building> buildings;
-    [IgnoreMember] public List<string> buildingIds;
 
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
     [Key(28)] public Vector2I pos;
@@ -47,11 +46,15 @@ public partial class Region : PopObject, ISaveable
     [Key(38)] public ulong? occupierId { get; set; }
     
     [Key(39)] public ulong? ownerId { get; set; }
+    [Key(46)] public Dictionary<string, float> naturalResources = [];
 
     // Demographics
     [IgnoreMember] public List<Region> borderingRegions { get; set; } = [];
     [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
+    // Buildings
+    //[IgnoreMember] public List<Building> buildings = [];
+    [Key(47)] public List<string> buildings = [];
     // References
     [Key(45)] public HashSet<ulong> linkedRegionIds = [];
     [IgnoreMember] public HashSet<Region> linkedRegions = [];
@@ -131,14 +134,14 @@ public partial class Region : PopObject, ISaveable
     {
         base.PrepareForSave();
         linkedRegionIds = [..linkedRegions.Select(r => r.id)];
-        buildingIds = [..buildings.Select(b => b.id)];
+        //buildingIds = [..buildings.Select(b => b.id)];
         //economy.PrepareForSave();
     }
     public override void LoadFromSave()
     {
         base.LoadFromSave();
         linkedRegions = [..linkedRegionIds.Select(r => objectManager.GetRegion(r))];
-        buildings = [..buildingIds.Select(AssetManager.GetBuilding)];
+        //buildings = [..buildingIds.Select(AssetManager.GetBuilding)];
         //economy.LoadFromSave();
     }
 
@@ -161,11 +164,41 @@ public partial class Region : PopObject, ISaveable
         tiles.Remove(tile.pos);
         tile.regionId = null;
     }
-    public void InitRegion()
+    public void LoadStats()
     {
         CalcAverages();
         CheckHabitability();
         RemoveInvalidBorders();
+    }
+    public void InitRegion()
+    {
+        LoadStats();
+        NameRegion();
+        economy.InitEconomy();
+        if (rng.NextSingle() < 0.01f)
+        {
+            debugProducer = true;
+        }
+        GetBiomeResources();    
+    }
+
+    public void GetBiomeResources()
+    {
+        foreach (var pair in biomes)
+        {
+            string biomeId = pair.Key;
+            Biome biome = AssetManager.GetBiome(biomeId);
+
+            for (int i = 0; i < pair.Value; i++)
+            {
+                foreach (ResourceDeposit deposit in biome.naturalResources)
+                {
+                    NaturalResource resource = deposit.resource;
+                    if (!naturalResources.ContainsKey(resource.id)) naturalResources.Add(resource.id, 0);
+                    naturalResources[resource.id] += deposit.maxAmount;
+                }                
+            }
+        }        
     }
     public void NameRegion()
     {
@@ -679,16 +712,61 @@ public partial class Region : PopObject, ISaveable
     }
     // Economy V2
     [IgnoreMember] public bool debugProducer = false;
+    public void UpdatePrimaryIndustries()
+    {
+        if (population < 1) return;
+
+        foreach (Building building in AssetManager.buildingTypes[BuildingType.PRIMARY_INDUSTRY])
+        {
+            if (buildings.Contains(building.id) || !building.Teched(averageTech))
+            {
+                continue;
+            }
+
+            foreach (string natResId in naturalResources.Keys)
+            {
+                NaturalResource presentResource = AssetManager.GetNaturalResource(natResId);
+                if (presentResource == building.requiredNaturalResource)
+                {
+                    buildings.Add(building.id);
+                    continue;
+                }
+            }
+        }
+    }
     public void CalcProduction()
     {
-        float fertility = arableLand/landCount;
-        float productivity = professions["farmer"] * 3f;
-        if (debugProducer)
+        foreach (var pair in economy.production)
         {
-            productivity *= 1;
+            economy.production[pair.Key] = 0;
         }
-        economy.production["grain"] = productivity * fertility;
-        economy.production["lumber"] = productivity * fertility * 0.05f;
+
+        float fertility = arableLand/landCount;
+        // Loops over buildings
+        foreach (Building building in buildings.Select(AssetManager.GetBuilding))
+        {
+            // Loops over each buildings output
+            foreach (BuildingOutput output in building.outputs)
+            {
+                // The base amount outputted
+                float baseOutput = output.amount;
+
+                // Checks if we should factor in population
+                if (building.populationFactor > 0)
+                {
+                    baseOutput *= population * building.populationFactor;
+                }
+
+                // Checks if we should factor in amount of natural resource
+                if (building.scalesWithResource)
+                {
+                    baseOutput *= naturalResources[building.requiredNaturalResource.id];
+                }
+
+                // Sets production
+                economy.production[output.output.id] += baseOutput;
+            }
+        }
     }
     public void CalcSupply()
     {
@@ -733,19 +811,29 @@ public partial class Region : PopObject, ISaveable
         {
             return 1f;
         }
-        return 0.75f + Mathf.Lerp(-0.5f, 0f, navigability);
+        float marketAccess = 0.75f + Mathf.Lerp(-0.5f, 0f, navigability);
+
+        if (owner?.capital == this)
+        {
+            marketAccess += 0.1f;
+        }
+
+        return Mathf.Clamp(marketAccess, 0, 1);
     }
     public float GetMarketWeight()
     {
         // More goods if we have good terrain
-        float weight = 1f + Mathf.Lerp(-1f, 0f, navigability);
+        float weight = 1f + Mathf.Lerp(-0.8f, 0f, navigability);
 
         // More goods if we are on a trade route
         if (tradeRouteLinks.Count > 0)
         {
             weight *= 2f;
         }
-
+        if (owner?.capital == this)
+        {
+            wealth *= 1.5f;
+        }
         // If we are market center we have most of the goods in store
         if (isTradeZoneCenter)
         {

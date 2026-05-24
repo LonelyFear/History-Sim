@@ -6,7 +6,7 @@ public static class AssetManager
     public static Dictionary<string, Biome> biomes = [];
     public static Dictionary<string, Building> buildings = [];
     public static Dictionary<string, Profession> professions = [];
-    public static Dictionary<BuildingType, List<string>> buildingTypes = [];
+    public static Dictionary<BuildingType, List<Building>> buildingTypes = [];
     public static Dictionary<string, Item> items = [];
     public static Dictionary<string, List<Item>> itemTags = [];
     public static Dictionary<string, NaturalResource> naturalResources = [];
@@ -56,7 +56,7 @@ public static class AssetManager
         foreach (var pair in buildings)
         {
             if (!buildingTypes.ContainsKey(pair.Value.type)) buildingTypes[pair.Value.type] = [];
-            buildingTypes[pair.Value.type].Add(pair.Key);
+            buildingTypes[pair.Value.type].Add(pair.Value);
         }
 
         foreach (Item item in items.Values)
@@ -75,6 +75,10 @@ public static class AssetManager
     public static Item GetItem(string id)
     {
         return items[id];
+    }
+    public static NaturalResource GetNaturalResource(string id)
+    {
+        return naturalResources[id];
     }
     public static Building GetBuilding(string id)
     {

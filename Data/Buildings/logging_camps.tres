@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Building" format=3 uid="uid://dys7a1hl5s3eg"]
+
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_qqouk"]
+[ext_resource type="Resource" uid="uid://crw371r0vskel" path="res://Data/Items/lumber.tres" id="2_qqouk"]
+[ext_resource type="Script" uid="uid://ccfih2hgmcp88" path="res://Scripts/Resources/BuildingOutput.cs" id="3_lsdvr"]
+[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/trees.tres" id="4_qqouk"]
+[ext_resource type="Script" uid="uid://108o3rkltf1c" path="res://Scripts/Resources/Building.cs" id="5_g1x60"]
+
+[sub_resource type="Resource" id="Resource_fwpq6"]
+script = ExtResource("3_lsdvr")
+output = ExtResource("2_qqouk")
+amount = 1.0
+metadata/_custom_type_script = "uid://ccfih2hgmcp88"
+
+[resource]
+script = ExtResource("5_g1x60")
+name = "Logging Camps"
+description = "Logging camps which process local trees into usable firewood and lumber."
+type = 1
+requiredNaturalResource = ExtResource("4_qqouk")
+scalesWithResource = true
+populationFactor = 0.01
+outputs = Array[Object]([SubResource("Resource_fwpq6")])
+metadata/_custom_type_script = "uid://108o3rkltf1c"

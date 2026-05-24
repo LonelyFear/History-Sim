@@ -3,7 +3,7 @@
 [ext_resource type="Resource" uid="uid://h7lq26qaeqwj" path="res://Data/Natural Resources/grain.tres" id="1_bymmx"]
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_x0v3v"]
 [ext_resource type="Script" uid="uid://bfrkeorgcmvpt" path="res://Scripts/Resources/ResourceDeposit.cs" id="2_i06ad"]
-[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/wood.tres" id="3_p25cb"]
+[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/trees.tres" id="3_p25cb"]
 [ext_resource type="Resource" uid="uid://cr1qfv0ya6jw1" path="res://Data/Natural Resources/livestock.tres" id="4_8uouh"]
 
 [sub_resource type="Resource" id="Resource_h45de"]

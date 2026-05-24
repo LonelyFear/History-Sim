@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://jin7ehw7xwnm"]
 
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_px8xf"]
-[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/wood.tres" id="1_una1d"]
+[ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/trees.tres" id="1_una1d"]
 [ext_resource type="Script" uid="uid://bfrkeorgcmvpt" path="res://Scripts/Resources/ResourceDeposit.cs" id="2_jh1sa"]
 [ext_resource type="Resource" uid="uid://h7lq26qaeqwj" path="res://Data/Natural Resources/grain.tres" id="3_ua3h6"]
 

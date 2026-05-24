@@ -4,6 +4,6 @@ using Godot;
 public partial class ResourceDeposit: SimResource
 {
     [Export] public NaturalResource resource;
-    [Export] float maxAmount = 0;
-    [Export] float minAmount = 0;
+    [Export] public float maxAmount = 0;
+    [Export] public float minAmount = 0;
 }

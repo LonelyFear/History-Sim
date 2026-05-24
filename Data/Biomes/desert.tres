@@ -6,6 +6,8 @@
 script = ExtResource("1_5ip1w")
 name = "Desert"
 type = 2
+minElevation = 0.0
+maxMoisture = 300.0
 maxTemperature = 35.0
 minTemperature = 5.0
 navigability = 0.5

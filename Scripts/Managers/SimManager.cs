@@ -185,7 +185,7 @@ public class SimManager
         regionIds.Values.ToList().ForEach(r =>
         {
             r.LoadFromSave();
-            r.InitRegion();
+            r.LoadStats();
         });
         BorderingRegions();
 
@@ -481,12 +481,6 @@ public class SimManager
         {
             Region region = pair.Value;
             region.InitRegion();
-            region.NameRegion();
-            region.economy.InitEconomy();
-            if (rng.NextSingle() < 0.01f)
-            {
-                region.debugProducer = true;
-            }
         }
         RemoveEmptyRegions();        
     }
@@ -758,9 +752,11 @@ public class SimManager
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
 
+                region.UpdatePrimaryIndustries();
                 region.CalcProduction();
                 region.CalcDemand();
                 region.CalcSupply();
+                
                 region.economy.CalculatePrices();
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;

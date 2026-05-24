@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_lccb5")
-name = "Grain Farms"
+name = "Grain Fields"
 description = "This area can support the farming of cereal grains such as wheat, rye, barley, or millet."
 color = Color(0.88, 0.66293335, 0.22879998, 1)
 metadata/_custom_type_script = "uid://1h5mxderppvp"

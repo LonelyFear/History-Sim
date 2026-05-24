@@ -1,8 +1,24 @@
 [gd_resource type="Resource" script_class="Building" format=3 uid="uid://2uanqwk6qdsu"]
 
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_jmw6s"]
+[ext_resource type="Resource" uid="uid://b5uv733wtfsk5" path="res://Data/Items/grain.tres" id="1_rrxi7"]
+[ext_resource type="Resource" uid="uid://h7lq26qaeqwj" path="res://Data/Natural Resources/grain.tres" id="1_tr8ip"]
 [ext_resource type="Script" uid="uid://108o3rkltf1c" path="res://Scripts/Resources/Building.cs" id="1_xne25"]
+[ext_resource type="Script" uid="uid://ccfih2hgmcp88" path="res://Scripts/Resources/BuildingOutput.cs" id="2_jmw6s"]
+
+[sub_resource type="Resource" id="Resource_fwpq6"]
+script = ExtResource("2_jmw6s")
+output = ExtResource("1_rrxi7")
+amount = 1.0
+metadata/_custom_type_script = "uid://ccfih2hgmcp88"
 
 [resource]
 script = ExtResource("1_xne25")
-scalesWithPopulation = true
+name = "Grain Farms"
+description = "Grain farms capable of cultivating edible grains."
+type = 1
+requiredNaturalResource = ExtResource("1_tr8ip")
+scalesWithResource = true
+populationFactor = 0.1
+outputs = Array[Object]([SubResource("Resource_fwpq6")])
 metadata/_custom_type_script = "uid://108o3rkltf1c"
