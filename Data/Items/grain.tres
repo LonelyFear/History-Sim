@@ -6,6 +6,7 @@
 script = ExtResource("1_cd43d")
 name = "Grain"
 description = "An edible grain, cultivated for consumption."
+staple = true
 basePrice = 5.0
 tags = PackedStringArray("tradeable", "need_food")
 metadata/_custom_type_script = "uid://6q2gt72gh7yk"

@@ -87,7 +87,7 @@ public partial class Pop
         }
     }
 
-    [IgnoreMember] public const float maxGoodMarketShare = 0.75f;
+    [IgnoreMember] public const float maxGoodMarketShare = 0.9f;
 
     public void ChangePopulation(int wfChange, int dfChange)
     {
@@ -332,7 +332,7 @@ public partial class Pop
                 foreach (Item item in itemsInTag)
                 {
                     float supply = Mathf.Max(region.economy.supply[item.id], 1);
-                    if (itemsPresentInMarket.Count == 0|| region.economy.supply[item.id] > 0)
+                    if (item.staple || region.economy.supply[item.id] > 0)
                     {
                         itemsPresentInMarket.Add(item, supply);
                         totalSupply += supply;

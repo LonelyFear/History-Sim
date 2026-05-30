@@ -15,8 +15,8 @@ metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 [sub_resource type="Resource" id="Resource_6vs0j"]
 script = ExtResource("2_707om")
 resource = ExtResource("3_bwxlq")
-maxAmount = 0.4
-minAmount = 0.1
+maxAmount = 0.8
+minAmount = 0.8
 metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 
 [resource]

@@ -139,13 +139,13 @@ public partial class ObjectInfo : Control
             specialLabel.Text += $"  {resource.name}: " + pair.Value.ToString("#,##0\n");
         } 
         specialLabel.Text += "\nEconomy: \n";
-        foreach (var pair in region.economy.prices.OrderByDescending(bp => bp.Value))
+        foreach (var pair in region.economy.prices.OrderByDescending(bp => bp.Key))
         {
             Item item = AssetManager.GetItem(pair.Key);
             float price = pair.Value;
             specialLabel.Text += $"  {item.name}: " + price.ToString("$#,###0.00\n");
-            //specialLabel.Text += $"     Supply: " + region.economy.supply[item.id].ToString("#,###0\n");
-            //specialLabel.Text += $"     Demand: " + region.economy.demand[item.id].ToString("#,###0\n");
+            specialLabel.Text += $"     Supply: " + region.economy.supply[item.id].ToString("#,###0\n");
+            specialLabel.Text += $"     Demand: " + region.economy.demand[item.id].ToString("#,###0\n");
         }       
     }
     public void DisplayPolityText(Polity polity, State state)
