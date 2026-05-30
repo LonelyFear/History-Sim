@@ -15,8 +15,8 @@ metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 [sub_resource type="Resource" id="Resource_7q8ja"]
 script = ExtResource("2_wsm6p")
 resource = ExtResource("3_jl0pm")
-maxAmount = 0.4
-minAmount = 0.4
+maxAmount = 0.3
+minAmount = 0.3
 metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 
 [resource]
@@ -27,7 +27,7 @@ minElevation = 0.0
 minMoisture = 300.0
 maxTemperature = 5.0
 minTemperature = -5.0
-navigability = 0.7
+navigability = 0.5
 arability = 0.3
 survivability = 0.6
 color = Color(0.2, 0.40392157, 0.23137255, 1)

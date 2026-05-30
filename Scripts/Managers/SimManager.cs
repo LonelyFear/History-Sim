@@ -33,6 +33,7 @@ public class SimManager
     public ObjectManager objectManager = new ObjectManager();
     public uint tick;
     public RegionStyle regionStyle = RegionStyle.Square;
+    public bool useNewEconomy = false;
     public Tile[,] tiles;
 
     [IgnoreMember] public List<Region> habitableRegions = [];
@@ -752,12 +753,16 @@ public class SimManager
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
 
-                region.UpdatePrimaryIndustries();
-                region.CalcProduction();
-                region.CalcDemand();
-                region.CalcSupply();
-                
-                region.economy.CalculatePrices();
+                if (useNewEconomy)
+                {
+                    region.UpdatePrimaryIndustries();
+                    region.CalcProduction();
+                    region.CalcDemand();
+                    region.CalcSupply();
+                    
+                    region.economy.CalculatePrices();                    
+                }
+
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
@@ -796,7 +801,7 @@ public class SimManager
                 stopwatch.Restart();
 
                 // States
-                //region.RandomStateFormation();
+                region.RandomStateFormation();
                 region.UpdateOccupation();
                 countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
@@ -840,10 +845,13 @@ public class SimManager
     public void UpdateTradeZones()
     {
         try {
-            foreach (TradeZone tradeZone in tradeZoneIds.Values)
+            if (useNewEconomy)
             {
-                tradeZone?.AggregateEconomies();
-            }            
+                foreach (TradeZone tradeZone in tradeZoneIds.Values)
+                {
+                    tradeZone?.AggregateEconomies();
+                }                 
+            }
         } catch (Exception e)
         {
             GD.PushError(e);

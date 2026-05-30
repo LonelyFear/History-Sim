@@ -128,6 +128,7 @@ public abstract partial class Polity : PopObject
             // Counts up socialClasss
             foreach (string professionId in region.professions.Keys)
             {
+                if (!countedProfessions.ContainsKey(professionId)) countedProfessions[professionId] = 0;
                 countedProfessions[professionId] += region.professions[professionId];
             }
 
