@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using Godot;
 using MessagePack;
 using System.Text.RegularExpressions;
+using System.IO;
 [MessagePackObject(AllowPrivate = true)]
-public class Region : PopObject, ISaveable
+public partial class Region : PopObject, ISaveable
 {
     [Key(17)] public List<Vector2I> tiles { get; set; } = [];
     [IgnoreMember] public bool conquered;
@@ -13,14 +14,15 @@ public class Region : PopObject, ISaveable
     [Key(19)] public bool coastal { get; set; }
     [Key(20)] public bool isWater { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
-    //[Key(5)] public int baseTradeWeight { get; set; } = 0;
+    [Key(22)] public Economy economy = new();
+    [Key(23)] public Dictionary<ulong, TradeConnection> tradeConnections = new();
 
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
     [Key(28)] public Vector2I pos;
 
     // trade
-    [Key(29)] public ulong? marketId { get; set; } = null;
-    [Key(30)] public bool isMarketCenter { get; set; } = false;  
+    [Key(29)] ulong? tradeZoneId { get; set; } = null;
+    [Key(30)] public bool isTradeZoneCenter { get; set; } = false;  
     [Key(24)] public float baseWealth { get; set; }
     [Key(25)] public float wealth { get; set; }  
     [Key(31)] public float tradeIncome = 0;
@@ -37,22 +39,41 @@ public class Region : PopObject, ISaveable
     [IgnoreMember] public float avgRainfall { get; set; }
     [IgnoreMember] public float[] avgMonthlyRainfall { get; set; } = new float[12];
     [IgnoreMember] public float avgElevation { get; set; }
-    [IgnoreMember] public Dictionary<Biome, int> biomes { get; set; }
+    [IgnoreMember] public Dictionary<string, int> biomes { get; set; }
     [Key(36)] public int landCount { get; set; }
     [Key(37)] public TerrainType terrainType { get; set; }
     
     [Key(38)] public ulong? occupierId { get; set; }
     
     [Key(39)] public ulong? ownerId { get; set; }
+    [Key(46)] public Dictionary<string, float> naturalResources = [];
 
     // Demographics
     [IgnoreMember] public List<Region> borderingRegions { get; set; } = [];
     [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
+    // Buildings
+    //[IgnoreMember] public List<Building> buildings = [];
+    [Key(47)] public List<string> buildings = [];
     // References
     [Key(45)] public HashSet<ulong> linkedRegionIds = [];
     [IgnoreMember] public HashSet<Region> linkedRegions = [];
     [IgnoreMember] public List<(Region, Region)> tradeRouteLinks = new List<(Region, Region)>();
+    [IgnoreMember] TradeZone _tradeZone;
+    [IgnoreMember] public TradeZone tradeZone
+    {
+        get
+        {
+            if (_tradeZone == null && tradeZoneId != null) 
+                _tradeZone = objectManager.GetTradeZone(tradeZoneId);
+            return _tradeZone;
+        } 
+        set
+        {
+            tradeZoneId = value?.id;
+            _tradeZone = value;
+        }         
+    }
     [IgnoreMember] Region _tradeLink;
     [IgnoreMember] public Region tradeLink { 
         get
@@ -113,11 +134,15 @@ public class Region : PopObject, ISaveable
     {
         base.PrepareForSave();
         linkedRegionIds = [..linkedRegions.Select(r => r.id)];
+        //buildingIds = [..buildings.Select(b => b.id)];
+        //economy.PrepareForSave();
     }
     public override void LoadFromSave()
     {
         base.LoadFromSave();
         linkedRegions = [..linkedRegionIds.Select(r => objectManager.GetRegion(r))];
+        //buildings = [..buildingIds.Select(AssetManager.GetBuilding)];
+        //economy.LoadFromSave();
     }
 
     public void AddTile(Tile tile)
@@ -139,11 +164,41 @@ public class Region : PopObject, ISaveable
         tiles.Remove(tile.pos);
         tile.regionId = null;
     }
-    public void InitRegion()
+    public void LoadStats()
     {
         CalcAverages();
         CheckHabitability();
         RemoveInvalidBorders();
+    }
+    public void InitRegion()
+    {
+        LoadStats();
+        NameRegion();
+        economy.InitEconomy();
+        if (rng.NextSingle() < 0.01f)
+        {
+            debugProducer = true;
+        }
+        GetBiomeResources();    
+    }
+
+    public void GetBiomeResources()
+    {
+        foreach (var pair in biomes)
+        {
+            string biomeId = pair.Key;
+            Biome biome = AssetManager.GetBiome(biomeId);
+
+            for (int i = 0; i < pair.Value; i++)
+            {
+                foreach (ResourceDeposit deposit in biome.naturalResources)
+                {
+                    NaturalResource resource = deposit.resource;
+                    if (!naturalResources.ContainsKey(resource.id)) naturalResources.Add(resource.id, 0);
+                    naturalResources[resource.id] += deposit.maxAmount;
+                }                
+            }
+        }        
     }
     public void NameRegion()
     {
@@ -153,8 +208,45 @@ public class Region : PopObject, ISaveable
     {
         foreach (Region border in borderingRegions.ToArray())
         {
-            borderingRegions.Remove(border);
+            if (!simManager.regionIds.ContainsKey(border.id)){
+                RemoveBorder(border);
+            }
         }
+    }
+    public void GetBorderingRegions()
+    {
+        borderingRegions = [];
+        tradeConnections = [];
+        foreach (Vector2I tilePos in tiles)
+        {
+            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
+                    Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
+                    Tile border = simManager.tiles[nPos.X, nPos.Y];
+                    Region borderRegion = objectManager.GetRegion(border.regionId);
+                    AddBorder(borderRegion);
+                }
+            }
+        }
+    }
+    public void AddBorder(Region region)
+    {
+        if (region != null && region != this && !borderingRegions.Contains(region))
+        {
+            borderingRegions.Add(region);
+            tradeConnections[region.id] = new();
+        }        
+    }
+    public void RemoveBorder(Region region)
+    {
+        if (borderingRegions.Remove(region))
+        {
+            tradeConnections.Remove(region.id);
+        }            
     }
     void CalcAverages()
     {
@@ -181,11 +273,11 @@ public class Region : PopObject, ISaveable
                 terrainTypes[tile.terrainType]++;
             }
 
-            if (!biomes.ContainsKey(tile.GetBiome()))
+            if (!biomes.ContainsKey(tile.biomeId))
             {
-                biomes.Add(tile.GetBiome(), 0);
+                biomes.Add(tile.biomeId, 0);
             }
-            biomes[tile.GetBiome()]++;
+            biomes[tile.biomeId]++;
 
             if (tile.IsWater())
             {
@@ -251,30 +343,6 @@ public class Region : PopObject, ISaveable
         else
         {
             habitable = false;
-        }
-    }
-
-    public void GetBorderingRegions()
-    {
-        borderingRegions = [];
-        foreach (Vector2I tilePos in tiles)
-        {
-            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
-                    Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
-                    Tile border = simManager.tiles[nPos.X, nPos.Y];
-                    Region borderRegion = objectManager.GetRegion(border.regionId);
-
-                    if (borderRegion != null && borderRegion != this && !borderingRegions.Contains(borderRegion))
-                    {
-                        borderingRegions.Add(borderRegion);
-                    }
-                }
-            }
         }
     }
     public void UpdateOccupation()
@@ -409,15 +477,6 @@ public class Region : PopObject, ISaveable
 
     public void CalcBaseWealth()
     {
-        /*
-        lastBaseWealth = baseWealth;
-        lastWealth = wealth;
-
-        long farmers = professions[SocialClass.FARMER];
-        long nonFarmers = workforce - professions[SocialClass.FARMER];
-
-        float baseProduction = (farmers * 0.04f) + (nonFarmers * 0.02f) + (dependents * 0.01f);
-        */
         baseWealth = population * 0.005f;
     }
     public void LinkTrade()
@@ -425,16 +484,16 @@ public class Region : PopObject, ISaveable
         // Default is that we are linked to nobody
         Region selectedLink = null;
 
-        // Default is that we are not a market center
-        bool newMarketCenterStatus = true;
+        // Default is that we are not a tradeZone center
+        bool newTradeZoneCenterStatus = true;
 
         // Loops over borders
         foreach (Region region in borderingRegions)
         {
-            // If we have an equal or lower weight to a region then we cant be market leader
+            // If we have an equal or lower weight to a region then we cant be tradeZone leader
             if (region.tradeWeight >= tradeWeight)
             {
-                newMarketCenterStatus = false;
+                newTradeZoneCenterStatus = false;
 
                 // We can only link to regions with a HIGHER trade weight
                 if (region.tradeWeight != tradeWeight)
@@ -448,37 +507,34 @@ public class Region : PopObject, ISaveable
             }
         }
 
-        // Joins market of region we linked to if it has a market
-        if (selectedLink != null && selectedLink.marketId != marketId)
+        // Joins tradeZone of region we linked to if it has a tradeZone
+        if (selectedLink != null && selectedLink.tradeZone != tradeZone)
         {
-            Market marketJoined = objectManager.GetMarket(selectedLink.marketId);
-            if (marketJoined != null)
+            TradeZone tradeZoneJoined = selectedLink.tradeZone;
+            if (tradeZoneJoined != null)
             {
-                lock (marketJoined)
+                lock (tradeZoneJoined)
                 {
-                    marketJoined.AddRegion(this);
+                    tradeZoneJoined.AddRegion(this);
                 }                 
             }
  
         }
 
-        isMarketCenter = newMarketCenterStatus;
+        isTradeZoneCenter = newTradeZoneCenterStatus;
 
-        // Gets the market we will be working with below
-        Market market = objectManager.GetMarket(marketId);
-
-        // If we are a market center and we dont have a market or are in someone elses market
-        if (isMarketCenter && (market == null || market.centerId != id))
+        // If we are a tradeZone center and we dont have a tradeZone or are in someone elses tradeZone
+        if (isTradeZoneCenter && (tradeZone == null || tradeZone.centerId != id))
         {
-            // Then create a new market
-            market = objectManager.CreateTradeZone(this);
+            // Then create a new tradeZone
+            tradeZone = objectManager.CreateTradeZone(this);
         }
 
-        // Then, on whatever market we just created, if we are no longer a market center
-        if (!isMarketCenter && market != null && market.centerId == id)
+        // Then, on whatever tradeZone we just created, if we are no longer a tradeZone center
+        if (!isTradeZoneCenter && tradeZone != null && tradeZone.centerId == id)
         {
-            // Then delete the market
-            objectManager.DeleteTradeZone(market);
+            // Then delete the tradeZone
+            objectManager.DeleteTradeZone(tradeZone);
             // And erase all trade routes
             EraseTradeRoutes();
         }
@@ -509,13 +565,13 @@ public class Region : PopObject, ISaveable
     {
         int baseTradeWeight = GetBaseTradeWeight();
 
-        // Current depth in market expansion
+        // Current depth in tradeZone expansion
         int depth = 0;
 
-        // The maximum depth we will go before stopping, determines the growth range of markets
-        // Region in markets will traverse up the link chain, ether reaching the maximum depth or market center
+        // The maximum depth we will go before stopping, determines the growth range of tradeZones
+        // Region in tradeZones will traverse up the link chain, ether reaching the maximum depth or tradeZone center
         // The further the chain goes the less impact the higher trade weights have
-        int maxDepth = 5;
+        int maxDepth = 7;
 
         List<float> tradeWeights = [];
         float multiplier = 1.0f;
@@ -533,7 +589,7 @@ public class Region : PopObject, ISaveable
             if (nextRegion != null)
             {
                 // Adds the weight to the chain multiplied by multiplier
-                // Note that this uses base trade weight so markets dont expand forever
+                // Note that this uses base trade weight so tradeZones dont expand forever
                 tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier);
                 // Then continues
                 currentRegion = nextRegion;
@@ -547,42 +603,67 @@ public class Region : PopObject, ISaveable
         if (tradeWeights.Count > 0)
         {
             // Our trade weight is set to the highest of the largest value in the chain and our base trade weight
-            // This simulates how a market center is going to be shipping goods to the rest of its market
+            // This simulates how a tradeZone center is going to be shipping goods to the rest of its tradeZone
             //GD.Print(tradeWeight + " vs " + baseTradeWeight);
             tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
         }
     }
+    public int GetBaseTradeWeight()
+    {
+        
+        //long notMerchants = Pop.FromNativePopulation(workforce - socialClasss[SocialClass.MERCHANT]);
+        //long merchants = Pop.FromNativePopulation(socialClasss[SocialClass.MERCHANT]);
+        float populationTradeWeight = population * 0.001f;
+
+        float zoneSizeTradeWeight = 0;
+        if (isTradeZoneCenter && tradeZone != null)
+        {
+            zoneSizeTradeWeight = tradeZone.GetZoneSize();
+        }
+
+        float politySizeTradeWeight = 0f;
+        if (owner != null && owner.capital == this)
+        {
+            politySizeTradeWeight = owner.regions.Count;
+            if (owner.sovereignty == Sovereignty.INDEPENDENT)
+            {
+                politySizeTradeWeight = owner.diplomacy.GetPolity().regions.Count;
+            }
+        }
+
+        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
+    } 
     public void ZoneTrade()
     {
-        if (!isMarketCenter || objectManager.GetMarket(marketId)?.centerId != id)
+        if (!isTradeZoneCenter || tradeZone?.centerId != id)
         {
             return;
         }
 
-        foreach (var pair in simManager.marketIds)
+        foreach (var pair in simManager.tradeZoneIds)
         {
-            Market otherMarket = pair.Value;
-            Region marketCenter = objectManager.GetRegion(otherMarket?.centerId);
-            if (marketCenter == null) continue;
+            TradeZone otherTradeZone = pair.Value;
+            Region tradeZoneCenter = objectManager.GetRegion(otherTradeZone?.centerId);
+            if (tradeZoneCenter == null) continue;
 
-            if (!regionPaths.TryGetValue(marketCenter, out List<Region> path))
+            if (!regionPaths.TryGetValue(tradeZoneCenter, out List<Region> path))
             {
-                path = GetPath(this, marketCenter, true, 20);
+                path = GetPath(this, tradeZoneCenter, true, 20);
 
                 lock (regionPaths)
                 {
-                    regionPaths[marketCenter] = path;
+                    regionPaths[tradeZoneCenter] = path;
                 }
-                lock (marketCenter.regionPaths)
+                lock (tradeZoneCenter.regionPaths)
                 {
-                    marketCenter.regionPaths[this] = path;
+                    tradeZoneCenter.regionPaths[this] = path;
                 }
 
                 foreach (Region tradeRoute in path)
                 {
                     lock (tradeRoute)
                     {
-                        tradeRoute.tradeRouteLinks.Add((this, marketCenter));
+                        tradeRoute.tradeRouteLinks.Add((this, tradeZoneCenter));
                     }
                 }                
             }
@@ -606,7 +687,7 @@ public class Region : PopObject, ISaveable
     {
         foreach ((Region, Region) tradingCities in tradeRouteLinks.ToArray())
         {
-            if (!tradingCities.Item1.isMarketCenter || !tradingCities.Item2.isMarketCenter)
+            if (!tradingCities.Item1.isTradeZoneCenter || !tradingCities.Item2.isTradeZoneCenter)
             {
                 tradeRouteLinks.Remove(tradingCities);
                 continue;
@@ -614,36 +695,10 @@ public class Region : PopObject, ISaveable
             tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingCities.Item1.tradeIncome, tradingCities.Item2.tradeIncome)* 0.5f);
         }
     }
-    public int GetBaseTradeWeight()
-    {
-        
-        //long notMerchants = Pop.FromNativePopulation(workforce - professions[SocialClass.MERCHANT]);
-        //long merchants = Pop.FromNativePopulation(professions[SocialClass.MERCHANT]);
-        float populationTradeWeight = workforce * 0.001f;
-
-        float zoneSizeTradeWeight = 0;
-        if (isMarketCenter && objectManager.GetMarket(marketId) != null)
-        {
-            zoneSizeTradeWeight = objectManager.GetMarket(marketId).GetZoneSize();
-        }
-
-        float politySizeTradeWeight = 0f;
-        if (owner != null && owner.capital == this)
-        {
-            politySizeTradeWeight = owner.regions.Count;
-            if (owner.sovereignty == Sovereignty.INDEPENDENT)
-            {
-                politySizeTradeWeight = owner.diplomacy.GetPolity().regions.Count;
-            }
-        }
-
-        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
-    }    
     public void UpdateWealth()
     {
         wealth = baseWealth + taxIncome + tradeIncome;
     }
-
     public void DistributeWealth()
     {
         foreach (Pop pop in pops)
@@ -651,10 +706,141 @@ public class Region : PopObject, ISaveable
             pop.wealth = (tradeIncome + taxIncome) * (pop.population / (float)population);
         }
     }
-
     public bool CanUpdateTrade()
     {
         return linkUpdateCountdown < 0 || pops.Count < 0 || tradeLink == null;
+    }
+    // Economy V2
+    [IgnoreMember] public bool debugProducer = false;
+    public void UpdatePrimaryIndustries()
+    {
+        if (population < 1) return;
+
+        foreach (Building building in AssetManager.buildingTypes[BuildingType.PRIMARY_INDUSTRY])
+        {
+            if (buildings.Contains(building.id) || !building.Teched(averageTech))
+            {
+                continue;
+            }
+
+            foreach (string natResId in naturalResources.Keys)
+            {
+                NaturalResource presentResource = AssetManager.GetNaturalResource(natResId);
+                if (presentResource == building.requiredNaturalResource)
+                {
+                    buildings.Add(building.id);
+                    continue;
+                }
+            }
+        }
+    }
+    public void CalcProduction()
+    {
+        foreach (var pair in economy.production)
+        {
+            economy.production[pair.Key] = 0;
+        }
+
+        float fertility = arableLand/landCount;
+        // Loops over buildings
+        foreach (Building building in buildings.Select(AssetManager.GetBuilding))
+        {
+            // Loops over each buildings output
+            foreach (BuildingOutput output in building.outputs)
+            {
+                // The base amount outputted
+                float baseOutput = output.amount;
+
+                // Checks if we should factor in population
+                if (building.populationFactor > 0)
+                {
+                    baseOutput *= population * building.populationFactor;
+                }
+
+                // Checks if we should factor in amount of natural resource
+                if (building.scalesWithResource)
+                {
+                    baseOutput *= naturalResources[building.requiredNaturalResource.id];
+                }
+
+                // Sets production
+                economy.production[output.output.id] += baseOutput;
+            }
+        }
+    }
+    public void CalcSupply()
+    {
+        foreach (var pair in economy.production)
+        {
+            string itemId = pair.Key;
+            float production = pair.Value;
+
+            if (tradeZone == null)
+            {
+                economy.supply[pair.Key] = production;
+                continue;
+            }
+
+            float marketAccess = GetMarketAccess();
+            float localWeight = 1f - marketAccess;
+            float availableMarketSupply = tradeZone.economy.supply[itemId] * Mathf.Min(GetMarketWeight() / tradeZone.totalMarketWeight, 1f);
+
+            //if (isTradeZoneCenter) GD.Print(tradeZone.economy.supply[itemId]);
+
+            economy.supply[pair.Key] = (production * localWeight) + (availableMarketSupply * marketAccess);
+        }
+    }
+    public void CalcDemand()
+    {
+        foreach (var pair in economy.demand)
+        {
+            economy.demand[pair.Key] = 0;
+            foreach (Pop pop in pops)
+            {
+                if (pop.goodsDemands.TryGetValue(pair.Key, out float demand))
+                {
+                    economy.demand[pair.Key] += demand;
+                }
+            }            
+                    
+        }
+    }
+    public float GetMarketAccess()
+    {
+        if (isTradeZoneCenter)
+        {
+            return 1f;
+        }
+        float marketAccess = 0.75f + Mathf.Lerp(-0.5f, 0f, navigability);
+
+        if (owner?.capital == this)
+        {
+            marketAccess += 0.1f;
+        }
+
+        return Mathf.Clamp(marketAccess, 0, 1);
+    }
+    public float GetMarketWeight()
+    {
+        // More goods if we have good terrain
+        float weight = 1f + Mathf.Lerp(-0.8f, 0f, navigability);
+
+        // More goods if we are on a trade route
+        if (tradeRouteLinks.Count > 0)
+        {
+            weight *= 2f;
+        }
+        if (owner?.capital == this)
+        {
+            wealth *= 1.5f;
+        }
+        // If we are market center we have most of the goods in store
+        if (isTradeZoneCenter)
+        {
+            weight = 4f;
+        }
+
+        return weight * landCount;
     }
     public void MergePops()
     {
@@ -792,10 +978,10 @@ public class Region : PopObject, ISaveable
             /*
             text += $"Professions Breakdown:\n";     
 
-            foreach (var professionSizePair in professions.OrderByDescending(pair => pair.Key))
+            foreach (var socialClassSizePair in socialClasss.OrderByDescending(pair => pair.Key))
             {
-                SocialClass socialClass = professionSizePair.Key;
-                long localPopulation = professionSizePair.Value;
+                SocialClass socialClass = socialClassSizePair.Key;
+                long localPopulation = socialClassSizePair.Value;
                 
                 // Skips if the culture is too small
                 if (Pop.FromNativePopulation(localPopulation) < 1) continue;
@@ -867,3 +1053,10 @@ public class Region : PopObject, ISaveable
         return source.pos.DistanceSquaredTo(target.pos);
     }
 }   
+[MessagePackObject]
+public struct TradeConnection
+{
+    public TradeConnection() {}
+    [Key(0)] public float capacity = 10000;
+    [Key(1)] public Dictionary<string, float> flow = new();
+}

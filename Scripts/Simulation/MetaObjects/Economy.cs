@@ -1,148 +1,64 @@
-using Godot;
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using Godot;
+using MessagePack;
 
+[MessagePackObject]
 public class Economy
 {
-    Dictionary<BaseResource, double> resources = [];
-    public float maxFoodStorage = 20000;
+    [Key(0)] public Dictionary<string, float> demand = [];
+    [Key(1)] public Dictionary<string, float> supply = [];
+    [Key(2)] public Dictionary<string, float> production = [];
+    [Key(3)] public Dictionary<string, float> prices = [];
+    public void InitEconomy()
+    {
+        foreach (var pair in AssetManager.items)
+        {
+            if (pair.Value.tags.Contains("tradeable"))
+            {
+                demand[pair.Key] = 0;
+                supply[pair.Key] = 0;
+                production[pair.Key] = 0;
+                prices[pair.Key] = pair.Value.basePrice;               
+            }
+        }
+    }
+    public void CalculatePrices()
+    {
+        foreach (var pair in prices)
+        {
+            string itemId = pair.Key;
+            Item item = AssetManager.GetItem(itemId);
+            float priceMultiplier = demand[itemId] / Mathf.Max(supply[itemId], 1f);
+            float targetPrice = item.basePrice * Mathf.Clamp(priceMultiplier, 0f, 4f);
+            prices[itemId] = Mathf.Lerp(prices[itemId], targetPrice, 0.1f);
+        }
+    }
+    /*
+    public static float GetLocalPrice(Region region, string itemId)
+    {
+        float localPrice = region.economy.prices[itemId];
+        if (region.tradeZone != null)
+        {
+            float marketPrice = region.tradeZone.economy.prices[itemId];
+            if (region.isTradeZoneCenter)
+            {
+                return marketPrice;
+            }
 
-    public double ChangeResourceAmount(BaseResource resource, double amount)
-    {
-        if (amount > 0)
+            float marketPriceRatio = 0.7f;
+            return (marketPrice * marketPriceRatio) + (localPrice * (1f - marketPriceRatio));
+        } else
         {
-            if (!resources.ContainsKey(resource))
-            {
-                resources.Add(resource, amount);
-            }
-            else
-            {
-                resources[resource] += amount;
-            }
-            if (resource.IsFood())
-            {
-                resources[resource] = Mathf.Clamp(resources[resource], 0, maxFoodStorage);
-            }
-        }
-        else if (resources.ContainsKey(resource))
-        {
-            resources[resource] += amount;
-            if (resources[resource] <= 0)
-            {
-                double extra = resources[resource];
-                resources.Remove(resource);
-                return Mathf.Abs(extra);
-            }
-        }
-        return 0;
-    }
-    public void TransferResource(Economy newEconomy, BaseResource resource, double amount)
-    {
-        double clampedAmount = Mathf.Clamp(amount, 0, resources[resource]);
-        if (resources.ContainsKey(resource))
-        {
-            ChangeResourceAmount(resource, -clampedAmount);
-        }
-        newEconomy.ChangeResourceAmount(resource, clampedAmount);
-    }
-
-    public void TransferResources(Economy newEconomy, BaseResource[] resourcesToTransfer, double amount)
-    {
-        double totalResources = 0;
-        foreach (BaseResource resource in resourcesToTransfer)
-        {
-            totalResources += GetResourceAmount(resource);
-        }
-
-        double clampedAmount = Mathf.Clamp(amount, 0, totalResources);
-        foreach (BaseResource resource in resourcesToTransfer)
-        {
-            double amountOfResource = GetResourceAmount(resource);
-            double amtTaken = Mathf.Clamp(amountOfResource, 0, clampedAmount);
-            clampedAmount -= amtTaken;
-            ChangeResourceAmount(resource, -amtTaken);
-            newEconomy.ChangeResourceAmount(resource, amtTaken);
+            return localPrice;
         }
     }
-
-    public void SetResourceAmount(BaseResource resource, double amount)
-    {
-        if (amount > 0)
-        {
-            if (!resources.ContainsKey(resource))
-            {
-                resources.Add(resource, amount);
-            }
-            else
-            {
-                resources[resource] = amount;
-            }
-        }
-        else if (resources.ContainsKey(resource))
-        {
-            resources.Remove(resource);
-        }
-    }
-    public double GetResourceAmount(BaseResource resource)
-    {
-        if (resources.ContainsKey(resource))
-        {
-            return resources[resource];
-        }
-        return 0;
-    }
-    public double GetTotalFoodAmount()
-    {
-        double amount = 0;
-        foreach (BaseResource resource in resources.Keys.ToArray())
-        {
-            if (resource.GetType() == typeof(FoodResouce))
-            {
-                amount += resources[resource];
-            }
-        }
-        return amount;
-    }
-    public FoodResouce[] GetAllFood()
-    {
-        FoodResouce[] allFood = [];
-        foreach (BaseResource resource in GetResources())
-        {
-            if (resource.IsFood())
-            {
-                allFood.Append(resource);
-            }
-        }
-        return allFood;
-    }
-    public double GetTotalNutrition()
-    {
-        double amount = 0;
-        foreach (BaseResource resource in resources.Keys)
-        {
-            if (resource.GetType() == typeof(FoodResouce))
-            {
-                FoodResouce food = (FoodResouce)resource;
-                amount += resources[food] * food.nutrition;
-            }
-        }
-        return amount;
-    }
-
-    public void RotPerishables()
-    {
-        foreach (BaseResource resource in resources.Keys)
-        {
-            if (resource.IsPerishable())
-            {
-                resources[resource] *= 1f - ((PerishableResource)resource).rotRate;
-            }
-        }
-    }
-
-    public BaseResource[] GetResources()
-    {
-        return resources.Keys.ToArray();
-    }
+    */
+}
+public enum SupplyStatus
+{
+    SURPLUS,
+    NORMAL,
+    SHORTAGE
 }

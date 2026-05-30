@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://dpx08jje32vx5"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_b6ic7"]
+
+[resource]
+script = ExtResource("1_b6ic7")
+name = "Forests"
+description = "This area can support the harvesting of trees for lumber."
+color = Color(0.44799995, 0.84, 0, 1)
+metadata/_custom_type_script = "uid://1h5mxderppvp"

@@ -1,6 +1,4 @@
-using System;
-using System.Data.Common;
-using System.Runtime.Serialization;
+using Godot;
 using MessagePack;
 [MessagePackObject]
 public struct Tech

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://b5uv733wtfsk5"]
+
+[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_cd43d"]
+
+[resource]
+script = ExtResource("1_cd43d")
+name = "Grain"
+description = "An edible grain, cultivated for consumption."
+staple = true
+basePrice = 5.0
+tags = PackedStringArray("tradeable", "need_food")
+metadata/_custom_type_script = "uid://6q2gt72gh7yk"

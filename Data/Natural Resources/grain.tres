@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://h7lq26qaeqwj"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_lccb5"]
+
+[resource]
+script = ExtResource("1_lccb5")
+name = "Grain Fields"
+description = "This area can support the farming of cereal grains such as wheat, rye, barley, or millet."
+color = Color(0.88, 0.66293335, 0.22879998, 1)
+metadata/_custom_type_script = "uid://1h5mxderppvp"

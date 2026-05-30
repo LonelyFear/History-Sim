@@ -32,7 +32,7 @@ public class HeightmapGenerator
 
     // Public Variables
     public float seaFloorLevel = 0.1f;
-    public float landCoverage = 0.3f;
+    public float landCoverage = 0.4f;
     public float maxHillHeight = 0.25f;
     float shelfDepth = 0.0f;
     const float slopeErosionThreshold = 0.1f;

@@ -37,10 +37,10 @@ public class Tile : Cell
 
 		switch (GetBiome().type)
 		{
-			case "land":
+			case Biome.BiomeType.LAND:
 				terrainType = TerrainType.LAND;
 				break;
-			case "water":
+			case Biome.BiomeType.WATER:
 				if (biomeId == "river")
 				{
 					terrainType = TerrainType.RIVER;

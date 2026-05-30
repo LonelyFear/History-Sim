@@ -210,12 +210,13 @@ public static class Utility
     }
     public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize)
     {
-        float noiseValue = noise.GetNoise(
-        Mathf.Sin(x * (worldSize.X / (2 * float.Pi))),
-        Mathf.Cos(x * (worldSize.X / (2 * float.Pi))), 
-        y);
-        
-        return noise.GetNoise(x,y);
+        float theta = 2 * float.Pi * (x / worldSize.X);
+
+        float nx = Mathf.Cos(theta);
+        float ny = Mathf.Sin(theta);
+
+        float noiseValue = noise.GetNoise(nx, ny, y);
+        return noiseValue;
     }
     public static Color MultiColourLerp(Color[] colours, float t) {
 

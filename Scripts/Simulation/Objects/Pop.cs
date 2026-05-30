@@ -1,15 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using MessagePack;
 [MessagePackObject(AllowPrivate = true)]
-public class Pop
+public partial class Pop
 {
     [Key(1)] public ulong id;
     [Key(2)] public int population { get; set; } = 0;
     [Key(3)] public int workforce { get; set; } = 0;
     [Key(4)] public int dependents { get; set; } = 0;
 
-    [Key(5)] public float baseBirthRate { get; set; } = 0.3f;
+    [Key(5)] public float baseBirthRate { get; set; } = 0.31f;
     [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.6f;
@@ -21,8 +23,8 @@ public class Pop
     [Key(12)] public ulong? regionId { get; set; }
 
     [Key(13)] public ulong? cultureId { get; set; }
-    [Key(14)] public SocialClass profession { get; set; } = SocialClass.FARMER;
-
+    //[Key(14)] public SocialClass socialClass { get; set; } = SocialClass.FARMER;
+    
     [Key(15)] public Tech tech = new();
     [Key(16)] public uint batchId { get; set; } = 1;
 
@@ -33,8 +35,29 @@ public class Pop
     [Key(19)] public int ownedLand { get; set; } = 0;
     [Key(20)] public bool shipborne { get; set; } = false;
     [Key(21)] public Direction lastDirection = Direction.RIGHT;
-
+    [Key(22)] string professionId = "farmer";
+    [IgnoreMember] public Dictionary<string, float> goodsDemands = [];
     // Reference Types
+    [IgnoreMember] Profession _profession;
+    [IgnoreMember] public Profession profession
+    {
+        get
+        {
+            if (_profession == null)
+            {
+                _profession = AssetManager.GetProfession(professionId);
+            }
+            return _profession;
+        } set
+        {
+            if (value == null)
+            {
+                return;
+            }
+            professionId = value.id;
+            _profession = value;
+        }
+    }
     [IgnoreMember] Culture _culture;
     [IgnoreMember] public Culture culture { 
         get
@@ -64,6 +87,8 @@ public class Pop
         }
     }
 
+    [IgnoreMember] public const float maxGoodMarketShare = 0.9f;
+
     public void ChangePopulation(int wfChange, int dfChange)
     {
         wfChange = Math.Max(wfChange, -workforce);
@@ -73,8 +98,8 @@ public class Pop
         dependents += dfChange;
         population += wfChange + dfChange;    
 
-        culture.ChangePopulation(wfChange, dfChange, profession, culture);
-        region.ChangePopulation(wfChange, dfChange, profession, culture);
+        culture.ChangePopulation(wfChange, dfChange, profession.id, culture);
+        region.ChangePopulation(wfChange, dfChange, profession.id, culture);
     }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
@@ -84,11 +109,11 @@ public class Pop
         }
         return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public Pop ChangeSocialClass(int workforceDelta, int dependentsDelta, SocialClass newSocialClass)
+    public Pop ChangeSocialClass(int workforceDelta, int dependentsDelta, Profession newProfession)
     {
         // Makes sure the profession is actually changing
         // And that we arent just creating an empty pop
-        if (newSocialClass == profession || (workforceDelta < 1 && dependentsDelta < 1))
+        if (newProfession == profession || (workforceDelta < 1 && dependentsDelta < 1))
         {
             return null;
         }
@@ -96,15 +121,15 @@ public class Pop
         workforceDelta = Math.Clamp(workforceDelta, 0, workforce);
         dependentsDelta = Math.Clamp(dependentsDelta, 0, dependents);
 
-        // If we are changing the whole pop just change the profession
+        // If we are changing the whole pop just change the socialClass
         if (workforceDelta == workforce && dependentsDelta == dependents)
         {
-            profession = newSocialClass;
+            profession = newProfession;
             return this;
         }
-        // Makes a new pop with the new profession
-        Pop newWorkers = objectManager.CreatePop(workforceDelta, dependentsDelta, region, tech, culture, newSocialClass);
-        // And removes the people who switched to the new profession
+        // Makes a new pop with the new socialClass
+        Pop newWorkers = objectManager.CreatePop(workforceDelta, dependentsDelta, region, tech, culture, newProfession.id);
+        // And removes the people who switched to the new socialClass
         ChangePopulation(-workforceDelta, -dependentsDelta);
         // Land Stuff
         return newWorkers;
@@ -128,28 +153,10 @@ public class Pop
             tech.industryLevel += 1;
         }
     }
-    public double CalculatePoliticalPower()
+    public float CalculatePoliticalPower()
     {
-        double popSizePoliticalPower = workforce * 0.0005;
-        double basePoliticalPower = 0;
-        switch (profession)
-        {
-            case SocialClass.FARMER:
-                basePoliticalPower = 0.5;
-                break;
-            case SocialClass.SOLDIER:
-                basePoliticalPower = 1;
-                break;
-            case SocialClass.LABOURER:
-                basePoliticalPower = 1;
-                break;
-            case SocialClass.MERCHANT:
-                basePoliticalPower = 2;
-                break;
-            case SocialClass.ARISTOCRAT:
-                basePoliticalPower = 4;
-                break;
-        }
+        float popSizePoliticalPower = workforce * 0.005f;
+        float basePoliticalPower = profession.politicalPower;
         return basePoliticalPower * popSizePoliticalPower;
     }
     public void Migrate()
@@ -161,11 +168,12 @@ public class Pop
         {
             if (region.population >= region.maxPopulation || shipborne)
             {
+                //GD.Print("Migrate");
                 migrateChance = 1f;
             }            
         }
 
-        if (profession == SocialClass.ARISTOCRAT && !shipborne)
+        if (profession.id == "aristocrat" && !shipborne)
         {
             migrateChance *= 0.1f;
         }
@@ -174,21 +182,21 @@ public class Pop
 
         Region target = target = region.PickRandomBorder();
 
-        bool professionAllows = true;
+        bool socialClassAllows = true;
 
-        // If the profession allows migration
+        // If the socialClass allows migration
         if (!shipborne)
         {
-            switch (profession)
+            switch (profession.id)
             {
-                case SocialClass.ARISTOCRAT:
+                case "aristocrat":
                     if (target.owner != region.owner)
                     {
-                        professionAllows = false;
+                        socialClassAllows = false;
                     }
                     break;
             }
-            if (!professionAllows) return;            
+            if (!socialClassAllows) return;            
         }
 
         float chanceToMoveOnTile = target.isWater ? 0.1f : target.navigability;
@@ -241,7 +249,7 @@ public class Pop
 
         lock (objectManager)
         {
-            Pop newPop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession);
+            Pop newPop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession.id);
             newPop.lastDirection = lastDirection;
         }
         ChangePopulation(-movedWorkforce, -movedDependents);     
@@ -258,11 +266,15 @@ public class Pop
     public float GetBirthRate()
     {
         float birthRate = baseBirthRate;
+        if (population <= 2)
+        {
+            return 0;
+        }
         lock (region)
         {
             if (region.population < region.maxPopulation * 0.5f)
             {
-                birthRate *= 1.5f;
+                //birthRate *= 1.5f;
             }            
         }
 
@@ -271,14 +283,7 @@ public class Pop
     public void GrowPop()
     {
 
-        float bRate;
-        if (population < 2)
-        {
-            bRate = 0;
-        }
-        {
-            bRate = GetBirthRate();
-        }
+        float bRate = GetBirthRate();
         if (!shipborne)
         {
             lock (region)
@@ -306,8 +311,62 @@ public class Pop
                 workforceChange++;
             }
         }
-
+        //GD.Print(workforceChange + dependentChange);
         ChangePopulation(workforceChange, dependentChange);
+    }
+
+    public void GetDemands()
+    {
+        goodsDemands = [];
+
+        foreach (PopNeeds need in profession.needs)
+        {
+            float demandForNeed = (workforce * need.demandPerWorker) + (dependents * need.demandPerDependent);
+            string stringNeedsType = need.type.ToString().ToLower();
+
+            float totalSupply = 0;
+            Dictionary<Item, float> itemsPresentInMarket = [];
+
+            if (AssetManager.itemTags.TryGetValue(stringNeedsType, out List<Item> itemsInTag))
+            {
+                foreach (Item item in itemsInTag)
+                {
+                    float supply = Mathf.Max(region.economy.supply[item.id], 1);
+                    if (item.staple || region.economy.supply[item.id] > 0)
+                    {
+                        itemsPresentInMarket.Add(item, supply);
+                        totalSupply += supply;
+                    }
+                }                
+            }
+
+            float remainingMarketShare = 1f;
+
+            foreach (var pair in itemsPresentInMarket.OrderByDescending(x => x.Value))
+            {
+                Item item = pair.Key;
+
+                // Calculates market share
+                float marketShare = Mathf.Max(pair.Value, 1)/totalSupply * remainingMarketShare;
+
+                // Makes sure demand isnt fully proportional
+                if (marketShare < 1f && marketShare > maxGoodMarketShare)
+                {
+                    marketShare = maxGoodMarketShare;
+                    remainingMarketShare = 1f - maxGoodMarketShare;
+                    totalSupply -= pair.Value;
+                }
+                
+                // Makes sure demand logging has items
+                if (!goodsDemands.ContainsKey(item.id))
+                {
+                    goodsDemands[item.id] = 0;
+                }
+
+                // Adds item to demand
+                goodsDemands[item.id] = demandForNeed * marketShare/item.basePrice;
+            }
+        }
     }
 }
 public enum SocialClass

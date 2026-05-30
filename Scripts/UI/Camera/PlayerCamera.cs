@@ -13,13 +13,25 @@ public partial class PlayerCamera : Camera2D
     bool dragging;
     Vector2 draggingStartMousePos;
     Vector2 draggingStartPos;
+    public Vector2 mousePos;
+    public Vector2 CameraPos = new(640, 360);
+    public float HorizontalFactor {get
+        {
+            return (CameraPos.X / GetViewportRect().Size.X) + 0.5f;
+        }
+    }
     public override void _Process(double delta)
     {
+		float mx = GetGlobalMousePosition().X + (CameraPos.X - (GetViewportRect().Size.X/2f));
+		mousePos = new Vector2(Mathf.PosMod(mx, GetViewportRect().Size.X), GetGlobalMousePosition().Y);
+
+        CameraPos = new Vector2(Mathf.PosMod(CameraPos.X, GetViewportRect().Size.X), CameraPos.Y);
         if (controlEnabled)
         {
             ZoomCamera(delta);
             SimplePan(delta);
             MousePan();
+            Position = new Vector2(640, CameraPos.Y);
         }
     }
     public override void _UnhandledInput(InputEvent evnt)
@@ -41,8 +53,8 @@ public partial class PlayerCamera : Camera2D
         float oldZoom = Zoom.X;
         Zoom = Zoom.Slerp(zoomTarget, (float)(zoomSpeed * delta));
 
-        Vector2 zoomDir = GetGlobalMousePosition() - Position;
-        Position += zoomDir - (zoomDir / (Zoom.X / oldZoom));
+        Vector2 zoomDir = mousePos - CameraPos;
+        CameraPos += zoomDir - (zoomDir / (Zoom.X / oldZoom));
     }
 
     void MousePan()
@@ -51,7 +63,7 @@ public partial class PlayerCamera : Camera2D
         {
             dragging = true;
             draggingStartMousePos = GetViewport().GetMousePosition();
-            draggingStartPos = Position;
+            draggingStartPos = CameraPos;
         }
         if (dragging && Input.IsActionJustReleased("Camera_Pan"))
         {
@@ -60,12 +72,12 @@ public partial class PlayerCamera : Camera2D
         if (dragging)
         {
             Vector2 moveVector = GetViewport().GetMousePosition() - draggingStartMousePos;
-            Position = draggingStartPos - moveVector * (1 / Zoom.X);
+            CameraPos = draggingStartPos - moveVector * (1 / Zoom.X);
         }
     }
     void SimplePan(double delta)
     {
         Vector2 moveVector = new Vector2(Input.GetAxis("Move_Left", "Move_Right"), Input.GetAxis("Move_Up", "Move_Down"));
-        Position += moveVector * cameraSpeed * (float)delta * (1 / Zoom.X);
+        CameraPos += moveVector * cameraSpeed * (float)delta * (1 / Zoom.X);
     }
 }

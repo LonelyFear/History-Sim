@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Biome" format=3 uid="uid://c422ds2j4iw1"]
+
+[ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_cfm23"]
+[ext_resource type="Resource" uid="uid://dyq612icm2abh" path="res://Data/Natural Resources/fish.tres" id="1_ltb7e"]
+[ext_resource type="Script" uid="uid://bfrkeorgcmvpt" path="res://Scripts/Resources/ResourceDeposit.cs" id="2_s8dmj"]
+
+[sub_resource type="Resource" id="Resource_hef7k"]
+script = ExtResource("2_s8dmj")
+resource = ExtResource("1_ltb7e")
+maxAmount = 1.0
+minAmount = 1.0
+metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
+
+[resource]
+script = ExtResource("1_cfm23")
+name = "Ocean"
+type = 1
+maxElevation = -1
+minTemperature = -5.0
+color = Color(0.105882354, 0.23137255, 0.43529412, 1)
+naturalResources = [SubResource("Resource_hef7k")]

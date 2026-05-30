@@ -58,7 +58,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, State> statesIds { get; set; } = [];
     [IgnoreMember] public List<ulong> deletedStateIds = [];
-    [IgnoreMember] public Dictionary<ulong, Market> marketIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZoneIds { get; set; } = [];
     [IgnoreMember] public ConcurrentDictionary<ulong, Character> characterIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
@@ -136,8 +136,8 @@ public class SimManager
         FileAccess cultureSave = FileAccess.Open($"{path}/cultures.pxsave", FileAccess.ModeFlags.Write);
         cultureSave.StoreBuffer(MessagePackSerializer.Serialize(cultureIds, options));
 
-        FileAccess tradeSave = FileAccess.Open($"{path}/markets.pxsave", FileAccess.ModeFlags.Write);
-        tradeSave.StoreBuffer(MessagePackSerializer.Serialize(marketIds, options));
+        FileAccess tradeSave = FileAccess.Open($"{path}/tradeZones.pxsave", FileAccess.ModeFlags.Write);
+        tradeSave.StoreBuffer(MessagePackSerializer.Serialize(tradeZoneIds, options));
 
         FileAccess charactersSave = FileAccess.Open($"{path}/characters.pxsave", FileAccess.ModeFlags.Write);
         charactersSave.StoreBuffer(MessagePackSerializer.Serialize(characterIds, options));
@@ -169,7 +169,7 @@ public class SimManager
         sim.statesIds = MessagePackSerializer.Deserialize<Dictionary<ulong, State>>(FileAccess.GetFileAsBytes($"{path}/states.pxsave"), options);
         sim.allianceIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Alliance>>(FileAccess.GetFileAsBytes($"{path}/alliances.pxsave"), options);
         sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/cultures.pxsave"), options);
-        sim.marketIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Market>>(FileAccess.GetFileAsBytes($"{path}/markets.pxsave"), options);
+        sim.tradeZoneIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/tradeZones.pxsave"), options);
         sim.characterIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
@@ -185,7 +185,7 @@ public class SimManager
         regionIds.Values.ToList().ForEach(r =>
         {
             r.LoadFromSave();
-            r.InitRegion();
+            r.LoadStats();
         });
         BorderingRegions();
 
@@ -217,7 +217,7 @@ public class SimManager
                         }
                         int nx = Mathf.PosMod(x + dx, worldSize.X);
                         int ny = Mathf.PosMod(y + dy, worldSize.Y);
-                        if (newTile.GetBiome().type == "water")
+                        if (newTile.GetBiome().type == Biome.BiomeType.WATER)
                         {
                             newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
                             newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);
@@ -481,7 +481,6 @@ public class SimManager
         {
             Region region = pair.Value;
             region.InitRegion();
-            region.NameRegion();
         }
         RemoveEmptyRegions();        
     }
@@ -620,7 +619,7 @@ public class SimManager
                 long startingPopulation = rng.Next(600, 1200);
                 
                 Culture culture = objectManager.CreateCulture();
-                objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, SocialClass.FARMER);
+                objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, "farmer");
             }
         }
     }
@@ -661,12 +660,14 @@ public class SimManager
             if (isInBatch)
             {
                 pop.GrowPop();
-                pop.TechnologyUpdate(); 
-            }    
+                pop.TechnologyUpdate();   
+            } 
             if (isInBatch || pop.shipborne)
             {
                 pop.Migrate();
             }   
+            if (isInBatch) pop.GetDemands();
+                      
             lock (this)
             {
                 if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())
@@ -750,7 +751,13 @@ public class SimManager
                 }
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
+
+                region.UpdatePrimaryIndustries();
+                region.CalcProduction();
+                region.CalcDemand();
+                region.CalcSupply();
                 
+                region.economy.CalculatePrices();
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
@@ -789,7 +796,7 @@ public class SimManager
                 stopwatch.Restart();
 
                 // States
-                region.RandomStateFormation();
+                //region.RandomStateFormation();
                 region.UpdateOccupation();
                 countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
@@ -829,6 +836,18 @@ public class SimManager
         worldPopulation = worldPop;
 
         regionPerformanceInfo = countedPerformanceInfo;
+    }
+    public void UpdateTradeZones()
+    {
+        try {
+            foreach (TradeZone tradeZone in tradeZoneIds.Values)
+            {
+                tradeZone?.AggregateEconomies();
+            }            
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
     }
     public void UpdateStates()
     {
@@ -1019,6 +1038,10 @@ public class SimManager
 
             UpdateRegions();
             countedPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
+            UpdateTradeZones();
+            countedPerformanceInfo["Trade Zones"] = processStopwatch.Elapsed.TotalMilliseconds;
             processStopwatch.Restart();
 
             UpdateStates();

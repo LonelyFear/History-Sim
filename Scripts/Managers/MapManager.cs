@@ -13,7 +13,8 @@ public partial class MapManager : Node2D
     [Export] TimeManager timeManager;
     [Export] SelectionManager selectionManager;
     Vector2I worldSize;
-    public Sprite2D regionOverlay;
+    [Export] public Sprite2D regionOverlay;
+    [Export] public Sprite2D terrainSprite;
     //ImageTexture regionTexture;
     Image regionImage;
     Image terrainImage;
@@ -217,12 +218,12 @@ public partial class MapManager : Node2D
     {
         if (initialized)
         {
+            ((ShaderMaterial)regionOverlay.Material).SetShaderParameter("horizontalPos", playerCamera.HorizontalFactor);
             if (regionOverlay.Visible)
             {
                 CheckMapmodeChange();
             }
         }
-
     }
 
     void UpdateRegionVisibility(bool value) {
@@ -460,7 +461,8 @@ public partial class MapManager : Node2D
             case MapModes.WEALTH:
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 0f)], region.wealth / simManager.maxWealth);
+                    //float factor = region.wealth / simManager.maxWealth;
+                    color = Utility.MultiColourLerp([new Color("black"), new Color("yellow")], region.economy.prices["grain"]/20f);
                 }
                 else if (region.habitable)
                 {
@@ -471,12 +473,12 @@ public partial class MapManager : Node2D
                 if (region.habitable && region.pops.Count > 0)
                 {
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
-                    if (region.marketId != null)
+                    if (region.tradeZone != null)
                     {
-                        borderId = (ulong)region.marketId;
-                        color = objectManager.GetMarket(region.marketId).color;
+                        borderId = region.tradeZone.id;
+                        color = region.tradeZone.color;
                     }
-                    if (region.isMarketCenter && includeCapital)
+                    if (region.isTradeZoneCenter && includeCapital)
                     {
                         color = new Color(1f, 1f, 0f);
                     }

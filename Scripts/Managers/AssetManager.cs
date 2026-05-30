@@ -1,81 +1,91 @@
 using Godot;
-using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text.Json;
 public static class AssetManager
 {
     // Saved Stuff
-    public const string modsFolderPath = "Mods/";
-    public static List<string> loadedModIds;
-    public static List<string> foundModPaths;
     public static Dictionary<string, Biome> biomes = [];
-    public static void LoadBiomes()
+    public static Dictionary<string, Building> buildings = [];
+    public static Dictionary<string, Profession> professions = [];
+    public static Dictionary<BuildingType, List<Building>> buildingTypes = [];
+    public static Dictionary<string, Item> items = [];
+    public static Dictionary<string, List<Item>> itemTags = [];
+    public static Dictionary<string, NaturalResource> naturalResources = [];
+
+    public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output, bool deepSearch = true) where ResType : SimResource
     {
-        string biomesPath = "Data/biomes.json";
-        FileAccess bio = FileAccess.Open(biomesPath, FileAccess.ModeFlags.Read);
-        if (bio != null)
-        {
-            string biomeData = bio.GetAsText();
+        DirAccess dir = DirAccess.Open(resPath);
 
-            foreach (Biome biome in JsonSerializer.Deserialize<Biome[]>(biomeData))
+        dir.ListDirBegin();
+        string fileName = dir.GetNext();
+
+        while (fileName != "")
+        {
+            if (dir.CurrentIsDir() && deepSearch)
             {
-                biomes.Add(biome.id, biome);
-            }
-            GD.Print("Loaded " + biomes.Count + " biomes");
-        }
-        else
-        {
-            GD.PushError("biomes.json not found at path '" + biomesPath + "'");
-        }
-    }
-    public static void GetLoadedMods()
-    {
-        GD.Print("Asset Loading Start");
-        foundModPaths = [];
-        DirAccess modsDir = DirAccess.Open(modsFolderPath);
-
-        if (modsDir != null)
-        {
-            foreach (string localModPath in modsDir.GetDirectories())
+                LoadResources(resPath.PathJoin(fileName), output, true);
+            } else
             {
-                string modPath = modsFolderPath + localModPath;
-                if (DirAccess.Open(modPath).GetFiles().Contains("mod.json"))
-                {
-                    foreach (string dataPath in DirAccess.Open(modPath).GetFiles())
-                    {
-                        if (dataPath == "mod.json")
-                        {
-                            string modInfoJson = FileAccess.Open(modPath + "/" + dataPath, FileAccess.ModeFlags.Read).GetAsText();
-                            Dictionary<string, string> modData = JsonSerializer.Deserialize<Dictionary<string, string>>(modInfoJson);
-
-                            if (modData.ContainsKey("name") && modData.ContainsKey("description") && modData.ContainsKey("author") && modData.ContainsKey("version"))
-                            {
-                                GD.Print("Found Mod '" + modData["name"] + "' by " + modData["author"]);
-                                foundModPaths.Add(modPath);
-                            }
-                            else
-                            {
-                                GD.Print("Mod at path '" + modPath + "' mod.json lacks information. Mod loading skipped");
-                            }
-                            break;
-                        }
-                    }
-                }
+                GD.Print(resPath.PathJoin(fileName));
+                ResType res = GD.Load<ResType>(resPath.PathJoin(fileName));
+                res.id = fileName[..^5];
+                output.Add(res.id, res);                
             }
-        }
-
-        GD.Print(foundModPaths.Count + " Mod(s) Found");
+            fileName = dir.GetNext();
+        }     
     }
     public static void LoadAssets()
     {
         biomes = [];
 
-        LoadBiomes();
+        buildings = [];
+        buildingTypes = [];
+
+        items = [];
+        itemTags = [];
+
+        professions = [];
+
+        naturalResources = [];
+
+        LoadResources("Data/Biomes", biomes);
+        LoadResources("Data/Buildings", buildings);
+        LoadResources("Data/Professions", professions);
+        LoadResources("Data/Items", items); 
+        LoadResources("Data/Natural Resources", naturalResources);
+
+        foreach (var pair in buildings)
+        {
+            if (!buildingTypes.ContainsKey(pair.Value.type)) buildingTypes[pair.Value.type] = [];
+            buildingTypes[pair.Value.type].Add(pair.Value);
+        }
+
+        foreach (Item item in items.Values)
+        {
+            foreach (string tag in item.tags)
+            {
+                if (!itemTags.ContainsKey(tag)) itemTags[tag] = [];
+                itemTags[tag].Add(item);                
+            }
+        }    
     }
     public static Biome GetBiome(string id)
     {
         return biomes[id];
+    }
+    public static Item GetItem(string id)
+    {
+        return items[id];
+    }
+    public static NaturalResource GetNaturalResource(string id)
+    {
+        return naturalResources[id];
+    }
+    public static Building GetBuilding(string id)
+    {
+        return buildings[id];
+    }
+    public static Profession GetProfession(string id)
+    {
+        return professions[id];
     }
 }
