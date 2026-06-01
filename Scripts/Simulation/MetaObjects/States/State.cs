@@ -23,7 +23,7 @@ public partial class State : Polity, ISaveable
     // Taxes & Wealth
     [Key(33)] public float mobilizationRate { get; set; } = 0.3f;
     [Key(34)] public float taxRate { get; set; } = 0.3f;
-    [Key(37)] public float tributeRate { get; set; } = 0.1f;
+    //[Key(37)] public float tributeRate { get; set; } = 0.1f;
 
     // Alliances
     [Key(38)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;

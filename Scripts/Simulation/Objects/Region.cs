@@ -14,6 +14,7 @@ public partial class Region : PopObject, ISaveable
     [Key(19)] public bool coastal { get; set; }
     [Key(20)] public bool isWater { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
+    [Key(48)] public float fertility;
     [Key(22)] public Economy economy = new();
     [Key(23)] public Dictionary<ulong, TradeConnection> tradeConnections = new();
 
@@ -303,6 +304,7 @@ public partial class Region : PopObject, ISaveable
         avgTemperature /= tiles.Count;
         avgRainfall /= tiles.Count;
         avgElevation /= tiles.Count;
+        fertility = arableLand/landCount;
 
         for (int month = 0; month < 12; month++)
         {
@@ -548,6 +550,24 @@ public partial class Region : PopObject, ISaveable
         tradeLink = link;
         tradeLink?.linkedRegions.Add(this);
     }
+    public void GetTaxIncome()
+    {
+        float newTaxIncome = 0;
+        State taxingState = owner?.diplomacy.GetRealm() == null ? owner : owner.diplomacy.GetRealm().leadState;
+        Polity taxingPolity = owner?.diplomacy.GetPolity();
+
+        if (taxingPolity != null)
+        {
+            float totalOwnerTaxes = taxingPolity.baseWealth * taxingState.taxRate;
+            if (taxingState.capital == this)
+            {
+                newTaxIncome = totalOwnerTaxes * 0.1f;
+            }
+            float taxInvestment = totalOwnerTaxes * 0.9f;
+            newTaxIncome += taxInvestment/taxingPolity.regions.Count;
+        }
+        taxIncome = newTaxIncome;
+    }
     public float GetTradeIncome()
     {
         float newIncome = baseWealth * 0.1f;
@@ -610,9 +630,6 @@ public partial class Region : PopObject, ISaveable
     }
     public int GetBaseTradeWeight()
     {
-        
-        //long notMerchants = Pop.FromNativePopulation(workforce - socialClasss[SocialClass.MERCHANT]);
-        //long merchants = Pop.FromNativePopulation(socialClasss[SocialClass.MERCHANT]);
         float populationTradeWeight = population * 0.001f;
 
         float zoneSizeTradeWeight = 0;

@@ -452,7 +452,7 @@ public partial class MapManager : Node2D
                 }                
                 break;
             case MapModes.TECH:
-                if (region.habitable)
+                if (region.population > 0)
                 {
                     region.GetAverageTech();
                     color = new Color(region.averageTech.militaryLevel / 20f, region.averageTech.industryLevel / 20f, region.averageTech.societyLevel / 20f);
@@ -465,10 +465,6 @@ public partial class MapManager : Node2D
                     if (simManager.useNewEconomy) factor = region.economy.prices["grain"]/20f;
                     
                     color = Utility.MultiColourLerp([new Color("black"), new Color("yellow")], factor);
-                }
-                else if (region.habitable)
-                {
-                    color = new Color(0, 0, 0, 1);
                 }
                 break;
             case MapModes.TRADE_WEIGHT:
@@ -484,11 +480,7 @@ public partial class MapManager : Node2D
                     {
                         color = new Color(1f, 1f, 0f);
                     }
-                }
-                else if (region.habitable)
-                {
-                    color = new Color(0, 0, 0, 1);
-                }     
+                }   
                 break;
             case MapModes.TERRAIN_TYPE:
                 borderId = (ulong)region.terrainType;

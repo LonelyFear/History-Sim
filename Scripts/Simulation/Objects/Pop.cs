@@ -137,9 +137,11 @@ public partial class Pop
 
     public void TechnologyUpdate()
     {
-        float militaryTechChance = 0.0025f;
-        float societyTechChance = 0.0025f;
-        float industryTechChance = 0.05f;
+        if (region.owner == null) return;
+        
+        float militaryTechChance = 0.0005f * region.fertility;
+        float societyTechChance = 0.0005f * region.fertility;
+        float industryTechChance = 0.05f * region.fertility;
         if (rng.NextSingle() < militaryTechChance && tech.militaryLevel < 20)
         {
             tech.militaryLevel += 1;

@@ -738,18 +738,7 @@ public class SimManager
                 region.GetTradeWeight();
 
                 // Tax Income
-                region.taxIncome = 0;
-                State owner = region.owner;
-                if (owner != null)
-                {
-                    float taxIncome = owner.baseWealth * owner.taxRate;
-                    if (owner.capital == region)
-                    {
-                        region.taxIncome = taxIncome * 0.1f;
-                    }
-                    float taxInvestment = taxIncome * 0.9f;
-                    region.taxIncome += taxInvestment/owner.regions.Count;
-                }
+                region.GetTaxIncome();
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
 

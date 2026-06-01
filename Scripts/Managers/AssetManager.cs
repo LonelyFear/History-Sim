@@ -1,5 +1,7 @@
 using Godot;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 public static class AssetManager
 {
     // Saved Stuff
@@ -13,8 +15,12 @@ public static class AssetManager
 
     public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output, bool deepSearch = true) where ResType : SimResource
     {
+        /*
         DirAccess dir = DirAccess.Open(resPath);
-
+        if (dir == null)
+        {
+            GD.PushError(DirAccess.GetOpenError());
+        }
         dir.ListDirBegin();
         string fileName = dir.GetNext();
 
@@ -31,7 +37,23 @@ public static class AssetManager
                 output.Add(res.id, res);                
             }
             fileName = dir.GetNext();
-        }     
+        } 
+        */    
+        var resourceList = ResourceLoader.ListDirectory(resPath);
+        foreach (string fileName in resourceList)
+        {
+            ResType res = GD.Load<ResType>(resPath.PathJoin(fileName));
+            string id = "";
+            foreach (char c in fileName)
+            {
+                if (c == '.') break; 
+                id += c;               
+            }
+            
+            res.id = id;
+            output.Add(id, res);   
+            GD.Print("Loaded " + id);             
+        }                 
     }
     public static void LoadAssets()
     {
@@ -47,11 +69,11 @@ public static class AssetManager
 
         naturalResources = [];
 
-        LoadResources("Data/Biomes", biomes);
-        LoadResources("Data/Buildings", buildings);
-        LoadResources("Data/Professions", professions);
-        LoadResources("Data/Items", items); 
-        LoadResources("Data/Natural Resources", naturalResources);
+        LoadResources("res://Data/Biomes", biomes);
+        LoadResources("res://Data/Buildings", buildings);
+        LoadResources("res://Data/Professions", professions);
+        LoadResources("res://Data/Items", items); 
+        LoadResources("res://Data/Natural Resources", naturalResources);
 
         foreach (var pair in buildings)
         {

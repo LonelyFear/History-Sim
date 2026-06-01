@@ -30,25 +30,10 @@ public partial class TopPanel : Panel
         if (!update) return;
 
         dateLabel.Text = $"Year {timeManager.GetYear()}";
-        ageLabel.Text = $"{GetAgeName()}";
+        ageLabel.Text = $"Age of History";
 
         populationLabel.Text = $"World Population: {simManager.worldPopulation:#,##0}";
         warsLabel.Text = $"Wars: {simManager.warIds.Count:#,##0}";
         statesLabel.Text = $"States: {simManager.statesIds.Count:#,##0}";
-    }
-    string GetAgeName()
-    {
-        string currentAge = "Age of Tribes";
-
-        if (simManager.highestTech.industryLevel > 0)
-        {
-            currentAge = "Birth of Industry";
-        }
-        if (simManager.averageTech.fIndustryLevel > 0.2)
-        {
-            currentAge = "Age of Industry";
-        }
-
-        return currentAge;
     }
 }
