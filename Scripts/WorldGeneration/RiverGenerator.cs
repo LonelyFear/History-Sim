@@ -12,18 +12,49 @@ public class RiverGenerator
     public bool riverMustEndInWater = true;
     public int minRiverHeight = 1000;
     int invalidRivers = 0;
-    List<Vector2I> validPositions = [];
+    HashSet<Vector2I> validPositions = [];
+    HashSet<Vector2I> checkedPositions = [];
     bool[,] rivers;
     void GeneratePoints(WorldGenerator world)
     {
         Random rng = world.rng;
+        for (int x = 0; x < world.WorldSize.X/minRiverDist; x++)
+        {
+            for (int y = 0; y < world.WorldSize.Y/minRiverDist; y++)
+            {
+                int px = (int)(x * minRiverDist);
+                int py = (int)(y * minRiverDist);
 
+                Vector2I pos = new(px, py);
+                Cell cell = world.cells[pos.X, pos.Y];
+
+                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.8f);
+
+                bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Biome.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
+
+                if (posGood)
+                {
+                    validPositions.Add(pos);
+                } else
+                {
+                    invalidRivers++;
+                }
+            }           
+        }
+        /*
         for (int i = 0; i < attemptedRivers; i++)
         {
             bool posGood = true;
             Vector2I pos = new Vector2I(rng.Next(0, world.WorldSize.X), rng.Next(0, world.WorldSize.Y));
-            if (!validPositions.Contains(pos) && world.cells[pos.X, pos.Y].elevation > minRiverHeight && rng.NextSingle() < world.cells[pos.X,pos.Y].GetAnnualRainfall()/3500f && AssetManager.GetBiome(world.cells[pos.X, pos.Y].biomeId).type == Biome.BiomeType.LAND)
+            if (!validPositions.Contains(pos) && world.cells[pos.X, pos.Y].elevation > minRiverHeight && rng.NextSingle() < world.cells[pos.X,pos.Y].GetAnnualRainfall()/3000f && AssetManager.GetBiome(world.cells[pos.X, pos.Y].biomeId).type == Biome.BiomeType.LAND)
             {
+                if (checkedPositions.Contains(pos))
+                {
+                    attemptedRivers++;
+                    continue;
+                }
+
+                checkedPositions.Add(pos);
                 foreach (Vector2I oPos in validPositions)
                 {
                     if (Utility.WrappedDistanceSquared(pos, oPos, world.WorldSize) <= minRiverDist * minRiverDist)
@@ -47,6 +78,7 @@ public class RiverGenerator
                 invalidRivers++;
             }
         }
+        */
         GD.Print("Attempting to generate " + validPositions.Count + " rivers");
     }
     public void RunRiverGeneration(WorldGenerator world)
@@ -75,7 +107,8 @@ public class RiverGenerator
             {
                 attempts++;
                 Vector2I lowestPos = pos;
-                float lowestElevation = world.cells[pos.X, pos.Y].elevation * 20;
+                float lowestElevation = world.cells[pos.X, pos.Y].elevation + 200;
+                //float nearb
                 for (int dx = -1; dx < 2; dx++)
                 {
                     for (int dy = -1; dy < 2; dy++)
@@ -104,20 +137,10 @@ public class RiverGenerator
                 }
                 pos = lowestPos;
             }
-            if ((currentRiver.Count >= minRiverLength && currentRiver.Count <= maxRiverLength) || endFound)
-            {
-                if (waterEnd)
-                {
-                    AddRiverToGlobal(currentRiver);
-                }
-                else if (!riverMustEndInWater)
-                {
-                    AddRiverToGlobal(currentRiver);
-                }
-                else
-                {
-                    invalidRivers += 1;
-                }
+            if (currentRiver.Count >= minRiverLength && endFound)
+            { 
+                if (waterEnd || !riverMustEndInWater) AddRiverToGlobal(currentRiver);
+                else invalidRivers += 1;
             }
             else
             {

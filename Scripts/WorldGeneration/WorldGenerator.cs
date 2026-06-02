@@ -28,7 +28,11 @@ public class WorldGenerator
     public float SeaLevel { get; set; } = 0.0001f;
     [Key(3)]
     public int Seed { get; set; } = 1;
-    [Key(30)]
+    [Key(6)] public int LargeContinents { get; set; } = 4;
+    [Key(7)] public int SmallContinents { get; set; } = 2;
+    [Key(8)] public float LandCoverage { get; set; } = 0.4f;
+
+    [Key(4)]
     public int WindNoiseSeed { get; set; } = 1;
     [IgnoreMember] public WorldgenFinished worldgenFinishedEvent;
     [Key(5)] public Cell[,] cells;
@@ -46,6 +50,7 @@ public class WorldGenerator
     [IgnoreMember]
     public WorldGenStage Stage;
     [IgnoreMember] public bool generateRandomMap;
+    [IgnoreMember] public bool generateRivers = false;
     public void GenerateWorld()
     {
         Init();
@@ -118,13 +123,13 @@ public class WorldGenerator
         
         Stage = WorldGenStage.BIOMES;
         //HydroMap = new HydrologyGenerator().GenerateHydrologyMap();
-        RiverGenerator riverGenerator = new RiverGenerator()
+        RiverGenerator riverGenerator = new()
         {
-            attemptedRivers = 10000,
-            minRiverDist = 3f,
-            minRiverLength = 5,
-            maxRiverLength = 500000,
-            minRiverHeight = 2000,
+            attemptedRivers = 50000,
+            minRiverDist = 4f,
+            minRiverLength = 8,
+            maxRiverLength = 100000,
+            minRiverHeight = 500,
             riverMustEndInWater = true
         };
 
@@ -137,7 +142,8 @@ public class WorldGenerator
         }
         KoppenClassification.GetKoppenMap(this);
         Stage = WorldGenStage.RIVERS;
-        //riverGenerator.RunRiverGeneration(this);
+        
+        if (generateRivers) riverGenerator.RunRiverGeneration(this);
         //GD.Print("Worldgen Started");
         Stage = WorldGenStage.FINISHING;
         // TODO: Add water flow simulations

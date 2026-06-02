@@ -6,8 +6,12 @@ public partial class WorldSettingsPanel : Panel
 	[Export] LineEdit seedEdit;
 	[Export] OptionButton sizeDropdown;
 	[Export] CheckBox heightmapCheckbox;
+	[Export] CheckBox riverCheckbox;
 	[Export] Button backButton;
 	[Export] Button generateWorldButton;
+	[Export] Slider largeContinents;
+	[Export] Slider smallContinents;
+	[Export] OptionButton landCoverageDropdown;
 	Random rng = new Random();
 	LoadingScreen loadingScreen;
 	string oldText = "";
@@ -43,11 +47,14 @@ public partial class WorldSettingsPanel : Panel
 		GetTree().Root.AddChild(GD.Load<PackedScene>("res://Scenes/game.tscn").Instantiate());
 		loadingScreen = GetNode<LoadingScreen>("/root/Game/Loading/Loading Screen");
 		
-
 		loadingScreen.generator = new WorldGenerator()
 		{
 			Seed = seed,
+			LargeContinents = (int)largeContinents.Value,
+			SmallContinents = (int)smallContinents.Value,
+			LandCoverage = (float)((landCoverageDropdown.Selected + 1)/10f),
 			generateRandomMap = !heightmapCheckbox.ButtonPressed,
+			generateRivers = riverCheckbox.ButtonPressed,
 			WorldMult = sizeDropdown.GetSelectedId()
 		};
 		GetParent().QueueFree();

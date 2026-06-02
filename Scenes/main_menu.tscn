@@ -13,6 +13,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+focus_behavior_recursive = 1
 script = ExtResource("1_n45e2")
 
 [node name="TextureRect" parent="." unique_id=1024992066 instance=ExtResource("1_1ehe0")]
@@ -57,7 +58,7 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 100
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 30
-text = "Alpha 0.1"
+text = "Alpha 1.0.1"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -97,6 +98,7 @@ script = ExtResource("2_48xlc")
 
 [node name="Start" type="Button" parent="Button Holder" unique_id=881217347]
 layout_mode = 2
+focus_mode = 0
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 24
@@ -106,6 +108,7 @@ alignment = 0
 
 [node name="Load" type="Button" parent="Button Holder" unique_id=1908724142]
 layout_mode = 2
+focus_mode = 0
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 24
@@ -115,6 +118,7 @@ alignment = 0
 
 [node name="Options" type="Button" parent="Button Holder" unique_id=440930513]
 layout_mode = 2
+focus_mode = 0
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 24
@@ -125,6 +129,7 @@ alignment = 0
 
 [node name="Exit Game" type="Button" parent="Button Holder" unique_id=1354809499]
 layout_mode = 2
+focus_mode = 0
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 24

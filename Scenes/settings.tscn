@@ -1,0 +1,120 @@
+[gd_scene format=3 uid="uid://bf6yk7pex2sm6"]
+
+[ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_aaqfp"]
+[ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scripts/UI/World Creation/WorldSettingsPanel.cs" id="2_j2dne"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="3_6kysc"]
+[ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_6vr2p"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_f60ng"]
+
+[node name="Settings" type="Control" unique_id=1976513774]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" parent="." unique_id=660834049 instance=ExtResource("1_aaqfp")]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="WorldSettingsPanel" type="Panel" parent="." unique_id=1616967869 node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "backButton", "generateWorldButton")]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2
+anchor_top = 0.05
+anchor_right = 0.8
+anchor_bottom = 0.95
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_j2dne")
+seedEdit = NodePath("")
+sizeDropdown = NodePath("")
+heightmapCheckbox = NodePath("")
+backButton = NodePath("MarginContainer/VBoxContainer/ButtonsContainer/Back")
+generateWorldButton = NodePath("MarginContainer/VBoxContainer/ButtonsContainer/Accept")
+metadata/_edit_use_anchors_ = true
+
+[node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel" unique_id=838992837]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="WorldSettingsPanel/MarginContainer" unique_id=1184779698]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=361033754]
+layout_mode = 2
+theme = ExtResource("3_6kysc")
+theme_override_fonts/font = ExtResource("4_6vr2p")
+theme_override_font_sizes/font_size = 63
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="Disclaimer" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=1986929433]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+theme = ExtResource("3_6kysc")
+theme_override_font_sizes/font_size = 30
+text = "Beyond simulation settings there is really no configuration yet. :\\"
+vertical_alignment = 1
+autowrap_mode = 1
+
+[node name="VolumeContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=1052408805]
+visible = false
+layout_mode = 2
+
+[node name="VolumeLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/VolumeContainer" unique_id=1844019831]
+layout_mode = 2
+theme = ExtResource("3_6kysc")
+theme_override_font_sizes/font_size = 30
+text = "Volume:"
+
+[node name="VolumeSlider" type="HSlider" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/VolumeContainer" unique_id=1374871049]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="HSeparator" type="HSeparator" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=1589162834]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/separator = SubResource("StyleBoxEmpty_f60ng")
+
+[node name="ButtonsContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=629606085]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Back" type="Button" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer" unique_id=1219437740]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_6kysc")
+theme_override_constants/line_spacing = 0
+theme_override_font_sizes/font_size = 40
+action_mode = 0
+text = "Back"
+
+[node name="Accept" type="Button" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer" unique_id=1350859383]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("3_6kysc")
+theme_override_font_sizes/font_size = 40
+action_mode = 0
+text = "Accept"

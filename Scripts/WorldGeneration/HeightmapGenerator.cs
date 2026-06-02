@@ -129,7 +129,11 @@ public class HeightmapGenerator
         world = worldAssigned;
         seaLevel = world.SeaLevel - shelfDepth;
         worldSize = world.WorldSize;
+
         worldMult = world.WorldMult;
+        smallContinents = world.SmallContinents;
+        landCoverage = world.LandCoverage;
+        
         int[,] map = new int[worldSize.X, worldSize.Y];
 
         heightmap = new float[worldSize.X, worldSize.Y];
