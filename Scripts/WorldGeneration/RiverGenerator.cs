@@ -126,7 +126,7 @@ public class RiverGenerator
                     }
                 }
                 currentRiver.Add(lowestPos);
-                if (world.cells[lowestPos.X, lowestPos.Y].elevation < world.SeaLevel)
+                if (world.cells[lowestPos.X, lowestPos.Y].elevation <= 0)
                 {
                     endFound = true;
                     waterEnd = true;

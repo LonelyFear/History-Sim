@@ -5,9 +5,9 @@
 [ext_resource type="Script" uid="uid://dx4r6k23011pi" path="res://Scripts/UI/World Creation/SizeWarningLabel.cs" id="4_04eni"]
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="4_4g6c4"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_8327h"]
-[ext_resource type="Script" uid="uid://c0ocojuh5w2it" path="res://Scenes/ContinentsLabel.cs" id="6_04eni"]
-[ext_resource type="Script" uid="uid://daxoulbdjrwaw" path="res://Scenes/AdvancedContainer.cs" id="6_e0cwy"]
-[ext_resource type="Script" uid="uid://b03mnvet4jhg8" path="res://Scenes/AdvancedCheckbox.cs" id="6_rq81p"]
+[ext_resource type="Script" uid="uid://c0ocojuh5w2it" path="res://Scripts/ContinentsLabel.cs" id="6_04eni"]
+[ext_resource type="Script" uid="uid://daxoulbdjrwaw" path="res://Scripts/AdvancedContainer.cs" id="6_e0cwy"]
+[ext_resource type="Script" uid="uid://b03mnvet4jhg8" path="res://Scripts/AdvancedCheckbox.cs" id="6_rq81p"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4g6c4"]
 content_margin_left = 10.0

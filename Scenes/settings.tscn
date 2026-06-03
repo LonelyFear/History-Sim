@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bf6yk7pex2sm6"]
 
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_aaqfp"]
+[ext_resource type="Script" uid="uid://bptdbuxvlqlnb" path="res://Scripts/settings.gd" id="1_j2dne"]
 [ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scripts/UI/World Creation/WorldSettingsPanel.cs" id="2_j2dne"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="3_6kysc"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_6vr2p"]
@@ -14,6 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_j2dne")
 
 [node name="TextureRect" parent="." unique_id=660834049 instance=ExtResource("1_aaqfp")]
 layout_mode = 1
@@ -27,7 +29,7 @@ offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
 
-[node name="WorldSettingsPanel" type="Panel" parent="." unique_id=1616967869 node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "backButton", "generateWorldButton")]
+[node name="WorldSettingsPanel" type="Panel" parent="." unique_id=1616967869 node_paths=PackedStringArray("seedEdit", "heightmapCheckbox", "backButton", "generateWorldButton")]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.2
@@ -37,11 +39,10 @@ anchor_bottom = 0.95
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_j2dne")
-seedEdit = NodePath("")
-sizeDropdown = NodePath("")
+seedEdit = NodePath("../../../../../../../../../../../../../../../DockVSplitRightL/DockSlotRightUL/Inspector/@VBoxContainer@6872/@MarginContainer@7173/@EditorInspector@7184/@VBoxContainer@7176/@VBoxContainer@7183/@VBoxContainer@459754/@VBoxContainer@459756/@EditorInspectorSection@459903/@VBoxContainer@459904/@EditorPropertyResource@459913/@EditorResourcePicker@459912/@Button@459911")
 heightmapCheckbox = NodePath("")
-backButton = NodePath("MarginContainer/VBoxContainer/ButtonsContainer/Back")
-generateWorldButton = NodePath("MarginContainer/VBoxContainer/ButtonsContainer/Accept")
+backButton = NodePath("")
+generateWorldButton = NodePath("")
 metadata/_edit_use_anchors_ = true
 
 [node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel" unique_id=838992837]
@@ -102,19 +103,18 @@ layout_mode = 2
 theme_override_constants/separation = 18
 alignment = 1
 
-[node name="Back" type="Button" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer" unique_id=1219437740]
+[node name="Back" type="Button" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer" unique_id=23614583]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("3_6kysc")
-theme_override_constants/line_spacing = 0
 theme_override_font_sizes/font_size = 40
-action_mode = 0
 text = "Back"
 
-[node name="Accept" type="Button" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer" unique_id=1350859383]
+[node name="Save" type="Button" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer" unique_id=445544037]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("3_6kysc")
 theme_override_font_sizes/font_size = 40
-action_mode = 0
-text = "Accept"
+text = "Save"
+
+[connection signal="pressed" from="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer/Back" to="." method="_on_back_pressed"]

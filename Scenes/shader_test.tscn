@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://l1cr5gsmerod"]
 
-[ext_resource type="Script" uid="uid://qwide1mdvfue" path="res://Scenes/ShaderTest.cs" id="1_56mpk"]
+[ext_resource type="Script" uid="uid://qwide1mdvfue" path="res://Scripts/ShaderTest.cs" id="1_56mpk"]
 [ext_resource type="Texture2D" uid="uid://c7croa2yvhh23" path="res://icon.svg" id="2_mrmnq"]
 [ext_resource type="Texture2D" uid="uid://bjjn4eyner8wb" path="res://Sprites/Icons.png" id="2_wso2r"]
 

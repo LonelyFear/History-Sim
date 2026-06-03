@@ -116,14 +116,11 @@ action_mode = 0
 text = "Load Simulation"
 alignment = 0
 
-[node name="Options" type="Button" parent="Button Holder" unique_id=440930513]
+[node name="Options" type="Button" parent="Button Holder" unique_id=1381084156]
 layout_mode = 2
-focus_mode = 0
 theme = ExtResource("2_1ehe0")
 theme_override_fonts/font = ExtResource("3_ce3w2")
 theme_override_font_sizes/font_size = 24
-disabled = true
-action_mode = 0
 text = "Options"
 alignment = 0
 
@@ -139,4 +136,5 @@ alignment = 0
 
 [connection signal="pressed" from="Button Holder/Start" to="Button Holder" method="_on_start_pressed"]
 [connection signal="pressed" from="Button Holder/Load" to="Button Holder" method="_on_load_pressed"]
+[connection signal="pressed" from="Button Holder/Options" to="Button Holder" method="_on_options_pressed"]
 [connection signal="pressed" from="Button Holder/Exit Game" to="Button Holder" method="_on_exit_game_pressed"]

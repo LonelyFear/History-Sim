@@ -165,7 +165,7 @@ public partial class StateDiplomacyManager
             int stateSize = state.diplomacy.GetPolity().regions.Count;
             int targetSize = relationState.diplomacy.GetPolity().regions.Count;
 
-            float relativeSizeRatio = (stateSize - targetSize)/(float)stateSize;
+            float relativeSizeRatio = (stateSize - targetSize)/Mathf.Max(stateSize, 0.001f);
 
             newThreat += relativeSizeRatio;
 

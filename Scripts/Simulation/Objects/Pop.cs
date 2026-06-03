@@ -139,8 +139,8 @@ public partial class Pop
     {
         if (region.owner == null) return;
         
-        float militaryTechChance = 0.0005f * region.fertility;
-        float societyTechChance = 0.0005f * region.fertility;
+        float militaryTechChance = 0.001f * region.fertility;
+        float societyTechChance = 0.001f * region.fertility;
         float industryTechChance = 0.05f * region.fertility;
         if (rng.NextSingle() < militaryTechChance && tech.militaryLevel < 20)
         {

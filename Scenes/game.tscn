@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://chv60w7s0kt3y" path="res://Scenes/loading_screen.tscn" id="2_nb51f"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="4_exi56"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_nnt18"]
-[ext_resource type="Script" uid="uid://cfr2ueilt3raf" path="res://Scenes/SelectionManager.cs" id="5_tgy6u"]
+[ext_resource type="Script" uid="uid://cfr2ueilt3raf" path="res://Scripts/SelectionManager.cs" id="5_tgy6u"]
 [ext_resource type="Script" uid="uid://lwipr6gngd83" path="res://Scripts/Managers/MapManager.cs" id="6_85qyi"]
 [ext_resource type="Script" uid="uid://xqd6wvhycyt7" path="res://Scripts/Managers/SimManagerHolder.cs" id="7_22asu"]
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
