@@ -9,8 +9,8 @@ using FileAccess = Godot.FileAccess;
 public class HeightmapGenerator
 {
     float[,] heightmap;
-    int gridSizeX = 16;
-    int gridSizeY = 16;
+    int gridSizeX = 20;
+    int gridSizeY = 20;
     int ppcx;
     int ppcy;
     TerrainCell[,] tiles;
@@ -133,7 +133,8 @@ public class HeightmapGenerator
         worldMult = world.WorldMult;
         smallContinents = world.SmallContinents;
         landCoverage = world.LandCoverage;
-        
+        GD.Print(landCoverage);
+
         int[,] map = new int[worldSize.X, worldSize.Y];
 
         heightmap = new float[worldSize.X, worldSize.Y];

@@ -7,7 +7,7 @@ public class RiverGenerator
     public int attemptedRivers = 100;
     public float minRiverDist = 5f;
     public float minRiverLength = 5;
-    public bool allowCornerConnections = true;
+    public bool includeDiagonals = true;
     public float maxRiverLength = Mathf.Inf;
     public bool riverMustEndInWater = true;
     public int minRiverHeight = 1000;
@@ -28,7 +28,7 @@ public class RiverGenerator
                 Vector2I pos = new(px, py);
                 Cell cell = world.cells[pos.X, pos.Y];
 
-                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.8f);
+                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.25f);
 
                 bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Biome.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
 
@@ -41,44 +41,6 @@ public class RiverGenerator
                 }
             }           
         }
-        /*
-        for (int i = 0; i < attemptedRivers; i++)
-        {
-            bool posGood = true;
-            Vector2I pos = new Vector2I(rng.Next(0, world.WorldSize.X), rng.Next(0, world.WorldSize.Y));
-            if (!validPositions.Contains(pos) && world.cells[pos.X, pos.Y].elevation > minRiverHeight && rng.NextSingle() < world.cells[pos.X,pos.Y].GetAnnualRainfall()/3000f && AssetManager.GetBiome(world.cells[pos.X, pos.Y].biomeId).type == Biome.BiomeType.LAND)
-            {
-                if (checkedPositions.Contains(pos))
-                {
-                    attemptedRivers++;
-                    continue;
-                }
-
-                checkedPositions.Add(pos);
-                foreach (Vector2I oPos in validPositions)
-                {
-                    if (Utility.WrappedDistanceSquared(pos, oPos, world.WorldSize) <= minRiverDist * minRiverDist)
-                    {
-                        posGood = false;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                posGood = false;
-            }
-
-            if (posGood)
-            {
-                validPositions.Add(pos);
-            }
-            else
-            {
-                invalidRivers++;
-            }
-        }
-        */
         GD.Print("Attempting to generate " + validPositions.Count + " rivers");
     }
     public void RunRiverGeneration(WorldGenerator world)
@@ -113,7 +75,7 @@ public class RiverGenerator
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if ((dx != 0 && dy != 0 && !allowCornerConnections) || (dx == 0 && dy == 0))
+                        if (!includeDiagonals && dx != 0 && dy != 0)
                         {
                             continue;
                         }
@@ -126,7 +88,7 @@ public class RiverGenerator
                     }
                 }
                 currentRiver.Add(lowestPos);
-                if (world.cells[lowestPos.X, lowestPos.Y].elevation <= 0)
+                if (world.cells[lowestPos.X, lowestPos.Y].elevation < 0)
                 {
                     endFound = true;
                     waterEnd = true;

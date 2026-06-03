@@ -67,7 +67,7 @@ public partial class IndexTab : BaseEncyclopediaTab
         newResult.Pressed += () => OnResultClicked(newResult.Name);
 		resultsContainer.AddChild(newResult);
 		newResult.Name = obj.GetFullId();
-		newResult.Text = obj.name;
+		newResult.Text = obj.name + (obj.dead ? " †" : "");
 		resultDictionary.Add(identifier + obj.name, newResult);        
     }
 	public void OnSearchEditSubmitted(string text)

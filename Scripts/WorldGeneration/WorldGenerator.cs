@@ -244,8 +244,8 @@ public class WorldGenerator
                 Color lowHillColor = Color.Color8(198, 187, 114);
                 Color highHillColor = Color.Color8(95, 42, 22);
                 Color mountainColor = Color.Color8(220, 220, 220);
-                Color shallowWatersColor = Color.Color8(71, 149, 197);
-                Color deepWatersColor = Color.Color8(27, 59, 111);
+                Color shallowWatersColor = new("#4795C5");
+                Color deepWatersColor = new("#1b3b6f");
 
                 float seaFloorDepth = -WorldHeight * SeaLevel;
                 Color waterColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(cells[x, y].elevation/seaFloorDepth, 0f, 1f));

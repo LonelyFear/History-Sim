@@ -52,7 +52,7 @@ public partial class WorldSettingsPanel : Panel
 			Seed = seed,
 			LargeContinents = (int)largeContinents.Value,
 			SmallContinents = (int)smallContinents.Value,
-			LandCoverage = (float)((landCoverageDropdown.Selected + 1)/10f),
+			LandCoverage = (float)(1f - ((landCoverageDropdown.Selected + 2)/10f)),
 			generateRandomMap = !heightmapCheckbox.ButtonPressed,
 			generateRivers = riverCheckbox.ButtonPressed,
 			WorldMult = sizeDropdown.GetSelectedId()

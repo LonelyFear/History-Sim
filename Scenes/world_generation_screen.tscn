@@ -167,7 +167,7 @@ focus_mode = 0
 theme = ExtResource("2_ktv3r")
 theme_override_constants/h_separation = 7
 theme_override_font_sizes/font_size = 40
-text = "Use Earth?"
+text = "Generate Earth?"
 
 [node name="Enable Rivers" type="CheckBox" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=2073049697]
 layout_mode = 2
@@ -176,14 +176,14 @@ focus_mode = 0
 theme = ExtResource("2_ktv3r")
 theme_override_constants/h_separation = 7
 theme_override_font_sizes/font_size = 40
-text = "Enable Rivers?"
+text = "Generate Rivers?"
 
 [node name="AdvancedCheckbox" type="CheckButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=1095888726 node_paths=PackedStringArray("heightmapCheckbox")]
 layout_mode = 2
 tooltip_text = "Edit Advanced Worldgen Options"
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
-text = "Show Advanced Options"
+text = "Advanced Options"
 script = ExtResource("6_rq81p")
 heightmapCheckbox = NodePath("../EarthHeightmapButton")
 
@@ -215,7 +215,7 @@ layout_mode = 2
 
 [node name="LargeContinentsLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents" unique_id=917531009 node_paths=PackedStringArray("slider")]
 layout_mode = 2
-tooltip_text = "The seed of the world. Must be in numbers only."
+tooltip_text = "Number of large continents spawned"
 mouse_filter = 0
 mouse_default_cursor_shape = 16
 theme = ExtResource("2_ktv3r")
@@ -243,7 +243,7 @@ layout_mode = 2
 
 [node name="SmallContinentsLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2" unique_id=1673684203 node_paths=PackedStringArray("slider")]
 layout_mode = 2
-tooltip_text = "The seed of the world. Must be in numbers only."
+tooltip_text = "Number of small continents spawned"
 mouse_filter = 0
 mouse_default_cursor_shape = 16
 theme = ExtResource("2_ktv3r")
@@ -271,7 +271,7 @@ layout_mode = 2
 
 [node name="LandCoverageLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3" unique_id=1669429957]
 layout_mode = 2
-tooltip_text = "The seed of the world. Must be in numbers only."
+tooltip_text = "Approximate percentage of the world covered by land"
 mouse_filter = 0
 mouse_default_cursor_shape = 16
 theme = ExtResource("2_ktv3r")
@@ -285,20 +285,24 @@ tooltip_text = "The seed of the world. Must be in numbers only."
 focus_mode = 1
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
-selected = 3
-item_count = 6
-popup/item_0/text = "70%"
-popup/item_0/id = 5
-popup/item_1/text = "60%"
-popup/item_1/id = 4
-popup/item_2/text = "50%"
-popup/item_2/id = 3
-popup/item_3/text = "40%"
-popup/item_3/id = 2
-popup/item_4/text = "30%"
-popup/item_4/id = 1
-popup/item_5/text = "20%"
-popup/item_5/id = 0
+selected = 4
+item_count = 8
+popup/item_0/text = "80%"
+popup/item_0/id = 8
+popup/item_1/text = "70%"
+popup/item_1/id = 7
+popup/item_2/text = "60%"
+popup/item_2/id = 6
+popup/item_3/text = "50%"
+popup/item_3/id = 5
+popup/item_4/text = "40%"
+popup/item_4/id = 4
+popup/item_5/text = "30%"
+popup/item_5/id = 3
+popup/item_6/text = "20%"
+popup/item_6/id = 2
+popup/item_7/text = "10%"
+popup/item_7/id = 1
 
 [node name="ButtonsContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=714897020]
 layout_mode = 2
