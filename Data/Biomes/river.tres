@@ -23,5 +23,6 @@ metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
 script = ExtResource("1_5665a")
 name = "River"
 type = 2
+arability = 1.0
 color = Color(0.2784314, 0.58431375, 0.77254903, 1)
 naturalResources = [SubResource("Resource_7ux8j"), SubResource("Resource_wgekc")]

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 
 [GlobalClass]
-public partial class ObjectInfo : Control
+public partial class ObjectInfo : Panel
 {
     [Export] SelectionManager selectionManager;
     [Export] SimManagerHolder simHolder;

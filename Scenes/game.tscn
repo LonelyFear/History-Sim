@@ -59,6 +59,8 @@ grow_begin = 0.0
 grow_end = 0.0
 thickness = 5
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cwurv"]
+
 [node name="Game" type="Node2D" unique_id=350215680]
 script = ExtResource("1_rku1e")
 
@@ -85,7 +87,7 @@ timeManager = NodePath("../Time Manager")
 script = ExtResource("5_tgy6u")
 playerCamera = NodePath("../PlayerCamera")
 simHolder = NodePath("../Simulation")
-deselectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/CloseInfoButton")
+deselectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose/CloseInfoButton")
 mapManager = NodePath("../Map Manager")
 
 [node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder", "gameSpeedUI")]
@@ -323,13 +325,13 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 20
+theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_bottom = 10
 
 [node name="ActionBar" type="HBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins" unique_id=838619392]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 
 [node name="Game Speed Holder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1731820463]
 layout_mode = 2
@@ -401,6 +403,20 @@ popup/item_7/id = 7
 popup/item_8/text = "Terrain Type"
 popup/item_8/id = 8
 
+[node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=761628914]
+layout_mode = 2
+focus_mode = 0
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+button_pressed = true
+text = " Show Overlay"
+
+[node name="ButtonMargins" type="MarginContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1721996382]
+layout_mode = 2
+
+[node name="StartStatsSeparator" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=2095709475]
+layout_mode = 2
+
 [node name="EncyclopediaButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=189557080]
 layout_mode = 2
 size_flags_vertical = 3
@@ -416,55 +432,15 @@ theme_override_font_sizes/font_size = 30
 disabled = true
 text = "Stats"
 
-[node name="DataOptions" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1951574640]
-layout_mode = 2
-alignment = 1
-
-[node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/DataOptions" unique_id=1563084269]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "Data"
-horizontal_alignment = 1
-
-[node name="DataButtons" type="GridContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/DataOptions" unique_id=1122603818]
-layout_mode = 2
-columns = 2
-
-[node name="EditOptions" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=248698897]
+[node name="StatsEditSeparator" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=232604395]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/EditOptions" unique_id=1295920238]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "God Mode"
-horizontal_alignment = 1
-
-[node name="GridContainer" type="GridContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/EditOptions" unique_id=689284685]
-layout_mode = 2
-columns = 2
-
-[node name="EditStateButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/EditOptions/GridContainer" unique_id=2075293348]
+[node name="EditorButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=713008555]
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
-text = "Edit State"
-
-[node name="StatisticsButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/EditOptions/GridContainer" unique_id=328764479]
-layout_mode = 2
-size_flags_vertical = 3
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-disabled = true
-text = "Stats"
-
-[node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=761628914]
-layout_mode = 2
-focus_mode = 0
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-button_pressed = true
-text = " Show Overlay"
+text = "Editor"
 
 [node name="DeadSpace" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1661888771]
 layout_mode = 2
@@ -499,6 +475,128 @@ Placeholder
 "
 script = ExtResource("11_nnt18")
 simHolder = NodePath("../../../Simulation")
+
+[node name="InfoHolder" type="Panel" parent="UI" unique_id=741863181 node_paths=PackedStringArray("selectionManager", "simHolder", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
+clip_contents = true
+anchors_preset = -1
+anchor_top = 0.4
+anchor_right = 0.25
+anchor_bottom = 0.9
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("15_ewbju")
+selectionManager = NodePath("../../SelectionManager")
+simHolder = NodePath("../../Simulation")
+nameLabel = NodePath("InfoMargins/InfoContainer/NameAndClose/NameType/Name")
+typeLabel = NodePath("InfoMargins/InfoContainer/NameAndClose/NameType/Type")
+populationLabel = NodePath("InfoMargins/InfoContainer/Scroll/Info/Population")
+specialLabel = NodePath("InfoMargins/InfoContainer/Scroll/Info/Special")
+encyclopediaButton = NodePath("InfoMargins/InfoContainer/EncyclopediaButton")
+encyclopediaManager = NodePath("../../Encyclopedia")
+
+[node name="InfoMargins" type="MarginContainer" parent="UI/InfoHolder" unique_id=256112831]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="InfoContainer" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins" unique_id=1153285923]
+layout_mode = 2
+
+[node name="NameAndClose" type="HBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=749298753]
+layout_mode = 2
+
+[node name="NameType" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose" unique_id=526718828]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Name" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose/NameType" unique_id=298328032]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 40
+text = "Nation Name"
+clip_text = true
+
+[node name="Type" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose/NameType" unique_id=2131231100]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 22
+text = "Nation"
+clip_text = true
+
+[node name="CloseInfoButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose" unique_id=587088966]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme = ExtResource("4_exi56")
+icon = SubResource("DPITexture_vm72l")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="NameTypeSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=624033057]
+layout_mode = 2
+theme_override_constants/separation = 7
+theme_override_styles/separator = SubResource("StyleBoxLine_22asu")
+
+[node name="Scroll" type="ScrollContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=1166211816]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
+theme = ExtResource("4_exi56")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_cwurv")
+
+[node name="Info" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/Scroll" unique_id=685208617]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Population" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/Scroll/Info" unique_id=1088169906]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 6
+theme = ExtResource("4_exi56")
+theme_override_constants/line_spacing = -4
+theme_override_font_sizes/font_size = 30
+text = "Population: 1,000
+Free Land:
+Farmers:
+Merchants:
+Aristocrats:
+Artisans:"
+
+[node name="Special" type="RichTextLabel" parent="UI/InfoHolder/InfoMargins/InfoContainer/Scroll/Info" unique_id=2001700316]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/normal_font_size = 30
+bbcode_enabled = true
+text = "Arable Land:
+Wealth:"
+fit_content = true
+scroll_active = false
+
+[node name="ButtonSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=2042874959]
+layout_mode = 2
+size_flags_vertical = 8
+
+[node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=342721538]
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 25
+text = "View In Encyclopedia"
+
+[node name="ContianerEdge" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=876529723]
+layout_mode = 2
+size_flags_vertical = 8
 
 [node name="DebugPanel" type="Panel" parent="UI" unique_id=230128597 node_paths=PackedStringArray("closeButton")]
 anchors_preset = -1
@@ -611,134 +709,6 @@ theme_override_font_sizes/font_size = 30
 text = "Misc Time"
 flat = false
 alignment = 0
-
-[node name="InfoHolder" type="Control" parent="UI" unique_id=213025015 node_paths=PackedStringArray("selectionManager", "simHolder", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
-clip_contents = true
-layout_mode = 3
-anchors_preset = 0
-offset_top = 256.0
-offset_right = 387.0
-offset_bottom = 648.0
-script = ExtResource("15_ewbju")
-selectionManager = NodePath("../../SelectionManager")
-simHolder = NodePath("../../Simulation")
-nameLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType/Name")
-typeLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType/Type")
-populationLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/Population")
-specialLabel = NodePath("InfoMargins/InfoContainer/InfoScrollContainer/Info/Special")
-encyclopediaButton = NodePath("InfoMargins/InfoContainer/EncyclopediaButton")
-encyclopediaManager = NodePath("../../Encyclopedia")
-
-[node name="InfoPanel" type="Panel" parent="UI/InfoHolder" unique_id=1417958973]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("4_exi56")
-
-[node name="InfoMargins" type="MarginContainer" parent="UI/InfoHolder" unique_id=256112831]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
-
-[node name="InfoContainer" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins" unique_id=1153285923]
-layout_mode = 2
-
-[node name="InfoScrollContainer" type="ScrollContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=1166211816]
-clip_contents = false
-layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 0
-mouse_force_pass_scroll_events = false
-theme = ExtResource("4_exi56")
-theme_override_styles/panel = ExtResource("12_vm72l")
-
-[node name="Info" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer" unique_id=1091706162]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 5
-
-[node name="NameAndClose" type="HBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info" unique_id=749298753]
-layout_mode = 2
-
-[node name="NameType" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose" unique_id=526718828]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Name" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType" unique_id=298328032]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 40
-text = "Nation Name"
-clip_text = true
-
-[node name="Type" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose/NameType" unique_id=2131231100]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 22
-text = "Nation"
-clip_text = true
-
-[node name="CloseInfoButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info/NameAndClose" unique_id=587088966]
-custom_minimum_size = Vector2(40, 0)
-layout_mode = 2
-theme = ExtResource("4_exi56")
-icon = SubResource("DPITexture_vm72l")
-flat = true
-icon_alignment = 1
-expand_icon = true
-
-[node name="NameTypeSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info" unique_id=624033057]
-layout_mode = 2
-theme_override_constants/separation = 7
-theme_override_styles/separator = SubResource("StyleBoxLine_22asu")
-
-[node name="Population" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info" unique_id=1088169906]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_constants/line_spacing = -4
-theme_override_font_sizes/font_size = 30
-text = "Population: 1,000
-Free Land:
-Farmers:
-Merchants:
-Aristocrats:
-Artisans:"
-
-[node name="Special" type="RichTextLabel" parent="UI/InfoHolder/InfoMargins/InfoContainer/InfoScrollContainer/Info" unique_id=2001700316]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/normal_font_size = 30
-bbcode_enabled = true
-text = "Arable Land:
-Wealth:"
-fit_content = true
-scroll_active = false
-
-[node name="ButtonSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=2042874959]
-layout_mode = 2
-size_flags_vertical = 8
-
-[node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=342721538]
-layout_mode = 2
-size_flags_horizontal = 4
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 25
-text = "View In Encyclopedia"
-
-[node name="ContianerEdge" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=876529723]
-layout_mode = 2
-size_flags_vertical = 8
 
 [node name="SaveSimPanel" type="Panel" parent="UI" unique_id=789988692 node_paths=PackedStringArray("openSavePanelButton", "saveButton", "cancelButton", "saveOptions", "saveNameEdit", "simHolder")]
 anchors_preset = -1

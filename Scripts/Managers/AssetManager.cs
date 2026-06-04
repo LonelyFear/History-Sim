@@ -52,7 +52,7 @@ public static class AssetManager
             
             res.id = id;
             output.Add(id, res);   
-            GD.Print("Loaded " + id);             
+            //GD.Print("Loaded " + id);             
         }                 
     }
     public static void LoadAssets()
