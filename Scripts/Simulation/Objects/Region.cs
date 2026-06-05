@@ -33,6 +33,8 @@ public partial class Region : PopObject, ISaveable
     [Key(34)] public ulong? tradeLinkId { get; set; }
     [Key(35)] public bool tradedUp { get; set; }
 
+    // Oceans
+    [IgnoreMember] public Ocean ocean = null;
 
     [IgnoreMember] public float navigability { get; set; }
     [IgnoreMember] public float avgTemperature { get; set; }
@@ -226,10 +228,15 @@ public partial class Region : PopObject, ISaveable
                 for (int dy = -1; dy < 2; dy++)
                 {
                     if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
-                    Vector2I nPos = new Vector2I(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), Mathf.PosMod(tile.pos.Y + dy, SimManager.worldSize.Y));
+                    Vector2I nPos = new(Mathf.PosMod(tile.pos.X + dx, SimManager.worldSize.X), tile.pos.Y + dy);
+                    
+                    if (nPos.Y < 0 || nPos.Y >= SimManager.worldSize.Y)
+                    {
+                        continue;
+                    } 
                     Tile border = simManager.tiles[nPos.X, nPos.Y];
                     Region borderRegion = objectManager.GetRegion(border.regionId);
-                    AddBorder(borderRegion);
+                    AddBorder(borderRegion);                        
                 }
             }
         }
@@ -256,6 +263,7 @@ public partial class Region : PopObject, ISaveable
         
         Dictionary<TerrainType, int> terrainTypes = [];
         biomes = [];
+
         foreach (Vector2I tilePos in tiles)
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
@@ -286,6 +294,7 @@ public partial class Region : PopObject, ISaveable
             }
             if (tile.IsLand())
             {
+                
                 landCount++;
                 arableLand += tile.arability;
                 navigability += tile.navigability;
@@ -295,7 +304,7 @@ public partial class Region : PopObject, ISaveable
                 coastal = true;
             }            
         }
-
+        isWater = (tiles.Count - waterCount) == 0;
         GetTerrainType(terrainTypes);
 
         navigability /= Mathf.Max(landCount, 1);

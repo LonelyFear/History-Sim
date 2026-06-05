@@ -87,7 +87,6 @@ public class ObjectManager
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
-            shipborne = region.isWater
         };
 
         lock (simManager.popsIds)
@@ -416,6 +415,24 @@ public class ObjectManager
 
         war.dead = true; 
         simManager.warIds.Remove(war.id);          
+    }
+    public Ocean CreateOcean(Region[] waterRegions)
+    {
+        float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+        float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+        float b = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+        Ocean ocean = new Ocean()
+        {
+            id = GetId(),
+            color = new Color(r, g, b),
+            waterRegions = [..waterRegions]
+        };
+        foreach (Region region in waterRegions)
+        {
+            region.ocean = ocean;
+        }
+        simManager.oceanIds.Add(ocean.id, ocean);
+        return ocean;
     }
     public void CreateHistoricalEvent(NamedObject[] relevantObjects, EventType eventType)
     {

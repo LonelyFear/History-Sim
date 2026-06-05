@@ -33,7 +33,6 @@ public partial class Pop
     [IgnoreMember] public static Random rng = new Random();
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
-    [Key(20)] public bool shipborne { get; set; } = false;
     [Key(21)] public Direction lastDirection = Direction.RIGHT;
     [Key(22)] string professionId = "farmer";
     [IgnoreMember] public Dictionary<string, float> goodsDemands = [];
@@ -168,44 +167,37 @@ public partial class Pop
         // Simple Migration
         lock (region)
         {
-            if (region.population >= region.maxPopulation || shipborne)
+            if (region.population >= region.maxPopulation)
             {
                 //GD.Print("Migrate");
                 migrateChance = 1f;
             }            
         }
 
-        if (profession.id == "aristocrat" && !shipborne)
+        if (profession.id == "aristocrat")
         {
             migrateChance *= 0.1f;
         }
         // If the pop migrates
         if (rng.NextSingle() > migrateChance) return;
 
-        Region target = target = region.PickRandomBorder();
+        Region target = region.PickRandomBorder();
 
         bool socialClassAllows = true;
 
         // If the socialClass allows migration
-        if (!shipborne)
+        switch (profession.id)
         {
-            switch (profession.id)
-            {
-                case "aristocrat":
-                    if (target.owner != region.owner)
-                    {
-                        socialClassAllows = false;
-                    }
-                    break;
-            }
-            if (!socialClassAllows) return;            
+            case "aristocrat":
+                if (target.owner != region.owner)
+                {
+                    socialClassAllows = false;
+                }
+                break;
         }
+        if (!socialClassAllows) return;            
 
-        float chanceToMoveOnTile = target.isWater ? 0.1f : target.navigability;
-        if (shipborne)
-        {
-            chanceToMoveOnTile = 1f;
-        }   
+        float chanceToMoveOnTile = target.navigability;
 
         lock (target)
         {
@@ -222,12 +214,6 @@ public partial class Pop
 
         if (rng.NextSingle() < chanceToMoveOnTile)
         {
-            if (shipborne)
-            {
-                MovePop(target, workforce, dependents);
-                return;
-            }
-
             float movedPercentage = 0;
             lock (region)
             {
@@ -259,10 +245,6 @@ public partial class Pop
     public float GetDeathRate()
     {
         float deathRate = baseDeathRate;
-        if (shipborne)
-        {
-            deathRate *= 3f;
-        }
         return deathRate;
     }
     public float GetBirthRate()
@@ -286,16 +268,13 @@ public partial class Pop
     {
 
         float bRate = GetBirthRate();
-        if (!shipborne)
+        lock (region)
         {
-            lock (region)
+            if (region.population > region.maxPopulation)
             {
-                if (region.population > region.maxPopulation)
-                {
-                    bRate *= region.maxPopulation/(float)region.population;
-                }            
+                bRate *= region.maxPopulation/(float)region.population;
             }            
-        }
+        }            
         float NIR = bRate - GetDeathRate();
 
         int change = Mathf.RoundToInt((workforce + dependents) * NIR);

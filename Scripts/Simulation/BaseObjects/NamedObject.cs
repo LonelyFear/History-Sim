@@ -159,6 +159,6 @@ public enum ObjectType
     CHARACTER,
     WAR,
     ALLIANCE,
-    LANDFORM,
+    OCEAN,
     UNKNOWN
 }

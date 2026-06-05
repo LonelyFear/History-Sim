@@ -523,6 +523,7 @@ public partial class MapManager : Node2D
         if (selectionManager.hoveredRegion == region){
             color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.3f);
         }
+        //if (region.ocean != null) color = Utility.MultiColourLerp([color, region.ocean.color], 0.8f);
         
         return color;
     }

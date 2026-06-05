@@ -68,16 +68,10 @@ public static class NameGenerator
     {
         Random rng = new Random();
 
-        //string[] syllables = File.ReadAllLines("Data/Names/NameSyllables.txt");
         string[] patterns = ["CV", "CVC", "VC"];
         string[] suffixes = ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"];
 
-        bool feminine = rng.Next(2) == 0;
         string consonants = "bcdfghjklmnpqrstvwxyz";
-        if (feminine)
-        {
-            consonants = "bdfghjklmnprstvwyz";
-        }  
 
         string name = "";
         for (int i = 0; i < rng.Next(2, 4); i++)
@@ -112,7 +106,41 @@ public static class NameGenerator
                 name = GetDemonym(name) + " Sea";
                 break;
         }
+        name = name.Capitalize();
 
+        return name;        
+    }
+    public static string GenerateOceanName(Ocean ocean)
+    {
+        Random rng = new Random();
+
+        string[] patterns = ["CV", "CVC", "VC"];
+        string[] suffixes = ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"];
+
+        string consonants = "bcdfghjklmnpqrstvwxyz";
+
+        string name = "";
+        for (int i = 0; i < rng.Next(2, 4); i++)
+        {
+            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
+        }
+        name += suffixes[rng.Next(0, suffixes.Length - 1)];
+
+        for (int c = 0; c < name.Length; c++)
+        {
+            if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
+            name = name.Remove(c, 1);
+        }
+        
+        // Location Specific Names
+        if (ocean.waterRegions.Count < 20)
+        {
+            name = $"{GetDemonym(name)} Sea";
+        } 
+        else
+        {
+            name = $"{GetDemonym(name)} Ocean";
+        }
         name = name.Capitalize();
 
         return name;        

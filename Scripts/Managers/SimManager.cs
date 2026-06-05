@@ -59,6 +59,8 @@ public class SimManager
     [IgnoreMember] public ConcurrentDictionary<ulong, Character> characterIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, Ocean> oceanIds { get; set; } = [];
+
     [IgnoreMember] public ConcurrentDictionary<ulong, HistoricalEvent> historicalEventIds = [];
 
     // Misc
@@ -141,6 +143,9 @@ public class SimManager
         FileAccess warsSave = FileAccess.Open($"{path}/wars.pxsave", FileAccess.ModeFlags.Write);
         warsSave.StoreBuffer(MessagePackSerializer.Serialize(warIds, options));
 
+        FileAccess oceansSave = FileAccess.Open($"{path}/oceans.pxsave", FileAccess.ModeFlags.Write);
+        oceansSave.StoreBuffer(MessagePackSerializer.Serialize(oceanIds, options));
+
         FileAccess eventsSave = FileAccess.Open($"{path}/events.pxsave", FileAccess.ModeFlags.Write);
         eventsSave.StoreBuffer(MessagePackSerializer.Serialize(historicalEventIds, options));
     }
@@ -168,6 +173,7 @@ public class SimManager
         sim.tradeZoneIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/tradeZones.pxsave"), options);
         sim.characterIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
+        sim.oceanIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Ocean>>(FileAccess.GetFileAsBytes($"{path}/oceans.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
         sim.simLoadedFromSave = true;
         return sim;
@@ -289,6 +295,9 @@ public class SimManager
 
             RegionGenerator regionGen = new(this);
             regionGen.GenerateRegions();
+
+            OceanGenerator oceanGenerator = new(this);
+            oceanGenerator.GenerateOceans();
         }
         simHolder.InvokeEvent();
 
@@ -349,7 +358,7 @@ public class SimManager
                 pop.GrowPop();
                 pop.TechnologyUpdate();   
             } 
-            if (isInBatch || pop.shipborne)
+            if (isInBatch)
             {
                 pop.Migrate();
             }   
