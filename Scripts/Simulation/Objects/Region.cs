@@ -365,7 +365,7 @@ public partial class Region : PopObject, ISaveable
     }
     public void RandomStateFormation()
     {
-        if (rng.NextDouble() < 0.00025f * Mathf.Max(averageTech.societyLevel, 1) * navigability && population > 1000)
+        if (rng.NextSingle() < 0.0005f && population > 1000)
         {
             objectManager.CreateState(this);
 
@@ -425,7 +425,7 @@ public partial class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        if (Battle.CalcBattle(region, attackerPower, 2000))
+        if (Battle.CalcBattle(region, attackerPower, 1000))
         {
             owner.AddRegion(region);
         }

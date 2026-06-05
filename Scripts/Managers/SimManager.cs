@@ -599,16 +599,7 @@ public class SimManager
             countedPerformanceInfo["Relations Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();                                 
         }
-        stopwatch.Restart();
-        /*
-        Parallel.ForEach(partitioner, (state) =>
-        {         
-
-        });
-        */
-
-        //countedPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
-        //stopwatch.Restart();    
+        stopwatch.Restart();  
 
         // Updates State Ai
         foreach (var pair in statesIds.ToArray())
