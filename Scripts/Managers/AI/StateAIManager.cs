@@ -81,7 +81,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
             War.WarSide enemySide = War.GetOtherSide(side);
 
             State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
-            Relation relations = state.diplomacy.GetRelationsWithState(enemyWarLead);
+            Relation relations = state.diplomacy.relations[enemyWarLead];
 
             if (war.warLeaderIds[side] != state.id) continue;
 
@@ -185,10 +185,9 @@ public partial class StateAIManager : UtilityAi.AiAgent
     }
     public void TickDiplomacy()
     {
-        foreach (var pair in diplomacyManager.relations)
+        foreach (State target in state.diplomacy.contactedStates)
         {
-            State target = pair.Key;
-            Relation relations = pair.Value;
+            Relation relations = state.diplomacy.relations[target];
             Character leader = state.leader;
             if (target == null || relations == null || leader == null || target.sovereignty != Sovereignty.INDEPENDENT) continue;
 
@@ -234,8 +233,8 @@ public partial class StateAIManager : UtilityAi.AiAgent
                         diplomacyManager.GetAllianceOfType(AllianceType.ALLIANCE)?.RemoveMember(state);
                     }
                 }
-            }
-        }     
+            }            
+        }   
     }
     public void TryJoinAlliance(Alliance alliance)
     {
@@ -243,7 +242,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         {
             if (diplomacyManager.HasRelations(member))
             {
-                float opinion = Mathf.InverseLerp(diplomacyManager.GetRelationsWithState(member).opinion, -1, 1);
+                float opinion = Mathf.InverseLerp(diplomacyManager.relations[member].opinion, -1, 1);
                 if (rng.NextSingle() > opinion + 0.2f)
                 {
                     return;
@@ -254,27 +253,38 @@ public partial class StateAIManager : UtilityAi.AiAgent
     }
     public void ChangeRelationsOrLoyalty()
     {
-        foreach (var pair in diplomacyManager.relations)
+        foreach (State target in state.diplomacy.contactedStates)
         {
             if (rng.NextSingle() >= diploChangeChance) continue;
 
-            State target = pair.Key;
-            Relation relations = pair.Value;
+            Relation relations = state.diplomacy.relations[target];
             Character leader = state.leader;
             
             if (target == null || relations == null || leader == null) continue;
 
-            if (state.sovereignty == Sovereignty.INDEPENDENT)
+            if (!target.diplomacy.GetPolity().borderingStates.Contains(state) && state.diplomacy.GetPolity().borderingStates.Contains(target))
             {
-                TickChangeRelations(target);
-            } else
+                //GD.PushError($"ERROR: Non Mutual Relations: {state.name} and {target.name}");
+                continue;
+            }
+
+            if (state.diplomacy.GetRealm()?.leadState == target)
             {
                 TickChangeLoyalty(target);
+            } else
+            {
+                TickChangeRelations(target);
             }
-        }        
+        }       
     }
     public void TickChangeRelations(State target)
     {
+        if (!target.diplomacy.relations.ContainsKey(state) && state.diplomacy.contactedStates.Contains(target))
+        {
+            GD.Print(simManager.statesIds.ContainsKey(target.id));
+            GD.PushError($"ERROR: Non Mutual Relations: {state.name} and {target.name}");
+            return;
+        }
         Character leader = state.leader;
         float diplomacyScore = rng.NextSingle();
 

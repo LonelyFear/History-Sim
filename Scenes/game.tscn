@@ -127,7 +127,7 @@ material = SubResource("ShaderMaterial_mucmn")
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Encyclopedia" type="CanvasLayer" parent="." unique_id=339626827 node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenu", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton", "simHolder")]
+[node name="Encyclopedia" type="CanvasLayer" parent="." unique_id=339626827 node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenu", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton", "simHolder", "selectionManager", "mapManager")]
 script = ExtResource("8_iivbl")
 infoTabScene = ExtResource("9_7nbq1")
 polityTabScene = ExtResource("11_81klo")
@@ -140,6 +140,8 @@ gameUi = NodePath("../UI")
 playerCamera = NodePath("../PlayerCamera")
 closeEncyclopediaButton = NodePath("Encyclopedia/Panel/ExitEncyclopediaButton")
 simHolder = NodePath("../Simulation")
+selectionManager = NodePath("../SelectionManager")
+mapManager = NodePath("../Map Manager")
 
 [node name="Encyclopedia" type="VBoxContainer" parent="Encyclopedia" unique_id=413390903]
 visible = false

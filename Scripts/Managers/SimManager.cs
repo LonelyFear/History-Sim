@@ -552,8 +552,7 @@ public class SimManager
         countedPerformanceInfo["Relations Time"] = 0; 
         countedPerformanceInfo["AI Time"] = 0;
         countedPerformanceInfo["Stats Time"] = 0;
-        
-        var partitioner = Partitioner.Create(statesIds.Values);
+
         Stopwatch stopwatch = Stopwatch.StartNew();
         foreach (var pair in statesIds.ToArray())
         {
@@ -561,12 +560,22 @@ public class SimManager
             if (state.rulingPop == null) state.FindNewRulingPop();
             if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
             {
-                objectManager.DeleteState(state);
+                try
+                {
+                    objectManager.DeleteState(state);
+                } catch (Exception e)
+                {
+                    GD.PushError(e);                 
+                }
                 continue;
-            }    
-            countedPerformanceInfo["Delete Time"] += stopwatch.Elapsed.TotalMilliseconds;
-            stopwatch.Restart(); 
+            }  
+        }        
+        countedPerformanceInfo["Delete Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        stopwatch.Restart();         
 
+        foreach (var pair in statesIds)
+        {
+            State state = pair.Value; 
             state.tech = state.rulingPop.tech;
             state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             state.culture = state.rulingPop.culture;
@@ -589,23 +598,33 @@ public class SimManager
             {
                 state.timeAsVassal += TimeManager.ticksPerMonth;
             }
+
             state.diplomacy.JoinObligateWars();
 
             countedPerformanceInfo["Join Wars Time"] += stopwatch.Elapsed.TotalMilliseconds;
-            stopwatch.Restart();   
-            
-            state.diplomacy.UpdateRelations(); 
-            state.diplomacy.CalculateThreats();
-            countedPerformanceInfo["Relations Time"] += stopwatch.Elapsed.TotalMilliseconds;
-            stopwatch.Restart();                                 
+            stopwatch.Restart();                                   
         }
-        stopwatch.Restart();  
+        stopwatch.Restart(); 
+        var partitioner = Partitioner.Create(statesIds.Values); 
+        Parallel.ForEach(partitioner, (state) =>
+        {
+            state.diplomacy.UpdateRelations(); 
+            state.diplomacy.CalculateThreats();            
+        });
+        countedPerformanceInfo["Relations Time"] += stopwatch.Elapsed.TotalMilliseconds;
 
-        // Updates State Ai
-        foreach (var pair in statesIds.ToArray())
+        // Updates
+        //  State Ai
+        foreach (var pair in statesIds)
         {
             State state = pair.Value;
-            state.AIManager.Tick();
+            try
+            {
+                state.AIManager.Tick();
+            } catch (Exception e)
+            {
+                GD.PushError(e);
+            }
         }
         countedPerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
@@ -613,6 +632,7 @@ public class SimManager
         // Counts State Stats
         Parallel.ForEach(partitioner, (state) =>
         {
+            
             state.CountPopulation();
             state.UpdateDisplayColor();
             state.UpdateCapital();
@@ -649,15 +669,15 @@ public class SimManager
         {
             Alliance alliance = pair.Value;
 
-            if (alliance.dead)
-            {
-                objectManager.DeleteAlliance(alliance);
-                continue;
-            }
-
             if (alliance.leadState == null)
             {
                 alliance.Die();
+                continue;
+            }
+
+            if (alliance.dead)
+            {
+                objectManager.DeleteAlliance(alliance);
                 continue;
             }
         }

@@ -81,7 +81,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 			resultCount++;
 			if (text == "") continue;
 
-			if (!name.Contains(text))
+			if (!name.Contains(text, StringComparison.CurrentCultureIgnoreCase))
             {
                 resultButton.Visible = false;
 				resultCount--;

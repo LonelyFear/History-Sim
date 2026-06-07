@@ -10,6 +10,7 @@ public partial class PolityTab : BaseEncyclopediaTab
 	[Export] RichTextLabel objStats;
 	[Export] RichTextLabel objHist;
 	[Export] PieChart culturesChart;
+	[Export] Button mapButton;
 	public Polity polity;
 	
     public override void InitTab()
@@ -19,6 +20,7 @@ public partial class PolityTab : BaseEncyclopediaTab
 		objDesc.Text = polity.GenerateDescription();
 		objStats.Text = GetStats();
 		objHist.Text = polity.GenerateHistoryText();
+		mapButton.Pressed += () => encyclopediaManager.OpenMap(polity);
 		InitCulturePieChart();
     }
 	public string GetStats()

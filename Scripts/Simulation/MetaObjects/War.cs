@@ -51,7 +51,7 @@ public partial class War : NamedObject
         foreach (ulong enemyId in sideIds[opposingSide])
         {
             State enemy = objectManager.GetState(enemyId);
-            enemy.diplomacy.SetEnemy(state.id, true);
+            enemy.diplomacy.SetEnemy(state, true);
         }
  
         state.diplomacy.wars[this] = side;
@@ -75,7 +75,7 @@ public partial class War : NamedObject
             foreach (ulong enemyId in sideIds[opposingSide])
             {
                 State enemy = objectManager.GetState(enemyId);
-                enemy.diplomacy.SetEnemy(state.id, false);
+                enemy.diplomacy.SetEnemy(state, false);
             }
         }
         // Removes from participants list

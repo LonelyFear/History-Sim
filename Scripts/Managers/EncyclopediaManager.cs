@@ -18,6 +18,8 @@ public partial class EncyclopediaManager : CanvasLayer
 	[Export] PlayerCamera playerCamera;
 	[Export] Button closeEncyclopediaButton;
 	[Export] SimManagerHolder simHolder;
+	[Export] SelectionManager selectionManager;
+	[Export] MapManager mapManager;
 	public SimManager simManager;
 	public ObjectManager objectManager;
 	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = [];
@@ -154,4 +156,32 @@ public partial class EncyclopediaManager : CanvasLayer
     {
         OpenTab(meta);
     }
+
+	public void OpenMap(NamedObject mapObject)
+	{
+		CloseEncyclopedia();
+		switch (mapObject)
+		{
+			case State:
+				State mapState = (State)mapObject;
+				
+				if (mapState.sovereignty == Sovereignty.INDEPENDENT) mapManager.SetMapMode(MapModes.REALM);
+				else mapManager.SetMapMode(MapModes.POLITIY);
+				
+				selectionManager.SelectRegion(mapState.capital);
+				break;
+			case Alliance:
+				Alliance mapAlliance = (Alliance)mapObject;
+				
+				if (mapAlliance.type == AllianceType.REALM)
+				{
+					mapManager.SetMapMode(MapModes.REALM);
+				} else
+				{
+					mapManager.SetMapMode(MapModes.ALLIANCE);
+				}
+				selectionManager.SelectRegion(mapAlliance.leadState.capital);
+				break;
+		}
+	}
 }

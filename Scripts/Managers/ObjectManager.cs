@@ -195,7 +195,7 @@ public class ObjectManager
     {
         if (selectionManager.GetSelectedState() == deletedState)
         {
-            //selectionManager.DeselectRegion();
+            selectionManager.DeselectRegion();
         }
         if (deletedState.diplomacy.liegeId != null)
         {
@@ -218,11 +218,15 @@ public class ObjectManager
         {
             GetCharacter(characterId).LeaveState();
         }
-        foreach (ulong relationId in simManager.statesIds.Keys)
+        foreach (State contactedState in deletedState.diplomacy.contactedStates.ToArray())
         {
-            State relation = GetState(relationId);
-            relation.diplomacy.RemoveRelations(deletedState);
-            //relation.borderingStates.Remove(deletedState);
+            contactedState.diplomacy.contactedStates.Remove(deletedState);
+            deletedState.diplomacy.contactedStates.Remove(contactedState);
+        }
+        foreach (State relation in simManager.statesIds.Values.ToArray())
+        {
+            relation.diplomacy.relations.Remove(deletedState);
+            relation.borderingStates.Remove(deletedState);
         }
         foreach (Alliance alliance in deletedState.diplomacy.alliances.ToArray())
         {

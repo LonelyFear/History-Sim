@@ -1,7 +1,7 @@
 extends Label
 
 @export var timeManager : Node
-@export var updateDelay : float = 0.5
+@export var updateDelay : float = 0.1
 var currentTimer : float = 0
 func _process(delta: float) -> void:
 	if (timeManager):

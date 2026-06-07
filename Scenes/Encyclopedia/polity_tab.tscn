@@ -18,32 +18,46 @@ content_margin_top = 0.0
 content_margin_right = 10.0
 content_margin_bottom = 10.0
 
-[node name="PolityTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist", "culturesChart")]
+[node name="PolityTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist", "culturesChart", "mapButton")]
 offset_right = 1280.0
 offset_bottom = 720.0
 mouse_filter = 0
 mouse_force_pass_scroll_events = false
 theme_override_constants/separation = 4
 script = ExtResource("1_tbcit")
-objName = NodePath("PolityName")
-objType = NodePath("PolityType")
+objName = NodePath("HBoxContainer/VBoxContainer/PolityName")
+objType = NodePath("HBoxContainer/VBoxContainer/PolityType")
 objDesc = NodePath("DescScrollBar/ContentContainer/Description")
 objStats = NodePath("DescScrollBar/ContentContainer/StatsTop")
 objHist = NodePath("DescScrollBar/ContentContainer/History")
 culturesChart = NodePath("DescScrollBar/ContentContainer/PieChartsContainer/CulturesChart/CulturesChart")
+mapButton = NodePath("HBoxContainer/MapButton")
 metadata/_tab_index = 1
 
-[node name="PolityName" type="Label" parent="." unique_id=602530060]
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1283086728]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=1811270695]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PolityName" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=602530060]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 70
 text = "Object Name"
 
-[node name="PolityType" type="Label" parent="." unique_id=1255607242]
+[node name="PolityType" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=1255607242]
 layout_mode = 2
 theme = ExtResource("2_0jkeo")
 theme_override_font_sizes/font_size = 25
 text = "Object Type"
+
+[node name="MapButton" type="Button" parent="HBoxContainer" unique_id=657850667]
+layout_mode = 2
+theme = ExtResource("2_0jkeo")
+theme_override_font_sizes/font_size = 50
+text = "View On Map"
 
 [node name="TitleSeparator" type="HSeparator" parent="." unique_id=56924337]
 layout_mode = 2

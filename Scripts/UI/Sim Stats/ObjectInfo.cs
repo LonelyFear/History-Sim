@@ -182,7 +182,7 @@ public partial class ObjectInfo : Panel
         
         // Wars text
         specialLabel.Text += "\n" + "Wars: ";
-        if (!state.diplomacy.wars.IsEmpty) {
+        if (state.diplomacy.wars.Count > 0) {
             foreach (War war in state.diplomacy.wars.Keys.ToArray()) {
                 if (war == null) continue;
 
@@ -221,7 +221,7 @@ public partial class ObjectInfo : Panel
         
         // Wars text
         specialLabel.Text += "\n" + "Wars: ";
-        if (!alliance.leadState.diplomacy.wars.IsEmpty) {
+        if (alliance.leadState.diplomacy.wars.Count > 0) {
             foreach (War war in alliance.leadState.diplomacy.wars.Keys.ToArray()) {
                 if (war == null) continue;
 

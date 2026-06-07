@@ -110,8 +110,9 @@ public partial class State : Polity, ISaveable
         base.PrepareForSave();
         diplomacy.vassalIds = [..diplomacy.vassals.Select(v => v.id)];
         diplomacy.allianceIds = [..diplomacy.alliances.Select(v => v.id)];
-        diplomacy.warIds = new ConcurrentDictionary<ulong, War.WarSide>(diplomacy.wars.Select(pair => new KeyValuePair<ulong, War.WarSide>(pair.Key.id, pair.Value)).ToDictionary());
-        diplomacy.relationIds = new ConcurrentDictionary<ulong, Relation>(diplomacy.relations.Select(pair => new KeyValuePair<ulong, Relation>(pair.Key.id, pair.Value)).ToDictionary());
+        diplomacy.enemyIds = [..diplomacy.enemies.Select(v => v.id)];
+        diplomacy.warIds = new Dictionary<ulong, War.WarSide>(diplomacy.wars.Select(pair => new KeyValuePair<ulong, War.WarSide>(pair.Key.id, pair.Value)).ToDictionary());
+        diplomacy.relationIds = new Dictionary<ulong, Relation>(diplomacy.relations.Select(pair => new KeyValuePair<ulong, Relation>(pair.Key.id, pair.Value)).ToDictionary());
     }
 
     public override void LoadFromSave()
@@ -120,8 +121,9 @@ public partial class State : Polity, ISaveable
         diplomacy.state = this;
         diplomacy.vassals = [..diplomacy.vassalIds.Select(objectManager.GetState)];
         diplomacy.alliances = [..diplomacy.allianceIds.Select(objectManager.GetAlliance)];
-        diplomacy.wars = new ConcurrentDictionary<War, War.WarSide>(diplomacy.warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
-        diplomacy.relations = new ConcurrentDictionary<State, Relation>(diplomacy.relationIds.Select(pair => new KeyValuePair<State, Relation>(objectManager.GetState(pair.Key), pair.Value)).ToDictionary());
+        diplomacy.enemies = [..diplomacy.enemyIds.Select(objectManager.GetState)];
+        diplomacy.wars = new Dictionary<War, War.WarSide>(diplomacy.warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
+        diplomacy.relations = new Dictionary<State, Relation>(diplomacy.relationIds.Select(pair => new KeyValuePair<State, Relation>(objectManager.GetState(pair.Key), pair.Value)).ToDictionary());
     }
     public void UpdateCapital()
     {
@@ -239,7 +241,7 @@ public partial class State : Polity, ISaveable
         List<State> rebels = [];
         foreach (State vassal in diplomacy.vassals)
         {
-            Relation relationsWithUs = vassal.diplomacy.GetRelationsWithState(this);
+            Relation relationsWithUs = vassal.diplomacy.relations[this];
             if (relationsWithUs.opinion < 0)
             {
                 rebels.Add(vassal);

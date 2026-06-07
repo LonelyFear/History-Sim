@@ -13,10 +13,10 @@ public partial class StateDiplomacyManager
 {
     [IgnoreMember] public static ObjectManager objectManager;
     // Diplomacy
-    [Key(5)] public ConcurrentDictionary<ulong, Relation> relationIds { get; set; } = [];
-    [IgnoreMember] public ConcurrentDictionary<State, Relation> relations { get; set; } = [];
-    [Key(4)] public ConcurrentDictionary<ulong, War.WarSide> warIds { get; set; } = [];
-    [IgnoreMember] public ConcurrentDictionary<War, War.WarSide> wars { get; set; } = [];
+    [Key(5)] public Dictionary<ulong, Relation> relationIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<State, Relation> relations { get; set; } = [];
+    [Key(4)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<War, War.WarSide> wars { get; set; } = [];
     [Key(1)] public ulong? liegeId {get; private set; } = null;
     //[IgnoreMember] ulong realmId;
     [Key(2)] public List<ulong?> allianceIds = [];
@@ -26,6 +26,11 @@ public partial class StateDiplomacyManager
     [IgnoreMember] public Random rng = PopObject.rng;
 
     [Key(6)] public int relationUpdateTime = 12;
+    [IgnoreMember] public HashSet<State> contactedStates = [];
+
+    [Key(7)] public HashSet<ulong?> enemyIds = [];
+    [IgnoreMember] public HashSet<State> enemies = [];
+
     // Constants
     [IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
 
@@ -85,7 +90,7 @@ public partial class StateDiplomacyManager
     }
     public void LeaveWarsWithState(State target)
     {
-        if (!relations[target].enemy) return;
+        if (!IsEnemyWithState(target)) return;
 
         foreach (War war in wars.Keys.ToArray())
         {
@@ -100,76 +105,71 @@ public partial class StateDiplomacyManager
         }
     } 
     // Enemy Utility
-    public void SetEnemy(ulong targetId, bool isEnemy)
-    {
-        SetEnemy(objectManager.GetState(targetId), isEnemy);
-    }
     public void SetEnemy(State target, bool isEnemy)
     {
-        GetMutualRelations(target, out Relation usThem, out Relation themUs);
+        if (isEnemy && enemies.Add(target)) {
+            target.diplomacy.enemies.Add(target);
+            
+        }
+        else if (enemies.Remove(target)){
+            target.diplomacy.enemies.Remove(target);
+            
+        };
 
-        usThem.enemy = isEnemy;
-        themUs.enemy = isEnemy; 
+        //state.diplomacy.relations[target].enemy = isEnemy;
+        //target.diplomacy.relations[state].enemy = isEnemy;
     }
     public void SetEnemies(IEnumerable<ulong> stateIds, bool isEnemy)
     {
         foreach (ulong stateId in stateIds)
         {
-            SetEnemy(stateId, isEnemy);     
+            SetEnemy(objectManager.GetState(stateId), isEnemy);     
         }
     }
 
     // Relations
     public void UpdateRelations()
     {
-        // All bordering or enemy states
-        HashSet<State> relationStates = [..GetPolity().borderingStates];
-        /*
-        if (GetRealm() != null)
+        try
         {
-            relationStates = [..GetPolity().borderingStates, ..GetRealm().memberStates];
-        }
-        */
-        relationStates.Add(GetLiege());
-        relationStates.Add(GetOverlord());
-
-        // Removes unneeded relations
-        foreach (var pair in relations.ToArray())
-        {
-            if (pair.Key == null || (!IsEnemyWithState(pair.Key) && !relationStates.Contains(pair.Key)))
+            // All bordering or enemy states
+            if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
-                RemoveRelations(pair.Key);
-                continue;                    
+                contactedStates = [..GetPolity().borderingStates, ..enemies, GetLiege(), GetOverlord()];
+            } else
+            {
+                contactedStates = [..state.borderingStates, ..enemies, GetLiege(), GetOverlord()];
             }
-        }
-        
+            contactedStates.Remove(state);
+            contactedStates.Remove(null);
 
-        // Establishes relations
-        foreach (State target in relationStates)
-        {
-            if (target != null && !relations.ContainsKey(target) && target != state)
+            foreach (State target in contactedStates)
             {
-                EstablishRelations(target);
-            } 
-        }  
+                if (relations.ContainsKey(target)) continue;
+                relations[target] = new Relation();
+                //target.diplomacy.relations.TryAdd(state, new Relation());
+            }            
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
     }
     public void CalculateThreats(){
-        foreach (var pair in relations.ToArray()){
-            Relation relation = pair.Value;
-            State relationState = pair.Key;
+        foreach (State target in contactedStates){
+            Relation relation = relations[target];
 
-            if (relationState == null) continue;          
+            if (target == null) continue;          
             float newThreat = 0;
 
             // Calc Percieved Threat (-1 to 1)
             int stateSize = state.diplomacy.GetPolity().regions.Count;
-            int targetSize = relationState.diplomacy.GetPolity().regions.Count;
+            int targetSize = target.diplomacy.GetPolity().regions.Count;
 
             float relativeSizeRatio = (stateSize - targetSize)/Mathf.Max(stateSize, 0.001f);
 
             newThreat += relativeSizeRatio;
 
-            if (relationState.sovereignty != Sovereignty.INDEPENDENT)
+            if (target.sovereignty != Sovereignty.INDEPENDENT)
             {
                 newThreat *= 0.5f;
             }
@@ -179,6 +179,8 @@ public partial class StateDiplomacyManager
             relation.threat = Mathf.MoveToward(relation.threat, Mathf.Clamp(newThreat, -1, 1), threatAdjustmentRate);
         }
     }
+
+    /*
     public void RemoveRelations(State target)
     {
         if (target == null) return;
@@ -188,33 +190,27 @@ public partial class StateDiplomacyManager
             target.diplomacy.RemoveRelations(state);
         }     
     }
-    public Relation EstablishRelations(State target)
-    {
-        Relation relation = relations.GetOrAdd(target, new Relation());
-        target.diplomacy.relations.GetOrAdd(state, new Relation());
-
-        return relation;
-    }
-
+    */
     // Relations Utilities
     public void ChangeOpinion(State target, float value)
     {
-        GetMutualRelations(target, out Relation usThem, out Relation themUs);
+        Relation relations = state.diplomacy.relations[target];
+        relations.opinion = Math.Clamp(relations.opinion + value, -1, 1); 
 
-        usThem.opinion = Math.Clamp(usThem.opinion + value, -1, 1);
-        themUs.opinion = Math.Clamp(themUs.opinion + value, -1, 1); 
+        Relation targetRelations = target.diplomacy.relations[state];
+        targetRelations.opinion = Math.Clamp(targetRelations.opinion + value, -1, 1);
     }
     public void SetRivalry(State target, bool value)
     {
-        GetMutualRelations(target, out Relation usThem, out Relation themUs);
-        usThem.rival = value;
-        themUs.rival = value;      
-    }
-    public void GetMutualRelations(State target, out Relation usThem, out Relation themUs)
+        target.diplomacy.relations[state].rival = value;
+        state.diplomacy.relations[target].rival = value;      
+    } 
+    public void SetTruce(State target, uint value)
     {
-        usThem = EstablishRelations(target);
-        themUs = target.diplomacy.EstablishRelations(state);
-    }    
+        target.diplomacy.relations[state].truce = value;
+        state.diplomacy.relations[target].truce = value;      
+    } 
+
     // Check utilities
     public War GetWarWithState(State target)
     {
@@ -242,14 +238,14 @@ public partial class StateDiplomacyManager
     public bool CanFightState(State target)
     {
         return state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT 
-        && !IsAlliedToState(target) && GetRelationsWithState(target).truce < 1
+        && !IsAlliedToState(target) && relations[target]?.truce < 1
         && !IsEnemyWithState(target);
     }
     public bool IsEnemyWithState(State otherState)
     {
         if (relations.TryGetValue(otherState, out Relation relation))
         {
-            return relation.enemy;
+            return enemies.Contains(otherState);
         }
         return false;
     }
@@ -263,14 +259,6 @@ public partial class StateDiplomacyManager
             }
         }
         return false;
-    }
-    public Relation GetRelationsWithState(State s)
-    {
-        if (relations.TryGetValue(s, out Relation relation))
-        {
-            return relation;
-        }
-        return null;          
     }
     public bool HasRelations(State target)
     {

@@ -98,7 +98,10 @@ public abstract partial class Polity : PopObject
                     }
 
                     // Extends our border with the state
-                    State[] statesToEvaluate = [border.owner, border.owner.diplomacy.GetOverlord()];
+                    
+                    //Alliance borderRealm = border.owner.diplomacy.GetRealm();
+
+                    State[] statesToEvaluate = [border.owner, border.owner.diplomacy.GetOverlord()/*, ..borderRealm == null ? [] : borderRealm.memberStates*/];
                     foreach (State state in statesToEvaluate)
                     {
                         if (state == null) continue;
