@@ -145,7 +145,7 @@ public abstract class PopObject : NamedObject
                 break;    
         } 
     }
-    public void ChangePopulation(long workforceChange, long dependentChange, string professionId, Culture culture)
+    public virtual void ChangePopulation(long workforceChange, long dependentChange, string professionId, Culture culture)
     {
         // Updates numbers
         lock (this)

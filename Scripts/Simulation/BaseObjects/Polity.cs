@@ -29,26 +29,23 @@ public abstract partial class Polity : PopObject
         base.PrepareForSave();
         regionIds = [.. regions.Select(r => r.id)];
         borderingStateIds = [.. borderingStates.Select(r => r.id)];
-        //borderingAllianceIds = [.. borderingAlliances.Select(r => r.id)];
     }
     public override void LoadFromSave()
     {
         base.LoadFromSave();
         regions = [.. regionIds.Select(p => objectManager.GetRegion(p))];
         borderingStates = [..borderingStateIds.Select(p => objectManager.GetState(p))];
-        //borderingAlliances = [..borderingAllianceIds.Select(p => objectManager.GetAlliance(p))];
     }
 
     public override void CountPopulation()
     {
         long countedP = 0;
         long countedW = 0;
-
-        HashSet<Alliance> allianceBorders = [];
-        HashSet<State> borders = [];
         Dictionary<string, long> countedProfessions = [];
-
         Dictionary<ulong, long> cCultures = [];
+
+        HashSet<State> borders = [];
+    
         float countedWealth = 0;
         float countedBaseWealth = 0;
         int occRegions = 0;
@@ -67,15 +64,13 @@ public abstract partial class Polity : PopObject
             countedWealth += region.wealth;
             countedBaseWealth += region.baseWealth;
 
-            if (region.frontier || region.border)
+            if (region.occupier != null)
             {
-                // Counts up occupied regions
-                if (region.occupier != null)
-                {
-                    occRegions++;
-                }
+                occRegions++;
+            }
 
-                //List<State> checkedBordersForRegion = new List<State>();
+            if (region.border)
+            {
                 // Gets the states bordering this region
                 foreach (Region border in region.borderingRegions)
                 {
@@ -93,40 +88,14 @@ public abstract partial class Polity : PopObject
                     {
                         if (state == null) continue;
                         
-                        borders.Add(state);                        
-                    }
-
-
-                    // Gets the alliances this state is in
-                    foreach (Alliance borderingAlliance in border.owner.alliances)
-                    {
-                        // Makes sure the alliance is real and not us (If this org is a state then we make sure we dont have membership)
-                        if (borderingAlliance == null || borderingAlliance == this || (this is State && borderingAlliance.HasMember((State)this)))
-                        {
-                            continue;
-                        }           
-                        // Extends our border with the alliance
-                        allianceBorders.Add(borderingAlliance);                                    
+                        borders.Add(state);
                     }
                 }
             }
 
-            // Counts up socialClasss
-            foreach (string professionId in region.professions.Keys)
-            {
-                if (!countedProfessions.ContainsKey(professionId)) countedProfessions[professionId] = 0;
-                countedProfessions[professionId] += region.professions[professionId];
-            }
-
-            // Counts up cultures
-            foreach (ulong cultureId in region.cultureIds.Keys)
-            {
-                // Adds regional culture population to state population
-                if (!cCultures.TryAdd(cultureId, region.cultureIds[cultureId]))
-                {
-                    cCultures[cultureId] += region.cultureIds[cultureId];
-                }
-            }
+            // Counts up socialClasses
+            CountClasses(region, countedProfessions);
+            CountCultures(region, cCultures);
         }
         
         // Updates values
@@ -139,10 +108,11 @@ public abstract partial class Polity : PopObject
         {
             professions[pair.Key] = pair.Value;
         }
-
+        
         cultureIds = cCultures;
         population = countedP;
         workforce = countedW;
+        dependents = population - workforce;
 
         manpower = GetManpower();
         armyPower = GetArmyPower();
@@ -155,4 +125,28 @@ public abstract partial class Polity : PopObject
     }
     public abstract int GetArmyPower();
     public abstract int GetManpower();
+
+    protected void CountClasses(PopObject obj, Dictionary<string, long> output)
+    {
+        foreach (string professionId in obj.professions.Keys)
+        {
+            // Adds objal profession population to state population
+            if (!output.TryAdd(professionId, obj.professions[professionId]))
+            {
+                output[professionId] += obj.professions[professionId];
+            }
+        }    
+    }
+    protected void CountCultures(PopObject obj, Dictionary<ulong, long> output)
+    {
+        // Counts up cultures
+        foreach (ulong cultureId in obj.cultureIds.Keys)
+        {
+            // Adds objal culture population to state population
+            if (!output.TryAdd(cultureId, obj.cultureIds[cultureId]))
+            {
+                output[cultureId] += obj.cultureIds[cultureId];
+            }
+        }        
+    }
 }

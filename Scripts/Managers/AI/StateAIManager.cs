@@ -59,8 +59,6 @@ public partial class StateAIManager : UtilityAi.AiAgent
         ticks++;
         if (Mathf.PosMod(ticks, ticksBetweenTickRecalc) == 0)
         {
-            ChangeRelationsOrLoyalty();
-
             if (state.sovereignty == Sovereignty.INDEPENDENT)
             {
                 TickDiplomacy();               
@@ -79,7 +77,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
             War.WarSide enemySide = War.GetOtherSide(side);
 
             State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
-            Relation relations = state.relations[enemyWarLead];
+            DiplomaticRelations relations = state.relations[enemyWarLead];
 
             if (war.warLeaderIds[side] != state.id) continue;
 
@@ -185,9 +183,10 @@ public partial class StateAIManager : UtilityAi.AiAgent
     }
     public void TickDiplomacy()
     {
-        foreach (State target in state.contactedStates)
+        foreach (var pair in state.relations)
         {
-            Relation relations = state.relations[target];
+            State target = pair.Key;
+            DiplomaticRelations relations = pair.Value;
             Character leader = state.leader;
             if (target == null || relations == null || leader == null || target.sovereignty != Sovereignty.INDEPENDENT) continue;
 
@@ -251,74 +250,40 @@ public partial class StateAIManager : UtilityAi.AiAgent
         }
         alliance.AddMember(state);
     }
-    public void ChangeRelationsOrLoyalty()
+    public void TickRelations(DiplomaticRelations relations)
     {
-        foreach (State target in state.contactedStates)
-        {
-            if (rng.NextSingle() >= diploChangeChance) continue;
-
-            Relation relations = state.relations[target];
-            Character leader = state.leader;
-            
-            if (target == null || relations == null || leader == null) continue;
-
-            if (!target.GetPolity().borderingStates.Contains(state) && state.GetPolity().borderingStates.Contains(target))
-            {
-                //GD.PushError($"ERROR: Non Mutual Relations: {state.name} and {target.name}");
-                continue;
-            }
-
-            if (state.GetRealm()?.leadState == target)
-            {
-                TickChangeLoyalty(target);
-            } else
-            {
-                TickChangeRelations(target);
-            }
-        }       
-    }
-    public void TickChangeRelations(State target)
-    {
-        if (!target.relations.ContainsKey(state) && state.contactedStates.Contains(target))
-        {
-            GD.Print(simManager.statesIds.ContainsKey(target.id));
-            GD.PushError($"ERROR: Non Mutual Relations: {state.name} and {target.name}");
-            return;
-        }
+        State target = state == relations.initiator ? relations.recipient : relations.initiator;
         Character leader = state.leader;
         float diplomacyScore = rng.NextSingle();
+        float positiveChance = -1;
 
-        float positiveChance = leader.GetPersonalityLevel("agression") switch
+        if (state.GetLiege() == target)
         {
-            TraitLevel.HIGH => 0.25f,
-            TraitLevel.MEDIUM => 0.5f,
-            TraitLevel.LOW => 0.75f,
-            _ => 1f,
-        };
+            // Vassal -> Liege
+            positiveChance = leader.GetPersonalityLevel("ambition") switch
+            {
+                TraitLevel.HIGH => 0.3f,
+                TraitLevel.MEDIUM => 0.5f,
+                TraitLevel.LOW => 0.7f,
+                _ => 1f,
+            };
+        } 
+        else if (target.GetLiege() != state)
+        {
+            // Anything Else that isnt Liege -> Vassal
+            positiveChance = leader.GetPersonalityLevel("agression") switch
+            {
+                TraitLevel.HIGH => 0.25f,
+                TraitLevel.MEDIUM => 0.5f,
+                TraitLevel.LOW => 0.75f,
+                _ => 1f,
+            };            
+        }
+        if (positiveChance == -1) return;
 
-        positiveChance = Mathf.Clamp(positiveChance, 0, 1);
         if (diplomacyScore < positiveChance) 
-            state.ChangeOpinion(target, 0.1f);
+            relations.ChangeOpinion(0.1f);
         else 
-            state.ChangeOpinion(target, -0.1f);
-    }
-    public void TickChangeLoyalty(State target)
-    {
-        Character leader = state.leader;
-        float unrestScore = rng.NextSingle();
-
-        float positiveChance = leader.GetPersonalityLevel("ambition") switch
-        {
-            TraitLevel.HIGH => 0.3f,
-            TraitLevel.MEDIUM => 0.5f,
-            TraitLevel.LOW => 0.7f,
-            _ => 1f,
-        };
-
-        positiveChance = Mathf.Clamp(positiveChance, 0, 1);
-        if (unrestScore < positiveChance) 
-            state.ChangeOpinion(target, 0.1f);
-        else 
-            state.ChangeOpinion(target, -0.1f);
+            relations.ChangeOpinion(-0.1f);
     }
 }

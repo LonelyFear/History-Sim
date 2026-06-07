@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using Godot;
 using MessagePack;
@@ -342,6 +343,31 @@ public class ObjectManager
             //GD.PushWarning(e);
             return null;
         }    
+    }
+    public void EstablishRelations(State initiator, State target)
+    {
+        if (initiator.relations.ContainsKey(target)) return;
+        
+        DiplomaticRelations relations = new()
+        {
+            id = GetId(),
+            initiator = initiator,
+            recipient = target
+        };
+        initiator.relations.Add(target, relations);
+        target.relations.Add(initiator, relations);
+
+        simManager.relationIds.Add(relations.id, relations);
+    }
+    public void BreakRelations(DiplomaticRelations relations)
+    {
+        State initiator = relations.initiator;
+        State target = relations.recipient;
+
+        initiator.relations.Remove(target);
+        target.relations.Remove(initiator);
+        
+        simManager.relationIds.Remove(relations.id);
     }
     public TradeZone CreateTradeZone(Region region)
     {

@@ -403,6 +403,7 @@ public partial class Region : PopObject, ISaveable
                 border = true;
             }
         }  
+
     }
     public State GetController(bool includeOccupier = true)
     {
@@ -482,16 +483,6 @@ public partial class Region : PopObject, ISaveable
         }
         return totalHappiness / totalPoliticalPower;
     }
-    
-    public void CheckPopulation()
-    {
-        CountPopulation();
-        if (population < 1 && owner != null)
-        {
-            owner.RemoveRegion(this);
-        }
-    }
-
     public void CalcBaseWealth()
     {
         baseWealth = population * 0.005f;
@@ -908,6 +899,7 @@ public partial class Region : PopObject, ISaveable
             }
         }
     }
+
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;

@@ -86,68 +86,21 @@ static class StateDiplomacyManager
         try
         {
             // All bordering or enemy states
-            state.contactedStates = [..GetPolity(state).borderingStates, ..state.enemies, GetLiege(state), GetOverlord(state)];
+            List<State> states = [..state.borderingStates, ..state.enemies, GetLiege(state)];
 
-            state.contactedStates.Remove(state);
-            state.contactedStates.Remove(null);
-
-            foreach (State target in state.contactedStates)
+            foreach (State target in states)
             {
-                if (state.relations.ContainsKey(target)) continue;
-                state.relations[target] = new Relation();
-                //target.relations.TryAdd(state, new Relation());
+                if (target == state || target == null || state.relations.ContainsKey(target)) continue;
+                lock (objectManager)
+                {
+                    objectManager.EstablishRelations(state, target);
+                }
             }            
         } catch (Exception e)
         {
             GD.PushError(e);
         }
     }
-    public static void CalculateThreats(this State state){
-        foreach (State target in state.contactedStates){
-            Relation relation = state.relations[target];
-
-            if (target == null) continue;          
-            float newThreat = 0;
-
-            // Calc Percieved Threat (-1 to 1)
-            int stateSize = GetPolity(state).regions.Count;
-            int targetSize = GetPolity(target).regions.Count;
-
-            float relativeSizeRatio = (stateSize - targetSize)/Mathf.Max(stateSize, 0.001f);
-
-            newThreat += relativeSizeRatio;
-
-            if (target.sovereignty != Sovereignty.INDEPENDENT)
-            {
-                newThreat *= 0.5f;
-            }
-            
-            // Moves threat for realistic adjustment
-            // Eg: If we feared a nation for a while then we wont just immediatly like them when they fall 
-            relation.threat = Mathf.MoveToward(relation.threat, Mathf.Clamp(newThreat, -1, 1), threatAdjustmentRate);
-        }
-    }
-
-    // Relations Utilities
-    public static void ChangeOpinion(this State state, State target, float value)
-    {
-        Relation relations = state.relations[target];
-        relations.opinion = Math.Clamp(relations.opinion + value, -1, 1); 
-
-        Relation targetRelations = target.relations[state];
-        targetRelations.opinion = Math.Clamp(targetRelations.opinion + value, -1, 1);
-    }
-    public static void SetRivalry(this State state, State target, bool value)
-    {
-        target.relations[state].rival = value;
-        state.relations[target].rival = value;      
-    } 
-    public static void SetTruce(this State state, State target, uint value)
-    {
-        target.relations[state].truce = value;
-        state.relations[target].truce = value;      
-    } 
-
     // Check utilities
     public static War GetWarWithState(this State state, State target)
     {
@@ -180,11 +133,7 @@ static class StateDiplomacyManager
     }
     public static bool IsEnemyWithState(this State state, State otherState)
     {
-        if (state.relations.TryGetValue(otherState, out Relation relation))
-        {
-            return state.enemies.Contains(otherState);
-        }
-        return false;
+        return state.enemies.Contains(otherState);
     }
     public static bool IsAlliedToState(this State state, State otherState)
     {

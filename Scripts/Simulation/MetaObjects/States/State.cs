@@ -30,7 +30,6 @@ public partial class State : Polity, ISaveable
     [Key(38)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     //[Key(39)] public StateDiplomacyManager diplomacy;
 
-    [Key(40)] public Tech tech = new Tech();
     [Key(41)] public int maxSize = 1;
 
     // Government   
@@ -46,8 +45,8 @@ public partial class State : Polity, ISaveable
     [Key(47)] ulong? leaderId = null;
     [Key(48)] ulong? rulingPopId;
     [Key(49)] ulong? capitalId;
-    [Key(50)] public Dictionary<ulong, Relation> relationIds { get; set; } = [];
-    [IgnoreMember] public Dictionary<State, Relation> relations { get; set; } = [];
+    [Key(50)] public List<ulong> relationIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<State, DiplomaticRelations> relations { get; set; } = [];
     [Key(51)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
     [IgnoreMember] public Dictionary<War, War.WarSide> wars { get; set; } = [];
     [Key(52)] public ulong? liegeId {get; set; } = null;
@@ -55,9 +54,6 @@ public partial class State : Polity, ISaveable
     [IgnoreMember] public List<Alliance> alliances = [];
     [Key(54)] public HashSet<ulong?> vassalIds { get; set; } = [];
     [IgnoreMember] public HashSet<State> vassals = [];
-
-    [Key(55)] public int relationUpdateTime = 12;
-    [IgnoreMember] public HashSet<State> contactedStates = [];
 
     [Key(56)] public HashSet<ulong?> enemyIds = [];
     [IgnoreMember] public HashSet<State> enemies = [];
@@ -128,7 +124,7 @@ public partial class State : Polity, ISaveable
         allianceIds = [..alliances.Select(v => v.id)];
         enemyIds = [..enemies.Select(v => v.id)];
         warIds = new Dictionary<ulong, War.WarSide>(wars.Select(pair => new KeyValuePair<ulong, War.WarSide>(pair.Key.id, pair.Value)).ToDictionary());
-        relationIds = new Dictionary<ulong, Relation>(relations.Select(pair => new KeyValuePair<ulong, Relation>(pair.Key.id, pair.Value)).ToDictionary());
+        relationIds = [..relations.Select(r => r.Value.id)];
     }
 
     public override void LoadFromSave()
@@ -138,7 +134,17 @@ public partial class State : Polity, ISaveable
         alliances = [..allianceIds.Select(objectManager.GetAlliance)];
         enemies = [..enemyIds.Select(objectManager.GetState)];
         wars = new Dictionary<War, War.WarSide>(warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
-        relations = new Dictionary<State, Relation>(relationIds.Select(pair => new KeyValuePair<State, Relation>(objectManager.GetState(pair.Key), pair.Value)).ToDictionary());
+        foreach (ulong relationId in relationIds)
+        {
+            DiplomaticRelations relation = simManager.relationIds[relationId];
+            if (relation.initiatorId == id)
+            {
+                relations.Add(objectManager.GetState(relation.recipientId), relation);
+            } else
+            {
+                relations.Add(objectManager.GetState(relation.initiatorId), relation); 
+            }
+        }
     }
     public void UpdateCapital()
     {
@@ -256,8 +262,7 @@ public partial class State : Polity, ISaveable
         List<State> rebels = [];
         foreach (State vassal in vassals)
         {
-            Relation relationsWithUs = vassal.relations[this];
-            if (relationsWithUs.opinion < 0)
+            if (relations[vassal].opinion < 0)
             {
                 rebels.Add(vassal);
             }
@@ -341,8 +346,10 @@ public partial class State : Polity, ISaveable
         foreach (Pop pop in region.pops)
         {
             pops.Add(pop);
+            //ChangePopulation(pop.workforce, pop.dependents, pop.profession.id, pop.culture);
         }
         region.conquered = true;
+
     }
     public void RemoveRegion(Region region)
     {
@@ -353,9 +360,11 @@ public partial class State : Polity, ISaveable
         foreach (Pop pop in region.pops)
         {
             pops.Remove(pop);
+            //ChangePopulation(-pop.workforce, -pop.dependents, pop.profession.id, pop.culture);
         }
         region.conquered = true;
     }
+
     public override int GetArmyPower()
     {
         return (int)(manpower * (totalWealth/manpower) * (tech.militaryLevel + 1));
@@ -370,7 +379,7 @@ public partial class State : Polity, ISaveable
     }
     public int GetMaxVassals() {
         return 5;
-    } 
+    }
     public override string GenerateDescription()
     {
         string desc = $"The {name} is a {govtName.ToLower()} in the simulation. It is ";

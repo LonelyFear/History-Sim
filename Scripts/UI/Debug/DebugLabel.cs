@@ -37,7 +37,7 @@ public partial class DebugLabel : Label
                     {
                         State relationState = pair.Key;
                         //if (relationState?.sovereignty != Sovereignty.INDEPENDENT) continue;
-                        Relation relation = pair.Value;
+                        DiplomaticRelations relation = pair.Value;
                         AddLine(relationState.name + ": " + Math.Round(relation.opinion * 100));
                     }                    
                 } catch (Exception e)

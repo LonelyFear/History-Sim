@@ -64,6 +64,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Ocean> oceanIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<ulong, DiplomaticRelations> relationIds { get; set; } = [];
 
     [IgnoreMember] public ConcurrentDictionary<ulong, HistoricalEvent> historicalEventIds = [];
 
@@ -152,6 +153,9 @@ public class SimManager
 
         FileAccess eventsSave = FileAccess.Open($"{path}/events.pxsave", FileAccess.ModeFlags.Write);
         eventsSave.StoreBuffer(MessagePackSerializer.Serialize(historicalEventIds, options));
+
+        FileAccess diplomacySave = FileAccess.Open($"{path}/diplomacy.pxsave", FileAccess.ModeFlags.Write);
+        eventsSave.StoreBuffer(MessagePackSerializer.Serialize(relationIds, options));
     }
     public static SimManager LoadSimFromFile(string path)
     {
@@ -178,6 +182,7 @@ public class SimManager
         sim.characterIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
         sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
         sim.oceanIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Ocean>>(FileAccess.GetFileAsBytes($"{path}/oceans.pxsave"), options);
+        sim.relationIds = MessagePackSerializer.Deserialize<Dictionary<ulong, DiplomaticRelations>>(FileAccess.GetFileAsBytes($"{path}/diplomacy.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
         sim.simLoadedFromSave = true;
         return sim;
@@ -554,7 +559,7 @@ public class SimManager
         countedPerformanceInfo["Ruling Pop Time"] = 0;
         countedPerformanceInfo["Succession Time"] = 0;  
         countedPerformanceInfo["Join Wars Time"] = 0; 
-        countedPerformanceInfo["Relations Time"] = 0; 
+        countedPerformanceInfo["Diplomacy Time"] = 0; 
         countedPerformanceInfo["AI Time"] = 0;
         countedPerformanceInfo["Stats Time"] = 0;
 
@@ -585,7 +590,6 @@ public class SimManager
             state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             state.culture = state.rulingPop.culture;
 
-            state.relationUpdateTime--;
             countedPerformanceInfo["Ruling Pop Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
 
@@ -613,10 +617,10 @@ public class SimManager
         var partitioner = Partitioner.Create(statesIds.Values); 
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.UpdateRelations(); 
-            state.CalculateThreats();            
+            state.UpdateRelations();            
         });
-        countedPerformanceInfo["Relations Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        UpdateDiplomacy();
+        countedPerformanceInfo["Diplomacy Time"] += stopwatch.Elapsed.TotalMilliseconds;
 
         // Updates
         //  State Ai
@@ -633,7 +637,6 @@ public class SimManager
         }
         countedPerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
-
         // Counts State Stats
         Parallel.ForEach(partitioner, (state) =>
         {
@@ -668,6 +671,16 @@ public class SimManager
             }
         }       
     }
+    public void UpdateDiplomacy()
+    {
+        Partitioner<DiplomaticRelations> partitioner = Partitioner.Create(relationIds.Values);
+        Parallel.ForEach(partitioner, relation =>
+        {
+            State state = rng.NextSingle() < 0.5f ? relation.initiator : relation.recipient;
+
+            state.AIManager.TickRelations(relation);
+        });
+    }
     public void UpdateAlliances()
     {
         foreach (var pair in allianceIds)
@@ -679,7 +692,6 @@ public class SimManager
         Partitioner<Alliance> partitioner = Partitioner.Create(allianceIds.Values);
         Parallel.ForEach(partitioner, alliance =>
         {
-            alliance.UpdateRegions();
             alliance.tech = alliance.averageTech;
             alliance.CountPopulation();  
         });
