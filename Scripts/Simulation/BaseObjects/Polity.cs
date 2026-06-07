@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using MessagePack;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
 
 [Union(0, typeof(State))]
 [Union(1, typeof(Alliance))]
@@ -14,33 +16,27 @@ public abstract partial class Polity : PopObject
     [Key(18)] public int armyPower { get; set; }
     // Political
     [Key(19)] public int occupiedLand { get; set; }
-    [Key(20)] public HashSet<ulong> borderingAllianceIds { get; set; } = [];
     [Key(21)] public HashSet<ulong> borderingStateIds { get; set; } = [];
-    [Key(22)] public HashSet<ulong> independentBorderIds { get; set; } = [];
-    [IgnoreMember] public HashSet<Alliance> borderingAlliances { get; set; } = [];
     [IgnoreMember] public HashSet<State> borderingStates { get; set; } = [];
-    [IgnoreMember] public HashSet<State> independentBorders { get; set; } = [];
     // Economy
     [Key(23)] public float totalWealth { get; set; }
     [Key(-1)] public float baseWealth { get; set; }
     [IgnoreMember] public HashSet<Region> regions = [];
     [Key(24)] public HashSet<ulong> regionIds { get; set; } = [];
-
+    [Key(-2)] public Tech tech;
     public override void PrepareForSave()
     {
         base.PrepareForSave();
         regionIds = [.. regions.Select(r => r.id)];
         borderingStateIds = [.. borderingStates.Select(r => r.id)];
-        independentBorderIds = [.. independentBorders.Select(r => r.id)];
-        borderingAllianceIds = [.. borderingAlliances.Select(r => r.id)];
+        //borderingAllianceIds = [.. borderingAlliances.Select(r => r.id)];
     }
     public override void LoadFromSave()
     {
         base.LoadFromSave();
         regions = [.. regionIds.Select(p => objectManager.GetRegion(p))];
         borderingStates = [..borderingStateIds.Select(p => objectManager.GetState(p))];
-        independentBorders = [..independentBorderIds.Select(p => objectManager.GetState(p))];
-        borderingAlliances = [..borderingAllianceIds.Select(p => objectManager.GetAlliance(p))];
+        //borderingAlliances = [..borderingAllianceIds.Select(p => objectManager.GetAlliance(p))];
     }
 
     public override void CountPopulation()
@@ -50,7 +46,6 @@ public abstract partial class Polity : PopObject
 
         HashSet<Alliance> allianceBorders = [];
         HashSet<State> borders = [];
-        HashSet<State> independentBorders = [];
         Dictionary<string, long> countedProfessions = [];
 
         Dictionary<ulong, long> cCultures = [];
@@ -61,13 +56,6 @@ public abstract partial class Polity : PopObject
 
         foreach (Region region in regions)
         {
-            //Region region = objectManager.GetRegion(regionId);
-
-            if (region == null) {
-                regions.Remove(region);
-                continue;
-            }
-
             region.GetAverageTech();
             newAvg.militaryLevel += region.averageTech.militaryLevel;
             newAvg.societyLevel += region.averageTech.societyLevel;
@@ -91,31 +79,26 @@ public abstract partial class Polity : PopObject
                 // Gets the states bordering this region
                 foreach (Region border in region.borderingRegions)
                 {
-                    // Makes sure the state is real and not us (If this org is alliance we make sure the state doesnt have membership)
-                    if (border == null || border.owner == null || border.owner == this/* || (this is Alliance alliance && alliance.HasMember(borderState))*/)
+                    // Makes sure the state is real and not us
+                    if (border == null || border.owner == null || border.owner == this)
                     {
                         continue;
                     }
 
                     // Extends our border with the state
-                    
-                    //Alliance borderRealm = border.owner.diplomacy.GetRealm();
+                    Alliance borderRealm = border.owner.GetRealm();
+                    State[] statesToEvaluate = [border.owner, ..borderRealm == null ? [] : borderRealm.memberStates];
 
-                    State[] statesToEvaluate = [border.owner, border.owner.diplomacy.GetOverlord()/*, ..borderRealm == null ? [] : borderRealm.memberStates*/];
                     foreach (State state in statesToEvaluate)
                     {
                         if (state == null) continue;
                         
-                        borders.Add(state);  
-                        if (border.owner.sovereignty == Sovereignty.INDEPENDENT)
-                        {
-                            independentBorders.Add(state);                   
-                        }                          
+                        borders.Add(state);                        
                     }
 
 
                     // Gets the alliances this state is in
-                    foreach (Alliance borderingAlliance in border.owner.diplomacy.alliances)
+                    foreach (Alliance borderingAlliance in border.owner.alliances)
                     {
                         // Makes sure the alliance is real and not us (If this org is a state then we make sure we dont have membership)
                         if (borderingAlliance == null || borderingAlliance == this || (this is State && borderingAlliance.HasMember((State)this)))
@@ -149,8 +132,6 @@ public abstract partial class Polity : PopObject
         // Updates values
         occupiedLand = occRegions;
         borderingStates = borders;
-        this.independentBorders = independentBorders;
-        borderingAlliances = allianceBorders;
         totalWealth = countedWealth;
         baseWealth = countedBaseWealth;
         
@@ -172,9 +153,6 @@ public abstract partial class Polity : PopObject
         newAvg.industryLevel /= Mathf.Max(regions.Count, 1);
         averageTech = newAvg;
     }
-    public int GetArmyPower()
-    {
-        return (int)(manpower * (totalWealth/workforce) * (averageTech.militaryLevel + 1));
-    }
+    public abstract int GetArmyPower();
     public abstract int GetManpower();
 }

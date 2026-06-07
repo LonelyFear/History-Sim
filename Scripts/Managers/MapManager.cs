@@ -1,4 +1,7 @@
 using Godot;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -288,7 +291,7 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (regionOwner != null)
                     {
-                        borderId = regionOwner.diplomacy.GetOverlord().id;
+                        borderId = regionOwner.GetOverlord().id;
                         color = regionOwner.displayColor;
                         if (region.occupier != null)
                         {
@@ -307,7 +310,7 @@ public partial class MapManager : Node2D
                     if (selectedState != null && region.owner != null)
                     {
                         // Darkens unrelated states
-                        if (region.owner != null && region.owner.diplomacy.GetOverlord() != selectedState.diplomacy.GetOverlord())
+                        if (region.owner != null && region.owner.GetOverlord() != selectedState.GetOverlord())
                         {
                             color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
                         }                      
@@ -372,7 +375,7 @@ public partial class MapManager : Node2D
                     overlord = region.GetController();
                     borderId = overlord.id;
 
-                    alliance = overlord.diplomacy.GetAllianceOfType(AllianceType.ALLIANCE);
+                    alliance = overlord.GetAllianceOfType(AllianceType.ALLIANCE);
                     if (alliance != null)
                     {
                         borderId = overlord.id;
@@ -399,7 +402,7 @@ public partial class MapManager : Node2D
                     if (region.owner != null)
                     {
                         // Darkens unrelated states
-                        if ((selectedAlliance == null && selectionManager.GetSelectedPolity() != region.owner.diplomacy.GetPolity()) || alliance != selectedAlliance)
+                        if ((selectedAlliance == null && selectionManager.GetSelectedPolity() != region.owner.GetPolity()) || alliance != selectedAlliance)
                         {
                             color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
                         }                      

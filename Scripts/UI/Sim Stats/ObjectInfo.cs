@@ -1,4 +1,7 @@
 using Godot;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
+using PixelHistory.Objects.Wars;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -53,7 +56,7 @@ public partial class ObjectInfo : Panel
             case MapModes.REALM:
                 if (selectedState != null)
                 {
-                    DisplayPolityText(selectionManager.GetSelectedPolity(), selectedState.diplomacy.GetOverlord()); 
+                    DisplayPolityText(selectionManager.GetSelectedPolity(), selectedState.GetOverlord()); 
                     selectedObject = selectionManager.GetSelectedPolity();                    
                 } else
                 {
@@ -112,7 +115,7 @@ public partial class ObjectInfo : Panel
     public void DisplayRegionText(Region region)
     {
         nameLabel.Text = region.name;   
-        typeLabel.Text = region.GetType().ToString();
+        typeLabel.Text = "Region";
         selectedObject = region;
 
         populationLabel.Text = "Population: " + region.population.ToString("#,###0");
@@ -158,7 +161,7 @@ public partial class ObjectInfo : Panel
         selectedObject = polity;
 
         nameLabel.Text = state.baseName;   
-        typeLabel.Text = polity.GetType().ToString();
+        typeLabel.Text = "State";
         //--------------------------------------------------
         populationLabel.Text = "Population: " + polity.population.ToString("#,###0");
 
@@ -182,8 +185,8 @@ public partial class ObjectInfo : Panel
         
         // Wars text
         specialLabel.Text += "\n" + "Wars: ";
-        if (state.diplomacy.wars.Count > 0) {
-            foreach (War war in state.diplomacy.wars.Keys.ToArray()) {
+        if (state.wars.Count > 0) {
+            foreach (War war in state.wars.Keys.ToArray()) {
                 if (war == null) continue;
 
                 yearAge = timeManager.GetYear(war.GetAge());
@@ -204,7 +207,7 @@ public partial class ObjectInfo : Panel
         selectedObject = alliance;
 
         nameLabel.Text = alliance.name;   
-        typeLabel.Text = alliance.GetType().ToString();
+        typeLabel.Text = alliance.type == AllianceType.REALM ? "State" : "Alliance";
         //--------------------------------------------------
         populationLabel.Text = "Population: " + alliance.population.ToString("#,###0");
 
@@ -221,8 +224,8 @@ public partial class ObjectInfo : Panel
         
         // Wars text
         specialLabel.Text += "\n" + "Wars: ";
-        if (alliance.leadState.diplomacy.wars.Count > 0) {
-            foreach (War war in alliance.leadState.diplomacy.wars.Keys.ToArray()) {
+        if (alliance.leadState.wars.Count > 0) {
+            foreach (War war in alliance.leadState.wars.Keys.ToArray()) {
                 if (war == null) continue;
 
                 yearAge = timeManager.GetYear(war.GetAge());

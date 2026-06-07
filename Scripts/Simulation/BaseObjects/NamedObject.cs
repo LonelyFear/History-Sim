@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Godot;
 using MessagePack;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.Wars;
 
 public abstract class NamedObject
 {

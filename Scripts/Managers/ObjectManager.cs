@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using MessagePack;
+using PixelHistory.Objects.States.AI;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
+using PixelHistory.Objects.Wars;
 [MessagePackObject]
 public class ObjectManager
 {
@@ -184,11 +188,7 @@ public class ObjectManager
             state.AddRegion(region);
             simManager.statesIds.Add(state.id, state);      
                   
-            state.diplomacy = new StateDiplomacyManager(state);
-            // Init ai manager after vassal and diplo
             state.AIManager = new StateAIManager(state);
-
-
         }
     }
     public void DeleteState(State deletedState)
@@ -197,19 +197,14 @@ public class ObjectManager
         {
             selectionManager.DeselectRegion();
         }
-        if (deletedState.diplomacy.liegeId != null)
+        deletedState.GetLiege()?.RemoveVassal(deletedState);
+        deletedState.LeaveAllWars();
+        deletedState.RemoveAllVassals();
+        foreach (State state in simManager.statesIds.Values)
         {
-            State liege = GetState(deletedState.diplomacy.liegeId);
-            liege.diplomacy.RemoveVassal(deletedState);
-        }
-        foreach (War war in deletedState.diplomacy.wars.Keys.ToArray())
-        {
-            war.RemoveParticipant(deletedState);
-        }
-        foreach (State vassal in deletedState.diplomacy.vassals.ToArray())
-        {
-            deletedState.diplomacy.RemoveVassal(vassal);
-        }
+            state.relations.Remove(deletedState);
+            state.borderingStates.Remove(deletedState);
+        }          
         foreach (Region region in deletedState.regions.ToArray())
         {
             deletedState.RemoveRegion(region);
@@ -218,23 +213,12 @@ public class ObjectManager
         {
             GetCharacter(characterId).LeaveState();
         }
-        foreach (State contactedState in deletedState.diplomacy.contactedStates.ToArray())
-        {
-            contactedState.diplomacy.contactedStates.Remove(deletedState);
-            deletedState.diplomacy.contactedStates.Remove(contactedState);
-        }
-        foreach (State relation in simManager.statesIds.Values.ToArray())
-        {
-            relation.diplomacy.relations.Remove(deletedState);
-            relation.borderingStates.Remove(deletedState);
-        }
-        foreach (Alliance alliance in deletedState.diplomacy.alliances.ToArray())
+        foreach (Alliance alliance in deletedState.alliances.ToArray())
         {
             alliance.RemoveMember(deletedState);
         }
 
         simManager.objectDeleted.Invoke(deletedState.id);
-        //simManager.deletedStateIds.Add(deletedState.id);
         simManager.statesIds.Remove(deletedState.id);
     }
     public State GetState(ulong? id)

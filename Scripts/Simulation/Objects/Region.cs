@@ -3,8 +3,11 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-using System.Text.RegularExpressions;
-using System.IO;
+
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
+using PixelHistory.Objects.Wars;
+
 [MessagePackObject(AllowPrivate = true)]
 public partial class Region : PopObject, ISaveable
 {
@@ -358,7 +361,7 @@ public partial class Region : PopObject, ISaveable
     }
     public void UpdateOccupation()
     {
-        if (owner == null || occupier == null || !GetController(false).diplomacy.IsEnemyWithState(occupier))
+        if (owner == null || occupier == null || !GetController(false).IsEnemyWithState(occupier))
         {
             occupier = null;
         }
@@ -411,46 +414,49 @@ public partial class Region : PopObject, ISaveable
 
         if (controller != null && controller.sovereignty != Sovereignty.REBELLIOUS)
         {
-            return controller.diplomacy.GetOverlord();
+            return controller.GetOverlord();
         }        
         return controller;
     }   
 
-    public void NeutralConquest()
+    public void NeutralConquest(Region target)
     {
-        Region region = PickRandomBorder();
-        bool checks = !region.conquered && occupier == null && region != null && region.pops.Count != 0 && region.owner == null;
+        bool checks = !target.conquered && occupier == null && target != null && target.pops.Count != 0 && target.owner == null;
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
         attackerPower = owner.GetArmyPower();
 
-        if (Battle.CalcBattle(region, attackerPower, 1000))
+        if (Battle.CalcBattle(target, attackerPower, 500))
         {
-            owner.AddRegion(region);
+            owner.AddRegion(target);
         }
     }
 
-    public void MilitaryConquest()
+    public void MilitaryConquest(Region target)
     {
-        Region targetRegion = PickRandomBorder();
-        if (targetRegion == null || targetRegion.conquered || targetRegion.GetController() == null || GetController() == null || !GetController().diplomacy.IsEnemyWithState(targetRegion.GetController()))
+        if (rng.NextSingle() > 0.5f) return;
+
+        State controller = GetController();
+        State enemyController = target.GetController();
+
+        if (target == null || target.conquered || controller == null || !controller.enemies.Contains(enemyController))
         {
             return;
         }      
         
-        State attacker = GetController();
-        State enemy = targetRegion.GetController();
+        State attacker = controller;
+        State enemy = enemyController;
 
-        War war = attacker.diplomacy.GetWarWithState(enemy);
+        War war = attacker.GetWarWithState(enemy);
 
-        long attackerPower = war.GetSideArmyPower(attacker.diplomacy.wars[war]);
-        long defenderPower = (long)(war.GetSideArmyPower(enemy.diplomacy.wars[war]) / 0.1f);
+        long attackerPower = war.GetSideArmyPower(attacker.wars[war]);
+        long defenderPower = (long)(war.GetSideArmyPower(enemy.wars[war]) / 0.1f);
 
-        if (Battle.CalcBattle(targetRegion, attackerPower, defenderPower))
+        if (Battle.CalcBattle(target, attackerPower, defenderPower))
         {
-            targetRegion.occupier = GetController();
-            targetRegion.conquered = true;
+            target.occupier = controller;
+            target.conquered = true;
         }         
     }
     
@@ -562,8 +568,8 @@ public partial class Region : PopObject, ISaveable
     public void GetTaxIncome()
     {
         float newTaxIncome = 0;
-        State taxingState = owner?.diplomacy.GetRealm() == null ? owner : owner.diplomacy.GetRealm().leadState;
-        Polity taxingPolity = owner?.diplomacy.GetPolity();
+        State taxingState = owner?.GetRealm() == null ? owner : owner.GetRealm().leadState;
+        Polity taxingPolity = owner?.GetPolity();
 
         if (taxingPolity != null)
         {
@@ -653,7 +659,7 @@ public partial class Region : PopObject, ISaveable
             politySizeTradeWeight = owner.regions.Count;
             if (owner.sovereignty == Sovereignty.INDEPENDENT)
             {
-                politySizeTradeWeight = owner.diplomacy.GetPolity().regions.Count;
+                politySizeTradeWeight = owner.GetPolity().regions.Count;
             }
         }
 

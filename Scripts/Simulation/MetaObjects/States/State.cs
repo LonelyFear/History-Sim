@@ -3,10 +3,11 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-using System.ComponentModel.Design.Serialization;
-using System.Security.Cryptography;
-using System.Collections.Concurrent;
+using PixelHistory.Objects.States.AI;
+using PixelHistory.Objects.States.Diplomacy;
+using PixelHistory.Objects.Wars;
 
+namespace PixelHistory.Objects.States.Base;
 [MessagePackObject(AllowPrivate = true)]
 public partial class State : Polity, ISaveable
 {
@@ -27,7 +28,7 @@ public partial class State : Polity, ISaveable
 
     // Alliances
     [Key(38)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
-    [Key(39)] public StateDiplomacyManager diplomacy;
+    //[Key(39)] public StateDiplomacyManager diplomacy;
 
     [Key(40)] public Tech tech = new Tech();
     [Key(41)] public int maxSize = 1;
@@ -45,6 +46,21 @@ public partial class State : Polity, ISaveable
     [Key(47)] ulong? leaderId = null;
     [Key(48)] ulong? rulingPopId;
     [Key(49)] ulong? capitalId;
+    [Key(50)] public Dictionary<ulong, Relation> relationIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<State, Relation> relations { get; set; } = [];
+    [Key(51)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<War, War.WarSide> wars { get; set; } = [];
+    [Key(52)] public ulong? liegeId {get; set; } = null;
+    [Key(53)] public List<ulong?> allianceIds = [];
+    [IgnoreMember] public List<Alliance> alliances = [];
+    [Key(54)] public HashSet<ulong?> vassalIds { get; set; } = [];
+    [IgnoreMember] public HashSet<State> vassals = [];
+
+    [Key(55)] public int relationUpdateTime = 12;
+    [IgnoreMember] public HashSet<State> contactedStates = [];
+
+    [Key(56)] public HashSet<ulong?> enemyIds = [];
+    [IgnoreMember] public HashSet<State> enemies = [];
     // References
     [IgnoreMember] public Culture culture;
     [IgnoreMember] Pop _rulingPop;
@@ -108,22 +124,21 @@ public partial class State : Polity, ISaveable
     public override void PrepareForSave()
     {
         base.PrepareForSave();
-        diplomacy.vassalIds = [..diplomacy.vassals.Select(v => v.id)];
-        diplomacy.allianceIds = [..diplomacy.alliances.Select(v => v.id)];
-        diplomacy.enemyIds = [..diplomacy.enemies.Select(v => v.id)];
-        diplomacy.warIds = new Dictionary<ulong, War.WarSide>(diplomacy.wars.Select(pair => new KeyValuePair<ulong, War.WarSide>(pair.Key.id, pair.Value)).ToDictionary());
-        diplomacy.relationIds = new Dictionary<ulong, Relation>(diplomacy.relations.Select(pair => new KeyValuePair<ulong, Relation>(pair.Key.id, pair.Value)).ToDictionary());
+        vassalIds = [..vassals.Select(v => v.id)];
+        allianceIds = [..alliances.Select(v => v.id)];
+        enemyIds = [..enemies.Select(v => v.id)];
+        warIds = new Dictionary<ulong, War.WarSide>(wars.Select(pair => new KeyValuePair<ulong, War.WarSide>(pair.Key.id, pair.Value)).ToDictionary());
+        relationIds = new Dictionary<ulong, Relation>(relations.Select(pair => new KeyValuePair<ulong, Relation>(pair.Key.id, pair.Value)).ToDictionary());
     }
 
     public override void LoadFromSave()
     {
         base.LoadFromSave();
-        diplomacy.state = this;
-        diplomacy.vassals = [..diplomacy.vassalIds.Select(objectManager.GetState)];
-        diplomacy.alliances = [..diplomacy.allianceIds.Select(objectManager.GetAlliance)];
-        diplomacy.enemies = [..diplomacy.enemyIds.Select(objectManager.GetState)];
-        diplomacy.wars = new Dictionary<War, War.WarSide>(diplomacy.warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
-        diplomacy.relations = new Dictionary<State, Relation>(diplomacy.relationIds.Select(pair => new KeyValuePair<State, Relation>(objectManager.GetState(pair.Key), pair.Value)).ToDictionary());
+        vassals = [..vassalIds.Select(objectManager.GetState)];
+        alliances = [..allianceIds.Select(objectManager.GetAlliance)];
+        enemies = [..enemyIds.Select(objectManager.GetState)];
+        wars = new Dictionary<War, War.WarSide>(warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
+        relations = new Dictionary<State, Relation>(relationIds.Select(pair => new KeyValuePair<State, Relation>(objectManager.GetState(pair.Key), pair.Value)).ToDictionary());
     }
     public void UpdateCapital()
     {
@@ -183,7 +198,7 @@ public partial class State : Polity, ISaveable
         if (rng.NextSingle() < collapseChanceCurve.Sample(stability) * baseCollapseChance)
         {
             List<State> potentialRebels = GetRebelliousVassals();
-            bool inCivilConflict = diplomacy.InWarOfType(WarType.CIVIL_WAR) || diplomacy.InWarOfType(WarType.REVOLT);
+            bool inCivilConflict = StateDiplomacyManager.InWarOfType(this, WarType.CIVIL_WAR) || StateDiplomacyManager.InWarOfType(this, WarType.REVOLT);
 
             if (potentialRebels.Count < 1 && !inCivilConflict)
             {
@@ -195,7 +210,7 @@ public partial class State : Polity, ISaveable
                 // Starts a civil war
                 State leadRebel = potentialRebels[0];
                 leadRebel.sovereignty = Sovereignty.REBELLIOUS;
-                War civilWar = leadRebel.diplomacy.DeclareWar(this, WarType.CIVIL_WAR);
+                War civilWar = StateDiplomacyManager.DeclareWar(leadRebel, this, WarType.CIVIL_WAR);
 
                 foreach (State rebel in potentialRebels)
                 {
@@ -203,7 +218,7 @@ public partial class State : Polity, ISaveable
                     rebel.sovereignty = Sovereignty.REBELLIOUS;
                     civilWar.AddParticipant(rebel, War.WarSide.AGRESSOR);
                 }
-                //GD.Print(leadRebel.diplomacy.IsEnemyWithState(this));
+                //GD.Print(leadRebel.IsEnemyWithState(this));
             }                
 
         }
@@ -239,9 +254,9 @@ public partial class State : Polity, ISaveable
     public List<State> GetRebelliousVassals()
     {
         List<State> rebels = [];
-        foreach (State vassal in diplomacy.vassals)
+        foreach (State vassal in vassals)
         {
-            Relation relationsWithUs = vassal.diplomacy.relations[this];
+            Relation relationsWithUs = vassal.relations[this];
             if (relationsWithUs.opinion < 0)
             {
                 rebels.Add(vassal);
@@ -301,16 +316,16 @@ public partial class State : Polity, ISaveable
         switch (sovereignty)
         {
             case Sovereignty.COLONY:
-                displayColor = diplomacy.GetOverlord().color;
+                displayColor = StateDiplomacyManager.GetOverlord(this).color;
                 break;
             case Sovereignty.PROVINCE:
-                displayColor = diplomacy.GetOverlord().color;
+                displayColor = StateDiplomacyManager.GetOverlord(this).color;
                 break;
             case Sovereignty.PUPPET:
-                displayColor = diplomacy.GetOverlord().color;
+                displayColor = StateDiplomacyManager.GetOverlord(this).color;
                 break;
             case Sovereignty.REBELLIOUS:
-                displayColor = Utility.MultiColourLerp([diplomacy.GetOverlord().color, new Color(0, 0, 0)], 0.5f);
+                displayColor = Utility.MultiColourLerp([StateDiplomacyManager.GetOverlord(this).color, new Color(0, 0, 0)], 0.5f);
                 break;
         }
     }
@@ -341,7 +356,10 @@ public partial class State : Polity, ISaveable
         }
         region.conquered = true;
     }
-
+    public override int GetArmyPower()
+    {
+        return (int)(manpower * (totalWealth/manpower) * (tech.militaryLevel + 1));
+    }
     public override int GetManpower()
     {
         return (int)(workforce * 0.05f);
@@ -366,7 +384,7 @@ public partial class State : Polity, ISaveable
                 desc += "an independent state";
                 break;
             default:
-                desc += $"a vassal of the {GenerateUrlText(diplomacy.GetLiege(), diplomacy.GetLiege().name)}";
+                desc += $"a vassal of the {GenerateUrlText(StateDiplomacyManager.GetLiege(this), StateDiplomacyManager.GetLiege(this).name)}";
                 break;
         }
         desc += $" lead by {(leader == null ? "nobody" : GenerateUrlText(leader, leader.name))}. "
@@ -386,10 +404,4 @@ public enum GovernmentType {
     REPUBLIC,
     MONARCHY,
     AUTOCRACY,
-}
-public enum WarType
-{
-    CONQUEST,
-    CIVIL_WAR,
-    REVOLT
 }

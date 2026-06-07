@@ -4,6 +4,10 @@ using System.Linq;
 using Godot;
 using MessagePack;
 using MessagePack.Formatters;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
+
+namespace PixelHistory.Objects.Wars;
 [MessagePackObject]
 public partial class War : NamedObject
 {
@@ -46,21 +50,21 @@ public partial class War : NamedObject
         WarSide opposingSide = (WarSide)Mathf.PosMod((int)side + 1, 2);
 
         sideIds[side].Add(state.id);
-        state.diplomacy.SetEnemies(sideIds[opposingSide], true);
+        StateDiplomacyManager.SetEnemies(state, sideIds[opposingSide], true);
 
         foreach (ulong enemyId in sideIds[opposingSide])
         {
             State enemy = objectManager.GetState(enemyId);
-            enemy.diplomacy.SetEnemy(state, true);
+            StateDiplomacyManager.SetEnemy(enemy, state, true);
         }
  
-        state.diplomacy.wars[this] = side;
+        state.wars[this] = side;
         participantIds.Add(state.id);
     }
     public void RemoveParticipant(State state)
     {
         // Gets the side this state is on
-        WarSide side = state.diplomacy.wars[this];
+        WarSide side = state.wars[this];
         
         if (!participantIds.Remove(state.id)) return;
 
@@ -69,17 +73,17 @@ public partial class War : NamedObject
         {
             // Gets opposition
             WarSide opposingSide = (WarSide)Mathf.PosMod((int)side + 1, 2);
-            state.diplomacy.SetEnemies(sideIds[opposingSide], false);
+            StateDiplomacyManager.SetEnemies(state, sideIds[opposingSide], false);
 
             // Makes it so our (former) opposition wont fight us
             foreach (ulong enemyId in sideIds[opposingSide])
             {
                 State enemy = objectManager.GetState(enemyId);
-                enemy.diplomacy.SetEnemy(state, false);
+                StateDiplomacyManager.SetEnemy(enemy, state, false);
             }
         }
         // Removes from participants list
-        state.diplomacy.wars.Remove(this, out _);
+        state.wars.Remove(this, out _);
 
         // Checks if we can end the war
         bool warEndConditions = sideIds[WarSide.AGRESSOR].Count < 1 || sideIds[WarSide.DEFENDER].Count < 1 || warLeaderIds[side] == state.id;
@@ -105,4 +109,10 @@ public partial class War : NamedObject
         AGRESSOR,
         DEFENDER
     }
+}
+public enum WarType
+{
+    CONQUEST,
+    CIVIL_WAR,
+    REVOLT
 }

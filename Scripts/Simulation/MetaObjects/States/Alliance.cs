@@ -3,6 +3,8 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Godot;
 using MessagePack;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
 
 [MessagePackObject(AllowPrivate = true)]
 // Alliances
@@ -54,10 +56,10 @@ public partial class Alliance : Polity
 
         if (exclusive)
         {
-            newMember.diplomacy.GetAllianceOfType(type)?.RemoveMember(newMember);
+            newMember.GetAllianceOfType(type)?.RemoveMember(newMember);
         }
 
-        newMember.diplomacy.alliances.Add(this);
+        newMember.alliances.Add(this);
         memberStates.Add(newMember);
 
         NameGenerator.UpdateAllianceName(this);
@@ -66,7 +68,7 @@ public partial class Alliance : Polity
     {
         if (!memberStates.Contains(member)) return;
 
-        member.diplomacy.alliances.Remove(this);
+        member.alliances.Remove(this);
         memberStates.Remove(member);  
 
         if (memberStates.Count < 2 || member == leadState)
@@ -77,15 +79,11 @@ public partial class Alliance : Polity
     }
     public void UpdateRegions()
     {
-        HashSet<Region> countedRegions = [];
-        foreach (State member in memberStates)
-        {
-            foreach (Region region in member.regions)
-            {
-                countedRegions.Add(region);
-            }
-        }
-        regions = countedRegions;
+        regions = [..memberStates.SelectMany(state => state.regions)];
+    }
+    public override int GetArmyPower()
+    {
+        return memberStates.Sum(state => state.armyPower);
     }
     public bool HasMember(State state)
     {
@@ -115,7 +113,7 @@ public partial class Alliance : Polity
         {
             foreach (State member in memberStates.ToArray())
             {
-                mp += member.diplomacy.GetPolity().GetManpower();
+                mp += member.GetPolity().GetManpower();
             }                
         }
         return mp;

@@ -7,7 +7,11 @@ using System.Threading.Tasks;
 using Godot;
 using MessagePack;
 using MessagePack.Resolvers;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
+using PixelHistory.Objects.States.AI;
 using FileAccess = Godot.FileAccess;
+using PixelHistory.Objects.Wars;
 
 public enum RegionStyle
 {
@@ -492,11 +496,12 @@ public class SimManager
 
                 if (region.owner != null && !region.conquered)
                 {
+                    Region borderToActOn = region.PickRandomBorder();
                     if (region.frontier && region.occupier == null)
                     {
-                        region.NeutralConquest();
+                        region.NeutralConquest(borderToActOn);
                     }
-                    region.MilitaryConquest();   
+                    region.MilitaryConquest(borderToActOn);   
                 }  
                 countedPerformanceInfo["Conquest Time"] += stopwatch.Elapsed.TotalMilliseconds;  
                 // Increments
@@ -580,7 +585,7 @@ public class SimManager
             state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             state.culture = state.rulingPop.culture;
 
-            state.diplomacy.relationUpdateTime--;
+            state.relationUpdateTime--;
             countedPerformanceInfo["Ruling Pop Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
 
@@ -599,7 +604,7 @@ public class SimManager
                 state.timeAsVassal += TimeManager.ticksPerMonth;
             }
 
-            state.diplomacy.JoinObligateWars();
+            state.JoinObligateWars();
 
             countedPerformanceInfo["Join Wars Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();                                   
@@ -608,8 +613,8 @@ public class SimManager
         var partitioner = Partitioner.Create(statesIds.Values); 
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.diplomacy.UpdateRelations(); 
-            state.diplomacy.CalculateThreats();            
+            state.UpdateRelations(); 
+            state.CalculateThreats();            
         });
         countedPerformanceInfo["Relations Time"] += stopwatch.Elapsed.TotalMilliseconds;
 
@@ -668,24 +673,15 @@ public class SimManager
         foreach (var pair in allianceIds)
         {
             Alliance alliance = pair.Value;
-
-            if (alliance.leadState == null)
-            {
-                alliance.Die();
-                continue;
-            }
-
-            if (alliance.dead)
-            {
-                objectManager.DeleteAlliance(alliance);
-                continue;
-            }
+            if (alliance.leadState == null) alliance.Die();
+            if (alliance.dead) objectManager.DeleteAlliance(alliance);
         }
         Partitioner<Alliance> partitioner = Partitioner.Create(allianceIds.Values);
         Parallel.ForEach(partitioner, alliance =>
         {
             alliance.UpdateRegions();
-            alliance.CountPopulation();            
+            alliance.tech = alliance.averageTech;
+            alliance.CountPopulation();  
         });
     }
     public void UpdateCharacters()
@@ -699,7 +695,7 @@ public class SimManager
                 if (character.dead)
                 {
                     // Deletes characters after 200 years if they are dead
-                    if (timeManager.GetYear(character.GetAge()) > 300)
+                    if (timeManager.GetYear(character.GetAge()) > 200)
                     {
                         objectManager.DeleteCharacter(character);
                     }

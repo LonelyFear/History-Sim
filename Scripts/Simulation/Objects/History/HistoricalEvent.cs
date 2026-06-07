@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using MessagePack;
+using PixelHistory.Objects.States.Base;
 [MessagePackObject(AllowPrivate = true)]
 public partial class HistoricalEvent
 {

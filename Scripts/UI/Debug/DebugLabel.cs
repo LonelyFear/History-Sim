@@ -1,4 +1,5 @@
 using Godot;
+using PixelHistory.Objects.States.Base;
 using System;
 using System.Linq;
 
@@ -22,7 +23,7 @@ public partial class DebugLabel : Label
         if (map != null)
         {
             Position = GetGlobalMousePosition();
-            Region region = selectionManager.GetSelectedRegion();
+            Region region = selectionManager.hoveredRegion;
             //Text = "Selected Region: " + (region == null ? "null" : region.name);
             if (region != null && region.owner != null){
                 State state = region.owner;
@@ -32,7 +33,7 @@ public partial class DebugLabel : Label
                 AddLine("Relations: ");
                 try
                 {
-                    foreach (var pair in state.diplomacy.relations.ToArray())
+                    foreach (var pair in state.relations.ToArray())
                     {
                         State relationState = pair.Key;
                         //if (relationState?.sovereignty != Sovereignty.INDEPENDENT) continue;

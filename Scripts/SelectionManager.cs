@@ -1,4 +1,6 @@
 using Godot;
+using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.States.Diplomacy;
 using System;
 
 [GlobalClass]
@@ -105,11 +107,11 @@ public partial class SelectionManager : Node2D
 	public Polity GetSelectedPolity()
 	{
 		if (selectedRegion == null || selectedRegion.owner == null) return null;
-		return selectedRegion.owner.diplomacy.GetPolity();
+		return selectedRegion.owner.GetPolity();
 	}
 	public Alliance GetSelectedAlliance(AllianceType type)
 	{
 		if (selectedRegion == null || selectedRegion.owner == null) return null;
-		return selectedRegion.owner.diplomacy.GetOverlord().diplomacy.GetAllianceOfType(type);
+		return selectedRegion.owner.GetOverlord().GetAllianceOfType(type);
 	}
 }
