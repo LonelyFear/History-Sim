@@ -62,7 +62,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<ulong, TradeZone> tradeZoneIds { get; set; } = [];
     [IgnoreMember] public ConcurrentDictionary<ulong, Character> characterIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Alliance> allianceIds { get; set; } = [];
-    [IgnoreMember] public Dictionary<ulong, War> warIds { get; set; } = [];
+    [IgnoreMember] public ConcurrentDictionary<ulong, War> warIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Ocean> oceanIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, DiplomaticRelations> relationIds { get; set; } = [];
 
@@ -180,7 +180,7 @@ public class SimManager
         sim.cultureIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Culture>>(FileAccess.GetFileAsBytes($"{path}/cultures.pxsave"), options);
         sim.tradeZoneIds = MessagePackSerializer.Deserialize<Dictionary<ulong, TradeZone>>(FileAccess.GetFileAsBytes($"{path}/tradeZones.pxsave"), options);
         sim.characterIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, Character>>(FileAccess.GetFileAsBytes($"{path}/characters.pxsave"), options);
-        sim.warIds = MessagePackSerializer.Deserialize<Dictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
+        sim.warIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, War>>(FileAccess.GetFileAsBytes($"{path}/wars.pxsave"), options);
         sim.oceanIds = MessagePackSerializer.Deserialize<Dictionary<ulong, Ocean>>(FileAccess.GetFileAsBytes($"{path}/oceans.pxsave"), options);
         sim.relationIds = MessagePackSerializer.Deserialize<Dictionary<ulong, DiplomaticRelations>>(FileAccess.GetFileAsBytes($"{path}/diplomacy.pxsave"), options);
         sim.historicalEventIds = MessagePackSerializer.Deserialize<ConcurrentDictionary<ulong, HistoricalEvent>>(FileAccess.GetFileAsBytes($"{path}/events.pxsave"), options);
@@ -566,7 +566,12 @@ public class SimManager
         Stopwatch stopwatch = Stopwatch.StartNew();
         foreach (var pair in statesIds.ToArray())
         {
+            
             State state = pair.Value;
+            if (state.vassals.Count > 0)
+            {
+                //GD.Print(state.regions.Sum(r => r.pops.Count));
+            }
             if (state.rulingPop == null) state.FindNewRulingPop();
             if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
             {
@@ -617,30 +622,22 @@ public class SimManager
         var partitioner = Partitioner.Create(statesIds.Values); 
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.UpdateRelations();            
+            state.UpdateRelations();     
         });
         UpdateDiplomacy();
         countedPerformanceInfo["Diplomacy Time"] += stopwatch.Elapsed.TotalMilliseconds;
-
         // Updates
         //  State Ai
         foreach (var pair in statesIds)
         {
             State state = pair.Value;
-            try
-            {
-                state.AIManager.Tick();
-            } catch (Exception e)
-            {
-                GD.PushError(e);
-            }
+            state.AIManager.Tick();
         }
-        countedPerformanceInfo["AI Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["AI Time"] = stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
         // Counts State Stats
         Parallel.ForEach(partitioner, (state) =>
         {
-            
             state.CountPopulation();
             state.UpdateDisplayColor();
             state.UpdateCapital();
@@ -676,9 +673,12 @@ public class SimManager
         Partitioner<DiplomaticRelations> partitioner = Partitioner.Create(relationIds.Values);
         Parallel.ForEach(partitioner, relation =>
         {
+            if (relation.truce > 0) relation.truce--;
             State state = rng.NextSingle() < 0.5f ? relation.initiator : relation.recipient;
-
-            state.AIManager.TickRelations(relation);
+            if (state.AIManager.CanTick())
+            {
+                state.AIManager.UpdateRelations(relation);
+            }
         });
     }
     public void UpdateAlliances()
@@ -694,7 +694,7 @@ public class SimManager
         {
             alliance.tech = alliance.averageTech;
             alliance.CountPopulation();  
-        });
+        });            
     }
     public void UpdateCharacters()
     {

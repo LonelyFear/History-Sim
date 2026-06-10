@@ -16,14 +16,9 @@ static class StateDiplomacyManager
     [IgnoreMember] public static ObjectManager objectManager;
     // Diplomacy
     // Constants
-    [IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
+    //[IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
 
     // Wars
-    public static War DeclareWar(this State initiator, State target, WarType type = WarType.CONQUEST)
-    {
-        //GD.Print($"Trying to start a war between {state.name} and {target.name}");
-        return objectManager.StartWar(type, initiator, target);
-    }
     public static void JoinObligateWars(this State state)
     {
         if (state.sovereignty == Sovereignty.REBELLIOUS) return;
@@ -127,9 +122,11 @@ static class StateDiplomacyManager
     }
     public static bool CanFightState(this State state, State target)
     {
-        return state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT 
-        && !IsAlliedToState(state, target) && state.relations[target]?.truce < 1
-        && !IsEnemyWithState(state, target);
+        DiplomaticRelations relations = state.relations[target];
+        bool rightSovereignty = state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT;
+        bool noTruce = state.relations.ContainsKey(target) && relations.truce < 1;
+
+        return rightSovereignty && noTruce && relations.opinion < -0.2f && !IsAlliedToState(state, target) && !IsEnemyWithState(state, target);
     }
     public static bool IsEnemyWithState(this State state, State otherState)
     {
@@ -169,7 +166,7 @@ static class StateDiplomacyManager
     
     public static Polity GetPolity(this State state)
     {
-        Alliance realm = GetRealm(state);
+        Alliance realm = state.GetRealm();
         if (realm == null)
         {
             return state;
@@ -179,51 +176,58 @@ static class StateDiplomacyManager
     // Vassalage
     public static void UpdateRealm(this State state)
     {
-        if (state.sovereignty == Sovereignty.INDEPENDENT && state.vassals.Count > 0 && GetRealm(state) == null){
+        if (state.vassals.Count < 1) return;
+
+        if (state.sovereignty == Sovereignty.INDEPENDENT && GetRealm(state) == null){
             objectManager.CreateAlliance(state, AllianceType.REALM);
         }
-        foreach (State vassal in state.vassals)
+
+        foreach (State vassal in state.vassals.ToArray())
         {
-            GetRealm(state).AddMember(vassal);
+            if (vassal.sovereignty != Sovereignty.INDEPENDENT)
+            {
+                GetRealm(state).AddMember(vassal);
+            } else
+            {
+                state.vassals.Remove(vassal);
+                GetRealm(state).RemoveMember(vassal);
+            }
+            vassal.UpdateRealm(); 
         }        
     }
     public static void AddVassal(this State state, State vassal, Sovereignty sovereignty)
     {
         if (sovereignty == Sovereignty.INDEPENDENT || state.vassals.Contains(vassal) || vassal == state) return;
 
-        State vassalFormerLiege = GetLiege(vassal);
-        if (vassalFormerLiege != null) RemoveVassal(vassalFormerLiege, vassal);
+        vassal.GetLiege()?.RemoveVassal(vassal);
 
         vassal.sovereignty = sovereignty;
         vassal.liegeId = state.id;
         state.vassals.Add(vassal);
 
-        // Updates our realm
-        UpdateRealm(state);
-        GetRealm(state).AddMember(vassal);
+        // Removes our vassal's vassals
+        vassal.RemoveAllVassals(); 
 
-        // Gives our vassal NO AUTHORITY ehehhe
-        RemoveAllVassals(vassal);        
-        UpdateRealm(state);
+        // Updates our realm
+        state.UpdateRealm();
 
         // Removes vassal from alliance
-        GetAllianceOfType(vassal, AllianceType.ALLIANCE)?.RemoveMember(vassal);
+        vassal.GetAllianceOfType(AllianceType.ALLIANCE)?.RemoveMember(vassal);
     }
     public static void RemoveVassal(this State state, State vassal)
     {
-        if (!state.vassals.Remove(vassal)) return;
+        if (!state.vassals.Contains(vassal)) return;
 
         vassal.sovereignty = Sovereignty.INDEPENDENT;
         vassal.liegeId = null;
 
-        GetRealm(state).RemoveMember(vassal);
-        UpdateRealm(vassal);
+        state.UpdateRealm();
     }
     public static void RemoveAllVassals(this State state)
     {
         foreach (State vassal in state.vassals.ToArray())
         {
-            RemoveVassal(state, vassal);
+            state.RemoveVassal(vassal);
         }
     }
     public static State GetLiege(this State state)
@@ -232,9 +236,9 @@ static class StateDiplomacyManager
     }
     public static State GetOverlord(this State state)
     {
-        if (GetRealm(state) != null)
+        if (state.GetRealm() != null)
         {
-            return GetRealm(state).leadState;
+            return state.GetRealm()?.leadState;
         }
         return state;
     }

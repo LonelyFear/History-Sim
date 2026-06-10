@@ -346,18 +346,24 @@ public class ObjectManager
     }
     public void EstablishRelations(State initiator, State target)
     {
-        if (initiator.relations.ContainsKey(target)) return;
-        
-        DiplomaticRelations relations = new()
+        try
         {
-            id = GetId(),
-            initiator = initiator,
-            recipient = target
-        };
-        initiator.relations.Add(target, relations);
-        target.relations.Add(initiator, relations);
+            if (initiator.relations.ContainsKey(target)) return;
+            
+            DiplomaticRelations relations = new()
+            {
+                id = GetId(),
+                initiator = initiator,
+                recipient = target
+            };
+            initiator.relations[target] = relations;
+            target.relations[initiator] = relations;
 
-        simManager.relationIds.Add(relations.id, relations);
+            simManager.relationIds.Add(relations.id, relations);            
+        } catch (Exception e)
+        {
+            GD.PushError(e);
+        }
     }
     public void BreakRelations(DiplomaticRelations relations)
     {
@@ -414,7 +420,7 @@ public class ObjectManager
         war.AddParticipant(defenderLeader, War.WarSide.DEFENDER);
         war.NameWar();
 
-        simManager.warIds.Add(war.id, war);
+        simManager.warIds.TryAdd(war.id, war);
         return war;
     }
     public void EndWar(War war)
@@ -428,7 +434,7 @@ public class ObjectManager
         } 
 
         war.dead = true; 
-        simManager.warIds.Remove(war.id);          
+        simManager.warIds.Remove(war.id, out _);          
     }
     public Ocean CreateOcean(Region[] waterRegions)
     {

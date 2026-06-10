@@ -166,6 +166,8 @@ public partial class State : Polity, ISaveable
     }
     public void FindNewRulingPop()
     {
+        //rulingPop = capital.pops.ToArray()[0];
+        //return;
         foreach (Pop pop in capital.pops)
         {
             if (pop.culture == culture)
@@ -216,7 +218,7 @@ public partial class State : Polity, ISaveable
                 // Starts a civil war
                 State leadRebel = potentialRebels[0];
                 leadRebel.sovereignty = Sovereignty.REBELLIOUS;
-                War civilWar = StateDiplomacyManager.DeclareWar(leadRebel, this, WarType.CIVIL_WAR);
+                War civilWar = objectManager.StartWar( WarType.CIVIL_WAR, leadRebel, this);
 
                 foreach (State rebel in potentialRebels)
                 {
@@ -338,7 +340,7 @@ public partial class State : Polity, ISaveable
     {
         if (region == null || regions.Contains(region)) return;
 
-        region.owner?.RemoveRegion(region);
+       // region.owner?.RemoveRegion(region);
         region.owner = this;
 
         regions.Add(region);
@@ -346,7 +348,6 @@ public partial class State : Polity, ISaveable
         foreach (Pop pop in region.pops)
         {
             pops.Add(pop);
-            //ChangePopulation(pop.workforce, pop.dependents, pop.profession.id, pop.culture);
         }
         region.conquered = true;
 
@@ -360,14 +361,13 @@ public partial class State : Polity, ISaveable
         foreach (Pop pop in region.pops)
         {
             pops.Remove(pop);
-            //ChangePopulation(-pop.workforce, -pop.dependents, pop.profession.id, pop.culture);
         }
         region.conquered = true;
     }
 
     public override int GetArmyPower()
     {
-        return (int)(manpower * (totalWealth/manpower) * (tech.militaryLevel + 1));
+        return (int)(manpower * (totalWealth/workforce) * (tech.militaryLevel + 1));
     }
     public override int GetManpower()
     {

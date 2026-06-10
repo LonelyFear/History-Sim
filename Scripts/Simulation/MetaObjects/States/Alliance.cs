@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -79,7 +80,12 @@ public partial class Alliance : Polity
     }
     public override int GetArmyPower()
     {
-        return memberStates.Sum(state => state.armyPower);
+        int ap = 0;
+        foreach (State state in memberStates)
+        {
+            ap += state.armyPower;
+        }
+        return ap;
     }
     public bool HasMember(State state)
     {
@@ -112,67 +118,9 @@ public partial class Alliance : Polity
         return mp;
     }
     public override void CountPopulation()
-    {
-        long countedP = 0;
-        long countedW = 0;
-        Dictionary<string, long> countedProfessions = [];
-        Dictionary<ulong, long> cCultures = [];
-
-        HashSet<State> borders = [];
-    
-        float countedWealth = 0;
-        float countedBaseWealth = 0;
-        int occRegions = 0;
-        Tech newAvg = new();
-        foreach (State state in memberStates)
-        {
-            newAvg.militaryLevel += state.tech.militaryLevel;
-            newAvg.societyLevel += state.tech.societyLevel;
-            newAvg.industryLevel += state.tech.industryLevel;        
-            occRegions += state.occupiedLand;
-
-            // Adds up population to state total
-            countedP += state.population;
-            countedW += state.workforce;
-            countedWealth += state.totalWealth;
-            countedBaseWealth += state.baseWealth;
-
-            foreach (State border in borderingStates)
-            {
-                if (!memberStates.Contains(border))
-                {
-                    borders.Add(border);
-                }
-            }    
-
-            CountClasses(state, countedProfessions);
-            CountCultures(state, cCultures);
-        }
-        
-        // Updates values
-        occupiedLand = occRegions;
-        borderingStates = borders;
-        totalWealth = countedWealth;
-        baseWealth = countedBaseWealth;
-        
-        foreach (var pair in countedProfessions)
-        {
-            professions[pair.Key] = pair.Value;
-        }
-        
-        cultureIds = cCultures;
-        population = countedP;
-        workforce = countedW;
-        dependents = population - workforce;
-
-        manpower = GetManpower();
-        armyPower = GetArmyPower();
-
-        // Tech
-        newAvg.militaryLevel /= Mathf.Max(memberStates.Count, 1);
-        newAvg.societyLevel /= Mathf.Max(memberStates.Count, 1);
-        newAvg.industryLevel /= Mathf.Max(memberStates.Count, 1);
-        averageTech = newAvg;
+    {        
+        regions = [..memberStates.SelectMany(state => state.regions)];
+        base.CountPopulation();
     }
 
 }

@@ -12,7 +12,7 @@ public partial class Pop
     [Key(4)] public int dependents { get; set; } = 0;
 
     [Key(5)] public float baseBirthRate { get; set; } = 0.31f;
-    [Key(6)] public float baseDeathRate { get; set; } = 0.29f - 0.05f;
+    [Key(6)] public float baseDeathRate { get; set; } = 0.29f;
 
     [Key(7)] public float targetDependencyRatio { get; set; } = 0.6f;
     [Key(8)] public float netIncome { get; set; } = 0f;
