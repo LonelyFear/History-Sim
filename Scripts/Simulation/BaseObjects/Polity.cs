@@ -81,13 +81,10 @@ public abstract partial class Polity : PopObject
                     }
 
                     // Extends our border with the state
-                    Alliance borderRealm = border.owner.GetRealm();
-                    State[] statesToEvaluate = [border.owner, ..borderRealm == null ? [] : borderRealm.memberStates];
-
+                    State[] statesToEvaluate = [border.owner, border.owner.GetLiege()];
                     foreach (State state in statesToEvaluate)
                     {
                         if (state == null) continue;
-                        
                         borders.Add(state);
                     }
                 }

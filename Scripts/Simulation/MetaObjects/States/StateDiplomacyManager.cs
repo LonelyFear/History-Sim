@@ -81,7 +81,7 @@ static class StateDiplomacyManager
         try
         {
             // All bordering or enemy states
-            List<State> states = [..state.borderingStates, ..state.enemies, GetLiege(state)];
+            List<State> states = [..state.borderingStates, ..state.enemies];
 
             foreach (State target in states)
             {
