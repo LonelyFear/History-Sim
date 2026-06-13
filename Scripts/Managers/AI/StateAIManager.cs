@@ -23,7 +23,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
-    [IgnoreMember] const float warChanceMultiplier = 0.25f;
+    [IgnoreMember] const float warChanceMultiplier = 0.05f;
     [IgnoreMember] const float allyChanceMultiplier = 0.01f;
     [IgnoreMember] const float diploChangeChance = 0.25f;
 
@@ -91,112 +91,43 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
             State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
             DiplomaticRelations relations = state.relations[enemyWarLead];
+           
 
             if (war.warLeaderIds[side] != state.id) continue;
+            bool surrendered = state.capitualated || state.sovereignty != Sovereignty.INDEPENDENT;
 
             switch (war.warType)
             {
                 case WarType.CONQUEST:
                     // Conquest Wars
-                    if (state.capitualated)
+                    if (surrendered || relations.opinion > 0 && rng.NextSingle() < 0.25f)
                     {
-                        CalcWarEnd(war, enemySide);
-                    }
-                    // Peaceful Ending
-                    if (relations.opinion > 0 && rng.NextSingle() < 0.05f)
-                    {
-                        CalcWarEnd(war);
+                        war.EndWar();
+                        relations.truce = TimeManager.YearsToTicks(5);
                     }
                     break; 
                 case WarType.CIVIL_WAR:
-
-                    bool surrender = state.capitualated;
-                    if (side == War.WarSide.AGRESSOR)
+                    if (surrendered)
                     {
-                        // Rebel
-                        foreach (State rebel in war.sideIds[side].Select(i => objectManager.GetState(i)))
+                        if (side == War.WarSide.AGRESSOR)
                         {
-                            if (!rebel.capitualated) surrender = false;
-                            break;
+                            // Rebels Defeat
+                            foreach (State rebel in war.sideIds[side].Select(id => objectManager.GetState(id)))
+                            {
+                                rebel.sovereignty = Sovereignty.PROVINCE;
+                            }                            
+                        } 
+                        else
+                        {
+                            // Government Defeat
+                            state.RemoveAllVassals();
                         }
-                        surrender = surrender || state.sovereignty != Sovereignty.REBELLIOUS;
-                    }
-
-                    if (surrender)
-                    {
-                        CalcWarEnd(war, enemySide);
+                        war.EndWar();
                         relations.truce = TimeManager.YearsToTicks(5);
                     }
                     break;
             }
-
-            /*
-            // Ends war because we dont even know who we are fightin
-            if (state.HasRelations(enemyWarLead) || !state.borderingStates.Contains(enemyWarLead))
-            {
-                //objectManager.EndWar(war);
-            }
-            */
         }
-    }
-    public void CalcWarEnd(War war, War.WarSide? victor = null)
-    {
-        lock (locker)
-        {
-            
-            foreach (War.WarSide side in war.sideIds.Keys)
-            {
-                if (victor == null) break;
-                else if (victor != side) continue;
-
-                War.WarSide enemySide = War.GetOtherSide(side);
-                List<ulong> enemyIds = [..war.sideIds[enemySide]];
-
-                switch (war.warType)
-                {
-                    case WarType.CONQUEST:
-                        foreach (ulong enemyId in enemyIds)
-                        {
-                            State enemyState = objectManager.GetState(enemyId);
-                            State[] enemyVassals = [.. enemyState.vassals];
-
-                            foreach (State enemyVassal in enemyVassals)
-                            {
-                                enemyVassal.GetOccupier()?.AddVassal(enemyVassal, Sovereignty.PUPPET);
-                            }
-
-                            if (enemyState.GetOccupier() != null && victor != null)
-                            {
-                                enemyState.GetOccupier().AddVassal(enemyState, Sovereignty.PUPPET);                            
-                            }                            
-                        }
-                    break;
-                    case WarType.CIVIL_WAR:
-                        
-                        if (side == War.WarSide.AGRESSOR)
-                        {
-                            // Rebel Perspective
-                            foreach (ulong enemyId in enemyIds)
-                            {
-                                State enemyState = objectManager.GetState(enemyId);
-                                enemyState.RemoveAllVassals(); 
-                            } 
-                        } else
-                        {
-                            // Government Perspective
-                            foreach (ulong enemyId in enemyIds)
-                            {
-                                State enemyState = objectManager.GetState(enemyId);
-                                if (enemyState.sovereignty == Sovereignty.REBELLIOUS) enemyState.sovereignty = Sovereignty.PROVINCE;
-                            } 
-                            state.stability += 0.3f;
-                        }                                        
-                    break;
-                }            
-            }            
-        }
-        objectManager.EndWar(war);
-        
     }
     public void UpdateDiplomacy(DiplomaticRelations relations)
     {
@@ -234,21 +165,18 @@ public partial class StateAIManager : UtilityAi.AiAgent
         } 
         else
         {
-            // Negative
-            if (state.CanFightState(target))
+            if (rng.NextSingle() < warChanceMultiplier)
             {
-                if (rng.NextSingle() < warChanceMultiplier)
+                if (state.CanFightState(target))
                 {
-                    objectManager.StartWar(WarType.CONQUEST, state, target); 
-                }                     
-            } 
-            else
-            {
-                // Other Forms of Agression
-                if (state.IsAlliedToState(target) && rng.NextSingle() < warChanceMultiplier)
+                    // Tries to go to war
+                    objectManager.StartWar(WarType.CONQUEST, state, target);                  
+                } 
+                else if (state.IsAlliedToState(target) && rng.NextSingle() < warChanceMultiplier)
                 {
+                    // Breaks alliance
                     state.GetAllianceOfType(AllianceType.ALLIANCE)?.RemoveMember(state);
-                }                    
+                }                 
             }
         }             
     }

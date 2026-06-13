@@ -12,7 +12,7 @@ namespace PixelHistory.Objects.Wars;
 public partial class War : NamedObject
 {
     [Key(7)] public Dictionary<WarSide, List<ulong>> sideIds = [];
-    [Key(8)] public HashSet<ulong> participantIds {get; private set;} = [];
+    [Key(8)] public HashSet<ulong?> participantIds {get; private set;} = [];
     [Key(10)] public Dictionary<WarSide, ulong> warLeaderIds = [];
     [Key(11)] public WarType warType { get; set; } = WarType.CONQUEST;
     public War() {}
@@ -61,12 +61,20 @@ public partial class War : NamedObject
         state.wars[this] = side;
         participantIds.Add(state.id);
     }
+
     public void RemoveParticipant(State state)
     {
         // Gets the side this state is on
-        WarSide side = state.wars[this];
-        
-        if (!participantIds.Remove(state.id)) return;
+        WarSide side = state.wars[this];  
+        // Checks if we can end the war
+        if (!dead && (sideIds[side].Count == 1 || warLeaderIds[side] == state.id))
+        {
+            EndWar();
+            return;
+        }
+        // Removes us from participants list if the war isnt going to end
+        // (Claim Transfer)
+        if (!dead) participantIds.Remove(state.id);
 
         // Removes enemies and sided participation
         if (sideIds[side].Remove(state.id))
@@ -82,15 +90,17 @@ public partial class War : NamedObject
                 StateDiplomacyManager.SetEnemy(enemy, state, false);
             }
         }
+        
         // Removes from participants list
         state.wars.Remove(this, out _);
 
-        // Checks if we can end the war
-        bool warEndConditions = sideIds[WarSide.AGRESSOR].Count < 1 || sideIds[WarSide.DEFENDER].Count < 1 || warLeaderIds[side] == state.id;
-        if (warEndConditions)
+        // Claims
+        foreach (Region region in state.regions)
         {
-            objectManager.EndWar(this);
-        }
+            if (participantIds.Contains(region.owner.GetOverlord().id)) {
+                region.owner.AddClaim(region);
+            }
+        }  
     }
     public int GetSideArmyPower(WarSide side)
     {
@@ -103,6 +113,18 @@ public partial class War : NamedObject
             power += state.armyPower;
         }
         return power;
+    }
+    public void EndWar()
+    {
+        dead = true;
+        foreach (State state in participantIds.ToArray().Select(objectManager.GetState))
+        {
+            RemoveParticipant(state);
+        }
+        // Clears all participants (Needed for claim transfer)
+        participantIds = [];
+
+        objectManager.ForgetWar(this);
     }
     public enum WarSide
     {

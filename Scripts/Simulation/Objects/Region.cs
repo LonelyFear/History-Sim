@@ -7,6 +7,7 @@ using MessagePack;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.Wars;
+using System.Security.Claims;
 
 [MessagePackObject(AllowPrivate = true)]
 public partial class Region : PopObject, ISaveable
@@ -49,8 +50,7 @@ public partial class Region : PopObject, ISaveable
     [Key(36)] public int landCount { get; set; }
     [Key(37)] public TerrainType terrainType { get; set; }
     
-    [Key(38)] public ulong? occupierId { get; set; }
-    
+    [Key(38)] public ulong? claimantId { get; set; }
     [Key(39)] public ulong? ownerId { get; set; }
     [Key(46)] public Dictionary<string, float> naturalResources = [];
 
@@ -108,18 +108,18 @@ public partial class Region : PopObject, ISaveable
             _owner = value;
         } 
     } 
-    [IgnoreMember] State _occupier;
-    [IgnoreMember] public State occupier { 
+    [IgnoreMember] State _claimant;
+    [IgnoreMember] public State claimant { 
         get
         {
-            if (_occupier == null && occupierId != null) 
-                _occupier = objectManager.GetState(occupierId);
-            return _occupier;
+            if (_claimant == null && claimantId != null) 
+                _claimant = objectManager.GetState(claimantId);
+            return _claimant;
         } 
         set
         {
-            occupierId = value?.id;
-            _occupier = value;
+            claimantId = value?.id;
+            _claimant = value;
         } 
     } 
 
@@ -359,13 +359,6 @@ public partial class Region : PopObject, ISaveable
             habitable = false;
         }
     }
-    public void UpdateOccupation()
-    {
-        if (owner == null || occupier == null || !GetController(false).IsEnemyWithState(occupier))
-        {
-            occupier = null;
-        }
-    }
     public void RandomStateFormation()
     {
         if (rng.NextSingle() < 0.0005f && population > 1000)
@@ -405,32 +398,19 @@ public partial class Region : PopObject, ISaveable
         }  
 
     }
-    public State GetController(bool includeOccupier = true)
-    {
-        State controller = owner;
-        
-        if (occupier != null && includeOccupier) {
-            controller = occupier;
-        }
 
-        if (controller != null && controller.sovereignty != Sovereignty.REBELLIOUS)
-        {
-            return controller.GetOverlord();
-        }        
-        return controller;
-    }   
 
     public void NeutralConquest(Region target)
     {
-        bool checks = !target.conquered && occupier == null && target != null && target.pops.Count != 0 && target.owner == null;
+        bool checks = !target.conquered && target != null && target.pops.Count != 0 && target.owner == null;
         if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
 
         long attackerPower;
-        attackerPower = owner.GetArmyPower();
+        attackerPower = owner.armyPower;
 
-        if (Battle.CalcBattle(target, attackerPower, 500))
+        if (Battle.CalcBattle(target, attackerPower, 50))
         {
-            owner.AddRegion(target);
+            owner.AddRegion(target, true);
         }
     }
 
@@ -438,26 +418,22 @@ public partial class Region : PopObject, ISaveable
     {
         if (rng.NextSingle() > 0.5f) return;
 
-        State controller = GetController();
-        State enemyController = target.GetController();
-
-        if (target == null || target.conquered || controller == null || !controller.enemies.Contains(enemyController))
+        if (target == null || target.conquered || owner == null || !owner.enemies.Contains(target.owner))
         {
             return;
         }      
         
-        State attacker = controller;
-        State enemy = enemyController;
+        State attacker = owner;
+        State enemy = target.owner;
 
         War war = attacker.GetWarWithState(enemy);
 
-        long attackerPower = war.GetSideArmyPower(attacker.wars[war]);
-        long defenderPower = (long)(war.GetSideArmyPower(enemy.wars[war]) / 0.1f);
+        long attackerPower = attacker.GetCombatPower();
+        long defenderPower = enemy.GetCombatPower();
 
         if (Battle.CalcBattle(target, attackerPower, defenderPower))
         {
-            target.occupier = controller;
-            target.conquered = true;
+            attacker.AddRegion(target, false);
         }         
     }
     
@@ -938,14 +914,14 @@ public partial class Region : PopObject, ISaveable
             // Region controller
             desc += " under the control of ";
             // Pretty straightforward
-            if (GetController() == null)
+            if (owner == null)
             {
                 desc += " no established factions.";
             } else
             {
-                if (GetController() != owner)
+                if (claimant != owner)
                 {
-                    desc += $"{GenerateUrlText(GetController(), GetController().name)} as occupied territory. ";
+                    desc += $"{GenerateUrlText(owner, owner.name)} as occupied territory. ";
                 } else
                 {
                     desc += $"{GenerateUrlText(owner, owner.name)}. ";

@@ -57,6 +57,8 @@ public partial class State : Polity, ISaveable
 
     [Key(56)] public HashSet<ulong?> enemyIds = [];
     [IgnoreMember] public HashSet<State> enemies = [];
+    [Key(57)] public HashSet<ulong?> claimIds = [];
+    [IgnoreMember] public HashSet<Region> claims = [];
     // References
     [IgnoreMember] public Culture culture;
     [IgnoreMember] Pop _rulingPop;
@@ -166,8 +168,6 @@ public partial class State : Polity, ISaveable
     }
     public void FindNewRulingPop()
     {
-        //rulingPop = capital.pops.ToArray()[0];
-        //return;
         foreach (Pop pop in capital.pops)
         {
             if (pop.culture == culture)
@@ -178,29 +178,17 @@ public partial class State : Polity, ISaveable
     }
     public void Capitualate()
     {
-        if (capital == null || capital.occupier == null){
-            timeUntilCapitulation = 12;
-            capitualated = false; 
-            return;           
-        };
+        capitualated = false; 
+        if (capital != null && capital.owner != capital.claimant){
+            capitualated = true; 
 
-        timeUntilCapitulation--;
-        if (timeUntilCapitulation > 0) return;
-
-        if (!capitualated)
-        {
-            foreach (Region region in regions)
+            capital.owner.GetOverlord().AddVassal(this, Sovereignty.PUPPET);
+            foreach (Region claim in claims)
             {
-                region.occupier ??= capital.occupier;
-            }
-            capitualated = true;
+                AddRegion(claim, true);
+            }            
         }
-    }  
-    public State GetOccupier()
-    {
-        if (!capitualated) return null;
-        return capital.occupier;
-    }      
+    } 
     public bool StateCollapse()
     {
         if (rng.NextSingle() < collapseChanceCurve.Sample(stability) * baseCollapseChance)
@@ -336,12 +324,13 @@ public partial class State : Polity, ISaveable
                 break;
         }
     }
-    public void AddRegion(Region region)
+    public void AddRegion(Region region, bool includeClaimant)
     {
         if (region == null || regions.Contains(region)) return;
 
-       // region.owner?.RemoveRegion(region);
+        region.owner?.RemoveRegion(region);
         region.owner = this;
+        if (includeClaimant) AddClaim(region);
 
         regions.Add(region);
 
@@ -350,13 +339,13 @@ public partial class State : Polity, ISaveable
             pops.Add(pop);
         }
         region.conquered = true;
-
     }
     public void RemoveRegion(Region region)
     {
         if (region == null || !regions.Remove(region)) return;
 
         region.owner = null;
+        //if (region.claimant != this) region.claimant?.AddRegion(region, true);
 
         foreach (Pop pop in region.pops)
         {
@@ -364,10 +353,38 @@ public partial class State : Polity, ISaveable
         }
         region.conquered = true;
     }
-
+    public void AddClaim(Region region)
+    {
+        if (region.claimant != this) region.claimant?.RemoveClaim(region);
+        region.claimant = this;
+        claims.Add(region);
+    }
+    public void RemoveClaim(Region region)
+    {
+        region.claimant = region.owner;
+        claims.Remove(region);
+    }
+    // Gets the power used by regions
+    public int GetCombatPower()
+    {
+        if (sovereignty == Sovereignty.INDEPENDENT)
+        {
+            return armyPower;
+        } else
+        {
+            return this.GetLiege().GetCombatPower();
+        }
+    }
     public override int GetArmyPower()
     {
-        return (int)(manpower * (totalWealth/workforce) * (tech.militaryLevel + 1));
+        float size = regions.Count;
+        float wealth = totalWealth;
+        foreach (State vassal in vassals)
+        {
+            wealth += vassal.totalWealth;
+            size += vassal.regions.Count;
+        }
+        return Mathf.RoundToInt(Math.Log10(wealth * wealth)/size * (tech.militaryLevel + 1));
     }
     public override int GetManpower()
     {

@@ -495,14 +495,13 @@ public class SimManager
 
                 // States
                 region.RandomStateFormation();
-                region.UpdateOccupation();
                 countedPerformanceInfo["State Formation Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
                 if (region.owner != null && !region.conquered)
                 {
                     Region borderToActOn = region.PickRandomBorder();
-                    if (region.frontier && region.occupier == null)
+                    if (region.frontier)
                     {
                         region.NeutralConquest(borderToActOn);
                     }
@@ -573,7 +572,7 @@ public class SimManager
                 //GD.Print(state.regions.Sum(r => r.pops.Count));
             }
             if (state.rulingPop == null) state.FindNewRulingPop();
-            if (state.regions.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null)
+            if (state.claims.Count < 1 || state.StateCollapse() || state.rulingPop == null || state.capital == null || state.capital.claimant != state)
             {
                 try
                 {

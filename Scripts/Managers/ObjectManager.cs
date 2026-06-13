@@ -186,7 +186,7 @@ public class ObjectManager
                 tickCreated = timeManager.ticks,
                 
             };
-            state.AddRegion(region);
+            state.AddRegion(region, true);
             simManager.statesIds.Add(state.id, state);      
                   
             state.AIManager = new StateAIManager(state);
@@ -205,11 +205,7 @@ public class ObjectManager
         {
             state.relations.Remove(deletedState);
             state.borderingStates.Remove(deletedState);
-        }          
-        foreach (Region region in deletedState.regions.ToArray())
-        {
-            deletedState.RemoveRegion(region);
-        }
+        }    
         foreach (ulong characterId in deletedState.characterIds.ToArray())
         {
             GetCharacter(characterId).LeaveState();
@@ -217,8 +213,19 @@ public class ObjectManager
         foreach (Alliance alliance in deletedState.alliances.ToArray())
         {
             alliance.RemoveMember(deletedState);
-        }
-
+        }      
+        foreach (Region region in deletedState.regions.ToArray())
+        {
+            if (region.claimant != region.owner)
+            {
+                region.claimant.AddRegion(region, true);
+            }
+            else deletedState.RemoveRegion(region);
+        }        
+        foreach (Region claim in deletedState.claims.ToArray())
+        {
+            deletedState.RemoveClaim(claim);
+        }      
         simManager.objectDeleted.Invoke(deletedState.id);
         simManager.statesIds.Remove(deletedState.id);
     }
@@ -423,17 +430,9 @@ public class ObjectManager
         simManager.warIds.TryAdd(war.id, war);
         return war;
     }
-    public void EndWar(War war)
+    public void ForgetWar(War war)
     {
-        //CreateHistoricalEvent([GetState(war.warLeaderIds[War.WarSide.AGRESSOR]), GetState(war.warLeaderIds[War.WarSide.DEFENDER])], EventType.WAR_END);
-        
-        foreach (ulong stateId in war.participantIds)
-        {
-            State state = GetState(stateId);
-            war.RemoveParticipant(state);           
-        } 
-
-        war.dead = true; 
+        if (!war.dead) war.EndWar();
         simManager.warIds.Remove(war.id, out _);          
     }
     public Ocean CreateOcean(Region[] waterRegions)

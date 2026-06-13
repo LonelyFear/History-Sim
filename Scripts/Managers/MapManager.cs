@@ -291,15 +291,11 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (regionOwner != null)
                     {
-                        borderId = regionOwner.GetOverlord().id;
+                        borderId = region.claimant.GetOverlord().id;
                         color = regionOwner.displayColor;
-                        if (region.occupier != null)
+                        if (region.claimant.capital == region && region.claimant.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
-                            color = region.occupier.displayColor;
-                        }
-                        if (regionOwner.capital == region && regionOwner.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
-                        {
-                            color = region.owner.capitalColor;
+                            color = region.claimant.capitalColor;
                         }
                     }                 
                 }
@@ -331,16 +327,12 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (region.owner != null)
                     {
-                        borderId = region.owner.id;
+                        borderId = region.claimant.id;
 
                         color = region.owner.displayColor;
-                        if (region.occupier != null)
+                        if (region.claimant.capital == region && includeCapital)
                         {
-                            color = region.occupier.displayColor;
-                        }
-                        if (region.owner.capital == region && includeCapital)
-                        {
-                            color = region.owner.capitalColor;
+                            color = region.claimant.capitalColor;
                         }
                     }                 
                 }
@@ -367,12 +359,12 @@ public partial class MapManager : Node2D
                 break;
             case MapModes.ALLIANCE:
                 Alliance alliance = null;
-                State overlord = null;
+                State overlord;
 
                 if (region.owner != null)
                 {
                     color = new Color(0.4f, 0.4f, 0.4f, 1);
-                    overlord = region.GetController();
+                    overlord = region.owner.GetOverlord();
                     borderId = overlord.id;
 
                     alliance = overlord.GetAllianceOfType(AllianceType.ALLIANCE);

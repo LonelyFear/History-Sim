@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection.Metadata.Ecma335;
 using Godot;
 using MessagePack;
 using PixelHistory.Objects.States.Base;
@@ -126,7 +122,7 @@ static class StateDiplomacyManager
         bool rightSovereignty = state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT;
         bool noTruce = state.relations.ContainsKey(target) && relations.truce < 1;
 
-        return rightSovereignty && noTruce && relations.opinion < -0.2f && !IsAlliedToState(state, target) && !IsEnemyWithState(state, target);
+        return rightSovereignty && noTruce && relations.opinion < -0.2f && !IsAlliedToState(state, target);
     }
     public static bool IsEnemyWithState(this State state, State otherState)
     {
@@ -205,6 +201,17 @@ static class StateDiplomacyManager
         vassal.liegeId = state.id;
         state.vassals.Add(vassal);
 
+        // Returns Territory
+        foreach (Region claim in vassal.claims)
+        {
+            if (claim.owner.GetOverlord() == state)
+            {
+                vassal.AddRegion(claim, true);
+            }
+        }
+        // Forces vassal to leave wars
+        vassal.LeaveAllWars();
+        
         // Removes our vassal's vassals
         vassal.RemoveAllVassals(); 
 

@@ -24,8 +24,11 @@ public partial class DebugLabel : Label
         {
             Position = GetGlobalMousePosition();
             Region region = selectionManager.hoveredRegion;
-            //Text = "Selected Region: " + (region == null ? "null" : region.name);
+            
             if (region != null && region.owner != null){
+                Text = "\n Claimant: " + (region.claimant == null ? "None" : region.claimant.name);
+                Text += "\n Owner: " + (region.owner == null ? "None" : region.owner.name);
+                /*
                 State state = region.owner;
                 //string leaderText = "Leader: None";
                 Text = "State: " + state.name;
@@ -45,6 +48,7 @@ public partial class DebugLabel : Label
                     GD.PushError(e);
                     AddLine("ERROR!");
                 }
+                */
 
             } else {
                 Text = "";

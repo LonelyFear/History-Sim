@@ -64,11 +64,6 @@ public abstract partial class Polity : PopObject
             countedWealth += region.wealth;
             countedBaseWealth += region.baseWealth;
 
-            if (region.occupier != null)
-            {
-                occRegions++;
-            }
-
             if (region.border)
             {
                 // Gets the states bordering this region
@@ -98,6 +93,7 @@ public abstract partial class Polity : PopObject
         // Updates values
         occupiedLand = occRegions;
         borderingStates = borders;
+        
         totalWealth = countedWealth;
         baseWealth = countedBaseWealth;
         
