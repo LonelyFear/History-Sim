@@ -19,7 +19,7 @@ config/description="Simulate thousands of years of history in real-time on your 
 config/version="a1.0.1"
 config/tags=PackedStringArray("game")
 run/main_scene="uid://bbnm5jqp5n32i"
-config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="uid://dvnuckpa177gl"
 
 [display]

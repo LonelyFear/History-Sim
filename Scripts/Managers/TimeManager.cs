@@ -257,6 +257,10 @@ public partial class TimeManager : Node
     {
         return (uint)(years * ticksPerYear);
     }
+    public static float TicksToYears(uint ticks)
+    {
+        return ticks / (float)ticksPerYear;
+    }
     public string GetStringMonth(uint tick = 0)
     {
         if (tick == 0)

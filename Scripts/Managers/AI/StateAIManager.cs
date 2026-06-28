@@ -23,7 +23,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
 
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
-    [IgnoreMember] const float warChanceMultiplier = 0.05f;
+    [IgnoreMember] const float warChanceMultiplier = 0.01f;
     [IgnoreMember] const float allyChanceMultiplier = 0.01f;
     [IgnoreMember] const float diploChangeChance = 0.25f;
 
@@ -100,7 +100,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
             {
                 case WarType.CONQUEST:
                     // Conquest Wars
-                    if (surrendered || relations.opinion > 0 && rng.NextSingle() < 0.25f)
+                    if (surrendered || relations.opinion + (TimeManager.TicksToYears(war.GetAge())/50f) > 0 && rng.NextSingle() < 0.25f)
                     {
                         war.EndWar();
                         relations.truce = TimeManager.YearsToTicks(5);

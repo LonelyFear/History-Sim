@@ -370,7 +370,12 @@ public partial class State : Polity, ISaveable
         if (sovereignty == Sovereignty.INDEPENDENT)
         {
             return armyPower;
-        } else
+        } 
+        else if (sovereignty == Sovereignty.REBELLIOUS)
+        {
+            return (int)(this.GetWarWithState(objectManager.GetState(liegeId))?.GetSideArmyPower(War.WarSide.AGRESSOR));
+        } 
+        else
         {
             return this.GetLiege().GetCombatPower();
         }
@@ -381,10 +386,12 @@ public partial class State : Polity, ISaveable
         float wealth = totalWealth;
         foreach (State vassal in vassals)
         {
+            if (vassal.sovereignty == Sovereignty.REBELLIOUS) continue;
+
             wealth += vassal.totalWealth;
             size += vassal.regions.Count;
         }
-        return Mathf.RoundToInt(Math.Log10(wealth * wealth)/size * (tech.militaryLevel + 1));
+        return (int)(Math.Log10(wealth * wealth)/size * (tech.militaryLevel + 1));
     }
     public override int GetManpower()
     {

@@ -122,7 +122,7 @@ static class StateDiplomacyManager
         bool rightSovereignty = state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT;
         bool noTruce = state.relations.ContainsKey(target) && relations.truce < 1;
 
-        return rightSovereignty && noTruce && relations.opinion < -0.2f && !IsAlliedToState(state, target);
+        return rightSovereignty && noTruce && relations.opinion < -0.2f && !IsAlliedToState(state, target) && state.borderingStates.Contains(target);
     }
     public static bool IsEnemyWithState(this State state, State otherState)
     {
