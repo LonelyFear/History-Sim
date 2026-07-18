@@ -9,7 +9,6 @@ using MessagePack;
 public class RegionGenerator
 {
     SimManager simManager;
-    ObjectManager objectManager;
     Vector2I worldSize;
     
     Dictionary<ulong, Region> regionIds;
@@ -20,7 +19,6 @@ public class RegionGenerator
     public RegionGenerator(SimManager sim)
     {
        simManager = sim;
-       objectManager = sim.objectManager;
        worldSize = sim.worldGenerator.WorldSize;
        tiles = sim.tiles;
        rng = sim.rng;
@@ -45,7 +43,7 @@ public class RegionGenerator
                 }
 
                 dict.Add(gridPos, pos);
-                objectManager.CreateRegion(pos.X, pos.Y).terrainType = tiles[pos.X, pos.Y].terrainType;
+                ObjectManager.CreateRegion(pos.X, pos.Y).terrainType = tiles[pos.X, pos.Y].terrainType;
             }            
         }  
         return dict;      
@@ -57,7 +55,7 @@ public class RegionGenerator
             for (int y = 0; y < worldSize.Y/tilesPerRegion; y++)
             {
                 // Creates a region
-                Region newRegion = objectManager.CreateRegion(x * tilesPerRegion + 1, y * tilesPerRegion + 1);
+                Region newRegion = ObjectManager.CreateRegion(x * tilesPerRegion + 1, y * tilesPerRegion + 1);
                 for (int tx = 0; tx < tilesPerRegion; tx++)
                 {
                     for (int ty = 0; ty < tilesPerRegion; ty++)
@@ -133,7 +131,7 @@ public class RegionGenerator
                     }                    
                 }
                 // Adds tile to region
-                if (closestId != null) objectManager.GetRegion(closestId).AddTile(tile);
+                if (closestId != null) ObjectManager.GetRegion(closestId).AddTile(tile);
             }
         }
 
@@ -217,7 +215,7 @@ public class RegionGenerator
                     if (nextTile.regionId == null && cell.IsLand() == nextTile.IsLand() && (cell.IsLand() || cell.terrainType == nextTile.terrainType))
                     {
                         // Adds tile to region if we can
-                        objectManager.GetRegion(cell.regionId).AddTile(nextTile);
+                        ObjectManager.GetRegion(cell.regionId).AddTile(nextTile);
                         cellsJoined.Enqueue(nextTile);
                         unassignedTiles.Remove(nextTile);
                     }
@@ -268,9 +266,9 @@ public class RegionGenerator
             
             if (tiles[rPos.X, rPos.Y].regionId == null)
             {
-                objectManager.CreateRegion(rPos.X, rPos.Y);
+                ObjectManager.CreateRegion(rPos.X, rPos.Y);
             }
-            Region r = objectManager.GetRegion(tiles[rPos.X, rPos.Y].regionId);
+            Region r = ObjectManager.GetRegion(tiles[rPos.X, rPos.Y].regionId);
             r.AddTile(tiles[pos.X, pos.Y]);
         }
     }

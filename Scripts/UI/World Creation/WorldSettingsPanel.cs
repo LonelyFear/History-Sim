@@ -3,6 +3,7 @@ using System;
 
 public partial class WorldSettingsPanel : Panel
 {
+	[Export] LineEdit nameEdit;
 	[Export] LineEdit seedEdit;
 	[Export] OptionButton sizeDropdown;
 	[Export] CheckBox heightmapCheckbox;
@@ -40,6 +41,11 @@ public partial class WorldSettingsPanel : Panel
 	}
 	public void OnStartPressed()
 	{
+		string worldName = "";
+		if (nameEdit.Text.Length < 1)
+		{
+			worldName = NameGenerator.GenerateRandomName(3, 5, false, ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
+		}
         if (!int.TryParse(seedEdit.Text, out int seed) || seed == 0)
         {
             seed = rng.Next(-99999999, 99999999);
@@ -47,15 +53,16 @@ public partial class WorldSettingsPanel : Panel
 		GetTree().Root.AddChild(GD.Load<PackedScene>("res://Scenes/game.tscn").Instantiate());
 		loadingScreen = GetNode<LoadingScreen>("/root/Game/Loading/Loading Screen");
 		
-		loadingScreen.generator = new WorldGenerator()
+		loadingScreen.worldSettings = new WorldSettings()
 		{
-			Seed = seed,
-			LargeContinents = (int)largeContinents.Value,
-			SmallContinents = (int)smallContinents.Value,
-			LandCoverage = (float)(1f - ((landCoverageDropdown.Selected + 2)/10f)),
-			generateRandomMap = !heightmapCheckbox.ButtonPressed,
-			generateRivers = riverCheckbox.ButtonPressed,
-			WorldMult = sizeDropdown.GetSelectedId()
+			worldName = worldName,
+			seed = seed,
+			largeContinents = (int)largeContinents.Value,
+			smallContinents = (int)smallContinents.Value,
+			landCoverage = 1f - ((landCoverageDropdown.Selected + 2)/10f),
+			useRandomMap = !heightmapCheckbox.ButtonPressed,
+			useRivers = riverCheckbox.ButtonPressed,
+			multiplier = sizeDropdown.GetSelectedId()			
 		};
 		GetParent().QueueFree();
 	}

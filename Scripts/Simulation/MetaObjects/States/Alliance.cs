@@ -26,7 +26,7 @@ public partial class Alliance : Polity
         get
         {
             if (_leadState == null && leadStateId != null) 
-                _leadState = objectManager.GetState(leadStateId);
+                _leadState = ObjectManager.GetState(leadStateId);
             return _leadState;
         } 
         set
@@ -43,7 +43,7 @@ public partial class Alliance : Polity
     }
     public override void LoadFromSave()
     {
-        memberStates = [..memberStateIds.Select(i => objectManager.GetState(i))];
+        memberStates = [..memberStateIds.Select(i => ObjectManager.GetState(i))];
         base.LoadFromSave();
     }
     public void SetLeader(State newLeader)
@@ -75,7 +75,7 @@ public partial class Alliance : Polity
         if (memberStates.Count < 2 || member == leadState)
         {
             Die();
-            objectManager.DeleteAlliance(this);
+            ObjectManager.DeleteAlliance(this);
         }
     }
     public override int GetArmyPower()

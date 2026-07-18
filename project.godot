@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Pixel History"
 config/description="Simulate thousands of years of history in real-time on your computer! Empires await!"
-config/version="a1.0.1"
+config/version="a1.1.1"
 config/tags=PackedStringArray("game")
 run/main_scene="uid://bbnm5jqp5n32i"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")

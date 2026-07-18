@@ -31,7 +31,7 @@ public partial class MapManager : Node2D
     [Export] public CheckBox showRegionsCheckbox;
 
     [Export(PropertyHint.Range, "1,10")] int regionResolution = 4;
-    public static ObjectManager objectManager;
+     
     // Shaders
     RenderingDevice rd = RenderingServer.GetRenderingDevice();
     RDShaderFile regionShaderFile = GD.Load<RDShaderFile>("res://Shaders/region_renderer.glsl");
@@ -359,13 +359,13 @@ public partial class MapManager : Node2D
                 break;
             case MapModes.ALLIANCE:
                 Alliance alliance = null;
-                State overlord;
-
+                State overlord; 
+                borderId = 1;
                 if (region.owner != null)
                 {
                     color = new Color(0.4f, 0.4f, 0.4f, 1);
                     overlord = region.owner.GetOverlord();
-                    borderId = overlord.id;
+                    borderId = region.claimant.GetOverlord().id;
 
                     alliance = overlord.GetAllianceOfType(AllianceType.ALLIANCE);
                     if (alliance != null)
@@ -425,7 +425,7 @@ public partial class MapManager : Node2D
                 if (region.largestCultureId != null && region.habitable)
                 {
                     borderId = (ulong)region.largestCultureId;
-                    color = objectManager.GetCulture(region.largestCultureId).color;
+                    color = ObjectManager.GetCulture(region.largestCultureId).color;
                 }
                 else if (region.habitable)
                 {
@@ -525,7 +525,7 @@ public partial class MapManager : Node2D
     public void UpdateRegionColor(int x, int y)
     {   
             
-        Region r = objectManager.GetRegion(simManager.tiles[x,y].regionId);
+        Region r = ObjectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
         Color color = GetRegionColor(r, out ulong borderId, false);

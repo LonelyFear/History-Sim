@@ -9,14 +9,12 @@ public partial class DebugLabel : Label
     [Export] MapManager map;
     [Export] SimManagerHolder simHolder;
     SimManager simManager;
-    ObjectManager objectManager;
     public override void _Ready()
     {
 		simHolder.simStartEvent += Init;
 	}
     void Init() {
         simManager = simHolder.simManager;
-        objectManager = simManager.objectManager;
     }
     public override void _Process(double delta)
     {

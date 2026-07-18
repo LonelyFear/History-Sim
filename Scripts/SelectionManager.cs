@@ -10,7 +10,6 @@ public partial class SelectionManager : Node2D
 	[Export] SimManagerHolder simHolder;
 	[Export] Button deselectButton;
 	[Export] MapManager mapManager;
-	ObjectManager objectManager;
 	SimManager simManager;
 
 	Vector2I worldSize;
@@ -29,9 +28,8 @@ public partial class SelectionManager : Node2D
 	public void Init()
 	{
 		simManager = simHolder.simManager;
-		objectManager = simManager.objectManager;
         worldSize = SimManager.worldSize;
-        ObjectManager.selectionManager = this;
+       ObjectManager.selectionManager = this;
 
 		selectionEnabled = true;
 	}
@@ -44,7 +42,7 @@ public partial class SelectionManager : Node2D
         lastHoveredRegion = hoveredRegion;
         if (hoveredPos.X >= 0 && hoveredPos.X < worldSize.X && hoveredPos.Y >= 0 && hoveredPos.Y < worldSize.Y && selectionEnabled)
         {
-            hoveredRegion = objectManager.GetRegion(hoveredPos.X, hoveredPos.Y);
+            hoveredRegion = ObjectManager.GetRegion(hoveredPos.X, hoveredPos.Y);
         }
         else
         {
@@ -97,7 +95,7 @@ public partial class SelectionManager : Node2D
 	public Culture GetSelectedCulture()
 	{
 		if (selectedRegion == null) return null;
-		return objectManager.GetCulture(selectedRegion.largestCultureId);
+		return ObjectManager.GetCulture(selectedRegion.largestCultureId);
 	}
 	public State GetSelectedState()
 	{

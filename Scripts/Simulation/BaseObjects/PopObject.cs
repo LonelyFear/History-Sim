@@ -36,7 +36,7 @@ public abstract class PopObject : NamedObject
     }
     public override void LoadFromSave()
     {
-        pops = popsIds == null ? [] : [.. popsIds.Select(p => objectManager.GetPop(p))];
+        pops = popsIds == null ? [] : [.. popsIds.Select(p => ObjectManager.GetPop(p))];
     }
 
     public virtual void GetAverageTech()

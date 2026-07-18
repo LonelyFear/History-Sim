@@ -23,8 +23,8 @@ public partial class War : NamedObject
     }
     public void NameWar()
     {
-        State agressor = objectManager.GetState(warLeaderIds[WarSide.AGRESSOR]);
-        State defender = objectManager.GetState(warLeaderIds[WarSide.DEFENDER]);
+        State agressor = ObjectManager.GetState(warLeaderIds[WarSide.AGRESSOR]);
+        State defender = ObjectManager.GetState(warLeaderIds[WarSide.DEFENDER]);
         switch (warType)
         {
             case WarType.CONQUEST:
@@ -54,7 +54,7 @@ public partial class War : NamedObject
 
         foreach (ulong enemyId in sideIds[opposingSide])
         {
-            State enemy = objectManager.GetState(enemyId);
+            State enemy = ObjectManager.GetState(enemyId);
             StateDiplomacyManager.SetEnemy(enemy, state, true);
         }
  
@@ -86,7 +86,7 @@ public partial class War : NamedObject
             // Makes it so our (former) opposition wont fight us
             foreach (ulong enemyId in sideIds[opposingSide])
             {
-                State enemy = objectManager.GetState(enemyId);
+                State enemy = ObjectManager.GetState(enemyId);
                 StateDiplomacyManager.SetEnemy(enemy, state, false);
             }
         }
@@ -107,7 +107,7 @@ public partial class War : NamedObject
         int power = 0;
         foreach (ulong parcipant in sideIds[side])
         {
-            State state = objectManager.GetState(parcipant);
+            State state = ObjectManager.GetState(parcipant);
             if (state.capitualated) continue;
             
             power += state.armyPower;
@@ -117,14 +117,14 @@ public partial class War : NamedObject
     public void EndWar()
     {
         dead = true;
-        foreach (State state in participantIds.ToArray().Select(objectManager.GetState))
+        foreach (State state in participantIds.ToArray().Select(ObjectManager.GetState))
         {
             RemoveParticipant(state);
         }
         // Clears all participants (Needed for claim transfer)
         participantIds = [];
 
-        objectManager.ForgetWar(this);
+        ObjectManager.ForgetWar(this);
     }
     public enum WarSide
     {

@@ -33,8 +33,8 @@ public abstract partial class Polity : PopObject
     public override void LoadFromSave()
     {
         base.LoadFromSave();
-        regions = [.. regionIds.Select(p => objectManager.GetRegion(p))];
-        borderingStates = [..borderingStateIds.Select(p => objectManager.GetState(p))];
+        regions = [.. regionIds.Select(p => ObjectManager.GetRegion(p))];
+        borderingStates = [..borderingStateIds.Select(p => ObjectManager.GetState(p))];
     }
 
     public override void CountPopulation()

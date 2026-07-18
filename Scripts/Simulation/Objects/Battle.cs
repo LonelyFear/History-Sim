@@ -3,7 +3,7 @@ using Godot;
 using PixelHistory.Objects.States.Base;
 
 public class Battle{
-    public static ObjectManager objectManager;
+     
     public Region location;
     public State attacker;
     public State defender;

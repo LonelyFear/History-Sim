@@ -8,8 +8,7 @@ using PixelHistory.Objects.Wars;
 
 namespace PixelHistory.Objects.States.Diplomacy;
 static class StateDiplomacyManager
-{
-    [IgnoreMember] public static ObjectManager objectManager;
+{ 
     // Diplomacy
     // Constants
     //[IgnoreMember] const float threatAdjustmentRate = 0.001f; // Rate of threat adjustment for lerping threat
@@ -67,7 +66,7 @@ static class StateDiplomacyManager
     {
         foreach (ulong stateId in stateIds)
         {
-            SetEnemy(state, objectManager.GetState(stateId), isEnemy);     
+            SetEnemy(state, ObjectManager.GetState(stateId), isEnemy);     
         }
     }
 
@@ -82,10 +81,7 @@ static class StateDiplomacyManager
             foreach (State target in states)
             {
                 if (target == state || target == null || state.relations.ContainsKey(target)) continue;
-                lock (objectManager)
-                {
-                    objectManager.EstablishRelations(state, target);
-                }
+                ObjectManager.EstablishRelations(state, target);
             }            
         } catch (Exception e)
         {
@@ -175,7 +171,7 @@ static class StateDiplomacyManager
         if (state.vassals.Count < 1) return;
 
         if (state.sovereignty == Sovereignty.INDEPENDENT && GetRealm(state) == null){
-            objectManager.CreateAlliance(state, AllianceType.REALM);
+            ObjectManager.CreateAlliance(state, AllianceType.REALM);
         }
 
         foreach (State vassal in state.vassals.ToArray())
@@ -239,7 +235,7 @@ static class StateDiplomacyManager
     }
     public static State GetLiege(this State state)
     {
-        return objectManager.GetState(state.liegeId);
+        return ObjectManager.GetState(state.liegeId);
     }
     public static State GetOverlord(this State state)
     {

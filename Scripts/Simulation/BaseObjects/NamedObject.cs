@@ -13,7 +13,7 @@ public abstract class NamedObject
     [Key(1)] public uint tickDestroyed { get; set; } = 0;
     [Key(2)] public bool dead = false;
     [IgnoreMember] public static SimManager simManager;
-    [IgnoreMember] public static ObjectManager objectManager;
+    [IgnoreMember]  
     [Key(3)] public ulong id { get; set; }
     [Key(4)] public string name { get; set; }
     [Key(5)] public string description { get; set; }
@@ -65,7 +65,7 @@ public abstract class NamedObject
         text = "";
         foreach (ulong eventId in eventIds)
         {
-            HistoricalEvent historicalEvent = objectManager.GetHistoricalEvent(eventId);
+            HistoricalEvent historicalEvent = ObjectManager.GetHistoricalEvent(eventId);
             text += $"{historicalEvent.GetEventText()}\n";
         }
         return text;
@@ -77,22 +77,22 @@ public abstract class NamedObject
         switch (GetTypeFromString(fullId[..3]))
         {
 			case ObjectType.STATE:
-				obj = objectManager.GetState(id);
+				obj = ObjectManager.GetState(id);
 				break;
 			case ObjectType.REGION:
-				obj = objectManager.GetRegion(id);
+				obj = ObjectManager.GetRegion(id);
 				break;
 			case ObjectType.CULTURE:
-				obj = objectManager.GetCulture(id);
+				obj = ObjectManager.GetCulture(id);
 				break;
 			case ObjectType.CHARACTER:
-				obj = objectManager.GetCharacter(id);
+				obj = ObjectManager.GetCharacter(id);
 				break;
 			case ObjectType.WAR:
-				obj = objectManager.GetWar(id);
+				obj = ObjectManager.GetWar(id);
 				break;
 			case ObjectType.ALLIANCE:
-				obj = objectManager.GetAlliance(id);
+				obj = ObjectManager.GetAlliance(id);
 				break;
             default:
                 obj = null;

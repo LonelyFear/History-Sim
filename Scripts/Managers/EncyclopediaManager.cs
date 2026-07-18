@@ -22,7 +22,6 @@ public partial class EncyclopediaManager : CanvasLayer
 	[Export] SelectionManager selectionManager;
 	[Export] MapManager mapManager;
 	public SimManager simManager;
-	public ObjectManager objectManager;
 	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = [];
 
 	// Called when the node enters the scene tree for the first time.
@@ -38,7 +37,6 @@ public partial class EncyclopediaManager : CanvasLayer
 	public void OnSimStart()
 	{
 		simManager = simHolder.simManager;
-		objectManager = simManager.objectManager;
 		simManager.objectDeleted += OnObjectDeleted;
 	}
 	public void OpenEncyclopedia()

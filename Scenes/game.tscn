@@ -112,8 +112,9 @@ material = SubResource("ShaderMaterial_mucmn")
 scale = Vector2(16, 16)
 centered = false
 
-[node name="Simulation" type="Node" parent="." unique_id=762724169]
+[node name="Simulation" type="Node" parent="." unique_id=762724169 node_paths=PackedStringArray("selectionManager")]
 script = ExtResource("7_22asu")
+selectionManager = NodePath("../SelectionManager")
 
 [node name="Terrain Map" type="Node2D" parent="." unique_id=1639461542 node_paths=PackedStringArray("simHolder")]
 z_index = -10
@@ -198,7 +199,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="TopPanel" type="Panel" parent="UI/Bars" unique_id=1976200673 node_paths=PackedStringArray("dateLabel", "ageLabel", "populationLabel", "warsLabel", "statesLabel", "simHolder", "timeManager")]
+[node name="TopPanel" type="Panel" parent="UI/Bars" unique_id=1976200673 node_paths=PackedStringArray("dateLabel", "nameLabel", "ageLabel", "populationLabel", "warsLabel", "statesLabel", "simHolder", "timeManager")]
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -208,6 +209,7 @@ mouse_force_pass_scroll_events = false
 theme = ExtResource("4_exi56")
 script = ExtResource("16_22asu")
 dateLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/TopTopBar/YearLabel")
+nameLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/TopTopBar/NameLabel")
 ageLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/TopTopBar/AgeLabel")
 populationLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/BottomTopBar/PopulationLabel")
 warsLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/BottomTopBar/WarsLabel")
@@ -244,6 +246,17 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "Year 47"
 
+[node name="HSeparator3" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=1429737548]
+layout_mode = 2
+theme_override_constants/separation = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
+
+[node name="NameLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=1079185909]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 40
+text = "World of [NAME]"
+
 [node name="HSeparator" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=84700209]
 layout_mode = 2
 theme_override_constants/separation = 2
@@ -253,7 +266,7 @@ theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 40
-text = "Age of Tribes"
+text = "Age of History"
 
 [node name="HSeparator2" type="VSeparator" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TopTopBar" unique_id=1257996594]
 layout_mode = 2
@@ -263,7 +276,6 @@ theme_override_styles/separator = SubResource("StyleBoxLine_fkdbe")
 [node name="BottomTopBar" type="HBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=55859062]
 layout_mode = 2
 theme_override_constants/separation = 10
-alignment = 2
 
 [node name="PopulationLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/BottomTopBar" unique_id=1046299775]
 layout_mode = 2

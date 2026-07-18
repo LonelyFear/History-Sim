@@ -35,7 +35,6 @@ namespace StateMachines
             this.key = key;
         }
         [IgnoreMember] public EState key {get; private set;}
-        [IgnoreMember] public static ObjectManager objectManager;
         [IgnoreMember] public static SimManager simManager;
         [IgnoreMember] public static Random rng = new Random();
         

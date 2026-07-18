@@ -30,30 +30,37 @@ public class SimManager
     // Not Exported
     [IgnoreMember] public SimManagerHolder simHolder;
     [IgnoreMember] public Node2D terrainMap;
-    public ObjectManager objectManager = new ObjectManager();
+
+    // Config
+    public string worldName = "";
     public uint tick;
     public RegionStyle regionStyle = RegionStyle.Square;
     public bool useNewEconomy = false;
-    public Tile[,] tiles;
-
-    [IgnoreMember] public List<Region> habitableRegions = [];
-    [IgnoreMember] public List<Region> paintedRegions = [];
-    [IgnoreMember] public static Vector2I worldSize;
-    [IgnoreMember] public WorldGenerator worldGenerator;
-    [IgnoreMember] public MapManager mapManager;
 
     // Population
-    
     public long worldPopulation { get; set; } = 0;
     public long highestPopulation { get; set; } = 0;
     public uint populatedRegions;
     public float maxWealth = 0;
     public float maxTradeWeight = 0;
     public Tech highestTech;
-    public Tech averageTech;
+    public Tech averageTech; 
+       
+    // Region Lists
+    [IgnoreMember] public List<Region> habitableRegions = [];
+    [IgnoreMember] public List<Region> paintedRegions = [];
+    public Tile[,] tiles; 
+
+    // Map
+    [IgnoreMember] public static Vector2I worldSize;
+    [IgnoreMember] public WorldGenerator worldGenerator;
+    [IgnoreMember] public MapManager mapManager;
+
+
 
     // Lists
     // Saved Data
+       
     [IgnoreMember] public Dictionary<ulong, Region> regionIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Pop> popsIds { get; set; } = [];
     [IgnoreMember] public Dictionary<ulong, Culture> cultureIds { get; set; } = [];
@@ -70,7 +77,7 @@ public class SimManager
 
     // Misc
     public uint currentBatch = 2;
-    public ulong currentId = 0;
+    public ulong currentId = 20;
     [IgnoreMember] public bool simLoadedFromSave = false;
 
     [IgnoreMember] public Random rng = new Random();
@@ -84,6 +91,8 @@ public class SimManager
 
     // Constants
     [IgnoreMember] public const int regionGlobalWidth = 16;
+
+    // Performance
     [IgnoreMember] public Dictionary<string, double> stepPerformanceInfo = new(){
         {"Pops", 0},
         {"Regions", 0},
@@ -96,6 +105,7 @@ public class SimManager
     [IgnoreMember] public Dictionary<string, double> statePerformanceInfo = [];
     [IgnoreMember] public Dictionary<string, double> miscPerformanceInfo = [];
     [IgnoreMember] public Vector2 terrainMapScale;
+
     public Vector2I GlobalToTilePos(Vector2 pos)
     {
         return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth));
@@ -256,35 +266,28 @@ public class SimManager
     }
     void AssignSimManager()
     {
+       ObjectManager.simManager = this;
+       ObjectManager.timeManager = timeManager;
+       ObjectManager.selectionManager = simHolder.selectionManager;
+
         terrainMapScale = terrainMap.Scale;
 
         HistoricalEvent.timeManager = timeManager;
 
-        StateDiplomacyManager.objectManager = objectManager;
+       ObjectManager.simManager = this;
+       ObjectManager.timeManager = timeManager;
 
-        ObjectManager.simManager = this;
-        ObjectManager.timeManager = timeManager;
-
-        MapManager.objectManager = objectManager;
-
-        Battle.objectManager = objectManager;
-
-        StateAIManager.objectManager = objectManager;
         StateAIManager.simManager = this;
         
-        StateAIManager.objectManager = objectManager;
         StateAIManager.simManager = this;
 
         NamedObject.simManager = this;
-        NamedObject.objectManager = objectManager;
         
         PopObject.timeManager = timeManager;
 
-        Pop.objectManager = objectManager;
         Character.sim = this;
 
         BaseEncyclopediaTab.simManager = this;
-        BaseEncyclopediaTab.objectManager = objectManager;
     }
 
     public void OnWorldgenFinished()
@@ -323,8 +326,8 @@ public class SimManager
             {
                 long startingPopulation = rng.Next(600, 1200);
                 
-                Culture culture = objectManager.CreateCulture();
-                objectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, "farmer");
+                Culture culture = ObjectManager.CreateCulture();
+                ObjectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, "farmer");
             }
         }
     }
@@ -348,7 +351,7 @@ public class SimManager
             // Deletions
             if (pop.region == null || pop.population <= 1)
             {
-                objectManager.DestroyPop(pop);
+                ObjectManager.DestroyPop(pop);
             }
         }
         countedPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
@@ -576,7 +579,7 @@ public class SimManager
             {
                 try
                 {
-                    objectManager.DeleteState(state);
+                    ObjectManager.DeleteState(state);
                 } catch (Exception e)
                 {
                     GD.PushError(e);                 
@@ -656,7 +659,7 @@ public class SimManager
 
             if (culture.dead)
             {
-                objectManager.DeleteCulture(culture);
+                ObjectManager.DeleteCulture(culture);
                 continue;
             }
 
@@ -686,7 +689,7 @@ public class SimManager
         {
             Alliance alliance = pair.Value;
             if (alliance.leadState == null) alliance.Die();
-            if (alliance.dead) objectManager.DeleteAlliance(alliance);
+            if (alliance.dead) ObjectManager.DeleteAlliance(alliance);
         }
         Partitioner<Alliance> partitioner = Partitioner.Create(allianceIds.Values);
         Parallel.ForEach(partitioner, alliance =>
@@ -708,7 +711,7 @@ public class SimManager
                     // Deletes characters after 200 years if they are dead
                     if (timeManager.GetYear(character.GetAge()) > 200)
                     {
-                        objectManager.DeleteCharacter(character);
+                        ObjectManager.DeleteCharacter(character);
                     }
                     
                     continue;

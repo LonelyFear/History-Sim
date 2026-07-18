@@ -34,7 +34,7 @@ public partial class PolityTab : BaseEncyclopediaTab
 
             foreach (var cultureSizePair in polity.cultureIds.OrderByDescending(pair => pair.Value))
             {
-                Culture culture = objectManager.GetCulture(cultureSizePair.Key);
+                Culture culture = ObjectManager.GetCulture(cultureSizePair.Key);
                 long localPopulation = cultureSizePair.Value;
                 
                 // Skips if the culture is too small
@@ -61,7 +61,7 @@ public partial class PolityTab : BaseEncyclopediaTab
 		
 		foreach (var pair in polity.cultureIds)
 		{
-			Culture culture = objectManager.GetCulture(pair.Key);
+			Culture culture = ObjectManager.GetCulture(pair.Key);
 			culturesChart.AddElement(culture.name, pair.Value, culture.color);
 		}
 		//culturesChart.AddElement("Placeholder Culture So Pie Chart Works-ism", 1f, Color.FromString("Red", new()));

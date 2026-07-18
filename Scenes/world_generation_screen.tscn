@@ -33,7 +33,7 @@ offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
 
-[node name="WorldSettingsPanel" type="Panel" parent="." unique_id=1921510254 node_paths=PackedStringArray("seedEdit", "sizeDropdown", "heightmapCheckbox", "riverCheckbox", "backButton", "generateWorldButton", "largeContinents", "smallContinents", "landCoverageDropdown")]
+[node name="WorldSettingsPanel" type="Panel" parent="." unique_id=1921510254 node_paths=PackedStringArray("nameEdit", "seedEdit", "sizeDropdown", "heightmapCheckbox", "riverCheckbox", "backButton", "generateWorldButton", "largeContinents", "smallContinents", "landCoverageDropdown")]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.2
@@ -43,6 +43,7 @@ anchor_bottom = 0.95
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_4g6c4")
+nameEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/NameContainer/Name")
 seedEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer/Seed")
 sizeDropdown = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer/WorldSize")
 heightmapCheckbox = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/EarthHeightmapButton")
@@ -94,6 +95,32 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
+[node name="NameContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=1003717755]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/NameContainer" unique_id=976845875]
+layout_mode = 2
+tooltip_text = "The seed of the world. Must be in numbers only."
+mouse_filter = 0
+mouse_default_cursor_shape = 16
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 40
+text = "World Name: "
+
+[node name="Name" type="LineEdit" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/NameContainer" unique_id=456948078]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "The seed of the world. Must be in numbers only."
+focus_mode = 1
+theme = ExtResource("2_ktv3r")
+theme_override_font_sizes/font_size = 40
+placeholder_text = "Leave Empty for Random"
+max_length = 10
+keep_editing_on_text_submit = true
+context_menu_enabled = false
+emoji_menu_enabled = false
+virtual_keyboard_type = 2
+
 [node name="SeedContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=998148752]
 layout_mode = 2
 
@@ -104,7 +131,7 @@ mouse_filter = 0
 mouse_default_cursor_shape = 16
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
-text = "Seed: "
+text = "World Seed: "
 
 [node name="Seed" type="LineEdit" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer" unique_id=1876541901]
 layout_mode = 2

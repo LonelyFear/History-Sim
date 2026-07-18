@@ -7,7 +7,7 @@ public partial class LoadingScreen : Control
     [Export] SimManagerHolder simHolder;
     [Export] StreamlineRenderer streamlineRenderer;
     Task task;
-    SimManager sim = new SimManager();
+    SimManager sim;
     TimeManager time;
     GameUI ui;
     Label splash;
@@ -17,8 +17,8 @@ public partial class LoadingScreen : Control
     bool firstFrameDone = false;
     public string savePath = null;
     TerrainMap map;
-    
-    public WorldGenerator generator;
+    public WorldSettings worldSettings;
+    WorldGenerator generator = null;
     public override void _Ready()
     {
         map = GetNode<TerrainMap>("/root/Game/Terrain Map");
@@ -31,12 +31,34 @@ public partial class LoadingScreen : Control
         GetNode<TextureProgressBar>("ProgressBar").Value = 0;
         AssetManager.LoadAssets();
 	}
+    public void LoadWorldSettings()
+    {
+        // Assigns stats to generator
+        GD.Print(worldSettings.seed);
+        generator = new WorldGenerator()
+        {
+            Seed = worldSettings.seed,
+            LargeContinents = worldSettings.largeContinents,
+            SmallContinents = worldSettings.smallContinents,
+            LandCoverage = worldSettings.landCoverage,
+            generateRandomMap = worldSettings.useRandomMap,
+            generateRivers = worldSettings.useRivers,
+            WorldMult = worldSettings.multiplier       
+        };
+        
+        // Gives world name
+        sim = new SimManager()
+        {
+            worldName = worldSettings.worldName
+        };        
+    }
     public override void _Process(double delta)
     {
         try
         {
             if (!firstFrameDone)
             {
+                LoadWorldSettings();
                 if (savePath != null && DirAccess.Open(savePath) != null)
                 {
                     WorldGenerator loadedWorld = WorldGenerator.LoadFromSave(savePath);

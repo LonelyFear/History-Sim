@@ -65,27 +65,39 @@ public static class NameGenerator
         }
         return demonym.Capitalize();
     }
-    public static string GenerateRegionName(Region region)
+    public static string GenerateRandomName(int minLength, int maxLength, bool feminine, string[] suffixes, bool suffixesOnlyFem = false)
     {
         Random rng = new Random();
 
         string[] patterns = ["CV", "CVC", "VC"];
-        string[] suffixes = ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"];
 
         string consonants = "bcdfghjklmnpqrstvwxyz";
+        if (feminine)
+        {
+            consonants = "bdfghjklmnprstvwyz";
+        }    
 
         string name = "";
-        for (int i = 0; i < rng.Next(2, 4); i++)
+        for (int i = 0; i < rng.Next(minLength, maxLength); i++)
         {
             name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
         }
-        name += suffixes[rng.Next(0, suffixes.Length - 1)];
-
         for (int c = 0; c < name.Length; c++)
         {
             if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
             name = name.Remove(c, 1);
-        }
+        }  
+
+        if (suffixes.Length > 0 && (!feminine || suffixesOnlyFem))
+        {
+            name += suffixes[rng.Next(0, suffixes.Length - 1)];
+        }  
+
+        return name.Capitalize();    
+    }
+    public static string GenerateRegionName(Region region)
+    {
+        string name = GenerateRandomName(2, 4, false, ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
         // Location Specific Names
         switch (region.terrainType)
         {
@@ -107,88 +119,16 @@ public static class NameGenerator
                 name = GetDemonym(name) + " Sea";
                 break;
         }
-        name = name.Capitalize();
-
         return name;        
     }
-    public static string GenerateOceanName(Ocean ocean)
-    {
-        Random rng = new Random();
 
-        string[] patterns = ["CV", "CVC", "VC"];
-        string[] suffixes = ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"];
-
-        string consonants = "bcdfghjklmnpqrstvwxyz";
-
-        string name = "";
-        for (int i = 0; i < rng.Next(2, 4); i++)
-        {
-            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
-        }
-        name += suffixes[rng.Next(0, suffixes.Length - 1)];
-
-        for (int c = 0; c < name.Length; c++)
-        {
-            if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
-            name = name.Remove(c, 1);
-        }
-        
-        // Location Specific Names
-        if (ocean.waterRegions.Count < 20)
-        {
-            name = $"{GetDemonym(name)} Sea";
-        } 
-        else
-        {
-            name = $"{GetDemonym(name)} Ocean";
-        }
-        name = name.Capitalize();
-
-        return name;        
-    }
     public static string GenerateCultureName()
     {
-        string name = "";
-        bool feminine = rng.Next(2) == 0;
-
-        string consonants = "bcdfghjklmnpqrstvwxyz";
-        if (feminine)
-        {
-            consonants = "bdfghjklmnprstvwyz";
-        }    
-
-        string[] patterns = ["CV", "CVC", "VC"];
-        for (int i = 0; i < rng.Next(2, 4); i++)
-        {
-            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
-        }   
-
-        return GetDemonym(name).Capitalize();
+        return GetDemonym(GenerateRandomName(2, 3, rng.Next(2) == 0, []).Capitalize());
     }
     public static string GenerateCharacterName(bool feminine = false)
     {
-        Random rng = new Random();
-
-        //string[] syllables = File.ReadAllLines("Data/Names/NameSyllables.txt");
-        string[] patterns = ["CV", "CVC", "VC"];
-        string[] feminineSuffixes = ["a", "ia", "ina", "elle", "ara", "essa", "ora", "ina", "ette"];
-        string consonants = "bcdfghjklmnpqrstvwxyz";
-        if (feminine)
-        {
-            consonants = "bdfghjklmnprstvwyz";
-        }
-        string name = "";
-        for (int i = 0; i < rng.Next(2, 3); i++)
-        {
-            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
-        }
-        if (feminine)
-        {
-            name += feminineSuffixes[rng.Next(0, feminineSuffixes.Length - 1)];
-        }
-        name = name.Capitalize();
-
-        return name;
+        return GenerateRandomName(2, 3, feminine, ["a", "ia", "ina", "elle", "ara", "essa", "ora", "ina", "ette"], true);
     }
     public static void UpdateAllianceName(Alliance alliance)
     {

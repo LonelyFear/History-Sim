@@ -5,12 +5,10 @@ using Godot;
 public class OceanGenerator
 {
     public SimManager simManager;
-    public ObjectManager objectManager;
 
     public OceanGenerator(SimManager sim)
     {
         simManager = sim;
-        objectManager = simManager.objectManager;
     }
 
     public void GenerateOceans()
@@ -42,7 +40,7 @@ public class OceanGenerator
                     }
                 }
             }
-            objectManager.CreateOcean([..oceanRegions]);
+            ObjectManager.CreateOcean([..oceanRegions]);
         }
     }
 }

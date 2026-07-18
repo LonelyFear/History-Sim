@@ -16,7 +16,6 @@ namespace PixelHistory.Objects.States.AI;
 public partial class StateAIManager : UtilityAi.AiAgent
 {
     [IgnoreMember] private readonly object locker = new object();
-    [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] public static SimManager simManager;
     [Key(0)] public ulong? stateId { get; set; }  
     [Key(2)] int ticks { get; set; } = 0;
@@ -36,7 +35,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         get
         {
             if (_state == null && stateId != null) 
-                _state = objectManager.GetState(stateId);
+                _state = ObjectManager.GetState(stateId);
             return _state;
         } 
         set
@@ -89,7 +88,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
             War.WarSide side = pair.Value;
             War.WarSide enemySide = War.GetOtherSide(side);
 
-            State enemyWarLead = objectManager.GetState(war.warLeaderIds[enemySide]);
+            State enemyWarLead = ObjectManager.GetState(war.warLeaderIds[enemySide]);
             DiplomaticRelations relations = state.relations[enemyWarLead];
            
 
@@ -112,7 +111,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
                         if (side == War.WarSide.AGRESSOR)
                         {
                             // Rebels Defeat
-                            foreach (State rebel in war.sideIds[side].Select(id => objectManager.GetState(id)))
+                            foreach (State rebel in war.sideIds[side].Select(id => ObjectManager.GetState(id)))
                             {
                                 rebel.sovereignty = Sovereignty.PROVINCE;
                             }                            
@@ -146,7 +145,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 Alliance ourAlliance = state.GetAllianceOfType(AllianceType.ALLIANCE);
                 if (ourAlliance == null && target.GetAllianceOfType(AllianceType.ALLIANCE) == null)
                 {
-                    Alliance newAlliance = objectManager.CreateAlliance(target, AllianceType.ALLIANCE);
+                    Alliance newAlliance = ObjectManager.CreateAlliance(target, AllianceType.ALLIANCE);
                     newAlliance.AddMember(state);                        
                 } 
                 else if (ourAlliance == null)
@@ -170,7 +169,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 if (state.CanFightState(target))
                 {
                     // Tries to go to war
-                    objectManager.StartWar(WarType.CONQUEST, state, target);                  
+                    ObjectManager.StartWar(WarType.CONQUEST, state, target);                  
                 } 
                 else if (state.IsAlliedToState(target) && rng.NextSingle() < warChanceMultiplier)
                 {

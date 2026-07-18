@@ -36,7 +36,6 @@ public partial class State : Polity, ISaveable
     [Key(42)] public List<ulong?> characterIds = [];
     [Key(43)] public float stability = 1;
     [Key(45)] public uint timeAsVassal = 0;
-    [IgnoreMember] int timeUntilCapitulation = 12;
     [IgnoreMember] const float stabChangeChance = 0.01f;
     [IgnoreMember] const float baseCollapseChance = 0.01f;
     [IgnoreMember] Curve collapseChanceCurve = GD.Load<Curve>("res://Curves/Simulation/CollapseChanceCurve.tres");
@@ -66,7 +65,7 @@ public partial class State : Polity, ISaveable
         get
         {
             if (_rulingPop == null && rulingPopId != null) 
-                _rulingPop = objectManager.GetPop(rulingPopId);
+                _rulingPop = ObjectManager.GetPop(rulingPopId);
             return _rulingPop;
         } 
         set
@@ -82,7 +81,7 @@ public partial class State : Polity, ISaveable
         get
         {
             if (_leader == null && leaderId != null) 
-                _leader = objectManager.GetCharacter(leaderId);
+                _leader = ObjectManager.GetCharacter(leaderId);
             return _leader;
         } 
         set
@@ -96,7 +95,7 @@ public partial class State : Polity, ISaveable
         get
         {
             if (_lastLeader == null && lastLeaderId != null) 
-                _lastLeader = objectManager.GetCharacter(lastLeaderId);
+                _lastLeader = ObjectManager.GetCharacter(lastLeaderId);
             return _lastLeader;
         } 
         set
@@ -110,7 +109,7 @@ public partial class State : Polity, ISaveable
         get
         {
             if (_capital == null && capitalId != null) 
-                _capital = objectManager.GetRegion(capitalId);
+                _capital = ObjectManager.GetRegion(capitalId);
             return _capital;
         } 
         set
@@ -132,19 +131,19 @@ public partial class State : Polity, ISaveable
     public override void LoadFromSave()
     {
         base.LoadFromSave();
-        vassals = [..vassalIds.Select(objectManager.GetState)];
-        alliances = [..allianceIds.Select(objectManager.GetAlliance)];
-        enemies = [..enemyIds.Select(objectManager.GetState)];
-        wars = new Dictionary<War, War.WarSide>(warIds.Select(pair => new KeyValuePair<War, War.WarSide>(objectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
+        vassals = [..vassalIds.Select(ObjectManager.GetState)];
+        alliances = [..allianceIds.Select(ObjectManager.GetAlliance)];
+        enemies = [..enemyIds.Select(ObjectManager.GetState)];
+        wars = new Dictionary<War, War.WarSide>(warIds.Select(pair => new KeyValuePair<War, War.WarSide>(ObjectManager.GetWar(pair.Key), pair.Value)).ToDictionary());
         foreach (ulong relationId in relationIds)
         {
             DiplomaticRelations relation = simManager.relationIds[relationId];
             if (relation.initiatorId == id)
             {
-                relations.Add(objectManager.GetState(relation.recipientId), relation);
+                relations.Add(ObjectManager.GetState(relation.recipientId), relation);
             } else
             {
-                relations.Add(objectManager.GetState(relation.initiatorId), relation); 
+                relations.Add(ObjectManager.GetState(relation.initiatorId), relation); 
             }
         }
     }
@@ -206,7 +205,7 @@ public partial class State : Polity, ISaveable
                 // Starts a civil war
                 State leadRebel = potentialRebels[0];
                 leadRebel.sovereignty = Sovereignty.REBELLIOUS;
-                War civilWar = objectManager.StartWar( WarType.CIVIL_WAR, leadRebel, this);
+                War civilWar = ObjectManager.StartWar( WarType.CIVIL_WAR, leadRebel, this);
 
                 foreach (State rebel in potentialRebels)
                 {
@@ -273,7 +272,7 @@ public partial class State : Polity, ISaveable
                 // Right now just has a character with the same last name of the last guy
                 string lastName = lastLeader == null ? NameGenerator.GenerateCharacterName() : lastLeader.lastName;
 
-                newLeader = objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
+                newLeader = ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
                 
                 break;
             case GovernmentType.AUTOCRACY:
@@ -283,7 +282,7 @@ public partial class State : Polity, ISaveable
         if (newLeader != null)
         {
             SetLeader(newLeader);
-            objectManager.CreateHistoricalEvent([this, newLeader], EventType.SUCCESSION);
+            ObjectManager.CreateHistoricalEvent([this, newLeader], EventType.SUCCESSION);
         }
     }
     public void SetLeader(Character character)
@@ -373,7 +372,7 @@ public partial class State : Polity, ISaveable
         } 
         else if (sovereignty == Sovereignty.REBELLIOUS)
         {
-            return (int)(this.GetWarWithState(objectManager.GetState(liegeId))?.GetSideArmyPower(War.WarSide.AGRESSOR));
+            return (int)(this.GetWarWithState(ObjectManager.GetState(liegeId))?.GetSideArmyPower(War.WarSide.AGRESSOR));
         } 
         else
         {

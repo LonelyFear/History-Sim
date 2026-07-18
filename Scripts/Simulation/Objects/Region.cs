@@ -71,7 +71,7 @@ public partial class Region : PopObject, ISaveable
         get
         {
             if (_tradeZone == null && tradeZoneId != null) 
-                _tradeZone = objectManager.GetTradeZone(tradeZoneId);
+                _tradeZone = ObjectManager.GetTradeZone(tradeZoneId);
             return _tradeZone;
         } 
         set
@@ -85,7 +85,7 @@ public partial class Region : PopObject, ISaveable
         get
         {
             if (_tradeLink == null && tradeLinkId != null) 
-                _tradeLink = objectManager.GetRegion(tradeLinkId);
+                _tradeLink = ObjectManager.GetRegion(tradeLinkId);
             return _tradeLink;
         } 
         set
@@ -99,7 +99,7 @@ public partial class Region : PopObject, ISaveable
         get
         {
             if (_owner == null && ownerId != null) 
-                _owner = objectManager.GetState(ownerId);
+                _owner = ObjectManager.GetState(ownerId);
             return _owner;
         } 
         set
@@ -113,7 +113,7 @@ public partial class Region : PopObject, ISaveable
         get
         {
             if (_claimant == null && claimantId != null) 
-                _claimant = objectManager.GetState(claimantId);
+                _claimant = ObjectManager.GetState(claimantId);
             return _claimant;
         } 
         set
@@ -146,7 +146,7 @@ public partial class Region : PopObject, ISaveable
     public override void LoadFromSave()
     {
         base.LoadFromSave();
-        linkedRegions = [..linkedRegionIds.Select(r => objectManager.GetRegion(r))];
+        linkedRegions = [..linkedRegionIds.Select(r => ObjectManager.GetRegion(r))];
         //buildings = [..buildingIds.Select(AssetManager.GetBuilding)];
         //economy.LoadFromSave();
     }
@@ -157,7 +157,7 @@ public partial class Region : PopObject, ISaveable
 
         if (tile.regionId != null)
         {
-            objectManager.GetRegion(tile.regionId).RemoveTile(tile);
+            ObjectManager.GetRegion(tile.regionId).RemoveTile(tile);
         }
 
         tile.regionId = id;
@@ -238,7 +238,7 @@ public partial class Region : PopObject, ISaveable
                         continue;
                     } 
                     Tile border = simManager.tiles[nPos.X, nPos.Y];
-                    Region borderRegion = objectManager.GetRegion(border.regionId);
+                    Region borderRegion = ObjectManager.GetRegion(border.regionId);
                     AddBorder(borderRegion);                        
                 }
             }
@@ -363,7 +363,7 @@ public partial class Region : PopObject, ISaveable
     {
         if (rng.NextSingle() < 0.0005f && population > 1000)
         {
-            objectManager.CreateState(this);
+            ObjectManager.CreateState(this);
 
             owner.population = population;
             owner.workforce = workforce;
@@ -377,7 +377,7 @@ public partial class Region : PopObject, ISaveable
             owner.tech = rulingPop.tech;
 
             // Sets Leader
-            objectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
+            ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
             NameGenerator.UpdateStateName(owner);           
         }
     }
@@ -511,14 +511,14 @@ public partial class Region : PopObject, ISaveable
         if (isTradeZoneCenter && (tradeZone == null || tradeZone.centerId != id))
         {
             // Then create a new tradeZone
-            tradeZone = objectManager.CreateTradeZone(this);
+            tradeZone = ObjectManager.CreateTradeZone(this);
         }
 
         // Then, on whatever tradeZone we just created, if we are no longer a tradeZone center
         if (!isTradeZoneCenter && tradeZone != null && tradeZone.centerId == id)
         {
             // Then delete the tradeZone
-            objectManager.DeleteTradeZone(tradeZone);
+            ObjectManager.DeleteTradeZone(tradeZone);
             // And erase all trade routes
             EraseTradeRoutes();
         }
@@ -642,7 +642,7 @@ public partial class Region : PopObject, ISaveable
         foreach (var pair in simManager.tradeZoneIds)
         {
             TradeZone otherTradeZone = pair.Value;
-            Region tradeZoneCenter = objectManager.GetRegion(otherTradeZone?.centerId);
+            Region tradeZoneCenter = ObjectManager.GetRegion(otherTradeZone?.centerId);
             if (tradeZoneCenter == null) continue;
 
             if (!regionPaths.TryGetValue(tradeZoneCenter, out List<Region> path))
@@ -962,7 +962,7 @@ public partial class Region : PopObject, ISaveable
 
             foreach (var cultureSizePair in cultureIds.OrderByDescending(pair => pair.Value))
             {
-                Culture culture = objectManager.GetCulture(cultureSizePair.Key);
+                Culture culture = ObjectManager.GetCulture(cultureSizePair.Key);
                 long localPopulation = cultureSizePair.Value;
                 
                 // Skips if the culture is too small

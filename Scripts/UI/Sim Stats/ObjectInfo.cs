@@ -20,7 +20,6 @@ public partial class ObjectInfo : Panel
     [Export] EncyclopediaManager encyclopediaManager;
     MapManager mapManager;
     SimManager simManager;
-    ObjectManager objectManager;
     TimeManager timeManager;
     NamedObject selectedObject;
 
@@ -35,7 +34,6 @@ public partial class ObjectInfo : Panel
     public void GetSimManager()
     {
         simManager = simHolder.simManager;
-        objectManager = simManager.objectManager;
     }
 
     public override void _Process(double delta)
@@ -192,8 +190,8 @@ public partial class ObjectInfo : Panel
                 yearAge = timeManager.GetYear(war.GetAge());
                 monthAge = timeManager.GetMonth(war.GetAge());
                 specialLabel.Text += "\n" + $"{war.name}";
-                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{objectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
-                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{objectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
                 specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
             }
         } else {
@@ -231,8 +229,8 @@ public partial class ObjectInfo : Panel
                 yearAge = timeManager.GetYear(war.GetAge());
                 monthAge = timeManager.GetMonth(war.GetAge());
                 specialLabel.Text += "\n" + $"{war.name}";
-                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{objectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
-                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{objectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
                 specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
             }
         } else {

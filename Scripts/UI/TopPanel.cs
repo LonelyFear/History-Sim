@@ -5,6 +5,7 @@ public partial class TopPanel : Panel
 {
     [ExportCategory("Top Bar")]
 	[Export] Label dateLabel;
+    [Export] Label nameLabel;
     [Export] Label ageLabel;
     [ExportCategory("Bottom Bar")]
     [Export] Label populationLabel;
@@ -30,6 +31,7 @@ public partial class TopPanel : Panel
         if (!update) return;
 
         dateLabel.Text = $"Year {timeManager.GetYear()}";
+        nameLabel.Text = $"World of {simManager.worldName}";
         ageLabel.Text = $"Age of History";
 
         populationLabel.Text = $"World Population: {simManager.worldPopulation:#,##0}";

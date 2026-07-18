@@ -45,7 +45,7 @@ public partial class Character : NamedObject
         get
         {
             if (_state == null && stateId != null) 
-                _state = objectManager.GetState(stateId);
+                _state = ObjectManager.GetState(stateId);
             return _state;
         } 
         set
@@ -84,7 +84,7 @@ public partial class Character : NamedObject
 
         dead = true;
         tickDestroyed = sim.timeManager.ticks;
-        objectManager.CreateHistoricalEvent([this, role == CharacterRole.LEADER ? state : null], EventType.DEATH);
+        ObjectManager.CreateHistoricalEvent([this, role == CharacterRole.LEADER ? state : null], EventType.DEATH);
 
         if (state == null) return;
         
@@ -135,8 +135,8 @@ public partial class Character : NamedObject
             desc += "unknown parents";
         } else
         {
-            Character parentOne = objectManager.GetCharacter(parentIds[0]);
-            Character parentTwo = objectManager.GetCharacter(parentIds[1]);
+            Character parentOne = ObjectManager.GetCharacter(parentIds[0]);
+            Character parentTwo = ObjectManager.GetCharacter(parentIds[1]);
             desc += $"{(parentOne == null ? "an unknown parent" : GenerateUrlText(parentOne, parentOne.name))} and {(parentTwo == null ? "an unknown parent" : GenerateUrlText(parentTwo, parentTwo.name))}";      
         }
         desc += $". {pronoun.Capitalize()} ";

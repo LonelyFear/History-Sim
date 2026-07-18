@@ -8,7 +8,7 @@ using PixelHistory.Objects.States.Base;
 public partial class HistoricalEvent
 {
     [IgnoreMember] public static TimeManager timeManager;
-    //[IgnoreMember] public static ObjectManager objectManager;
+    //[IgnoreMember]  
     [Key(401)] public ulong id;
     [Key(402)] public EventType type;
     [Key(403)] public uint tickOccured;

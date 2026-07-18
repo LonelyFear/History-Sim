@@ -1,21 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
 using Godot;
-using MessagePack;
 using PixelHistory.Objects.States.AI;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.Wars;
-[MessagePackObject]
-public class ObjectManager
+public static class ObjectManager
 {
-    [IgnoreMember] public static SelectionManager selectionManager;
-    [IgnoreMember] public static SimManager simManager;
-    [IgnoreMember] public static TimeManager timeManager;
-    [Key(0)] public ulong currentId = 20;
-    public Region GetRegion(ulong? id)
+    public static SelectionManager selectionManager;
+    public static SimManager simManager;
+    public static TimeManager timeManager;
+    public static readonly object locker = new();
+    
+    public static Region GetRegion(ulong? id)
     {
         try
         {
@@ -27,18 +25,18 @@ public class ObjectManager
             return null;
         }
     }
-    public Region GetRegion(int x, int y)
+    public static Region GetRegion(int x, int y)
     {
         int lx = Mathf.PosMod(x, SimManager.worldSize.X);
         int ly = Mathf.PosMod(y, SimManager.worldSize.Y);
         Tile tile = simManager.tiles[lx, ly];
         return GetRegion(tile.regionId);
     }
-    public Region GetRegion(Vector2I pos)
+    public static Region GetRegion(Vector2I pos)
     {
         return GetRegion(pos.X, pos.Y);
     }
-    public TradeZone GetTradeZone(ulong? id)
+    public static TradeZone GetTradeZone(ulong? id)
     {
         try
         {
@@ -50,7 +48,7 @@ public class ObjectManager
             return null;
         }
     }
-    public War GetWar(ulong? id)
+    public static War GetWar(ulong? id)
     {
         try
         {
@@ -62,7 +60,7 @@ public class ObjectManager
             return null;
         }
     }
-    public Region CreateRegion(int x, int y)
+    public static Region CreateRegion(int x, int y)
     {
         Region region = new Region()
         {
@@ -76,7 +74,7 @@ public class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
-    public Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string professionId)
+    public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string professionId)
     {
         simManager.currentBatch++;
         if (simManager.currentBatch > 12)
@@ -110,7 +108,7 @@ public class ObjectManager
         return pop;
     }
 
-    public void DestroyPop(Pop pop)
+    public static void DestroyPop(Pop pop)
     {
         if (pop.region != null && pop.region.owner != null && pop.region.owner.rulingPop == pop)
         {
@@ -125,7 +123,7 @@ public class ObjectManager
         pop.culture?.RemovePop(pop, pop.culture);
         simManager.popsIds.Remove(pop.id);
     }
-    public Pop GetPop(ulong? id)
+    public static Pop GetPop(ulong? id)
     {
         try
         {
@@ -137,7 +135,7 @@ public class ObjectManager
             return null;
         }
     }
-    public Culture CreateCulture()
+    public static Culture CreateCulture()
     {
         float r = simManager.rng.NextSingle();
         float g = simManager.rng.NextSingle();
@@ -153,7 +151,7 @@ public class ObjectManager
         simManager.cultureIds.Add(culture.id, culture);
         return culture;
     }
-    public void DeleteCulture(Culture culture)
+    public static void DeleteCulture(Culture culture)
     {
         foreach (Pop pop in culture.pops)
         {
@@ -161,7 +159,7 @@ public class ObjectManager
         }
         simManager.cultureIds.Remove(culture.id);
     }
-    public Culture GetCulture(ulong? id)
+    public static Culture GetCulture(ulong? id)
     {
         try {
             return simManager.cultureIds[(ulong)id];
@@ -170,7 +168,7 @@ public class ObjectManager
             return null;
         }        
     }
-    public void CreateState(Region region)
+    public static void CreateState(Region region)
     {
         if (region.owner == null)
         {
@@ -192,7 +190,7 @@ public class ObjectManager
             state.AIManager = new StateAIManager(state);
         }
     }
-    public void DeleteState(State deletedState)
+    public static void DeleteState(State deletedState)
     {
         if (selectionManager.GetSelectedState() == deletedState)
         {
@@ -229,7 +227,7 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(deletedState.id);
         simManager.statesIds.Remove(deletedState.id);
     }
-    public State GetState(ulong? id)
+    public static State GetState(ulong? id)
     {
         if (id == null)
         {
@@ -245,7 +243,7 @@ public class ObjectManager
             return null;
         }
     }
-    public Character GetCharacter(ulong? id)
+    public static Character GetCharacter(ulong? id)
     {
         if (id == null)
         {
@@ -260,7 +258,7 @@ public class ObjectManager
             return null;
         }
     }
-    public Character GetCharacter(ulong id)
+    public static Character GetCharacter(ulong id)
     {
         if (simManager.characterIds.ContainsKey(id))
         {
@@ -268,7 +266,7 @@ public class ObjectManager
         }
         return null;
     }
-    public Character CreateCharacter(string firstName, string lastName, uint age, State state, CharacterRole role)
+    public static Character CreateCharacter(string firstName, string lastName, uint age, State state, CharacterRole role)
     {
         Character character = new Character()
         {
@@ -295,7 +293,7 @@ public class ObjectManager
         }
         return null;
     }
-    public void DeleteCharacter(Character character)
+    public static void DeleteCharacter(Character character)
     {
 
         character.LeaveState();
@@ -314,7 +312,7 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(character.id);
         simManager.characterIds.Remove(character.id, out _);
     }
-    public Alliance CreateAlliance(State founder, AllianceType type = AllianceType.ALLIANCE, bool exclusive = true)
+    public static Alliance CreateAlliance(State founder, AllianceType type = AllianceType.ALLIANCE, bool exclusive = true)
     {
         Alliance alliance = new Alliance()
         {
@@ -330,7 +328,7 @@ public class ObjectManager
         simManager.allianceIds.Add(alliance.id, alliance);
         return alliance;
     }
-    public void DeleteAlliance(Alliance alliance)
+    public static void DeleteAlliance(Alliance alliance)
     {
         foreach (State member in alliance.memberStates)
         {
@@ -339,7 +337,7 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(alliance.id);
         simManager.allianceIds.Remove(alliance.id);
     }
-    public Alliance GetAlliance(ulong? id)
+    public static Alliance GetAlliance(ulong? id)
     {
         try
         {
@@ -351,7 +349,7 @@ public class ObjectManager
             return null;
         }    
     }
-    public void EstablishRelations(State initiator, State target)
+    public static void EstablishRelations(State initiator, State target)
     {
         try
         {
@@ -372,7 +370,7 @@ public class ObjectManager
             GD.PushError(e);
         }
     }
-    public void BreakRelations(DiplomaticRelations relations)
+    public static void BreakRelations(DiplomaticRelations relations)
     {
         State initiator = relations.initiator;
         State target = relations.recipient;
@@ -382,7 +380,7 @@ public class ObjectManager
         
         simManager.relationIds.Remove(relations.id);
     }
-    public TradeZone CreateTradeZone(Region region)
+    public static TradeZone CreateTradeZone(Region region)
     {
         TradeZone zone = new TradeZone()
         {
@@ -396,7 +394,7 @@ public class ObjectManager
         simManager.tradeZoneIds.Add(zone.id, zone);
         return zone;
     }
-    public void DeleteTradeZone(TradeZone tradeZone)
+    public static void DeleteTradeZone(TradeZone tradeZone)
     {
         if (tradeZone == null) return;
         foreach (Region region in tradeZone.regions.ToArray())
@@ -406,7 +404,7 @@ public class ObjectManager
         simManager.objectDeleted.Invoke(tradeZone.id);
         simManager.tradeZoneIds.Remove(tradeZone.id);     
     }
-    public War StartWar(WarType warType, State agressorLeader, State defenderLeader)
+    public static War StartWar(WarType warType, State agressorLeader, State defenderLeader)
     {
         if (agressorLeader == defenderLeader || agressorLeader == null || defenderLeader == null)
         {
@@ -430,12 +428,12 @@ public class ObjectManager
         simManager.warIds.TryAdd(war.id, war);
         return war;
     }
-    public void ForgetWar(War war)
+    public static void ForgetWar(War war)
     {
         if (!war.dead) war.EndWar();
         simManager.warIds.Remove(war.id, out _);          
     }
-    public Ocean CreateOcean(Region[] waterRegions)
+    public static Ocean CreateOcean(Region[] waterRegions)
     {
         float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
         float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
@@ -453,7 +451,7 @@ public class ObjectManager
         simManager.oceanIds.Add(ocean.id, ocean);
         return ocean;
     }
-    public void CreateHistoricalEvent(NamedObject[] relevantObjects, EventType eventType)
+    public static void CreateHistoricalEvent(NamedObject[] relevantObjects, EventType eventType)
     {
         HistoricalEvent historicalEvent = new HistoricalEvent()
         {
@@ -478,7 +476,7 @@ public class ObjectManager
         }
         simManager.historicalEventIds.TryAdd(historicalEvent.id, historicalEvent);
     }
-    public void DeleteHistoricalEvent(HistoricalEvent historicalEvent)
+    public static void DeleteHistoricalEvent(HistoricalEvent historicalEvent)
     {
         foreach (string fullId in historicalEvent.objIds)
         {
@@ -487,7 +485,7 @@ public class ObjectManager
         }  
         simManager.historicalEventIds.Remove(historicalEvent.id, out HistoricalEvent _);      
     }
-    public HistoricalEvent GetHistoricalEvent(ulong? id)
+    public static HistoricalEvent GetHistoricalEvent(ulong? id)
     {
         if (id == null)
         {
@@ -500,16 +498,16 @@ public class ObjectManager
             return null;
         }        
     }
-    ulong GetId()
+    static ulong GetId()
     {
-        lock (this)
+        lock (locker)
         {
-            currentId++;
-            if (currentId == ulong.MaxValue)
+            simManager.currentId++;
+            if (simManager.currentId == ulong.MaxValue)
             {
-                currentId = 1;
+                simManager.currentId = 1;
             }
-            return currentId;            
+            return simManager.currentId;              
         }
     }
 }

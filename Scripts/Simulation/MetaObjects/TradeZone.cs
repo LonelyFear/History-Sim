@@ -71,7 +71,7 @@ public class TradeZone : NamedObject
                 region.economy.demand[itemId] = economy.demand[itemId] * (1f/regions.Count);
             }            
         }
-        objectManager.DeleteTradeZone(this);
+        ObjectManager.DeleteTradeZone(this);
     }
     public void AggregateEconomies()
     {

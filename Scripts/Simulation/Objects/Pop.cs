@@ -29,7 +29,6 @@ public partial class Pop
     [Key(16)] public uint batchId { get; set; } = 1;
 
     //[IgnoreMember] public static SimManager simManager;
-    [IgnoreMember] public static ObjectManager objectManager;
     [IgnoreMember] public static Random rng = new Random();
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
@@ -62,7 +61,7 @@ public partial class Pop
         get
         {
             if (_culture == null) 
-                _culture = objectManager.GetCulture(cultureId);
+                _culture = ObjectManager.GetCulture(cultureId);
             return _culture;
         }
         set
@@ -76,7 +75,7 @@ public partial class Pop
         get
         {
             if (_region == null) 
-                _region = objectManager.GetRegion(regionId);
+                _region = ObjectManager.GetRegion(regionId);
             return _region;
         }
         set
@@ -127,7 +126,7 @@ public partial class Pop
             return this;
         }
         // Makes a new pop with the new socialClass
-        Pop newWorkers = objectManager.CreatePop(workforceDelta, dependentsDelta, region, tech, culture, newProfession.id);
+        Pop newWorkers = ObjectManager.CreatePop(workforceDelta, dependentsDelta, region, tech, culture, newProfession.id);
         // And removes the people who switched to the new socialClass
         ChangePopulation(-workforceDelta, -dependentsDelta);
         // Land Stuff
@@ -235,11 +234,9 @@ public partial class Pop
         movedWorkforce = Math.Clamp(movedWorkforce, 0, workforce);
         movedDependents = Math.Clamp(movedDependents, 0, dependents);
 
-        lock (objectManager)
-        {
-            Pop newPop = objectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession.id);
-            newPop.lastDirection = lastDirection;
-        }
+        Pop newPop = ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession.id);
+        newPop.lastDirection = lastDirection;
+        
         ChangePopulation(-movedWorkforce, -movedDependents);     
     }
     public float GetDeathRate()
