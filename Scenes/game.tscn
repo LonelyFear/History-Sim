@@ -16,7 +16,6 @@
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/Menus/GameUI.cs" id="11_7nbq1"]
 [ext_resource type="PackedScene" uid="uid://8kvblrpf5g8" path="res://Scenes/Encyclopedia/polity_tab.tscn" id="11_81klo"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/Sim Stats/tps_label.gd" id="11_exi56"]
-[ext_resource type="Script" uid="uid://gfht7ss7kkek" path="res://Scripts/UI/God Mode/PopulationLabel.cs" id="11_nnt18"]
 [ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scripts/UI/Debug/FrameBreakdown.cs" id="12_ewbju"]
 [ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/Encyclopedia/index_tab.tscn" id="12_mg4q0"]
 [ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="12_vm72l"]
@@ -27,8 +26,19 @@
 [ext_resource type="Script" uid="uid://c1u8xh8uvrleb" path="res://Scripts/UI/TopPanel.cs" id="16_22asu"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/God Mode/ActionPanel.cs" id="17_7nbq1"]
 [ext_resource type="Script" uid="uid://d1qang7nemn0r" path="res://Scripts/UI/Debug/DebugPanel.cs" id="19_fkdbe"]
+[ext_resource type="Texture2D" uid="uid://ccc5754ycb84s" path="res://Sprites/Icons/16x16 Banner.png" id="19_ym3tv"]
+[ext_resource type="Texture2D" uid="uid://bftrngyk2d7mo" path="res://Sprites/Icons/16x16 Crown.png" id="20_6uxt2"]
+[ext_resource type="Texture2D" uid="uid://eti0xnre28kp" path="res://Sprites/Icons/16x16 Shield.png" id="21_bwj6o"]
 [ext_resource type="Script" uid="uid://e41goq8da66p" path="res://Scripts/UI/Saving/SaveSimPanel.cs" id="22_22asu"]
+[ext_resource type="Texture2D" uid="uid://bjswosc22jdnq" path="res://Sprites/Icons/16x16 Rug.png" id="22_bwj6o"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="22_vm72l"]
+[ext_resource type="Texture2D" uid="uid://33nbpixfhw8x" path="res://Sprites/Icons/16x16 Flask.png" id="23_f3c8l"]
+[ext_resource type="Texture2D" uid="uid://b0kyr2kyx0h63" path="res://Sprites/Icons/16x16 Dude.png" id="24_bu0y5"]
+[ext_resource type="Texture2D" uid="uid://cyx5duhtufclb" path="res://Sprites/Icons/16x16 Coins.png" id="25_6a4tp"]
+[ext_resource type="Texture2D" uid="uid://c7r2bcm15dohg" path="res://Sprites/Icons/16x16 Crate.png" id="26_631el"]
+[ext_resource type="Texture2D" uid="uid://cmlxs5r34p8no" path="res://Sprites/Icons/16x16 Encyclopedia.png" id="29_f3c8l"]
+[ext_resource type="Texture2D" uid="uid://bkpm0xd4k2k8n" path="res://Sprites/Icons/16x16 Pie Chart.png" id="30_bu0y5"]
+[ext_resource type="Texture2D" uid="uid://dx8okltbengvp" path="res://Sprites/Icons/16x16 House.png" id="31_6a4tp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mucmn"]
 shader = ExtResource("8_cwurv")
@@ -184,11 +194,119 @@ theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
 [node name="Main Menu" parent="Encyclopedia/Encyclopedia/TabMargins" unique_id=554748121 instance=ExtResource("14_fkdbe")]
-visible = true
 layout_mode = 2
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=2059065808]
 script = ExtResource("11_7nbq1")
+
+[node name="MarginContainer" type="MarginContainer" parent="UI" unique_id=534535950]
+offset_left = 1128.0
+offset_top = 530.0
+offset_right = 1280.0
+offset_bottom = 648.0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="MapModes" type="VBoxContainer" parent="UI/MarginContainer" unique_id=1193493906]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MapModeLabel" type="Label" parent="UI/MarginContainer/MapModes" unique_id=128419047]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 30
+text = "MapModes: "
+
+[node name="MapmodeGrid" type="GridContainer" parent="UI/MarginContainer/MapModes" unique_id=2001476607]
+layout_mode = 2
+columns = 4
+
+[node name="ProvinceButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=874235086]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Provinces/Polities Map Mode"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("19_ym3tv")
+icon_alignment = 1
+expand_icon = true
+
+[node name="PolityButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=147318261]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "States Map Mode"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("20_6uxt2")
+icon_alignment = 1
+expand_icon = true
+
+[node name="AllyButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=458292831]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Alliance Map Mode"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("21_bwj6o")
+icon_alignment = 1
+expand_icon = true
+
+[node name="CultureButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=1584733130]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Cultures Map Mode"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("22_bwj6o")
+icon_alignment = 1
+expand_icon = true
+
+[node name="TechButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=675830797]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Tech Map Mode
+Red = Military
+Blue = Society
+Brighter = More Advanced"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("23_f3c8l")
+icon_alignment = 1
+expand_icon = true
+
+[node name="PopButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=1448186897]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Population Map Mode
+Brighter = More"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("24_bu0y5")
+icon_alignment = 1
+expand_icon = true
+
+[node name="WealthButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=2095481779]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Wealth Map Mode
+Brighter = More"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("25_6a4tp")
+icon_alignment = 1
+expand_icon = true
+
+[node name="TradeButton" type="Button" parent="UI/MarginContainer/MapModes/MapmodeGrid" unique_id=66767611]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Trade Zone/Markets Map Mode"
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 13
+icon = ExtResource("26_631el")
+icon_alignment = 1
+expand_icon = true
 
 [node name="Bars" type="Control" parent="UI" unique_id=2084363429]
 layout_mode = 3
@@ -380,6 +498,7 @@ popup/item_6/text = "Unlimited"
 popup/item_6/id = 6
 
 [node name="MapModeHolder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=525852745]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
@@ -432,24 +551,31 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="EncyclopediaButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=189557080]
+custom_minimum_size = Vector2(65, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
-text = "Encyclopedia"
+icon = ExtResource("29_f3c8l")
+icon_alignment = 1
+expand_icon = true
 
 [node name="StatisticsButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=636329146]
+custom_minimum_size = Vector2(65, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
 disabled = true
-text = "Stats"
+icon = ExtResource("30_bu0y5")
+icon_alignment = 1
+expand_icon = true
 
 [node name="StatsEditSeparator" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=232604395]
 layout_mode = 2
 
 [node name="EditorButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=713008555]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("4_exi56")
@@ -462,33 +588,14 @@ size_flags_horizontal = 3
 theme_override_styles/separator = SubResource("StyleBoxEmpty_fkdbe")
 
 [node name="MenuButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1471884785]
-custom_minimum_size = Vector2(82, 60)
+custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 size_flags_vertical = 4
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
-text = "Options"
-
-[node name="WorldStats" type="VBoxContainer" parent="UI" unique_id=1044866030]
-visible = false
-offset_right = 191.0
-offset_bottom = 163.0
-
-[node name="Population Label" type="Label" parent="UI/WorldStats" unique_id=107232461 node_paths=PackedStringArray("simHolder")]
-layout_mode = 2
-mouse_filter = 0
-theme = ExtResource("4_exi56")
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 30
-text = "World Population:
-Placeholder
-Placeholder
-Placeholder
-Placeholder
-"
-script = ExtResource("11_nnt18")
-simHolder = NodePath("../../../Simulation")
+icon = ExtResource("31_6a4tp")
+icon_alignment = 1
+expand_icon = true
 
 [node name="InfoHolder" type="Panel" parent="UI" unique_id=741863181 node_paths=PackedStringArray("selectionManager", "simHolder", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
 clip_contents = true
@@ -613,6 +720,7 @@ layout_mode = 2
 size_flags_vertical = 8
 
 [node name="DebugPanel" type="Panel" parent="UI" unique_id=230128597 node_paths=PackedStringArray("closeButton")]
+visible = false
 anchors_preset = -1
 anchor_left = 0.76600003
 anchor_top = 0.1
@@ -725,6 +833,7 @@ flat = false
 alignment = 0
 
 [node name="SaveSimPanel" type="Panel" parent="UI" unique_id=789988692 node_paths=PackedStringArray("openSavePanelButton", "saveButton", "cancelButton", "saveOptions", "saveNameEdit", "simHolder")]
+visible = false
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.5
@@ -760,6 +869,7 @@ theme_override_constants/margin_bottom = 10
 
 [node name="PanelContent" type="VBoxContainer" parent="UI/SaveSimPanel/PanelMargins" unique_id=219805128]
 layout_mode = 2
+theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="UI/SaveSimPanel/PanelMargins/PanelContent" unique_id=1417416091]
 layout_mode = 2

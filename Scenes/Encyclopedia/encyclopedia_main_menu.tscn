@@ -12,7 +12,6 @@ color = Color(0.5, 0.5, 0.5, 1)
 thickness = 4
 
 [node name="Main Menu" type="VBoxContainer" unique_id=554748121 node_paths=PackedStringArray("text")]
-visible = false
 theme_override_constants/separation = 4
 script = ExtResource("1_ylssi")
 text = NodePath("EncyclopediaDesc")

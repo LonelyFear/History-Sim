@@ -34,7 +34,7 @@ public static class SaveManager
         string saveId = $"{sim.worldName.ToLower()}-auto";
 
         string[] pastAutosaves = GetSavesWithId(saveId);
-        string saveName = $"{sim.worldName.ToLower()} autosave-";
+        string saveName = $"{sim.worldName.ToLower()}-autosave-";
         if (pastAutosaves.Length < 5)
         {
             // Gives us autosaves per world going up to 5
