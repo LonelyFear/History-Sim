@@ -41,8 +41,8 @@ public partial class WorldSettingsPanel : Panel
 	}
 	public void OnStartPressed()
 	{
-		string worldName = "";
-		if (nameEdit.Text.Length < 1)
+		string worldName = nameEdit.Text;
+		if (worldName.Length < 1)
 		{
 			worldName = NameGenerator.GenerateRandomName(3, 5, false, ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
 		}

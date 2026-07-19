@@ -40,10 +40,7 @@ public partial class SaveButton : Button
 
     public override void _Pressed()
     {
-		if (saves != null)
-		{
-			saves.SaveSelected(this);
-		}
+		saves?.SaveSelected(this);
     }
 
 }

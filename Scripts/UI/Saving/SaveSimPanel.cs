@@ -11,6 +11,7 @@ public partial class SaveSimPanel : Panel
 	[Export] LineEdit saveNameEdit;
 	[Export] SimManagerHolder simHolder;
 	List<string> saveOverwritePaths;
+    SimManager sim;
     public override void _Ready()
     {
 		Visible = false;
@@ -18,10 +19,15 @@ public partial class SaveSimPanel : Panel
 		openSavePanelButton.Pressed += () => Visible = true;
 		cancelButton.Pressed += () => Visible = false;
 		saveButton.Pressed += OnSimSave;
-        VisibilityChanged += OnVisibilityChanged;
+        VisibilityChanged += OnVisibilityChanged;    
     }
+
 	void OnVisibilityChanged()
 	{
+        sim = simHolder.simManager;
+
+        saveNameEdit.Text = sim.worldName;
+
 		if (!Visible) return;
 
         saveOverwritePaths = [];
@@ -42,9 +48,9 @@ public partial class SaveSimPanel : Panel
         {
             string dirName = directories[i];
             string savePath = "user://saves/" + dirName;
-            if (Utility.IsSaveValid(savePath))
+            if (SaveManager.IsSaveValid(savePath))
             {
-                saveOptions.AddItem($"Overwrite '{Utility.GetSaveData(savePath).saveName}'", i);
+                saveOptions.AddItem($"Overwrite '{SaveManager.GetSaveData(savePath).saveName}'", i);
                 saveOverwritePaths.Add(savePath);
             }
         }		
@@ -53,48 +59,8 @@ public partial class SaveSimPanel : Panel
     public void OnSimSave()
     {
         string saveName = saveNameEdit.Text;
-		string overwritePath = saveOverwritePaths[saveOptions.Selected];
-
-        if (saveName == "")
-        {
-            saveName = Utility.GetSaveData(overwritePath).saveName;
-        }
-        int saveNum = DirAccess.GetDirectoriesAt("user://saves").Length + 1;
-        string saveFolderName = "Save" + saveNum;
-
-        SaveData data = new()
-        {
-            saveName = saveName,
-            saveID = saveFolderName,
-        };
-
-        // Creates a new save folder
-        string saveDir = $"user://saves/{saveFolderName}";
-
-        if (overwritePath == "New Save")
-        {
-			DirAccess.MakeDirAbsolute($"user://saves/{saveFolderName}");
-        }
-        else
-        {
-            GD.Print($"Overwriting {overwritePath}");
-            saveDir = overwritePath;             
-        }
         
-        SimManager sim = simHolder.simManager;
-        WorldGenerator world = sim.worldGenerator;
-
-		// Saves save data
-        FileAccess saveDataFile = FileAccess.Open(saveDir.PathJoin("save_data.json"), FileAccess.ModeFlags.Write);
-
-        saveDataFile.StoreString(JsonSerializer.Serialize(data));
-		saveDataFile.Dispose(); 
-
-		// Saves world and simulation
-		world.SaveTerrainToFile(saveDir);
-        sim.SaveSimToFile(saveDir);
-
-		Visible = false;   
+        SaveManager.CreateSave(saveName, sim, sim.worldGenerator);
     }
 
 	

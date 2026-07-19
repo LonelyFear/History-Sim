@@ -2,7 +2,8 @@ using Godot;
 using MessagePack;
 using PixelHistory.Objects.States.Base;
 
-public class DiplomaticRelations{
+[MessagePackObject]
+public class DiplomaticRelations { 
     [Key(0)] public ulong id;
     [Key(1)] public float opinion = 0f;
     [Key(2)] public uint truce = 0;

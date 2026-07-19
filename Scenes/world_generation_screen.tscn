@@ -10,8 +10,8 @@
 [ext_resource type="Script" uid="uid://b03mnvet4jhg8" path="res://Scripts/AdvancedCheckbox.cs" id="6_rq81p"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4g6c4"]
-content_margin_left = 10.0
-content_margin_right = 10.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
 
 [node name="World Generation Screen" type="Control" unique_id=634413835]
 layout_mode = 3
@@ -43,16 +43,16 @@ anchor_bottom = 0.95
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_4g6c4")
-nameEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/NameContainer/Name")
-seedEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer/Seed")
-sizeDropdown = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer/WorldSize")
-heightmapCheckbox = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/EarthHeightmapButton")
-riverCheckbox = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Enable Rivers")
+nameEdit = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/NameContainer/Name")
+seedEdit = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/SeedContainer/Seed")
+sizeDropdown = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/WorldSizeContainer/WorldSize")
+heightmapCheckbox = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/EarthHeightmapButton")
+riverCheckbox = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Enable Rivers")
 backButton = NodePath("MarginContainer/VBoxContainer/ButtonsContainer/Back")
 generateWorldButton = NodePath("MarginContainer/VBoxContainer/ButtonsContainer/Start")
-largeContinents = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents/LargeContinents")
-smallContinents = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2/SmallContinents")
-landCoverageDropdown = NodePath("MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3/LandCoverageDropdown")
+largeContinents = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents/LargeContinents")
+smallContinents = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2/SmallContinents")
+landCoverageDropdown = NodePath("MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3/LandCoverageDropdown")
 
 [node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel" unique_id=1772216783]
 layout_mode = 1
@@ -78,53 +78,60 @@ theme_override_font_sizes/font_size = 63
 text = "World Generation Settings"
 horizontal_alignment = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=704949651]
+[node name="HSeparator" type="HSeparator" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=2026904545]
 layout_mode = 2
-size_flags_vertical = 3
 
-[node name="WorldSettingsScrollContainer" type="ScrollContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer" unique_id=416214450]
+[node name="WorldSettingsScrollContainer" type="ScrollContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer" unique_id=416214450]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxEmpty_4g6c4")
 horizontal_scroll_mode = 0
-vertical_scroll_mode = 2
 
-[node name="WorldSettingsContainer" type="VBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer" unique_id=2137100513]
+[node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer" unique_id=704949651]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 0
+
+[node name="WorldSettingsContainer" type="VBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer" unique_id=2137100513]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="NameContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=1003717755]
+[node name="NameContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=1003717755]
 layout_mode = 2
 
-[node name="NameLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/NameContainer" unique_id=976845875]
+[node name="NameLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/NameContainer" unique_id=976845875]
 layout_mode = 2
-tooltip_text = "The seed of the world. Must be in numbers only."
+tooltip_text = "The name of your world."
 mouse_filter = 0
 mouse_default_cursor_shape = 16
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 text = "World Name: "
 
-[node name="Name" type="LineEdit" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/NameContainer" unique_id=456948078]
+[node name="Name" type="LineEdit" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/NameContainer" unique_id=456948078]
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "The seed of the world. Must be in numbers only."
+tooltip_text = "The name of your world."
 focus_mode = 1
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
-placeholder_text = "Leave Empty for Random"
+placeholder_text = "Leave Empty for Random Name"
 max_length = 10
 keep_editing_on_text_submit = true
 context_menu_enabled = false
 emoji_menu_enabled = false
 virtual_keyboard_type = 2
 
-[node name="SeedContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=998148752]
+[node name="SeedContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=998148752]
 layout_mode = 2
 
-[node name="SeedLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer" unique_id=1161696532]
+[node name="SeedLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/SeedContainer" unique_id=1161696532]
 layout_mode = 2
 tooltip_text = "The seed of the world. Must be in numbers only."
 mouse_filter = 0
@@ -133,24 +140,24 @@ theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 text = "World Seed: "
 
-[node name="Seed" type="LineEdit" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer" unique_id=1876541901]
+[node name="Seed" type="LineEdit" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/SeedContainer" unique_id=1876541901]
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "The seed of the world. Must be in numbers only."
 focus_mode = 1
 theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
-placeholder_text = "Leave Empty for Random"
+placeholder_text = "Leave Empty for Random Seed"
 max_length = 10
 keep_editing_on_text_submit = true
 context_menu_enabled = false
 emoji_menu_enabled = false
 virtual_keyboard_type = 2
 
-[node name="WorldSizeContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=1560212773]
+[node name="WorldSizeContainer" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=1560212773]
 layout_mode = 2
 
-[node name="WorldSizeLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer" unique_id=1801551938]
+[node name="WorldSizeLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/WorldSizeContainer" unique_id=1801551938]
 layout_mode = 2
 tooltip_text = "The size of the simulated regions in the world. Larger simulation means more regions."
 mouse_filter = 0
@@ -159,7 +166,7 @@ theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 text = "Simulation Size: "
 
-[node name="WorldSize" type="OptionButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/WorldSizeContainer" unique_id=590860983]
+[node name="WorldSize" type="OptionButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/WorldSizeContainer" unique_id=590860983]
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "The size of the simulated regions in the world. Larger simulation means more regions."
@@ -176,7 +183,7 @@ popup/item_2/id = 2
 popup/item_3/text = "Small"
 popup/item_3/id = 1
 
-[node name="WorldSizeWarning" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=176115882 node_paths=PackedStringArray("worldSizeDropdown")]
+[node name="WorldSizeWarning" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=176115882 node_paths=PackedStringArray("worldSizeDropdown")]
 custom_minimum_size = Vector2(10, 0)
 layout_mode = 2
 theme = ExtResource("2_ktv3r")
@@ -187,7 +194,7 @@ autowrap_mode = 2
 script = ExtResource("4_04eni")
 worldSizeDropdown = NodePath("../WorldSizeContainer/WorldSize")
 
-[node name="EarthHeightmapButton" type="CheckBox" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=806039093]
+[node name="EarthHeightmapButton" type="CheckBox" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=806039093]
 layout_mode = 2
 tooltip_text = "Generate A World Using Earth Heightmap"
 focus_mode = 0
@@ -196,7 +203,7 @@ theme_override_constants/h_separation = 7
 theme_override_font_sizes/font_size = 40
 text = "Generate Earth?"
 
-[node name="Enable Rivers" type="CheckBox" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=2073049697]
+[node name="Enable Rivers" type="CheckBox" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=2073049697]
 layout_mode = 2
 tooltip_text = "Enable River Generation (May be broken on Earth Maps)"
 focus_mode = 0
@@ -205,7 +212,7 @@ theme_override_constants/h_separation = 7
 theme_override_font_sizes/font_size = 40
 text = "Generate Rivers?"
 
-[node name="AdvancedCheckbox" type="CheckButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=1095888726 node_paths=PackedStringArray("heightmapCheckbox")]
+[node name="AdvancedCheckbox" type="CheckButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=1095888726 node_paths=PackedStringArray("heightmapCheckbox")]
 layout_mode = 2
 tooltip_text = "Edit Advanced Worldgen Options"
 theme = ExtResource("2_ktv3r")
@@ -214,14 +221,15 @@ text = "Advanced Options"
 script = ExtResource("6_rq81p")
 heightmapCheckbox = NodePath("../EarthHeightmapButton")
 
-[node name="Advanced Container" type="Panel" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer" unique_id=1196113471 node_paths=PackedStringArray("advancedOptionsToggle")]
+[node name="Advanced Container" type="Panel" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=1196113471 node_paths=PackedStringArray("advancedOptionsToggle")]
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("6_e0cwy")
 advancedOptionsToggle = NodePath("../AdvancedCheckbox")
 
-[node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container" unique_id=1680819746]
+[node name="MarginContainer" type="MarginContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container" unique_id=1680819746]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -233,14 +241,14 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer" unique_id=258601313]
+[node name="VBoxContainer" type="VBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer" unique_id=258601313]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="LargeContinents" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer" unique_id=1741230486]
+[node name="LargeContinents" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer" unique_id=1741230486]
 layout_mode = 2
 
-[node name="LargeContinentsLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents" unique_id=917531009 node_paths=PackedStringArray("slider")]
+[node name="LargeContinentsLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents" unique_id=917531009 node_paths=PackedStringArray("slider")]
 layout_mode = 2
 tooltip_text = "Number of large continents spawned"
 mouse_filter = 0
@@ -251,7 +259,7 @@ text = "Large Continents (#): "
 script = ExtResource("6_04eni")
 slider = NodePath("../LargeContinents")
 
-[node name="LargeContinents" type="HSlider" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents" unique_id=523605630]
+[node name="LargeContinents" type="HSlider" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/LargeContinents" unique_id=523605630]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -265,10 +273,10 @@ tick_count = 6
 ticks_on_borders = true
 ticks_position = 3
 
-[node name="ContinentsContainer2" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer" unique_id=819938936]
+[node name="ContinentsContainer2" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer" unique_id=819938936]
 layout_mode = 2
 
-[node name="SmallContinentsLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2" unique_id=1673684203 node_paths=PackedStringArray("slider")]
+[node name="SmallContinentsLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2" unique_id=1673684203 node_paths=PackedStringArray("slider")]
 layout_mode = 2
 tooltip_text = "Number of small continents spawned"
 mouse_filter = 0
@@ -279,7 +287,7 @@ text = "Small Continents (#): "
 script = ExtResource("6_04eni")
 slider = NodePath("../SmallContinents")
 
-[node name="SmallContinents" type="HSlider" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2" unique_id=1233307573]
+[node name="SmallContinents" type="HSlider" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer2" unique_id=1233307573]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -293,10 +301,10 @@ tick_count = 6
 ticks_on_borders = true
 ticks_position = 3
 
-[node name="ContinentsContainer3" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer" unique_id=852253157]
+[node name="ContinentsContainer3" type="HBoxContainer" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer" unique_id=852253157]
 layout_mode = 2
 
-[node name="LandCoverageLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3" unique_id=1669429957]
+[node name="LandCoverageLabel" type="Label" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3" unique_id=1669429957]
 layout_mode = 2
 tooltip_text = "Approximate percentage of the world covered by land"
 mouse_filter = 0
@@ -305,7 +313,7 @@ theme = ExtResource("2_ktv3r")
 theme_override_font_sizes/font_size = 40
 text = "Land Coverage %: "
 
-[node name="LandCoverageDropdown" type="OptionButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3" unique_id=427363097]
+[node name="LandCoverageDropdown" type="OptionButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/Advanced Container/MarginContainer/VBoxContainer/ContinentsContainer3" unique_id=427363097]
 layout_mode = 2
 size_flags_horizontal = 3
 tooltip_text = "The seed of the world. Must be in numbers only."
@@ -352,6 +360,6 @@ theme_override_font_sizes/font_size = 40
 action_mode = 0
 text = "Start Simulation"
 
-[connection signal="text_changed" from="WorldSettingsPanel/MarginContainer/VBoxContainer/MarginContainer/WorldSettingsScrollContainer/WorldSettingsContainer/SeedContainer/Seed" to="WorldSettingsPanel" method="_on_seed_text_changed"]
+[connection signal="text_changed" from="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer/SeedContainer/Seed" to="WorldSettingsPanel" method="_on_seed_text_changed"]
 [connection signal="pressed" from="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer/Back" to="WorldSettingsPanel" method="_on_back_pressed"]
 [connection signal="pressed" from="WorldSettingsPanel/MarginContainer/VBoxContainer/ButtonsContainer/Start" to="WorldSettingsPanel" method="_on_start_pressed"]

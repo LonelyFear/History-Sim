@@ -98,33 +98,6 @@ public static class Utility
         return ObjectType.UNKNOWN;
     }
 
-    public static bool IsSaveValid(string path)
-    {
-        if (DirAccess.Open(path) != null)
-        {
-            bool saveDataExists = FileAccess.FileExists(path.PathJoin("save_data.json"));
-            bool terrainDataExists = FileAccess.FileExists(path.PathJoin("terrain_data.pxsave"));
-            bool simDataExists = FileAccess.FileExists(path.PathJoin("sim_data.pxsave"));
-            //bool dataWritingFinished = FileAccess.Open(path + "/save_data.json", FileAccess.ModeFlags.Read).GetAsText(true).Length > 0;
-            return saveDataExists && terrainDataExists && simDataExists;// && dataWritingFinished;
-        }
-        return false;
-    }
-    public static SaveData GetSaveData(string savePath)
-    {
-        DirAccess saveDirectory = DirAccess.Open(savePath);
-        if (saveDirectory.FileExists("save_data.json"))
-        {
-            FileAccess saveDataFile = FileAccess.Open(savePath.PathJoin("save_data.json"), FileAccess.ModeFlags.Read);
-            string saveText = saveDataFile.GetAsText(true); 
-
-            saveDataFile.Dispose();  
-            saveDirectory.Dispose();
-
-            return JsonSerializer.Deserialize<SaveData>(saveText);     
-        }
-        return null;
-    }
     public static float CalcWeightedAverage(params (float value, float weight)[] traits)
     {
         float average = 0;

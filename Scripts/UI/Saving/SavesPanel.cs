@@ -58,7 +58,7 @@ public partial class SavesPanel : Panel
 			saveButtonContainer.AddChild(save);
 			saves.Add(savePath, save);
 
-			if (Utility.IsSaveValid(savePath))
+			if (SaveManager.IsSaveValid(savePath))
 			{
 				saveDataFile = FileAccess.Open(savePath.PathJoin("save_data.json"), FileAccess.ModeFlags.Read);
 				string saveText = saveDataFile.GetAsText(true);
@@ -104,33 +104,13 @@ public partial class SavesPanel : Panel
 	{
 		if (selectedSave.Length > 0)
 		{
-			DeleteDirectory(saves[selectedSave].savePath);
+			SaveManager.DeleteDirectory(saves[selectedSave].savePath);
 			DeselectSave(saves[selectedSave]);
 			RefreshSaveButtons();
 		}
 	}
 
-	void DeleteDirectory(string path)
-	{
-		if (!DirAccess.DirExistsAbsolute(path)) return;
 
-		DirAccess dir = DirAccess.Open(path);
-		dir.ListDirBegin();
-		string fileName = dir.GetNext();
-
-		while (fileName != "")
-		{
-			if (dir.CurrentIsDir())
-			{
-				DeleteDirectory(path.PathJoin(fileName));
-			} else
-			{
-				dir.Remove(fileName);
-			}
-			fileName = dir.GetNext();
-		}
-		DirAccess.RemoveAbsolute(path);
-	}
 
 	public void DeselectSave(SaveButton saveButton)
 	{
