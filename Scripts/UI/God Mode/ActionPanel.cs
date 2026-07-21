@@ -16,13 +16,11 @@ public partial class ActionPanel : Panel
     [Export] public Button saveCancelButton;
     [Export] public OptionButton overwriteButton;
     [Export] public Panel menuPanel;
-    [Export] public Panel saveNamePanel;
-    [Export] public LineEdit saveNameEdit;
+    [Export] Panel saveSimPanel;
     [Export] public Button encyclopediaButton;
     [Export] EncyclopediaManager encyclopediaManager;
     [Export] public GameUI uiLayer;
 
-    List<string> saveOverwritePaths;
     bool uiVisible = true;
     public override void _Ready()
     {
@@ -39,7 +37,7 @@ public partial class ActionPanel : Panel
             uiVisible = !uiVisible;
             uiLayer.show = uiVisible;
         }
-        saveNameEdit.Visible = overwriteButton.Selected == 0;
+        saveSimPanel.Visible = overwriteButton.Selected == 0;
 
         if (Input.IsActionJustPressed("Take_Screenshot"))
         {
@@ -59,6 +57,7 @@ public partial class ActionPanel : Panel
     }
     public void OnMenuClick()
     {
+        if (saveSimPanel.Visible) return;
         menuPanel.Visible = !menuPanel.Visible;
     }
     public void TakeScreenshot()

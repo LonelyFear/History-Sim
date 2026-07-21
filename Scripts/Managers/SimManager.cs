@@ -616,16 +616,18 @@ public class SimManager
             }
 
             state.JoinObligateWars();
-
+            state.UpdateRelations();  
             countedPerformanceInfo["Join Wars Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();                                   
         }
         stopwatch.Restart(); 
         var partitioner = Partitioner.Create(statesIds.Values); 
+        /*
         Parallel.ForEach(partitioner, (state) =>
         {
-            state.UpdateRelations();     
+               
         });
+        */
         UpdateDiplomacy();
         countedPerformanceInfo["Diplomacy Time"] += stopwatch.Elapsed.TotalMilliseconds;
         // Updates

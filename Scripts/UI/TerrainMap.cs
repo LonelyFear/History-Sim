@@ -7,6 +7,7 @@ public partial class TerrainMap : Node2D
     public WorldGenerator world;
     [Export] bool switchMap;
     [Export] SimManagerHolder simHolder;
+    [Export] MapModeSelector mapModeSelector;
     bool isBiomeMap = false;
     public override void _Ready()
     {

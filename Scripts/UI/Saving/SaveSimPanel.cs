@@ -2,9 +2,8 @@ using Godot;
 using System.Collections.Generic;
 using System.Text.Json;
 
-public partial class SaveSimPanel : Panel
+public partial class SaveSimPanel : MenuButtonPanelBase
 {
-	[Export] Button openSavePanelButton;
 	[Export] Button saveButton;
 	[Export] Button cancelButton;
 	[Export] OptionButton saveOptions;
@@ -14,11 +13,14 @@ public partial class SaveSimPanel : Panel
     SimManager sim;
     public override void _Ready()
     {
-		Visible = false;
-
-		openSavePanelButton.Pressed += () => Visible = true;
-		cancelButton.Pressed += () => Visible = false;
-		saveButton.Pressed += OnSimSave;
+		cancelButton.Pressed += () => {
+            Visible = false;
+            GD.Print("Yay");
+        };
+		saveButton.Pressed += () => {
+            OnSimSave();
+            Visible = false;
+        };
         VisibilityChanged += OnVisibilityChanged;    
     }
 
@@ -29,6 +31,7 @@ public partial class SaveSimPanel : Panel
         saveNameEdit.Text = sim.worldName;
 
 		if (!Visible) return;
+        menuButton.ButtonPressed = false;
 
         saveOverwritePaths = [];
         
@@ -62,6 +65,4 @@ public partial class SaveSimPanel : Panel
         
         SaveManager.CreateSave(saveName, sim, sim.worldGenerator);
     }
-
-	
 }

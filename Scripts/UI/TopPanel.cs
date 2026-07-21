@@ -11,6 +11,7 @@ public partial class TopPanel : Panel
     [Export] Label populationLabel;
     [Export] Label warsLabel;
     [Export] Label statesLabel;
+
     [ExportCategory("References")]
 	[Export] SimManagerHolder simHolder;
 	SimManager simManager;
