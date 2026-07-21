@@ -14,8 +14,9 @@ public partial class SaveSimPanel : MenuButtonPanelBase
     public override void _Ready()
     {
 		cancelButton.Pressed += () => {
-            Visible = false;
             GD.Print("Yay");
+            Visible = false;
+            GD.Print(Visible);
         };
 		saveButton.Pressed += () => {
             OnSimSave();

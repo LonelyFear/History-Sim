@@ -37,7 +37,7 @@ public partial class ActionPanel : Panel
             uiVisible = !uiVisible;
             uiLayer.show = uiVisible;
         }
-        saveSimPanel.Visible = overwriteButton.Selected == 0;
+        //saveSimPanel.Visible = overwriteButton.Selected == 0;
 
         if (Input.IsActionJustPressed("Take_Screenshot"))
         {
