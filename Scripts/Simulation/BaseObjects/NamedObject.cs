@@ -13,11 +13,11 @@ public abstract class NamedObject
     [Key(1)] public uint tickDestroyed { get; set; } = 0;
     [Key(2)] public bool dead = false;
     [IgnoreMember] public static SimManager simManager;
-    [IgnoreMember]  
     [Key(3)] public ulong id { get; set; }
     [Key(4)] public string name { get; set; }
     [Key(5)] public string description { get; set; }
     [Key(6)] public List<ulong> eventIds = [];
+    [IgnoreMember] public static Random rng = null;
     public virtual void PrepareForSave()
     {
 

@@ -29,7 +29,7 @@ public partial class Pop
     [Key(16)] public uint batchId { get; set; } = 1;
 
     //[IgnoreMember] public static SimManager simManager;
-    [IgnoreMember] public static Random rng = new Random();
+    [IgnoreMember] public static Random rng = null;
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
     [Key(21)] public Direction lastDirection = Direction.RIGHT;

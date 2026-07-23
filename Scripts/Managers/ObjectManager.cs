@@ -137,13 +137,13 @@ public static class ObjectManager
     }
     public static Culture CreateCulture()
     {
-        float r = simManager.rng.NextSingle();
-        float g = simManager.rng.NextSingle();
-        float b = simManager.rng.NextSingle();
+        float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+        float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+        float b = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
         Culture culture = new Culture()
         {
             id = GetId(),
-            name = NameGenerator.GenerateCultureName(),
+            name = NameGenerator.GenerateCultureName(simManager.rng),
             color = new Color(r, g, b),
             tickCreated = timeManager.ticks,
         };
@@ -178,7 +178,7 @@ public static class ObjectManager
             State state = new State()
             {
                 id = GetId(),
-                baseName = NameGenerator.GenerateNationName(),
+                baseName = NameGenerator.GenerateNationName(simManager.rng),
                 color = new Color(r, g, b),
                 capital = region,
                 tickCreated = timeManager.ticks,

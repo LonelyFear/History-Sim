@@ -22,7 +22,6 @@ public abstract class PopObject : NamedObject
     [Key(14)] public Dictionary<ulong, long> cultureIds { get; set; } = [];
     [Key(15)] public ulong? largestCultureId { get; set; } = null;
     [Key(16)] public Tech averageTech { get; set; }
-    [IgnoreMember] public static Random rng = new Random();
     public PopObject()
     {
         foreach (string professionId in AssetManager.professions.Keys)

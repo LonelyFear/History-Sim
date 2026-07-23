@@ -12,7 +12,6 @@ public partial class PieChart : Control
 
 	[ExportToolButton("Update Chart")] 
 	public Callable updateChart => Callable.From(QueueRedraw);
-	Random rng = new Random();
 	// Called when the node enters the scene tree for the first time.
 	public void AddElement(string name, float value, Color color)
 	{

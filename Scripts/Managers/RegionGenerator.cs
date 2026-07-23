@@ -13,16 +13,16 @@ public class RegionGenerator
     
     Dictionary<ulong, Region> regionIds;
     Tile[,] tiles;
-    Random rng;
+    readonly Random rng = null;
     public const int tilesPerRegion = 4;
 
     public RegionGenerator(SimManager sim)
     {
-       simManager = sim;
-       worldSize = sim.worldGenerator.WorldSize;
-       tiles = sim.tiles;
-       rng = sim.rng;
-       regionIds = sim.regionIds;
+        rng = sim.worldGenerator.rng;
+        simManager = sim;
+        worldSize = sim.worldGenerator.WorldSize;
+        tiles = sim.tiles;
+        regionIds = sim.regionIds;
     }
 
     Dictionary<Vector2I,Vector2I> PlaceRegionSeeds(int size, TerrainType[] acceptedTerrain)

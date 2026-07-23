@@ -34,10 +34,9 @@ public partial class LoadingScreen : Control
     public void LoadWorldSettings()
     {
         // Assigns stats to generator
-        GD.Print(worldSettings.seed);
         generator = new WorldGenerator()
         {
-            Seed = worldSettings.seed,
+            Seed = worldSettings.worldSeed,
             LargeContinents = worldSettings.largeContinents,
             SmallContinents = worldSettings.smallContinents,
             LandCoverage = worldSettings.landCoverage,
@@ -49,7 +48,8 @@ public partial class LoadingScreen : Control
         // Gives world name
         sim = new SimManager()
         {
-            worldName = worldSettings.worldName
+            worldName = worldSettings.worldName,
+            eventSeed = worldSettings.eventsSeed
         };        
     }
     public override void _Process(double delta)

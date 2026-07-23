@@ -24,6 +24,7 @@ public abstract partial class Polity : PopObject
     [IgnoreMember] public HashSet<Region> regions = [];
     [Key(24)] public HashSet<ulong> regionIds { get; set; } = [];
     [Key(-2)] public Tech tech;
+    
     public override void PrepareForSave()
     {
         base.PrepareForSave();

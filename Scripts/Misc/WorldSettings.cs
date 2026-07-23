@@ -1,7 +1,8 @@
 public class WorldSettings
 {
     public string worldName;
-    public int seed;
+    public int worldSeed;
+    public int eventsSeed;
     public int largeContinents;
     public int smallContinents;
     public float landCoverage;

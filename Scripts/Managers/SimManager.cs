@@ -25,7 +25,7 @@ public class SimManager
     // Exported 
     [Export] [IgnoreMember] public TileMapLayer reliefs;
 
-    [Export][IgnoreMember] public TimeManager timeManager;
+    [Export] [IgnoreMember] public TimeManager timeManager;
     
     // Not Exported
     [IgnoreMember] public SimManagerHolder simHolder;
@@ -80,7 +80,9 @@ public class SimManager
     public ulong currentId = 20;
     [IgnoreMember] public bool simLoadedFromSave = false;
 
-    [IgnoreMember] public Random rng = new Random();
+    // Random
+    public int eventSeed;
+    public Random rng;
 
     // Events
     public delegate void ObjectDeletedEvent(ulong id);
@@ -201,6 +203,7 @@ public class SimManager
     public void RebuildAfterSave()
     {
         AssignSimManager();
+        AssignRandom();
         timeManager.ticks = tick;
         
         regionIds.Values.ToList().ForEach(r =>
@@ -266,33 +269,42 @@ public class SimManager
     }
     void AssignSimManager()
     {
-       ObjectManager.simManager = this;
-       ObjectManager.timeManager = timeManager;
-       ObjectManager.selectionManager = simHolder.selectionManager;
+        ObjectManager.simManager = this;
+        ObjectManager.timeManager = timeManager;
+        ObjectManager.selectionManager = simHolder.selectionManager;
 
         terrainMapScale = terrainMap.Scale;
 
         HistoricalEvent.timeManager = timeManager;
 
-       ObjectManager.simManager = this;
-       ObjectManager.timeManager = timeManager;
+        ObjectManager.simManager = this;
+        ObjectManager.timeManager = timeManager;
 
         StateAIManager.simManager = this;
-        
+
         StateAIManager.simManager = this;
 
         NamedObject.simManager = this;
-        
+
         PopObject.timeManager = timeManager;
 
         Character.sim = this;
 
         BaseEncyclopediaTab.simManager = this;
     }
-
+    public void AssignRandom()
+    {
+        Pop.rng = rng;
+        NamedObject.rng = rng;
+    }
     public void OnWorldgenFinished()
     {
+        GD.Print("Events Seed: " + eventSeed);
+        rng = new Random(eventSeed);
+        
+        GD.Print(rng.ToString());
         AssignSimManager();
+        AssignRandom();
         worldSize = worldGenerator.WorldSize;
 
         if (simLoadedFromSave)

@@ -208,7 +208,7 @@ public partial class Region : PopObject, ISaveable
     }
     public void NameRegion()
     {
-        name = NameGenerator.GenerateRegionName(this);
+        name = NameGenerator.GenerateRegionName(this, simManager.rng);
     }
     void RemoveInvalidBorders()
     {
@@ -377,7 +377,7 @@ public partial class Region : PopObject, ISaveable
             owner.tech = rulingPop.tech;
 
             // Sets Leader
-            ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), NameGenerator.GenerateCharacterName(), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
+            ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(simManager.rng), NameGenerator.GenerateCharacterName(simManager.rng), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
             NameGenerator.UpdateStateName(owner);           
         }
     }

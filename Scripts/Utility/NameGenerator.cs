@@ -10,10 +10,7 @@ using FileAccess = Godot.FileAccess;
 public static class NameGenerator
 {
     public static string vowels = "aeiou";
-    static Random rng = new Random();
-    public static string GenerateNationName(){
-        Random rng = new Random();
-
+    public static string GenerateNationName(Random rng){
         string name = "";
         string[] prefixes = FileAccess.Open(@"Data/Names/NationPrefixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
         string[] roots = FileAccess.Open(@"Data/Names/NationRoots.txt", FileAccess.ModeFlags.Read).GetAsArray();
@@ -65,10 +62,8 @@ public static class NameGenerator
         }
         return demonym.Capitalize();
     }
-    public static string GenerateRandomName(int minLength, int maxLength, bool feminine, string[] suffixes, bool suffixesOnlyFem = false)
+    public static string GenerateRandomName(int minLength, int maxLength, Random rng, string[] suffixes = null, bool feminine = false, bool suffixesOnlyFem = false)
     {
-        Random rng = new Random();
-
         string[] patterns = ["CV", "CVC", "VC"];
 
         string consonants = "bcdfghjklmnpqrstvwxyz";
@@ -80,24 +75,23 @@ public static class NameGenerator
         string name = "";
         for (int i = 0; i < rng.Next(minLength, maxLength); i++)
         {
-            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], consonants);
+            name += GenerateSyllable(patterns[rng.Next(0, patterns.Length - 1)], rng, consonants);
         }
         for (int c = 0; c < name.Length; c++)
         {
             if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
             name = name.Remove(c, 1);
         }  
-
-        if (suffixes.Length > 0 && (!feminine || suffixesOnlyFem))
+        if (suffixes != null && suffixes.Length > 0 && (feminine || suffixesOnlyFem))
         {
             name += suffixes[rng.Next(0, suffixes.Length - 1)];
-        }  
+        }
 
         return name.Capitalize();    
     }
-    public static string GenerateRegionName(Region region)
+    public static string GenerateRegionName(Region region, Random rng)
     {
-        string name = GenerateRandomName(2, 4, false, ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
+        string name = GenerateRandomName(2, 4, rng, ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
         // Location Specific Names
         switch (region.terrainType)
         {
@@ -121,14 +115,13 @@ public static class NameGenerator
         }
         return name;        
     }
-
-    public static string GenerateCultureName()
+    public static string GenerateCultureName(Random rng)
     {
-        return GetDemonym(GenerateRandomName(2, 3, rng.Next(2) == 0, []).Capitalize());
+        return GetDemonym(GenerateRandomName(2, 3, rng, [], rng.Next(2) == 1).Capitalize());
     }
-    public static string GenerateCharacterName(bool feminine = false)
+    public static string GenerateCharacterName(Random rng, bool feminine = false)
     {
-        return GenerateRandomName(2, 3, feminine, ["a", "ia", "ina", "elle", "ara", "essa", "ora", "ina", "ette"], true);
+        return GenerateRandomName(2, 3, rng, ["a", "ia", "ina", "elle", "ara", "essa", "ora", "ina", "ette"], feminine, true);
     }
     public static void UpdateAllianceName(Alliance alliance)
     {
@@ -260,7 +253,7 @@ public static class NameGenerator
         }
         state.name = $"{state.govtName} of {state.baseName}";
     }
-    static string GenerateSyllable(string pattern, string consonants = "bcdfghjklmnpqrstvwxyz")
+    static string GenerateSyllable(string pattern, Random rng, string consonants = "bcdfghjklmnpqrstvwxyz")
     {
         string syllable = "";
         foreach (char c in pattern)

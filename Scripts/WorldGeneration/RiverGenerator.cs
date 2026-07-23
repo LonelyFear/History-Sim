@@ -13,7 +13,6 @@ public class RiverGenerator
     public int minRiverHeight = 1000;
     int invalidRivers = 0;
     HashSet<Vector2I> validPositions = [];
-    HashSet<Vector2I> checkedPositions = [];
     bool[,] rivers;
     void GeneratePoints(WorldGenerator world)
     {

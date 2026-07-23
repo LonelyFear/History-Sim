@@ -4,7 +4,8 @@ using System;
 public partial class WorldSettingsPanel : Panel
 {
 	[Export] LineEdit nameEdit;
-	[Export] LineEdit seedEdit;
+	[Export] NumberLineEdit seedEdit;
+	[Export] NumberLineEdit eventSeedEdit;
 	[Export] OptionButton sizeDropdown;
 	[Export] CheckBox heightmapCheckbox;
 	[Export] CheckBox riverCheckbox;
@@ -13,26 +14,13 @@ public partial class WorldSettingsPanel : Panel
 	[Export] Slider largeContinents;
 	[Export] Slider smallContinents;
 	[Export] OptionButton landCoverageDropdown;
-	Random rng = new Random();
+	readonly Random rng = new Random();
 	LoadingScreen loadingScreen;
-	string oldText = "";
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		backButton.Pressed += OnBackPressed;
-		seedEdit.TextChanged += OnSeedChanged;
 		generateWorldButton.Pressed += OnStartPressed;
-	}
-	public void OnSeedChanged(string newText)
-	{
-		if (string.IsNullOrEmpty(newText) || !int.TryParse(newText, out _))
-		{
-			oldText = newText;
-		}
-		else
-		{
-			seedEdit.Text = oldText;
-		}
 	}
 	public void OnBackPressed()
 	{
@@ -42,21 +30,28 @@ public partial class WorldSettingsPanel : Panel
 	public void OnStartPressed()
 	{
 		string worldName = nameEdit.Text;
-		if (worldName.Length < 1)
-		{
-			worldName = NameGenerator.GenerateRandomName(3, 5, false, ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
-		}
-        if (!int.TryParse(seedEdit.Text, out int seed) || seed == 0)
+
+        if (!int.TryParse(seedEdit.Text, out int seed))
         {
             seed = rng.Next(-99999999, 99999999);
         }
+        if (!int.TryParse(eventSeedEdit.Text, out int eventsSeed))
+        {
+            eventsSeed = rng.Next(-99999999, 99999999);
+        }
+		if (worldName.Length < 1)
+		{
+			worldName = NameGenerator.GenerateRandomName(3, 5, new Random(seed), ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
+		}
+
 		GetTree().Root.AddChild(GD.Load<PackedScene>("res://Scenes/game.tscn").Instantiate());
 		loadingScreen = GetNode<LoadingScreen>("/root/Game/Loading/Loading Screen");
 		
 		loadingScreen.worldSettings = new WorldSettings()
 		{
 			worldName = worldName,
-			seed = seed,
+			worldSeed = seed,
+			eventsSeed = eventsSeed,
 			largeContinents = (int)largeContinents.Value,
 			smallContinents = (int)smallContinents.Value,
 			landCoverage = 1f - ((landCoverageDropdown.Selected + 2)/10f),

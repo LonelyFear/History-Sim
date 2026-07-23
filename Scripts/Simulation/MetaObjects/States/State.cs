@@ -270,9 +270,9 @@ public partial class State : Polity, ISaveable
                 // Monarchy
                 // TODO: Make it relate to families
                 // Right now just has a character with the same last name of the last guy
-                string lastName = lastLeader == null ? NameGenerator.GenerateCharacterName() : lastLeader.lastName;
+                string lastName = lastLeader == null ? NameGenerator.GenerateCharacterName(simManager.rng) : lastLeader.lastName;
 
-                newLeader = ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(), lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
+                newLeader = ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(simManager.rng), lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
                 
                 break;
             case GovernmentType.AUTOCRACY:
