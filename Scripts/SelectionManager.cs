@@ -23,7 +23,7 @@ public partial class SelectionManager : Node2D
     public override void _Ready()
     {
 		simHolder.simStartEvent += Init;
-        deselectButton.Pressed += DeselectRegion;
+        deselectButton.Pressed += () => SelectRegion(null);
 	}
 	public void Init()
 	{
@@ -51,14 +51,9 @@ public partial class SelectionManager : Node2D
     }
 	public void SelectRegion(Region region)
 	{
-		if (region == null) return;
-
-		if (CanSelectRegion(region))
+		if (region == null || CanSelectRegion(region))
 		{
 			selectedRegion = region;
-		} else
-		{
-			DeselectRegion();
 		}
 	}
 	public bool CanSelectRegion(Region region)
@@ -72,10 +67,6 @@ public partial class SelectionManager : Node2D
             _ => false,
         };
     }
-	public void DeselectRegion()
-	{
-		selectedRegion = null;
-	}
     public override void _UnhandledInput(InputEvent evnt)
     {
         if (evnt.IsAction("Select") && hoveredRegion != null)

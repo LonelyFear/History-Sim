@@ -128,7 +128,7 @@ public partial class MapManager : Node2D
         //borderRenderer.RedrawBorders();
         Parallel.ForEach(partitioner, (region) =>
         {
-            UpdateRegionColor(region.pos.X, region.pos.Y);
+            UpdateRegionColor(region.centerPos.X, region.centerPos.Y);
         });
         PrepBuffers();
         //RunShader();
@@ -235,7 +235,7 @@ public partial class MapManager : Node2D
             regionOverlay.Visible = value;
             if (!value)
             {
-                selectionManager.DeselectRegion();            
+                selectionManager.SelectRegion(null);            
             }            
         }
     }
@@ -254,7 +254,7 @@ public partial class MapManager : Node2D
 
     public void SetMapMode(MapModes mode)
     {
-        selectionManager.DeselectRegion();
+        selectionManager.SelectRegion(null);
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
         UpdateRegionColors(simManager.regionIds.Values);
@@ -509,7 +509,7 @@ public partial class MapManager : Node2D
                 break;
             case MapModes.DAY_LENGTH:
                 float opacity = 0.75f;
-                Tile tile = simManager.tiles[region.pos.X, region.pos.Y];
+                Tile tile = simManager.tiles[region.centerPos.X, region.centerPos.Y];
                 color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
                 Mathf.InverseLerp(0, 24, tile.GetDaylightForMonth(month)));
                 break;
@@ -537,7 +537,7 @@ public partial class MapManager : Node2D
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
             Color finalColor = color;
-            if (centralColor != null && tilePos == r.pos)
+            if (centralColor != null && tilePos == r.centerPos)
             {
                 finalColor = (Color)centralColor;
             }

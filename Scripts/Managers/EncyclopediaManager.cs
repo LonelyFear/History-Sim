@@ -9,7 +9,7 @@ using System.Linq;
 public partial class EncyclopediaManager : CanvasLayer
 {
 	[Export] PackedScene infoTabScene;
-	[Export] PackedScene polityTabScene;
+	//[Export] PackedScene polityTabScene;
 	[Export] PackedScene indexTabScene;
 	[Export] TimeManager timeManager;
 	[Export] TabManager encyclopediaMenu;
@@ -60,19 +60,23 @@ public partial class EncyclopediaManager : CanvasLayer
 	public void OpenTab(Variant metaData)
 	{
 		string meta = metaData.ToString();
-		string type = meta[..3];
-		string stringId = meta[3..];
-		if (stringId == "Index")
+		if (meta.Contains("Index"))
         {
 			// Opens an index
-			OpenIndexTab(NamedObject.GetTypeFromString(type));
+			OpenIndexTab(NamedObject.GetTypeFromId(meta));
             return;
         }
 		OpenTab(meta);
     }
-	public void OpenIndexTab(ObjectType objectType)
+	public void OpenIndexTab(string objectType)
     {
-		ulong id = (ulong)objectType;
+		ulong id = objectType switch
+		{
+			"state" => 0,
+			"region" => 1,
+			"character" => 2,
+			_ => 9999999
+		};
         // TODO: Implement
 		GD.Print(objectType);
 		// If we already have a tab open for this object switch to it
@@ -91,7 +95,7 @@ public partial class EncyclopediaManager : CanvasLayer
     }
 	public void OpenTab(string fullId)
 	{
-		ulong id = ulong.Parse(fullId[3..]);
+		ulong id = NamedObject.GetNumFromId(fullId);
 
 		// If we already have a tab open for this object switch to it
 		if (infoTabs.ContainsKey(id))
@@ -102,18 +106,10 @@ public partial class EncyclopediaManager : CanvasLayer
 		
 		BaseEncyclopediaTab newTab;
 		NamedObject obj = NamedObject.GetNamedObject(fullId);
-		switch (obj)
-		{
-			case Polity:
-				newTab = polityTabScene.Instantiate<PolityTab>();
-				((PolityTab)newTab).polity = (Polity)obj;
-				break;
-			default:
-                newTab = infoTabScene.Instantiate<InfoTab>();
-                ((InfoTab)newTab).objectType = NamedObject.GetTypeFromString(fullId[..3]);
-				((InfoTab)newTab).loadedObj = obj;			
-				break;
-		}
+
+		newTab = infoTabScene.Instantiate<InfoTab>();
+		((InfoTab)newTab).loadedObj = obj;			
+
 		newTab.Name = obj.name;
 		newTab.InitTab();
 

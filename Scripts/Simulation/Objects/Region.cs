@@ -20,11 +20,10 @@ public partial class Region : PopObject, ISaveable
     [Key(21)] public int tradeWeight { get; set; } = 0;
     [Key(48)] public float fertility;
     [Key(22)] public Economy economy = new();
-    [Key(23)] public Dictionary<ulong, TradeConnection> tradeConnections = new();
 
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
-    [Key(28)] public Vector2I pos;
-
+    [Key(28)] public Vector2I centerPos;
+    [Key(44)] public Vector2I gridPos;
     // trade
     [Key(29)] ulong? tradeZoneId { get; set; } = null;
     [Key(30)] public bool isTradeZoneCenter { get; set; } = false;  
@@ -222,7 +221,6 @@ public partial class Region : PopObject, ISaveable
     public void GetBorderingRegions()
     {
         borderingRegions = [];
-        tradeConnections = [];
         foreach (Vector2I tilePos in tiles)
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
@@ -249,15 +247,11 @@ public partial class Region : PopObject, ISaveable
         if (region != null && region != this && !borderingRegions.Contains(region))
         {
             borderingRegions.Add(region);
-            tradeConnections[region.id] = new();
         }        
     }
     public void RemoveBorder(Region region)
     {
-        if (borderingRegions.Remove(region))
-        {
-            tradeConnections.Remove(region.id);
-        }            
+        borderingRegions.Remove(region);          
     }
     void CalcAverages()
     {
@@ -364,6 +358,8 @@ public partial class Region : PopObject, ISaveable
         if (rng.NextSingle() < 0.0005f && population > 1000)
         {
             ObjectManager.CreateState(this);
+            
+            if (owner == null) return;
 
             owner.population = population;
             owner.workforce = workforce;
@@ -1050,13 +1046,6 @@ public partial class Region : PopObject, ISaveable
 
     static float Heuristic(Region source, Region target)
     {
-        return source.pos.DistanceSquaredTo(target.pos);
+        return source.centerPos.DistanceSquaredTo(target.centerPos);
     }
 }   
-[MessagePackObject]
-public struct TradeConnection
-{
-    public TradeConnection() {}
-    [Key(0)] public float capacity = 10000;
-    [Key(1)] public Dictionary<string, float> flow = new();
-}

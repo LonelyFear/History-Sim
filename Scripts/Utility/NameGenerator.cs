@@ -82,7 +82,7 @@ public static class NameGenerator
             if (c >= name.Length - 1 || name[c] != name[c + 1] ) continue;
             name = name.Remove(c, 1);
         }  
-        if (suffixes != null && suffixes.Length > 0 && (feminine || suffixesOnlyFem))
+        if (suffixes != null && suffixes.Length > 0 && (!suffixesOnlyFem || feminine == suffixesOnlyFem))
         {
             name += suffixes[rng.Next(0, suffixes.Length - 1)];
         }

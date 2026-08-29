@@ -16,7 +16,7 @@ public partial class PolityTab : BaseEncyclopediaTab
     public override void InitTab()
     {
 		objName.Text = polity.name;
-		objType.Text = polity.GetObjectType().ToString();
+		objType.Text = polity.GetTypeName();
 		objDesc.Text = polity.GenerateDescription();
 		objStats.Text = GetStats();
 		objHist.Text = polity.GenerateHistoryText();

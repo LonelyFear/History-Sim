@@ -34,9 +34,10 @@ theme_override_font_sizes/normal_font_size = 30
 bbcode_enabled = true
 text = "The encyclopedia is home to all the information about your world, from history, to conflicts, to characters, to states, to even geography. Select one of the tabs above to switch to the object and read all the information about it, or select an index below to browse the objects of your world.
 
-[url=chaIndex]Characters Index[/url]
-[url=regIndex]Regions Index[/url]
-[url=staIndex]States Index[/url]"
+[url=characterIndex]Characters Index[/url]
+[url=regionIndex]Regions Index[/url]
+[url=stateIndex]States Index[/url]
+[url=warIndex]Wars Index[/url]"
 fit_content = true
 autowrap_mode = 2
 

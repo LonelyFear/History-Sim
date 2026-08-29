@@ -34,7 +34,6 @@ public class SimManager
     // Config
     public string worldName = "";
     public uint tick;
-    public RegionStyle regionStyle = RegionStyle.Square;
     public bool useNewEconomy = false;
 
     // Population
@@ -55,8 +54,6 @@ public class SimManager
     [IgnoreMember] public static Vector2I worldSize;
     [IgnoreMember] public WorldGenerator worldGenerator;
     [IgnoreMember] public MapManager mapManager;
-
-
 
     // Lists
     // Saved Data
@@ -82,7 +79,7 @@ public class SimManager
 
     // Random
     public int eventSeed;
-    public Random rng;
+    public Random rng = new Random();
 
     // Events
     public delegate void ObjectDeletedEvent(ulong id);
@@ -92,6 +89,7 @@ public class SimManager
     [IgnoreMember] public double totalStepTime;
 
     // Constants
+    [IgnoreMember] public static RegionStyle regionStyle = RegionStyle.Square;
     [IgnoreMember] public const int regionGlobalWidth = 16;
 
     // Performance
@@ -300,7 +298,7 @@ public class SimManager
     public void OnWorldgenFinished()
     {
         GD.Print("Events Seed: " + eventSeed);
-        rng = new Random(eventSeed);
+        //rng = new Random(eventSeed);
         
         GD.Print(rng.ToString());
         AssignSimManager();

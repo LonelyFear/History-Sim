@@ -420,7 +420,7 @@ public partial class State : Polity, ISaveable
                 break;
         }
         desc += $" lead by {(leader == null ? "nobody" : GenerateUrlText(leader, leader.name))}. "
-        + $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.pos.X}, {capital.pos.Y}. ";
+        + $"It's capital is {GenerateUrlText(capital, capital.name)}, located at {capital.gridPos.X}, {capital.gridPos.Y}. ";
         return desc;
     }  
 }   

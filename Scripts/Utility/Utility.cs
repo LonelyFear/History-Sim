@@ -77,27 +77,6 @@ public static class Utility
         int length = array.Count();
         return array[r.Next(0, length)];
     }
-    public static ObjectType GetObjectType(this NamedObject popObject)
-    {
-        if (popObject.GetType() == typeof(Culture))
-        {
-            return ObjectType.CULTURE;
-        }
-        else if (popObject.GetType() == typeof(Region))
-        {
-            return ObjectType.REGION;
-        }
-        else if (popObject.GetType() == typeof(State))
-        {
-            return ObjectType.STATE;
-        }
-        else if (popObject.GetType() == typeof(Character))
-        {
-            return ObjectType.CHARACTER;
-        }
-        return ObjectType.UNKNOWN;
-    }
-
     public static float CalcWeightedAverage(params (float value, float weight)[] traits)
     {
         float average = 0;

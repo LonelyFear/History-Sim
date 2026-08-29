@@ -150,7 +150,7 @@ public class RegionGenerator
             Queue<Tile> cellsToEvaluate = new();
 
             // Performs a flood fill to see which tiles are connected to the region
-            cellsToEvaluate.Enqueue(tiles[region.pos.X, region.pos.Y]);
+            cellsToEvaluate.Enqueue(tiles[region.centerPos.X, region.centerPos.Y]);
             while (cellsToEvaluate.Count > 0)
             {
                 Tile tile = cellsToEvaluate.Dequeue();
@@ -330,11 +330,11 @@ public class RegionGenerator
     
     public void GenerateRegions()
     {
-        if (simManager.regionStyle == RegionStyle.Square) CreateRegionsSquare();
+        if (SimManager.regionStyle == RegionStyle.Square) CreateRegionsSquare();
         else CreateRegionsVoronoi();
 
         InitializeRegions();
 
-        if (simManager.regionStyle == RegionStyle.Voronoi) MergeRegions();
+        if (SimManager.regionStyle == RegionStyle.Voronoi) MergeRegions();
     }
 }

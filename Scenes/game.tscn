@@ -22,7 +22,6 @@
 [ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="13_22asu"]
 [ext_resource type="PackedScene" uid="uid://dj6rclmbb0jdm" path="res://Scenes/player_camera.tscn" id="13_rfjv2"]
 [ext_resource type="PackedScene" uid="uid://5m67xih57d7m" path="res://Scenes/Encyclopedia/encyclopedia_main_menu.tscn" id="14_fkdbe"]
-[ext_resource type="Script" uid="uid://0g8tda0fqa40" path="res://Scripts/UI/Sim Stats/ObjectInfo.cs" id="15_ewbju"]
 [ext_resource type="Script" uid="uid://c1u8xh8uvrleb" path="res://Scripts/UI/TopPanel.cs" id="16_22asu"]
 [ext_resource type="Script" uid="uid://2sheynjgehe8" path="res://Scripts/UI/God Mode/ActionPanel.cs" id="17_7nbq1"]
 [ext_resource type="Texture2D" uid="uid://fydmn8silblm" path="res://Sprites/Icons/pause_icon.png" id="19_f3c8l"]
@@ -43,7 +42,15 @@
 [ext_resource type="Texture2D" uid="uid://cy4rk47qw3kfe" path="res://Sprites/Icons/32x32 Encyclopedia.png" id="29_ym3tv"]
 [ext_resource type="Texture2D" uid="uid://mr0s2xt8m66g" path="res://Sprites/Icons/32x32 Pie Chart.png" id="30_bwj6o"]
 [ext_resource type="Texture2D" uid="uid://bdjtnarj1d4sk" path="res://Sprites/Icons/16x16 Hamburger Menu.png" id="31_ym3tv"]
+[ext_resource type="Texture2D" uid="uid://fdl6b4lgpqij" path="res://Sprites/Icons/Cube Tab Icon.png" id="36_htg8p"]
+[ext_resource type="Script" uid="uid://cj0k0s1dru788" path="res://Scripts/UI/InfoHolder.cs" id="36_jcvim"]
+[ext_resource type="Texture2D" uid="uid://cbxcrhkoik54u" path="res://Sprites/Icons/Banner Tab Icon.png" id="38_htg8p"]
 [ext_resource type="Script" uid="uid://dqai4dwkt1r7g" path="res://Scripts/UI/OptionsPanel.cs" id="39_bu0y5"]
+[ext_resource type="Texture2D" uid="uid://d0ikusbp8bvy2" path="res://Sprites/Icons/Shield Tab Icon.png" id="39_fnkle"]
+[ext_resource type="Texture2D" uid="uid://dr8j8fmvdbjhj" path="res://Sprites/Icons/Crown Tab Icon.png" id="39_jcvim"]
+[ext_resource type="Texture2D" uid="uid://dy0pq3ah4prxn" path="res://Sprites/Icons/Rug Tab Icon.png" id="40_fnkle"]
+[ext_resource type="Texture2D" uid="uid://qyiufmqook10" path="res://Sprites/Icons/Crate Tab Icon.png" id="41_wr3wg"]
+[ext_resource type="Script" uid="uid://b7otfafxlep3u" path="res://Scripts/UI/HoverText.cs" id="42_jcvim"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mucmn"]
 shader = ExtResource("8_cwurv")
@@ -68,13 +75,15 @@ vertical = true
 _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#fff\" fill-opacity=\".75\" d=\"m1 3 2-2 5 5 5-5 2 2-5 5 5 5-2 2-5-5-5 5-2-2 5-5z\"/></svg>
 "
 
-[sub_resource type="StyleBoxLine" id="StyleBoxLine_22asu"]
-color = Color(0.5, 0.5, 0.5, 1)
-grow_begin = 0.0
-grow_end = 0.0
-thickness = 5
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cwurv"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_htg8p"]
+content_margin_left = 10.0
+content_margin_right = 10.0
+bg_color = Color(0.1, 0.1, 0.1, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
 
 [node name="Game" type="Node2D" unique_id=350215680]
 script = ExtResource("1_rku1e")
@@ -98,11 +107,10 @@ visible = false
 script = ExtResource("2_fkdbe")
 timeManager = NodePath("../Time Manager")
 
-[node name="SelectionManager" type="Node2D" parent="." unique_id=288866782 node_paths=PackedStringArray("playerCamera", "simHolder", "deselectButton", "mapManager")]
+[node name="SelectionManager" type="Node2D" parent="." unique_id=288866782 node_paths=PackedStringArray("playerCamera", "simHolder", "mapManager")]
 script = ExtResource("5_tgy6u")
 playerCamera = NodePath("../PlayerCamera")
 simHolder = NodePath("../Simulation")
-deselectButton = NodePath("../UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose/CloseInfoButton")
 mapManager = NodePath("../Map Manager")
 
 [node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder", "gameSpeedUI")]
@@ -662,29 +670,42 @@ script = ExtResource("28_v2cs8")
 mapMode = 7
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
-[node name="InfoHolder" type="Panel" parent="UI" unique_id=741863181 node_paths=PackedStringArray("selectionManager", "simHolder", "nameLabel", "typeLabel", "populationLabel", "specialLabel", "encyclopediaButton", "encyclopediaManager")]
-clip_contents = true
+[node name="InfoHolder" type="VBoxContainer" parent="UI" unique_id=83497120 node_paths=PackedStringArray("selectionManager", "exitButton")]
 anchors_preset = -1
-anchor_top = 0.4
+anchor_top = 0.35
 anchor_right = 0.25
-anchor_bottom = 0.9
-offset_left = 1.0
-offset_top = -45.0
-offset_right = 1.0
-offset_bottom = -45.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("15_ewbju")
+anchor_bottom = 0.87
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+script = ExtResource("36_jcvim")
 selectionManager = NodePath("../../SelectionManager")
-simHolder = NodePath("../../Simulation")
-nameLabel = NodePath("InfoMargins/InfoContainer/NameAndClose/NameType/Name")
-typeLabel = NodePath("InfoMargins/InfoContainer/NameAndClose/NameType/Type")
-populationLabel = NodePath("InfoMargins/InfoContainer/Scroll/Info/Population")
-specialLabel = NodePath("InfoMargins/InfoContainer/Scroll/Info/Special")
-encyclopediaButton = NodePath("InfoMargins/InfoContainer/EncyclopediaButton")
-encyclopediaManager = NodePath("../../Encyclopedia")
+exitButton = NodePath("Panel/MarginContainer/VBoxContainer/NameAndClose/CloseInfoButton")
 
-[node name="InfoMargins" type="MarginContainer" parent="UI/InfoHolder" unique_id=256112831]
+[node name="TabBar" type="TabBar" parent="UI/InfoHolder" unique_id=1462659835]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_constants/icon_max_width = 24
+current_tab = 0
+tab_alignment = 1
+tab_count = 6
+tab_0/tooltip = "Region"
+tab_0/icon = ExtResource("36_htg8p")
+tab_1/tooltip = "Polity"
+tab_1/icon = ExtResource("38_htg8p")
+tab_2/tooltip = "Realm"
+tab_2/icon = ExtResource("39_jcvim")
+tab_3/tooltip = "Alliance"
+tab_3/icon = ExtResource("39_fnkle")
+tab_4/tooltip = "Culture"
+tab_4/icon = ExtResource("40_fnkle")
+tab_5/tooltip = "Trade Zone"
+tab_5/icon = ExtResource("41_wr3wg")
+
+[node name="Panel" type="Panel" parent="UI/InfoHolder" unique_id=547422584]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/InfoHolder/Panel" unique_id=1858658172]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -694,33 +715,33 @@ grow_vertical = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
+theme_override_constants/margin_bottom = 10
 
-[node name="InfoContainer" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins" unique_id=1153285923]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer" unique_id=806584796]
 layout_mode = 2
 
-[node name="NameAndClose" type="HBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=749298753]
+[node name="NameAndClose" type="HBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer" unique_id=884140041]
 layout_mode = 2
 
-[node name="NameType" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose" unique_id=526718828]
+[node name="NameType" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/NameAndClose" unique_id=626641760]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Name" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose/NameType" unique_id=298328032]
+[node name="Name" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/NameAndClose/NameType" unique_id=722268416]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 40
 text = "Nation Name"
 clip_text = true
 
-[node name="Type" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose/NameType" unique_id=2131231100]
+[node name="Type" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/NameAndClose/NameType" unique_id=520929884]
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 22
 text = "Nation"
 clip_text = true
 
-[node name="CloseInfoButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer/NameAndClose" unique_id=587088966]
+[node name="CloseInfoButton" type="Button" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/NameAndClose" unique_id=1545033231]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme = ExtResource("4_exi56")
@@ -729,64 +750,42 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
-[node name="NameTypeSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=624033057]
+[node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer" unique_id=1177022685]
 layout_mode = 2
-theme_override_constants/separation = 7
-theme_override_styles/separator = SubResource("StyleBoxLine_22asu")
 
-[node name="Scroll" type="ScrollContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=1166211816]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer" unique_id=539605542]
 layout_mode = 2
 size_flags_vertical = 3
-mouse_filter = 0
-mouse_force_pass_scroll_events = false
-theme = ExtResource("4_exi56")
-theme_override_styles/panel = SubResource("StyleBoxEmpty_cwurv")
+vertical_scroll_mode = 2
 
-[node name="Info" type="VBoxContainer" parent="UI/InfoHolder/InfoMargins/InfoContainer/Scroll" unique_id=685208617]
+[node name="MarginContainer" type="MarginContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer" unique_id=1941233286]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 0
 
-[node name="Population" type="Label" parent="UI/InfoHolder/InfoMargins/InfoContainer/Scroll/Info" unique_id=1088169906]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
+[node name="HoverText" type="RichTextLabel" parent="UI" unique_id=1534067496 node_paths=PackedStringArray("selectionManager", "mapManager")]
+anchors_preset = -1
+anchor_top = 0.87
+anchor_right = 0.25
+anchor_bottom = 0.90000004
+offset_bottom = 1.0
+size_flags_vertical = 13
 theme = ExtResource("4_exi56")
-theme_override_constants/line_spacing = -4
-theme_override_font_sizes/font_size = 30
-text = "Population: 1,000
-Free Land:
-Farmers:
-Merchants:
-Aristocrats:
-Artisans:"
-
-[node name="Special" type="RichTextLabel" parent="UI/InfoHolder/InfoMargins/InfoContainer/Scroll/Info" unique_id=2001700316]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/normal_font_size = 30
-bbcode_enabled = true
-text = "Arable Land:
-Wealth:"
+theme_override_font_sizes/normal_font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_htg8p")
+text = "(0,0), Region name, Region owner"
 fit_content = true
 scroll_active = false
-
-[node name="ButtonSeparator" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=2042874959]
-layout_mode = 2
-size_flags_vertical = 8
-
-[node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=342721538]
-layout_mode = 2
-size_flags_horizontal = 4
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 25
-text = "View In Encyclopedia"
-
-[node name="ContianerEdge" type="HSeparator" parent="UI/InfoHolder/InfoMargins/InfoContainer" unique_id=876529723]
-layout_mode = 2
-size_flags_vertical = 8
+autowrap_mode = 0
+context_menu_enabled = true
+vertical_alignment = 1
+script = ExtResource("42_jcvim")
+selectionManager = NodePath("../../SelectionManager")
+mapManager = NodePath("../../Map Manager")
 
 [node name="DebugPanel" type="Panel" parent="UI" unique_id=230128597 node_paths=PackedStringArray("closeButton")]
 visible = false

@@ -7,7 +7,6 @@ public partial class InfoTab : BaseEncyclopediaTab
 	[Export] RichTextLabel objDesc;
 	[Export] RichTextLabel objStats;
 	[Export] RichTextLabel objHist;
-	public ObjectType objectType;
 	public NamedObject loadedObj;
 	
 	public override void _Ready() {
@@ -18,7 +17,7 @@ public partial class InfoTab : BaseEncyclopediaTab
 	public override void InitTab()
 	{
 		objName.Text = loadedObj.name;
-		objType.Text = objectType.ToString().Capitalize();
+		objType.Text = loadedObj.GetTypeName();
 		objDesc.Text = loadedObj.GenerateDescription();
 		objStats.Text = loadedObj.GenerateStatsText();
 		objHist.Text = loadedObj.GenerateHistoryText();

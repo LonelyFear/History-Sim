@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Godot;
 using MessagePack;
 using PixelHistory.Objects.States.Base;
@@ -70,73 +72,70 @@ public abstract class NamedObject
         }
         return text;
     }
+    public static string GetTypeFromId(string fullId)
+    {
+        return Regex.Match(fullId, "^[a-zA-Z_]+").ToString();
+    }
+    public static ulong GetNumFromId(string fullId)
+    {
+        return ulong.Parse(Regex.Match(fullId, "[0-9]+$").ToString());
+    }
     public static T GetNamedObject<T>(string fullId) where T : NamedObject
     {
-        ulong id = ulong.Parse(fullId[3..]);
-        NamedObject obj;
-        switch (GetTypeFromString(fullId[..3]))
+        string typeString = GetTypeFromId(fullId);
+        ulong id = GetNumFromId(fullId);
+        NamedObject obj = typeString switch
         {
-			case ObjectType.STATE:
-				obj = ObjectManager.GetState(id);
-				break;
-			case ObjectType.REGION:
-				obj = ObjectManager.GetRegion(id);
-				break;
-			case ObjectType.CULTURE:
-				obj = ObjectManager.GetCulture(id);
-				break;
-			case ObjectType.CHARACTER:
-				obj = ObjectManager.GetCharacter(id);
-				break;
-			case ObjectType.WAR:
-				obj = ObjectManager.GetWar(id);
-				break;
-			case ObjectType.ALLIANCE:
-				obj = ObjectManager.GetAlliance(id);
-				break;
-            default:
-                obj = null;
-                break;
-        }
-        return (T)obj;
-    }
-    public static NamedObject GetNamedObject(string fullId)
-    {
-        return GetNamedObject<NamedObject>(fullId);
-    }
-	public static ObjectType GetTypeFromString(string s)
-    {
-        switch (s)
+            "state" => ObjectManager.GetState(id),
+            "region" => ObjectManager.GetRegion(id),
+            "culture" => ObjectManager.GetCulture(id),
+            "character" => ObjectManager.GetCharacter(id),
+            "war" => ObjectManager.GetWar(id),
+            "alliance" => ObjectManager.GetAlliance(id),
+            "market" => ObjectManager.GetTradeZone(id),
+            //"ocean" => ObjectManager.GetOcean(id),
+            _ => null,
+        };
+        if (obj is T typeObj)
         {
-			case "sta":
-				return ObjectType.STATE;
-			case "reg":
-				return ObjectType.REGION;
-			case "cul":
-				return ObjectType.CULTURE;
-			case "cha":
-				return ObjectType.CHARACTER;
-			case "war":
-				return ObjectType.WAR;
-			case "all":
-				return ObjectType.ALLIANCE;
-			default:
-				return ObjectType.UNKNOWN;
+            return typeObj;
         }
+        return null;
     }
     public string GetFullId()
     {
         string typeId = this switch
         {
-            State => "sta",
-            Region => "reg",
-            Culture => "cul",
-            Character => "cha",
+            State => "state",
+            Region => "region",
+            Culture => "culture",
+            Character => "character",
             War => "war",
-            Alliance => "all",
-            _ => "idk"
+            Alliance => "alliance",
+            TradeZone => "market",
+            //Ocean => "ocean",
+            _ => "unknown"
         };
         return typeId + id;        
+    }
+    public static NamedObject GetNamedObject(string fullId)
+    {
+        return GetNamedObject<NamedObject>(fullId);
+    }
+    public string GetTypeName()
+    {
+        string tName = this switch
+        {
+            State => "State",
+            Region => "Region",
+            Culture => "Culture",
+            Character => "Character",
+            War => "War",
+            Alliance => "Alliance",
+            TradeZone => "Market",
+            _ => "Unknown"
+        };
+        return tName;        
     }
     public static string GenerateUrlText(NamedObject obj, string text, string color = "orange")
     {
@@ -152,15 +151,4 @@ public abstract class NamedObject
     {
         return (NamedObject)MemberwiseClone();
     }
-}
-public enum ObjectType
-{
-    STATE,
-    REGION,
-    CULTURE,
-    CHARACTER,
-    WAR,
-    ALLIANCE,
-    OCEAN,
-    UNKNOWN
 }

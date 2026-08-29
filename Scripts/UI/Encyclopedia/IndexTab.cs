@@ -11,7 +11,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 	[Export] VBoxContainer resultsContainer;
 	[Export] PackedScene resultScene;
 	[Export] Label resultsLabel;
-	public ObjectType type;
+	public string type;
 	Dictionary<string, Button> resultDictionary = [];
 	int currentIdentifier = 0;
 	// Called when the node enters the scene tree for the first time.
@@ -20,7 +20,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 		search.TextChanged += OnSearchEditSubmitted;
 		switch (type)
 		{
-			case ObjectType.CHARACTER:
+			case "character":
 				Name = "Character Index";
 				indexNameLabel.Text = "Character Index";
 				foreach (Character character in simManager.characterIds.Values)
@@ -28,7 +28,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 					CreateResultButton(character);
 				}
 				break;
-			case ObjectType.STATE:
+			case "state":
 				Name = "State Index";
 				indexNameLabel.Text = "State Index";
 				foreach (State state in simManager.statesIds.Values)
@@ -36,7 +36,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 					CreateResultButton(state);
 				}
 				break;
-			case ObjectType.REGION:
+			case "region":
 				Name = "Region Index";
 				indexNameLabel.Text = "Region Index";
 				foreach (Region region in simManager.regionIds.Values)

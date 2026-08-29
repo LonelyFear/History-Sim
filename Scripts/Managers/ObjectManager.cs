@@ -66,7 +66,8 @@ public static class ObjectManager
         {
             id = GetId(),
             linkUpdateCountdown = simManager.rng.Next(0, 13),
-            pos = new Vector2I(x,y)
+            centerPos = new Vector2I(x,y),
+            gridPos = new Vector2I(x/RegionGenerator.tilesPerRegion,y/RegionGenerator.tilesPerRegion)
         };
         region.AddTile(simManager.tiles[x,y]);
         region.terrainType = simManager.tiles[x,y].terrainType;
@@ -170,31 +171,43 @@ public static class ObjectManager
     }
     public static void CreateState(Region region)
     {
-        if (region.owner == null)
+        try
         {
-            float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
-            float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
-            float b = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
-            State state = new State()
+            if (region.owner == null)
             {
-                id = GetId(),
-                baseName = NameGenerator.GenerateNationName(simManager.rng),
-                color = new Color(r, g, b),
-                capital = region,
-                tickCreated = timeManager.ticks,
-                
-            };
-            state.AddRegion(region, true);
-            simManager.statesIds.Add(state.id, state);      
-                  
-            state.AIManager = new StateAIManager(state);
+                float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+                float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+                float b = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
+                string name = NameGenerator.GenerateNationName(simManager.rng);
+
+                if (name.Equals("koria", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return;
+                }
+
+                State state = new()
+                {
+                    id = GetId(),
+                    baseName = name,
+                    color = new Color(r, g, b),
+                    capital = region,
+                    tickCreated = timeManager.ticks,
+                };
+                state.AddRegion(region, true);
+                simManager.statesIds.Add(state.id, state);      
+                    
+                state.AIManager = new StateAIManager(state);
+            }            
+        } catch (Exception e)
+        {
+            GD.PushError(e);
         }
     }
     public static void DeleteState(State deletedState)
     {
         if (selectionManager.GetSelectedState() == deletedState)
         {
-            selectionManager.DeselectRegion();
+            selectionManager.SelectRegion(null);
         }
         deletedState.GetLiege()?.RemoveVassal(deletedState);
         deletedState.LeaveAllWars();
