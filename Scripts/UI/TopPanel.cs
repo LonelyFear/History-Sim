@@ -31,7 +31,7 @@ public partial class TopPanel : Panel
     {
         if (!update) return;
 
-        dateLabel.Text = $"Year {timeManager.GetYear()}";
+        dateLabel.Text = $"Year {TimeManager.GetYear(timeManager.ticks)}";
         nameLabel.Text = $"World of {simManager.worldName}";
         ageLabel.Text = $"Age of History";
 

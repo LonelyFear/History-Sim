@@ -8,12 +8,12 @@ public partial class StreamlineRenderer : Node2D
 
     public override void _Process(double delta)
     {
-		if (Mathf.PosMod(timeManager.GetMonth(), 6) == 0) QueueRedraw();
+		if (Mathf.PosMod(TimeManager.GetMonth(timeManager.ticks), 6) == 0) QueueRedraw();
     }
 
     public override void _Draw()
     {
-		bool winter = timeManager.GetMonth() > 6;
+		bool winter = TimeManager.GetMonth(timeManager.ticks) > 6;
 
 		Scale = new Godot.Vector2(1, 1) * 80f / world.WorldSize.X;
         for (int x = 0; x < world.WorldSize.X; x++)

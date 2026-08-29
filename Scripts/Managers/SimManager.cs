@@ -372,7 +372,7 @@ public class SimManager
         Parallel.ForEach(partitioner, (popsPair) =>
         {
             Pop pop = popsPair.Value;
-            bool isInBatch = pop.batchId == timeManager.GetMonth(timeManager.ticks);
+            bool isInBatch = pop.batchId == TimeManager.GetMonth(timeManager.ticks);
             pop.politicalPower = pop.CalculatePoliticalPower(); 
               
             if (isInBatch)
@@ -721,7 +721,7 @@ public class SimManager
                 if (character.dead)
                 {
                     // Deletes characters after 200 years if they are dead
-                    if (timeManager.GetYear(character.GetAge()) > 200)
+                    if (TimeManager.GetYear(character.GetAge()) > 200)
                     {
                         ObjectManager.DeleteCharacter(character);
                     }
@@ -732,7 +732,7 @@ public class SimManager
 
                 // Character Aging
                 // Calculated yearly, decreases character health as they age
-                if (timeManager.GetMonth(character.tickCreated) == timeManager.GetMonth())
+                if (TimeManager.GetMonth(character.tickCreated) == TimeManager.GetMonth(timeManager.ticks))
                 {
                     character.CharacterAging();
                 }

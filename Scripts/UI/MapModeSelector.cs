@@ -22,8 +22,19 @@ public partial class MapModeSelector : GridContainer
 				}
 			}
 		}
+		mapManager.mapmodeChanged += OnMapModeChanged;
 	}
-
+	public void OnMapModeChanged(MapModes mapMode)
+	{
+		foreach (MapModeButton button in mapModeButtons)
+		{
+			button.Disabled = false;
+			if (button.mapMode == mapManager.mapMode)
+			{
+				button.Disabled = true;
+			}
+		}		
+	}
 	public void OnMapmodePressed()
 	{
 		foreach (MapModeButton button in mapModeButtons)

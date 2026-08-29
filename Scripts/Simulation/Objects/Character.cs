@@ -152,7 +152,7 @@ public partial class Character : NamedObject
             _ => $"{(dead ? "lived" : "is living")} in the {GenerateUrlText(state, state.name)}",
         };
 
-        desc += $", and {pronoun} {w} {sim.timeManager.GetYear(GetAge())} years old" 
+        desc += $", and {pronoun} {w} {TimeManager.GetYear(GetAge())} years old" 
         + (dead ? $" when {pronoun} died. " : ". ");
         // Personality
         string agressionString = GetPersonalityLevel("agression") switch

@@ -163,10 +163,10 @@ public partial class ObjectInfo : Panel
         //--------------------------------------------------
         populationLabel.Text = "Population: " + polity.population.ToString("#,###0");
 
-        uint yearAge = timeManager.GetYear(polity.GetAge());
-        uint monthAge = timeManager.GetMonth(polity.GetAge());
+        uint yearAge = TimeManager.GetYear(polity.GetAge());
+        uint monthAge = TimeManager.GetMonth(polity.GetAge());
 
-        specialLabel.Text = $"Founded in Month {timeManager.GetMonth(polity.tickCreated)} of Year {timeManager.GetYear(polity.tickCreated)}";
+        specialLabel.Text = $"Founded in Month {TimeManager.GetMonth(polity.tickCreated)} of Year {TimeManager.GetYear(polity.tickCreated)}";
         specialLabel.Text += "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";  
 
         specialLabel.Text += "\n" + "Total Wealth: " + polity.totalWealth.ToString("#,###0");
@@ -175,7 +175,7 @@ public partial class ObjectInfo : Panel
         if (state.leader != null) {
             Character leader = state.leader;
             specialLabel.Text += "\n" + $"Leader: {state.leaderTitle} {leader.firstName + " " + leader.lastName}";
-            specialLabel.Text += "\n" + $"Leader Age: {timeManager.GetYear(leader.GetAge())} year(s)" + "\n";
+            specialLabel.Text += "\n" + $"Leader Age: {TimeManager.GetYear(leader.GetAge())} year(s)" + "\n";
         } else {
             specialLabel.Text += "\n" + "Leader: None";
         }
@@ -187,8 +187,8 @@ public partial class ObjectInfo : Panel
             foreach (War war in state.wars.Keys.ToArray()) {
                 if (war == null) continue;
 
-                yearAge = timeManager.GetYear(war.GetAge());
-                monthAge = timeManager.GetMonth(war.GetAge());
+                yearAge = TimeManager.GetYear(war.GetAge());
+                monthAge = TimeManager.GetMonth(war.GetAge());
                 specialLabel.Text += "\n" + $"{war.name}";
                 specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
                 specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
@@ -209,10 +209,10 @@ public partial class ObjectInfo : Panel
         //--------------------------------------------------
         populationLabel.Text = "Population: " + alliance.population.ToString("#,###0");
 
-        uint yearAge = timeManager.GetYear(alliance.GetAge());
-        uint monthAge = timeManager.GetMonth(alliance.GetAge());
+        uint yearAge = TimeManager.GetYear(alliance.GetAge());
+        uint monthAge = TimeManager.GetMonth(alliance.GetAge());
 
-        specialLabel.Text = $"Formed in Month {timeManager.GetMonth(alliance.tickCreated)} of Year {timeManager.GetYear(alliance.tickCreated)}";
+        specialLabel.Text = $"Formed in Month {TimeManager.GetMonth(alliance.tickCreated)} of Year {TimeManager.GetYear(alliance.tickCreated)}";
         specialLabel.Text += "\n" + $"Age {yearAge} year(s), {monthAge} month(s)";  
 
         specialLabel.Text += "\n" + "Member States: " + alliance.memberStates.Count.ToString("#,###0") + "\n"; 
@@ -226,8 +226,8 @@ public partial class ObjectInfo : Panel
             foreach (War war in alliance.leadState.wars.Keys.ToArray()) {
                 if (war == null) continue;
 
-                yearAge = timeManager.GetYear(war.GetAge());
-                monthAge = timeManager.GetMonth(war.GetAge());
+                yearAge = TimeManager.GetYear(war.GetAge());
+                monthAge = TimeManager.GetMonth(war.GetAge());
                 specialLabel.Text += "\n" + $"{war.name}";
                 specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
                 specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";

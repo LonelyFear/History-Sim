@@ -28,8 +28,8 @@ public partial class SelectionManager : Node2D
 	public void Init()
 	{
 		simManager = simHolder.simManager;
-        worldSize = SimManager.worldSize;
-       ObjectManager.selectionManager = this;
+		worldSize = SimManager.worldSize;
+		ObjectManager.selectionManager = this;
 
 		selectionEnabled = true;
 	}
@@ -51,13 +51,15 @@ public partial class SelectionManager : Node2D
     }
 	public void SelectRegion(Region region)
 	{
-		if (region == null || CanSelectRegion(region))
+		selectedRegion = null;
+		if (CanSelectRegion(region))
 		{
 			selectedRegion = region;
 		}
 	}
 	public bool CanSelectRegion(Region region)
 	{
+		if (region == null) return false;
         return mapManager.mapMode switch
         {
 			MapModes.REALM => region.habitable,
@@ -87,6 +89,11 @@ public partial class SelectionManager : Node2D
 	{
 		if (selectedRegion == null) return null;
 		return ObjectManager.GetCulture(selectedRegion.largestCultureId);
+	}
+	public TradeZone GetSelectedTradeZone()
+	{
+		if (selectedRegion == null) return null;
+		return selectedRegion.tradeZone;
 	}
 	public State GetSelectedState()
 	{

@@ -51,6 +51,10 @@ public partial class MapManager : Node2D
     ulong[] borderValues;
     //float[] colorValues;
 
+    // Events
+    public delegate void MapmodeChanged(MapModes newMapMode);
+    public event MapmodeChanged mapmodeChanged;
+
     // NOTE: Painted regions are updated in TimeManager.cs
     public override void _Ready()
     {
@@ -258,6 +262,7 @@ public partial class MapManager : Node2D
         mapMode = mode;
         mapModeUI.Selected = (int)mode;
         UpdateRegionColors(simManager.regionIds.Values);
+        mapmodeChanged.Invoke(mode);
     }
     float GetMapmodeOpacity()
     {
@@ -280,7 +285,7 @@ public partial class MapManager : Node2D
         if (region == null) return color;
         State regionOwner = region.owner;
         MapModes drawnMapMode = mapMode;
-        int month = (int)(timeManager.GetMonth() - 1);
+        int month = (int)(TimeManager.GetMonth(timeManager.ticks) - 1);
 
         switch (drawnMapMode)
         {
@@ -531,7 +536,7 @@ public partial class MapManager : Node2D
         Color color = GetRegionColor(r, out ulong borderId, false);
         Color? centralColor = GetRegionColor(r, out ulong _, true);;
 
-        int month = (int)(timeManager.GetMonth() - 1);
+        int month = (int)(TimeManager.GetMonth(timeManager.ticks) - 1);
 
         foreach (Vector2I tilePos in r.tiles)
         {
