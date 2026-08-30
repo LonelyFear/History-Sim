@@ -52,6 +52,8 @@
 [ext_resource type="Script" uid="uid://dm80ni1pwsu8b" path="res://Scripts/UI/InfoPanelBox.cs" id="42_fnkle"]
 [ext_resource type="Script" uid="uid://b7otfafxlep3u" path="res://Scripts/UI/HoverText.cs" id="42_jcvim"]
 [ext_resource type="Script" uid="uid://y6dbljc821m" path="res://Scenes/DemographicsBox.cs" id="42_wr3wg"]
+[ext_resource type="Script" uid="uid://cv5nuwudhbqr6" path="res://Scripts/UI/LeadershipBox.cs" id="43_wr3wg"]
+[ext_resource type="Script" uid="uid://clmuvck1mxus6" path="res://Scripts/EconomyBox.cs" id="44_6xvgv"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mucmn"]
 shader = ExtResource("8_cwurv")
@@ -689,7 +691,7 @@ typeLabel = NodePath("Panel/MarginContainer/VBoxContainer/NameAndClose/NameType/
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_constants/icon_max_width = 24
-current_tab = 0
+current_tab = 2
 tab_alignment = 1
 tab_count = 6
 tab_0/tooltip = "Region"
@@ -775,7 +777,7 @@ theme_override_constants/margin_bottom = 0
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="DemographicsBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=309550292 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager", "populationLabel", "foundedLabel", "ageLabel", "techLabel")]
+[node name="DemographicsBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=309550292 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager", "populationLabel", "foundedLabel", "ageLabel", "strengthLabel", "techLabel")]
 layout_mode = 2
 script = ExtResource("42_wr3wg")
 infoHolder = NodePath("../../../../../../..")
@@ -784,6 +786,7 @@ selectionManager = NodePath("../../../../../../../../../SelectionManager")
 populationLabel = NodePath("PopulationLabel")
 foundedLabel = NodePath("FoundLabel")
 ageLabel = NodePath("AgeLabel")
+strengthLabel = NodePath("StrengthLabel")
 techLabel = NodePath("TechLabel")
 
 [node name="Label" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=1852763623]
@@ -812,7 +815,14 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
 text = "Age: 999 years, 6 months"
 
+[node name="StrengthLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=496463928]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 25
+text = "Strength: 100"
+
 [node name="TechLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=192843572]
+visible = false
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
@@ -821,10 +831,14 @@ Mil - 1/20
 Soc - 1/20
 Ind - 0/20"
 
-[node name="LeadershipBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1567667305 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager")]
+[node name="LeadershipBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1567667305 node_paths=PackedStringArray("govtLabel", "leaderLabel", "leaderAgeLabel", "stabLabel", "infoHolder", "mapManager", "selectionManager")]
 visible = false
 layout_mode = 2
-script = ExtResource("42_fnkle")
+script = ExtResource("43_wr3wg")
+govtLabel = NodePath("GovtLabel")
+leaderLabel = NodePath("LeaderLabel")
+leaderAgeLabel = NodePath("LeaderAge")
+stabLabel = NodePath("StabLabel")
 infoHolder = NodePath("../../../../../../..")
 mapManager = NodePath("../../../../../../../../../Map Manager")
 selectionManager = NodePath("../../../../../../../../../SelectionManager")
@@ -845,11 +859,13 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
 text = "Parliamentary Monarchy"
 
-[node name="LeaderLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=576857951]
+[node name="LeaderLabel" type="RichTextLabel" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=445528950]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/normal_font_size = 25
+bbcode_enabled = true
 text = "Leader: King Jon Doe III"
+fit_content = true
 
 [node name="LeaderAge" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=1005179275]
 layout_mode = 2
@@ -863,14 +879,14 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
 text = "Stability: 50%"
 
-[node name="EconomyBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=366582153 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager")]
-visible = false
+[node name="EconomyBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=366582153 node_paths=PackedStringArray("wealthLabel", "tradeZoneLabel", "infoHolder", "mapManager", "selectionManager")]
 layout_mode = 2
-script = ExtResource("42_fnkle")
+script = ExtResource("44_6xvgv")
+wealthLabel = NodePath("WealthLabel")
+tradeZoneLabel = NodePath("TradeZoneLabel")
 infoHolder = NodePath("../../../../../../..")
 mapManager = NodePath("../../../../../../../../../Map Manager")
 selectionManager = NodePath("../../../../../../../../../SelectionManager")
-visibleTypes = PackedStringArray("state", "alliance", "market")
 metadata/_custom_type_script = "uid://dm80ni1pwsu8b"
 
 [node name="Label" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=814330184]
@@ -887,11 +903,13 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
 text = "Wealth: 100,000"
 
-[node name="TradeZoneLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=1653541392]
+[node name="TradeZoneLabel" type="RichTextLabel" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=1614957524]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/normal_font_size = 25
+bbcode_enabled = true
 text = "Trade Zone: Joma Market"
+fit_content = true
 
 [node name="DiplomacyBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=2021864065 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager")]
 visible = false

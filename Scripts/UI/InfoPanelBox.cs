@@ -5,9 +5,9 @@ using System.Linq;
 [GlobalClass]
 public partial class InfoPanelBox : VBoxContainer
 {
-	[Export] InfoHolder infoHolder;
-	[Export] MapManager mapManager;
-	[Export] SelectionManager selectionManager;
+	[Export] protected InfoHolder infoHolder;
+	[Export] protected MapManager mapManager;
+	[Export] protected SelectionManager selectionManager;
 	[Export] string[] visibleTypes = [];
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

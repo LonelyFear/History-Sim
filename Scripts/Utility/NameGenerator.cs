@@ -93,6 +93,7 @@ public static class NameGenerator
     {
         string name = GenerateRandomName(2, 4, rng, ["a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
         // Location Specific Names
+        /*
         switch (region.terrainType)
         {
             case TerrainType.LAND:
@@ -113,6 +114,7 @@ public static class NameGenerator
                 name = GetDemonym(name) + " Sea";
                 break;
         }
+        */
         return name;        
     }
     public static string GenerateCultureName(Random rng)

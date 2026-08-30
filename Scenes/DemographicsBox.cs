@@ -9,6 +9,7 @@ public partial class DemographicsBox : VBoxContainer
 	[Export] Label populationLabel;
 	[Export] Label foundedLabel;
 	[Export] Label ageLabel;
+	[Export] Label strengthLabel;
 	[Export] Label techLabel;
 
 	public override void _Process(double delta)
@@ -25,9 +26,26 @@ public partial class DemographicsBox : VBoxContainer
 
 		foundedLabel.Text = $"Founded: Month {TimeManager.GetMonth(infoHolder.selectedObject.tickCreated)} of {TimeManager.GetYear(infoHolder.selectedObject.tickCreated)}";
 		
-		int years = (int)TimeManager.GetYear(infoHolder.selectedObject.GetAge());
-		int months = (int)TimeManager.GetMonth(infoHolder.selectedObject.GetAge());
-		ageLabel.Text = $"Age: {years} Year{(years == 1 ? "" : "s")}, {months} Month{(months == 1 ? "" : "s")}";
+		NamedObject obj = infoHolder.selectedObject;
+		if (obj is Alliance a && a.type == AllianceType.REALM)
+		{
+			obj = a.leadState;
+		}
+
+		if (obj != null)
+		{
+			int years = (int)TimeManager.GetYear(obj.GetAge());
+			int months = (int)TimeManager.GetMonth(obj.GetAge());
+			
+			ageLabel.Text = $"Age: {years} Year{(years == 1 ? "" : "s")}, {months} Month{(months == 1 ? "" : "s")}";			
+		}
+
+		strengthLabel.Visible = false;
+		if (infoHolder.selectedObject is Polity polity)
+		{
+			strengthLabel.Visible = true;
+			strengthLabel.Text = $"Strength: {polity.armyPower}";			
+		}
 
 		techLabel.Visible = false;
 	}

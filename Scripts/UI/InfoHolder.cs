@@ -40,7 +40,17 @@ public partial class InfoHolder : VBoxContainer
                 5 => selectionManager.GetSelectedTradeZone(),
                 _ => selectionManager.GetSelectedRegion(),
             };
-			nameLabel.Text = (selectedObject is State s) ? s.baseName : selectedObject.name;
+			selectedObject ??= selectionManager.GetSelectedRegion();
+			
+			nameLabel.Text = selectedObject.name;
+			if (selectedObject is State s)
+			{
+				nameLabel.Text = s.baseName;
+			}
+			if (selectedObject is Alliance a && a.type == AllianceType.REALM)
+			{
+				nameLabel.Text = a.leadState.baseName;
+			}
 			typeLabel.Text = selectedObject.GetTypeName();
         }
 	}
