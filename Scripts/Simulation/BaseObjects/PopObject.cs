@@ -79,7 +79,7 @@ public abstract class PopObject : NamedObject
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
 
-            countedProfessions[pop.profession.id] += pop.workforce;
+            countedProfessions[pop.socialClass.id] += pop.workforce;
             if (!countedCultures.ContainsKey(pop.culture))
             {
                 countedCultures.Add(pop.culture, pop.population);
@@ -127,13 +127,13 @@ public abstract class PopObject : NamedObject
                     pop.region = (Region)popObject;
                     break;
             }
-            ChangePopulation(pop.workforce, pop.dependents, pop.profession.id, pop.culture);
+            ChangePopulation(pop.workforce, pop.dependents, pop.socialClass.id, pop.culture);
         }
     }
     public void RemovePop(Pop pop, PopObject popObject)
     {
         pops.Remove(pop);
-        ChangePopulation(-pop.workforce, -pop.dependents, pop.profession.id, pop.culture);
+        ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
         switch (popObject)
         {     
             case Culture:

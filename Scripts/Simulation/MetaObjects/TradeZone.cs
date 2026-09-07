@@ -11,8 +11,7 @@ public class TradeZone : NamedObject
     [IgnoreMember] public HashSet<Region> regions { get; set; } = [];
     [Key(9)] public Color color { get; set; }
     [Key(10)]  public ulong? controllerId { get; set; } = null;
-    [Key(11)] public Economy economy = new Economy();
-    [Key(12)] public float totalMarketWeight = 1f;
+    [Key(11)] public float totalMarketWeight = 1f;
 
     public override void PrepareForSave()
     {
@@ -61,44 +60,7 @@ public class TradeZone : NamedObject
     }
     public override void Die()
     {
-        foreach (var pair in AssetManager.items)
-        {
-            if (!pair.Value.tags.Contains("tradeable")) return;
-            string itemId = pair.Key;
-            foreach (Region region in regions)
-            {
-                region.economy.supply[itemId] = economy.supply[itemId] * (1f/regions.Count);
-                region.economy.demand[itemId] = economy.demand[itemId] * (1f/regions.Count);
-            }            
-        }
         ObjectManager.DeleteTradeZone(this);
-    }
-    public void AggregateEconomies()
-    {
-        try
-        {
-            totalMarketWeight = regions.Sum(r => r.GetMarketWeight());
-            foreach (var pair in economy.supply)
-            {
-                string itemId = pair.Key;
-
-                economy.supply[itemId] = 0;
-                economy.demand[itemId] = 0;
-
-                foreach (Region region in regions)
-                {
-                    economy.supply[itemId] += region.economy.production[itemId];// * region.GetMarketAccess();
-                    economy.demand[itemId] += region.economy.demand[itemId];
-                }  
-                //GD.Print($"Supply of {AssetManager.GetItem(itemId).name}: " + economy.supply[itemId]);          
-            }            
-        } catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-        
-        //GD.Print(totalMarketWeight);
-        //economy.CalculatePrices();
     }
 
     public int GetZoneSize()

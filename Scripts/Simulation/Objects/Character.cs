@@ -8,12 +8,10 @@ using PixelHistory.Objects.States.Base;
 public partial class Character : NamedObject
 {
     // Constants
-    [IgnoreMember] const float hdChanceAnnualGrowth = 0.02f;
-    [IgnoreMember] const int agingHealthDecrease = 3; 
-    [IgnoreMember] public const int dieHealthThreshold = 40; 
-    
+    [IgnoreMember] public const int OldAgeYear = 60;
+    [IgnoreMember] public const float OldAgeDeathChance = 0.05f;
+    [IgnoreMember] public static readonly float MonthlyOldAgeDeathChance = 1f - Mathf.Pow(1f - OldAgeDeathChance, 0.0833f);
     // Ignored Members   
-    [IgnoreMember] public Random rng = new Random();
     [IgnoreMember] public static SimManager sim;
 
     // Character Stats
@@ -91,14 +89,6 @@ public partial class Character : NamedObject
         if (state.leader == this)
         {
             state.RemoveLeader();
-        }
-    }
-    public void CharacterAging()
-    {
-        healthDecreaseChance += hdChanceAnnualGrowth;
-        if (rng.NextSingle() < healthDecreaseChance)
-        {
-            health -= agingHealthDecrease;
         }
     }
     public TraitLevel GetPersonalityLevel(string trait)

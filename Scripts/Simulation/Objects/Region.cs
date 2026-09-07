@@ -19,8 +19,6 @@ public partial class Region : PopObject, ISaveable
     [Key(20)] public bool isWater { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
     [Key(48)] public float fertility;
-    [Key(22)] public Economy economy = new();
-
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
     [Key(28)] public Vector2I centerPos;
     [Key(44)] public Vector2I gridPos;
@@ -131,7 +129,7 @@ public partial class Region : PopObject, ISaveable
     {
         get
         {
-            int additionalPopulation = (int)((tradeIncome + taxIncome) * Mathf.Max(averageTech.societyLevel, 1));
+            int additionalPopulation = (int)((tradeIncome + taxIncome) * (averageTech.societyLevel +  1));
             return (int)((populationDensity + additionalPopulation) * arableLand);
         }
     }
@@ -179,11 +177,6 @@ public partial class Region : PopObject, ISaveable
     {
         LoadStats();
         NameRegion();
-        economy.InitEconomy();
-        if (rng.NextSingle() < 0.01f)
-        {
-            debugProducer = true;
-        }
         GetBiomeResources();    
     }
 
@@ -373,8 +366,7 @@ public partial class Region : PopObject, ISaveable
             owner.tech = rulingPop.tech;
 
             // Sets Leader
-            ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(simManager.rng), NameGenerator.GenerateCharacterName(simManager.rng), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);
-            NameGenerator.UpdateStateName(owner);           
+            ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(simManager.rng), NameGenerator.GenerateCharacterName(simManager.rng), TimeManager.YearsToTicks(rng.Next(18, 25)), owner, CharacterRole.LEADER);       
         }
     }
     public void StateBordering()
@@ -404,7 +396,7 @@ public partial class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.armyPower;
 
-        if (Battle.CalcBattle(target, attackerPower, 50))
+        if (Battle.CalcBattle(target, attackerPower, 5000))
         {
             owner.AddRegion(target, true);
         }
@@ -705,138 +697,7 @@ public partial class Region : PopObject, ISaveable
     {
         return linkUpdateCountdown < 0 || pops.Count < 0 || tradeLink == null;
     }
-    // Economy V2
-    [IgnoreMember] public bool debugProducer = false;
-    public void UpdatePrimaryIndustries()
-    {
-        if (population < 1) return;
 
-        foreach (Building building in AssetManager.buildingTypes[BuildingType.PRIMARY_INDUSTRY])
-        {
-            if (buildings.Contains(building.id) || !building.Teched(averageTech))
-            {
-                continue;
-            }
-
-            foreach (string natResId in naturalResources.Keys)
-            {
-                NaturalResource presentResource = AssetManager.GetNaturalResource(natResId);
-                if (presentResource == building.requiredNaturalResource)
-                {
-                    buildings.Add(building.id);
-                    continue;
-                }
-            }
-        }
-    }
-    public void CalcProduction()
-    {
-        foreach (var pair in economy.production)
-        {
-            economy.production[pair.Key] = 0;
-        }
-
-        float fertility = arableLand/landCount;
-        // Loops over buildings
-        foreach (Building building in buildings.Select(AssetManager.GetBuilding))
-        {
-            // Loops over each buildings output
-            foreach (BuildingOutput output in building.outputs)
-            {
-                // The base amount outputted
-                float baseOutput = output.amount;
-
-                // Checks if we should factor in population
-                if (building.populationFactor > 0)
-                {
-                    baseOutput *= population * building.populationFactor;
-                }
-
-                // Checks if we should factor in amount of natural resource
-                if (building.scalesWithResource)
-                {
-                    baseOutput *= naturalResources[building.requiredNaturalResource.id];
-                }
-
-                // Sets production
-                economy.production[output.output.id] += baseOutput;
-            }
-        }
-    }
-    public void CalcSupply()
-    {
-        foreach (var pair in economy.production)
-        {
-            string itemId = pair.Key;
-            float production = pair.Value;
-
-            if (tradeZone == null)
-            {
-                economy.supply[pair.Key] = production;
-                continue;
-            }
-
-            float marketAccess = GetMarketAccess();
-            float localWeight = 1f - marketAccess;
-            float availableMarketSupply = tradeZone.economy.supply[itemId] * Mathf.Min(GetMarketWeight() / tradeZone.totalMarketWeight, 1f);
-
-            //if (isTradeZoneCenter) GD.Print(tradeZone.economy.supply[itemId]);
-
-            economy.supply[pair.Key] = (production * localWeight) + (availableMarketSupply * marketAccess);
-        }
-    }
-    public void CalcDemand()
-    {
-        foreach (var pair in economy.demand)
-        {
-            economy.demand[pair.Key] = 0;
-            foreach (Pop pop in pops)
-            {
-                if (pop.goodsDemands.TryGetValue(pair.Key, out float demand))
-                {
-                    economy.demand[pair.Key] += demand;
-                }
-            }            
-                    
-        }
-    }
-    public float GetMarketAccess()
-    {
-        if (isTradeZoneCenter)
-        {
-            return 1f;
-        }
-        float marketAccess = 0.75f + Mathf.Lerp(-0.5f, 0f, navigability);
-
-        if (owner?.capital == this)
-        {
-            marketAccess += 0.1f;
-        }
-
-        return Mathf.Clamp(marketAccess, 0, 1);
-    }
-    public float GetMarketWeight()
-    {
-        // More goods if we have good terrain
-        float weight = 1f + Mathf.Lerp(-0.8f, 0f, navigability);
-
-        // More goods if we are on a trade route
-        if (tradeRouteLinks.Count > 0)
-        {
-            weight *= 2f;
-        }
-        if (owner?.capital == this)
-        {
-            wealth *= 1.5f;
-        }
-        // If we are market center we have most of the goods in store
-        if (isTradeZoneCenter)
-        {
-            weight = 4f;
-        }
-
-        return weight * landCount;
-    }
     public void MergePops()
     {
         if (pops.Count < 2)

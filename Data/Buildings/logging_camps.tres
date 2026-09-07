@@ -1,10 +1,10 @@
 [gd_resource type="Resource" script_class="Building" format=3 uid="uid://dys7a1hl5s3eg"]
 
-[ext_resource type="Script" uid="uid://6q2gt72gh7yk" path="res://Scripts/Resources/Item.cs" id="1_qqouk"]
-[ext_resource type="Resource" uid="uid://crw371r0vskel" path="res://Data/Items/lumber.tres" id="2_qqouk"]
-[ext_resource type="Script" uid="uid://ccfih2hgmcp88" path="res://Scripts/Resources/BuildingOutput.cs" id="3_lsdvr"]
+[ext_resource type="Script" path="res://Scripts/Resources/Item.cs" id="1_qqouk"]
+[ext_resource type="Resource" uid="uid://crw371r0vskel" path="res://Data/Goods/lumber.tres" id="2_qqouk"]
+[ext_resource type="Script" path="res://Scripts/Resources/BuildingOutput.cs" id="3_lsdvr"]
 [ext_resource type="Resource" uid="uid://dpx08jje32vx5" path="res://Data/Natural Resources/trees.tres" id="4_qqouk"]
-[ext_resource type="Script" uid="uid://108o3rkltf1c" path="res://Scripts/Resources/Building.cs" id="5_g1x60"]
+[ext_resource type="Script" path="res://Scripts/Resources/Building.cs" id="5_g1x60"]
 
 [sub_resource type="Resource" id="Resource_fwpq6"]
 script = ExtResource("3_lsdvr")

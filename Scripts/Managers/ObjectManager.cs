@@ -75,7 +75,7 @@ public static class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
-    public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string professionId)
+    public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string socialClass)
     {
         simManager.currentBatch++;
         if (simManager.currentBatch > 12)
@@ -86,7 +86,7 @@ public static class ObjectManager
         {
             id = GetId(),
             batchId = simManager.currentBatch,
-            profession = AssetManager.GetProfession(professionId),
+            socialClass = AssetManager.GetSocialClass(socialClass),
             tech = tech,
             workforce = workforce,
             dependents = dependents,
@@ -193,6 +193,7 @@ public static class ObjectManager
                     capital = region,
                     tickCreated = timeManager.ticks,
                 };
+                state.name = NameGenerator.GetStateName(state);
                 state.AddRegion(region, true);
                 simManager.statesIds.Add(state.id, state);      
                     
@@ -400,9 +401,8 @@ public static class ObjectManager
             id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
             centerId = region.id,
-            name = region.name + " TradeZone"
+            name = region.name + " Market"
         };
-        zone.economy.InitEconomy();
         zone.AddRegion(region);
         simManager.tradeZoneIds.Add(zone.id, zone);
         return zone;

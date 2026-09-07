@@ -34,7 +34,6 @@ public class SimManager
     // Config
     public string worldName = "";
     public uint tick;
-    public bool useNewEconomy = false;
 
     // Population
     public long worldPopulation { get; set; } = 0;
@@ -384,7 +383,6 @@ public class SimManager
             {
                 pop.Migrate();
             }   
-            if (isInBatch) pop.GetDemands();
                       
             lock (this)
             {
@@ -458,17 +456,6 @@ public class SimManager
                 region.GetTaxIncome();
                 // Base Trade Income
                 if (region.tradeLink == null) region.GetTradeIncome();
-
-                if (useNewEconomy)
-                {
-                    region.UpdatePrimaryIndustries();
-                    region.CalcProduction();
-                    region.CalcDemand();
-                    region.CalcSupply();
-                    
-                    region.economy.CalculatePrices();                    
-                }
-
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
@@ -550,18 +537,7 @@ public class SimManager
     }
     public void UpdateTradeZones()
     {
-        try {
-            if (useNewEconomy)
-            {
-                foreach (TradeZone tradeZone in tradeZoneIds.Values)
-                {
-                    tradeZone?.AggregateEconomies();
-                }                 
-            }
-        } catch (Exception e)
-        {
-            GD.PushError(e);
-        }
+        // TODO
     }
     public void UpdateStates()
     {
@@ -655,7 +631,7 @@ public class SimManager
             state.CountPopulation();
             state.UpdateDisplayColor();
             state.UpdateCapital();
-            NameGenerator.UpdateStateName(state);
+            state.name = NameGenerator.GetStateName(state);
         });
 
         countedPerformanceInfo["Stats Time"] += stopwatch.Elapsed.TotalMilliseconds;
@@ -728,18 +704,10 @@ public class SimManager
                     
                     continue;
                 }
-                // Character Aliveness
 
-                // Character Aging
-                // Calculated yearly, decreases character health as they age
-                if (TimeManager.GetMonth(character.tickCreated) == TimeManager.GetMonth(timeManager.ticks))
-                {
-                    character.CharacterAging();
-                }
                 // Character Death
-                // Calculated monthly, characters have a chance to die every month if their health is below a certain threshold
-                float deathChance = Mathf.Lerp(0.01f, 0.25f, (float)character.health / Character.dieHealthThreshold);
-                if (character.health <= Character.dieHealthThreshold && rng.NextSingle() < deathChance)
+                // Calculated monthly, characters have a chance to die if they are old enough
+                if (character.GetAge() > Character.OldAgeYear && rng.NextSingle() < Character.MonthlyOldAgeDeathChance)
                 {
                     character.Die();
                 }

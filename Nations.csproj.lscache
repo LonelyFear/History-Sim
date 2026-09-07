@@ -80,7 +80,7 @@ Scripts/
   BuildingOutput.cs
   Item.cs
   PopNeeds.cs
-  Profession.cs
+  SocialClass.cs
   SimResource.cs
  Simulation/BaseObjects/
   NamedObject.cs

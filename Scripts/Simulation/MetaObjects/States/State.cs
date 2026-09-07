@@ -12,14 +12,14 @@ namespace PixelHistory.Objects.States.Base;
 public partial class State : Polity, ISaveable
 {
     [Key(25)] public string baseName = "Nation";
-    [Key(26)] public string govtName;
     [Key(27)] public string leaderTitle { get; set; } = "King";
     [Key(28)] public StateAIManager AIManager;
     [Key(29)] public Color displayColor;
     [Key(30)] public Color capitalColor;
     [Key(31)] public bool capitualated = false;
 
-    [Key(32)] public GovernmentType government { get; set; } = GovernmentType.MONARCHY;
+    [Key(58)] public GovernmentType government { get; set; } = GovernmentType.AUTOCRACY;
+    [Key(32)] public SuccessionType successionType { get; set; } = SuccessionType.ARISTOCRATIC;
     
     // Taxes & Wealth
     [Key(33)] public float mobilizationRate { get; set; } = 0.3f;
@@ -260,23 +260,30 @@ public partial class State : Polity, ISaveable
     }
     public void SuccessionUpdate()
     {
+        string newName = NameGenerator.GenerateCharacterName(simManager.rng);
+        string lastName = NameGenerator.GenerateCharacterName(simManager.rng);
         Character newLeader = null;
-        switch (government)
+        switch (successionType)
         {
-            case GovernmentType.REPUBLIC:
-                // Republic TODO
+            case SuccessionType.MERITOCRATIC:
+                newLeader = ObjectManager.CreateCharacter(newName, lastName, TimeManager.YearsToTicks(rng.Next(25, 65)), this, CharacterRole.LEADER);
                 break;
-            case GovernmentType.MONARCHY:
+            case SuccessionType.ARISTOCRATIC:
                 // Monarchy
                 // TODO: Make it relate to families
                 // Right now just has a character with the same last name of the last guy
-                string lastName = lastLeader == null ? NameGenerator.GenerateCharacterName(simManager.rng) : lastLeader.lastName;
-
-                newLeader = ObjectManager.CreateCharacter(NameGenerator.GenerateCharacterName(simManager.rng), lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
-                
-                break;
-            case GovernmentType.AUTOCRACY:
-                // Autocracy TODO
+                switch (government)
+                {
+                    case GovernmentType.REPUBLIC:
+                        // Republics
+                        newLeader = ObjectManager.CreateCharacter(newName, lastName, TimeManager.YearsToTicks(rng.Next(25, 65)), this, CharacterRole.LEADER);
+                        break;
+                    default:
+                        // Monarchies & Tribes
+                        lastName = lastLeader == null ? NameGenerator.GenerateCharacterName(simManager.rng) : lastLeader.lastName;
+                        newLeader = ObjectManager.CreateCharacter(newName, lastName, TimeManager.YearsToTicks(rng.Next(18, 25)), this, CharacterRole.LEADER);
+                        break;
+                }
                 break;
         }
         if (newLeader != null)
@@ -390,7 +397,7 @@ public partial class State : Polity, ISaveable
             wealth += vassal.totalWealth;
             size += vassal.regions.Count;
         }
-        return (int)(Math.Log10(wealth * wealth)/size * (tech.militaryLevel + 1));
+        return Mathf.RoundToInt(wealth/(size) * (tech.militaryLevel + 1));
     }
     public override int GetManpower()
     {
@@ -398,18 +405,14 @@ public partial class State : Polity, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 5 + (tech.societyLevel * 2);
+        return 5 + (tech.societyLevel * 2) * 100;
     }
     public int GetMaxVassals() {
         return 5;
     }
     public override string GenerateDescription()
     {
-        string desc = $"The {name} is a {govtName.ToLower()} in the simulation. It is ";
-        if ("aeiou".Contains(govtName[0]))
-        {
-            desc = $"The {name} is an {govtName.ToLower()} in the simulation. It is ";
-        }
+        string desc = $"The {name} is a polity in the simulation. It is ";
         switch (sovereignty)
         {
             case Sovereignty.INDEPENDENT:
@@ -434,6 +437,18 @@ public enum Sovereignty
 }
 public enum GovernmentType {
     REPUBLIC,
-    MONARCHY,
     AUTOCRACY,
+    TRIBAL
+}
+
+public enum SuccessionType {
+    MERITOCRATIC,
+    ARISTOCRATIC,
+}
+
+public enum StateSize {
+    TINY,
+    SMALL,
+    MEDIUM,
+    LARGE
 }

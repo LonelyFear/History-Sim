@@ -152,108 +152,46 @@ public static class NameGenerator
                 break;
         }
     }
-    public static void UpdateStateName(State state)
+    public static string GetStateName(State state)
     {
+        string name = state.baseName;
         switch (state.government)
         {
             case GovernmentType.REPUBLIC:
-                switch (state.sovereignty)
+                switch (state.successionType)
                 {
-                    case Sovereignty.COLONY:
-                        state.govtName = "Colony";
-                        state.leaderTitle = "Governor";
+                    case SuccessionType.ARISTOCRATIC:
+                        name = $"Sovereignty of {state.baseName}";
                         break;
-                    case Sovereignty.PUPPET:
-                        state.govtName = "Mandate";
-                        state.leaderTitle = "Governor";
-                        break;
-                    case Sovereignty.PROVINCE:
-                        state.govtName = "Department";
-                        state.leaderTitle = "Governor";
-                        break;
-                    default:
-                        state.govtName = "Free State";
-                        state.leaderTitle = "Prime Minister";
-                        if (state.vassals.Count > 0)
-                        {
-                            state.govtName = "Republic";
-                            state.leaderTitle = "President";
-                        }
-                        else if (state.vassals.Count > 3)
-                        {
-                            state.govtName = "Commonwealth";
-                            state.leaderTitle = "Chancellor";
-                        }
-                        break;
-                }
-                break;
-            case GovernmentType.MONARCHY:
-                switch (state.sovereignty)
-                {
-                    case Sovereignty.COLONY:
-                        state.govtName = "Crown Colony";
-                        state.leaderTitle = "Viceroy";
-                        break;
-                    case Sovereignty.PUPPET:
-                        state.govtName = "Protectorate";
-                        state.leaderTitle = "Regent";
-                        break;
-                    case Sovereignty.PROVINCE:
-                        state.govtName = "Duchy";
-                        state.leaderTitle = "Duke";
-                        break;
-                    default:
-                        state.govtName = "Principality";
-                        state.leaderTitle = "Prince";
-                        if (state.vassals.Count > 0)
-                        {
-                            state.govtName = "Kingdom";
-                            state.leaderTitle = "King";
-                        }
-                        else if (state.vassals.Count > 3)
-                        {
-                            state.govtName = "Empire";
-                            state.leaderTitle = "Emperor";
-                        }
+                    case SuccessionType.MERITOCRATIC:
+                        name = $"Republic of {state.baseName}";
                         break;
                 }
                 break;
             case GovernmentType.AUTOCRACY:
-                switch (state.sovereignty)
+                switch (state.successionType)
                 {
-                    case Sovereignty.COLONY:
-                        state.govtName = "Colony";
-                        state.leaderTitle = "Governor";
+                    case SuccessionType.ARISTOCRATIC:
+                        name = $"Kingdom of {state.baseName}";
                         break;
-                    case Sovereignty.PUPPET:
-                        state.govtName = "Puppet";
-                        state.leaderTitle = "Administrator";
-                        break;
-                    case Sovereignty.PROVINCE:
-                        state.govtName = "Province";
-                        state.leaderTitle = "Governor";
-                        break;
-                    default:
-                        state.govtName = "State";
-                        state.leaderTitle = "Despot";
-                        if (state.vassals.Count > 0)
-                        {
-                            state.govtName = "Autocracy";
-                            state.leaderTitle = "Archon";
-                        }
-                        else if (state.vassals.Count > 3)
-                        {
-                            state.govtName = "Imperium";
-                            state.leaderTitle = "Emperor";
-                        }
+                    case SuccessionType.MERITOCRATIC:
+                        name = $"State of {state.baseName}";
                         break;
                 }
                 break;
-            default:
-                state.govtName = "State";
+            case GovernmentType.TRIBAL:
+                switch (state.successionType)
+                {
+                    case SuccessionType.ARISTOCRATIC:
+                        name = $"{GetDemonym(state.baseName)} Horde";
+                        break;
+                    case SuccessionType.MERITOCRATIC:
+                        name = $"{GetDemonym(state.baseName)} Clan";
+                        break;
+                }
                 break;
         }
-        state.name = $"{state.govtName} of {state.baseName}";
+        return name;
     }
     static string GenerateSyllable(string pattern, Random rng, string consonants = "bcdfghjklmnpqrstvwxyz")
     {

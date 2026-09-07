@@ -33,27 +33,27 @@ public partial class Pop
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
     [Key(21)] public Direction lastDirection = Direction.RIGHT;
-    [Key(22)] string professionId = "farmer";
+    [Key(22)] string socialClassId = "farmer";
     [IgnoreMember] public Dictionary<string, float> goodsDemands = [];
     // Reference Types
-    [IgnoreMember] Profession _profession;
-    [IgnoreMember] public Profession profession
+    [IgnoreMember] SocialClass _socialClass;
+    [IgnoreMember] public SocialClass socialClass
     {
         get
         {
-            if (_profession == null)
+            if (_socialClass == null)
             {
-                _profession = AssetManager.GetProfession(professionId);
+                _socialClass = AssetManager.GetSocialClass(socialClassId);
             }
-            return _profession;
+            return _socialClass;
         } set
         {
             if (value == null)
             {
                 return;
             }
-            professionId = value.id;
-            _profession = value;
+            socialClassId = value.id;
+            _socialClass = value;
         }
     }
     [IgnoreMember] Culture _culture;
@@ -96,8 +96,8 @@ public partial class Pop
         dependents += dfChange;
         population += wfChange + dfChange;    
 
-        culture.ChangePopulation(wfChange, dfChange, profession.id, culture);
-        region.ChangePopulation(wfChange, dfChange, profession.id, culture);
+        culture.ChangePopulation(wfChange, dfChange, socialClass.id, culture);
+        region.ChangePopulation(wfChange, dfChange, socialClass.id, culture);
     }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
@@ -105,30 +105,30 @@ public partial class Pop
         {
             return false;
         }
-        return a != b && a.profession == b.profession && Culture.CheckCultureSimilarity(a.culture, b.culture);
+        return a != b && a.socialClass == b.socialClass && Culture.CheckCultureSimilarity(a.culture, b.culture);
     }
-    public Pop ChangeSocialClass(int workforceDelta, int dependentsDelta, Profession newProfession)
+    public Pop ChangeSocialClass(int convertedWorkforce, int convertedDependents, SocialClass newSocialClass)
     {
-        // Makes sure the profession is actually changing
+        // Makes sure the socialClass is actually changing
         // And that we arent just creating an empty pop
-        if (newProfession == profession || (workforceDelta < 1 && dependentsDelta < 1))
+        if (newSocialClass == socialClass || (convertedWorkforce < 1 && convertedDependents < 1))
         {
             return null;
         }
         // Clamping
-        workforceDelta = Math.Clamp(workforceDelta, 0, workforce);
-        dependentsDelta = Math.Clamp(dependentsDelta, 0, dependents);
+        convertedWorkforce = Math.Clamp(convertedWorkforce, 0, workforce);
+        convertedDependents = Math.Clamp(convertedDependents, 0, dependents);
 
         // If we are changing the whole pop just change the socialClass
-        if (workforceDelta == workforce && dependentsDelta == dependents)
+        if (convertedWorkforce == workforce && convertedDependents == dependents)
         {
-            profession = newProfession;
+            socialClass = newSocialClass;
             return this;
         }
         // Makes a new pop with the new socialClass
-        Pop newWorkers = ObjectManager.CreatePop(workforceDelta, dependentsDelta, region, tech, culture, newProfession.id);
+        Pop newWorkers = ObjectManager.CreatePop(convertedWorkforce, convertedDependents, region, tech, culture, newSocialClass.id);
         // And removes the people who switched to the new socialClass
-        ChangePopulation(-workforceDelta, -dependentsDelta);
+        ChangePopulation(-convertedWorkforce, -convertedDependents);
         // Land Stuff
         return newWorkers;
     }
@@ -156,8 +156,7 @@ public partial class Pop
     public float CalculatePoliticalPower()
     {
         float popSizePoliticalPower = workforce * 0.005f;
-        float basePoliticalPower = profession.politicalPower;
-        return basePoliticalPower * popSizePoliticalPower;
+        return socialClass.basePoliticalPower * popSizePoliticalPower;
     }
     public void Migrate()
     {
@@ -173,7 +172,7 @@ public partial class Pop
             }            
         }
 
-        if (profession.id == "aristocrat")
+        if (socialClass.id == "aristocrat")
         {
             migrateChance *= 0.1f;
         }
@@ -185,7 +184,7 @@ public partial class Pop
         bool socialClassAllows = true;
 
         // If the socialClass allows migration
-        switch (profession.id)
+        switch (socialClass.id)
         {
             case "aristocrat":
                 if (target.owner != region.owner)
@@ -234,7 +233,7 @@ public partial class Pop
         movedWorkforce = Math.Clamp(movedWorkforce, 0, workforce);
         movedDependents = Math.Clamp(movedDependents, 0, dependents);
 
-        Pop newPop = ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, profession.id);
+        Pop newPop = ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, socialClass.id);
         newPop.lastDirection = lastDirection;
         
         ChangePopulation(-movedWorkforce, -movedDependents);     
@@ -292,70 +291,7 @@ public partial class Pop
         //GD.Print(workforceChange + dependentChange);
         ChangePopulation(workforceChange, dependentChange);
     }
-
-    public void GetDemands()
-    {
-        goodsDemands = [];
-
-        foreach (PopNeeds need in profession.needs)
-        {
-            float demandForNeed = (workforce * need.demandPerWorker) + (dependents * need.demandPerDependent);
-            string stringNeedsType = need.type.ToString().ToLower();
-
-            float totalSupply = 0;
-            Dictionary<Item, float> itemsPresentInMarket = [];
-
-            if (AssetManager.itemTags.TryGetValue(stringNeedsType, out List<Item> itemsInTag))
-            {
-                foreach (Item item in itemsInTag)
-                {
-                    float supply = Mathf.Max(region.economy.supply[item.id], 1);
-                    if (item.staple || region.economy.supply[item.id] > 0)
-                    {
-                        itemsPresentInMarket.Add(item, supply);
-                        totalSupply += supply;
-                    }
-                }                
-            }
-
-            float remainingMarketShare = 1f;
-
-            foreach (var pair in itemsPresentInMarket.OrderByDescending(x => x.Value))
-            {
-                Item item = pair.Key;
-
-                // Calculates market share
-                float marketShare = Mathf.Max(pair.Value, 1)/totalSupply * remainingMarketShare;
-
-                // Makes sure demand isnt fully proportional
-                if (marketShare < 1f && marketShare > maxGoodMarketShare)
-                {
-                    marketShare = maxGoodMarketShare;
-                    remainingMarketShare = 1f - maxGoodMarketShare;
-                    totalSupply -= pair.Value;
-                }
-                
-                // Makes sure demand logging has items
-                if (!goodsDemands.ContainsKey(item.id))
-                {
-                    goodsDemands[item.id] = 0;
-                }
-
-                // Adds item to demand
-                goodsDemands[item.id] = demandForNeed * marketShare/item.basePrice;
-            }
-        }
-    }
 }
-public enum SocialClass
-{
-    FARMER,
-    SOLDIER,
-    LABOURER,
-    MERCHANT,
-    ARISTOCRAT
-}
-
 public enum Direction{
     UP = 0,
 	RIGHT = 1,
