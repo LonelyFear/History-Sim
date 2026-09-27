@@ -5,10 +5,18 @@ using System;
 
 public partial class LeadershipBox : InfoPanelBox
 {
+	[Export] EncyclopediaManager encyclopedia;
+
+	[ExportCategory("Labels")]
 	[Export] Label govtLabel;
 	[Export] RichTextLabel leaderLabel;
 	[Export] Label leaderAgeLabel;
 	[Export] Label stabLabel;
+    public override void _Ready()
+    {
+        leaderLabel.MetaClicked += encyclopedia.OpenTab;
+    }
+
 	public override void _Process(double delta)
 	{
         Visible = (infoHolder.selectedObject is State) || (infoHolder.selectedObject is Alliance);	

@@ -1,22 +1,46 @@
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Collections;
 
 [Tool] [GlobalClass]
 public partial class PieChart : Control
 {
-	[Export] Dictionary<string, float> elements = [];
-	[Export] Dictionary<string, Color> colors;
-
 	[ExportToolButton("Update Chart")] 
 	public Callable updateChart => Callable.From(QueueRedraw);
+
+	[ExportToolButton("Clear Chart")] 
+	public Callable clearChart => Callable.From(() =>
+	{
+		Clear();
+		QueueRedraw();
+	});
+
+	[ExportGroup("New Element")]
+
+	Dictionary<string, PieChartElement> elements = [];
+	[Export] string newElementName = "Element 1";
+	[Export] float newElementValue = 1;
+	[Export] Color newElementColor= new Color("red");
+
+	[ExportToolButton("Add Element")] 
+	public Callable addElement => Callable.From(() =>
+	{
+		AddElement(newElementName, newElementValue, newElementColor);
+		newElementName = "Element " + (elements.Count + 1);
+		newElementValue = 1;
+		newElementColor = new Color("red");
+		QueueRedraw();
+		GD.Print(elements.Count);
+	});
 	// Called when the node enters the scene tree for the first time.
 	public void AddElement(string name, float value, Color color)
 	{
-		elements[name] = value;
-		colors[name] = color;
+		elements[name] = new PieChartElement()
+		{
+			value = value,
+			color = color
+		};
 	}
 
 	public void Clear()
@@ -24,7 +48,6 @@ public partial class PieChart : Control
 		foreach (string key in elements.Keys)
 		{
 			elements.Remove(key);
-			colors.Remove(key);
 		}
 	}
 
@@ -50,19 +73,15 @@ public partial class PieChart : Control
 
 	public override void _Draw()
     {
-		float sum = 0;
-		foreach (var pair in elements)
-		{
-			sum += pair.Value;
-		}
-
+		float sum = elements.Sum(element => element.Value.value);
+	
 		float lastAngle = 0;
 		foreach (var pair in elements)
 		{
-			float proportion = pair.Value/sum;
+			float proportion = pair.Value.value/sum;
 
 			float newAngle = 359.99f * proportion;
-			DrawCircleArcPoly(Size/2, Mathf.Min(Size.X, Size.Y)/2, lastAngle, lastAngle + newAngle, colors[pair.Key]);
+			DrawCircleArcPoly(Size/2, Mathf.Min(Size.X, Size.Y)/2, lastAngle, lastAngle + newAngle, elements[pair.Key].color);
 			lastAngle += newAngle;
 		}
 		

@@ -147,6 +147,16 @@ public abstract class NamedObject
             return $"{text}";
         }
     }
+    public static string GenerateUrlText(NamedObject obj, string text, Color color)
+    {
+        if (obj != null && GetNamedObject(obj.GetFullId()) != null)
+        {
+            return $"[color=#{color.ToHtml(false)}][url={obj.GetFullId()}]{text}[/url][/color]";
+        } else
+        {
+            return $"{text}";
+        }
+    }
     public NamedObject Clone()
     {
         return (NamedObject)MemberwiseClone();

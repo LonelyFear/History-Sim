@@ -10,6 +10,8 @@ public partial class InfoHolder : VBoxContainer
 	[Export] TabBar focusTabBar;
 	[Export] Label nameLabel;
 	[Export] Label typeLabel;
+	[Export] EncyclopediaManager encyclopedia;
+	[Export] Button encyclopediaButton;
 
 	public NamedObject selectedObject;
 	// Called when the node enters the scene tree for the first time.
@@ -17,6 +19,11 @@ public partial class InfoHolder : VBoxContainer
 	{
 		focusTabBar.TabChanged += TabSelected;
 		mapManager.mapmodeChanged += OnMapModeChanged;
+		encyclopediaButton.Pressed += () =>
+		{
+			encyclopedia.OpenEncyclopedia();
+			encyclopedia.OpenTab(selectedObject.GetFullId());
+		};
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
