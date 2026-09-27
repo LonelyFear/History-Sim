@@ -1,4 +1,5 @@
 using Godot;
+using PixelHistory.Objects.States.Base;
 using System;
 
 public partial class DemographicsBox : VBoxContainer
@@ -6,10 +7,13 @@ public partial class DemographicsBox : VBoxContainer
 	[Export] InfoHolder infoHolder;
 	[Export] MapManager mapManager;
 	[Export] SelectionManager selectionManager;
+
+	[ExportCategory("Labels")]
 	[Export] Label populationLabel;
 	[Export] Label foundedLabel;
 	[Export] Label ageLabel;
 	[Export] Label strengthLabel;
+	[Export] Label fertilityLabel;
 	[Export] Label techLabel;
 
 	public override void _Process(double delta)
@@ -46,6 +50,15 @@ public partial class DemographicsBox : VBoxContainer
 			strengthLabel.Visible = true;
 			strengthLabel.Text = $"Strength: {polity.armyPower}";			
 		}
+
+		fertilityLabel.Visible = false;
+		if (infoHolder.selectedObject is Region region)
+		{
+			fertilityLabel.Visible = true;
+			fertilityLabel.Text = $"Fertility: {region.fertility:0%}";
+			fertilityLabel.Text += $"\nNavigability: {region.navigability:0%}";
+		}
+		
 
 		techLabel.Visible = false;
 	}

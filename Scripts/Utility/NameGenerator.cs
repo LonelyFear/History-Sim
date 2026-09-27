@@ -12,8 +12,8 @@ public static class NameGenerator
     public static string vowels = "aeiou";
     public static string GenerateNationName(Random rng){
         string name = "";
-        string[] prefixes = FileAccess.Open(@"Data/Names/NationPrefixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
-        string[] roots = FileAccess.Open(@"Data/Names/NationRoots.txt", FileAccess.ModeFlags.Read).GetAsArray();
+        //string[] prefixes = FileAccess.Open(@"Data/Names/NationPrefixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
+        //string[] roots = FileAccess.Open(@"Data/Names/NationRoots.txt", FileAccess.ModeFlags.Read).GetAsArray();
         string[] suffixes = FileAccess.Open(@"Data/Names/NationSuffixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
         
         string InsertVowel(string root){
@@ -22,6 +22,7 @@ public static class NameGenerator
             }
             return root;
         }
+        /*
         name += prefixes[rng.Next(0, prefixes.Length - 1)];
         for (int i = 0; i < rng.Next(0, 2); i++){
             if (i == 0){
@@ -31,7 +32,8 @@ public static class NameGenerator
             }
             
         }
-        name += suffixes[rng.Next(0, suffixes.Length - 1)];
+        */
+        name = GenerateRandomName(2, 4, rng) + suffixes[rng.Next(0, suffixes.Length - 1)];
 
         return name.Capitalize();
     }
@@ -66,11 +68,7 @@ public static class NameGenerator
     {
         string[] patterns = ["CV", "CVC", "VC"];
 
-        string consonants = "bcdfghjklmnpqrstvwxyz";
-        if (feminine)
-        {
-            consonants = "bdfghjklmnprstvwyz";
-        }    
+        string[] consonants = ["b","c","d","f","g","h","j","k","l","m","n","p","q","r","s","t","v","w","x","y","z","ch","sh","th","ph"];   
 
         string name = "";
         for (int i = 0; i < rng.Next(minLength, maxLength); i++)
@@ -193,7 +191,7 @@ public static class NameGenerator
         }
         return name;
     }
-    static string GenerateSyllable(string pattern, Random rng, string consonants = "bcdfghjklmnpqrstvwxyz")
+    static string GenerateSyllable(string pattern, Random rng, string[] consonants)
     {
         string syllable = "";
         foreach (char c in pattern)
@@ -201,7 +199,7 @@ public static class NameGenerator
             switch (c)
             {
                 case 'C':
-                    syllable += consonants.ToCharArray()[rng.Next(0, consonants.Length - 1)];
+                    syllable += consonants[rng.Next(0, consonants.Length - 1)];
                     break;
                 case 'V':
                     syllable += vowels.ToCharArray()[rng.Next(0, vowels.Length - 1)];

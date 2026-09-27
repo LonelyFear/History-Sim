@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_q0aqs"]
 [ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_tbcit"]
+[ext_resource type="Script" uid="uid://bp5y8uk5vspts" path="res://Scripts/UI/Sim Stats/PieChart.cs" id="3_h5edq"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
 content_margin_left = 4.0
@@ -17,7 +18,7 @@ content_margin_top = 0.0
 content_margin_right = 10.0
 content_margin_bottom = 10.0
 
-[node name="InfoTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist")]
+[node name="InfoTab" type="VBoxContainer" unique_id=199867513 node_paths=PackedStringArray("objName", "objType", "objDesc", "objStats", "objHist", "chartsContainer", "cultureChart", "cultureList")]
 offset_right = 1280.0
 offset_bottom = 720.0
 mouse_filter = 0
@@ -26,9 +27,12 @@ theme_override_constants/separation = 4
 script = ExtResource("1_q0aqs")
 objName = NodePath("ObjName")
 objType = NodePath("ObjType")
-objDesc = NodePath("DescScrollBar/VBoxContainer/Description")
-objStats = NodePath("DescScrollBar/VBoxContainer/Stats")
-objHist = NodePath("DescScrollBar/VBoxContainer/History")
+objDesc = NodePath("DescScrollBar/DescriptionContainer/TitleContainer/Description")
+objStats = NodePath("DescScrollBar/DescriptionContainer/StatsContainer/Stats")
+objHist = NodePath("DescScrollBar/DescriptionContainer/HistoryContainer/History")
+chartsContainer = NodePath("DescScrollBar/DescriptionContainer/PieChartsContainer")
+cultureChart = NodePath("DescScrollBar/DescriptionContainer/PieChartsContainer/CulturesChart/CulturesChart")
+cultureList = NodePath("DescScrollBar/DescriptionContainer/PieChartsContainer/CulturesChart/CulturesList")
 metadata/_tab_index = 1
 
 [node name="ObjName" type="Label" parent="." unique_id=602530060]
@@ -54,19 +58,22 @@ size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxEmpty_5rqtu")
 horizontal_scroll_mode = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="DescScrollBar" unique_id=1470565023]
+[node name="DescriptionContainer" type="VBoxContainer" parent="DescScrollBar" unique_id=1470565023]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="DescTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=136005221]
+[node name="TitleContainer" type="VBoxContainer" parent="DescScrollBar/DescriptionContainer" unique_id=781252706]
+layout_mode = 2
+
+[node name="DescTitle" type="Label" parent="DescScrollBar/DescriptionContainer/TitleContainer" unique_id=136005221]
 layout_mode = 2
 theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 30
 text = "Description:"
 
-[node name="Description" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=1810584970]
+[node name="Description" type="RichTextLabel" parent="DescScrollBar/DescriptionContainer/TitleContainer" unique_id=1810584970]
 layout_mode = 2
 theme = ExtResource("2_tbcit")
 theme_override_font_sizes/normal_font_size = 30
@@ -76,18 +83,21 @@ fit_content = true
 meta_underlined = false
 hint_underlined = false
 
-[node name="DescSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer" unique_id=1698521707]
+[node name="DescSeparator" type="HSeparator" parent="DescScrollBar/DescriptionContainer" unique_id=1698521707]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="StatsTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=1569492835]
+[node name="StatsContainer" type="VBoxContainer" parent="DescScrollBar/DescriptionContainer" unique_id=238224217]
+layout_mode = 2
+
+[node name="StatsTitle" type="Label" parent="DescScrollBar/DescriptionContainer/StatsContainer" unique_id=1569492835]
 layout_mode = 2
 theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 30
 text = "Stats:"
 
-[node name="Stats" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=741282142]
+[node name="Stats" type="RichTextLabel" parent="DescScrollBar/DescriptionContainer/StatsContainer" unique_id=741282142]
 layout_mode = 2
 theme = ExtResource("2_tbcit")
 theme_override_font_sizes/normal_font_size = 30
@@ -96,18 +106,52 @@ text = "Statistics Go Here"
 fit_content = true
 autowrap_mode = 2
 
-[node name="StatsSeparator" type="HSeparator" parent="DescScrollBar/VBoxContainer" unique_id=529642687]
+[node name="PieChartsContainer" type="HBoxContainer" parent="DescScrollBar/DescriptionContainer" unique_id=604549312]
+layout_mode = 2
+
+[node name="CulturesChart" type="VBoxContainer" parent="DescScrollBar/DescriptionContainer/PieChartsContainer" unique_id=1308274580]
+layout_mode = 2
+
+[node name="CulturesChart" type="Control" parent="DescScrollBar/DescriptionContainer/PieChartsContainer/CulturesChart" unique_id=530322426]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+script = ExtResource("3_h5edq")
+newElementName = "Element 5"
+metadata/_custom_type_script = "uid://bp5y8uk5vspts"
+
+[node name="CulturesLabel" type="Label" parent="DescScrollBar/DescriptionContainer/PieChartsContainer/CulturesChart" unique_id=175830504]
+layout_mode = 2
+theme = ExtResource("2_tbcit")
+theme_override_font_sizes/font_size = 30
+text = "Cultures"
+horizontal_alignment = 1
+
+[node name="CulturesList" type="RichTextLabel" parent="DescScrollBar/DescriptionContainer/PieChartsContainer/CulturesChart" unique_id=756595873]
+layout_mode = 2
+theme = ExtResource("2_tbcit")
+bbcode_enabled = true
+text = "Culture A - 50%
+Culture B - 25%
+Culture C - 25%"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+
+[node name="StatsSeparator" type="HSeparator" parent="DescScrollBar/DescriptionContainer" unique_id=529642687]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_6xtfp")
 
-[node name="HistoryTitle" type="Label" parent="DescScrollBar/VBoxContainer" unique_id=1835261741]
+[node name="HistoryContainer" type="VBoxContainer" parent="DescScrollBar/DescriptionContainer" unique_id=1135963891]
+layout_mode = 2
+
+[node name="HistoryTitle" type="Label" parent="DescScrollBar/DescriptionContainer/HistoryContainer" unique_id=1835261741]
 layout_mode = 2
 theme = ExtResource("2_tbcit")
 theme_override_font_sizes/font_size = 30
 text = "History:"
 
-[node name="History" type="RichTextLabel" parent="DescScrollBar/VBoxContainer" unique_id=1816751528]
+[node name="History" type="RichTextLabel" parent="DescScrollBar/DescriptionContainer/HistoryContainer" unique_id=1816751528]
 layout_mode = 2
 theme = ExtResource("2_tbcit")
 theme_override_font_sizes/normal_font_size = 30

@@ -1,5 +1,6 @@
 using Godot;
 using PixelHistory.Objects.States.Base;
+using PixelHistory.Objects.Wars;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 		search.TextChanged += OnSearchEditSubmitted;
 		switch (type)
 		{
-			case "character":
+			case "characterIndex":
 				Name = "Character Index";
 				indexNameLabel.Text = "Character Index";
 				foreach (Character character in simManager.characterIds.Values)
@@ -28,7 +29,7 @@ public partial class IndexTab : BaseEncyclopediaTab
 					CreateResultButton(character);
 				}
 				break;
-			case "state":
+			case "stateIndex":
 				Name = "State Index";
 				indexNameLabel.Text = "State Index";
 				foreach (State state in simManager.statesIds.Values)
@@ -36,13 +37,21 @@ public partial class IndexTab : BaseEncyclopediaTab
 					CreateResultButton(state);
 				}
 				break;
-			case "region":
+			case "regionIndex":
 				Name = "Region Index";
 				indexNameLabel.Text = "Region Index";
 				foreach (Region region in simManager.regionIds.Values)
 				{
 					if (!region.habitable) continue;
 					CreateResultButton(region);
+				}
+				break;
+			case "warIndex":
+				Name = "Wars Index";
+				indexNameLabel.Text = "Wars Index";
+				foreach (War war in simManager.warIds.Values)
+				{
+					CreateResultButton(war);
 				}
 				break;
 		}

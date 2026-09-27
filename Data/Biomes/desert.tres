@@ -1,16 +1,19 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://clsxv78dh2b1u"]
 
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_0uif3"]
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_5ip1w"]
+[ext_resource type="Resource" uid="uid://dpkypndxul2wr" path="res://Data/Natural Resources/farmland.tres" id="2_k3yao"]
 
 [resource]
 script = ExtResource("1_5ip1w")
 name = "Desert"
-type = 2
-minElevation = 0.0
-maxMoisture = 300.0
+maxMoisture = 300
 maxTemperature = 35.0
 minTemperature = 5.0
 navigability = 0.5
 arability = 0.1
 survivability = 0.3
 color = Color(0.8980392, 0.7529412, 0.48235294, 1)
+naturalResources = Dictionary[ExtResource("1_0uif3"), float]({
+ExtResource("2_k3yao"): 0.1
+})

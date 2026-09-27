@@ -296,7 +296,15 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (regionOwner != null)
                     {
-                        borderId = region.claimant.GetOverlord().id;
+                        if (region.claimant.sovereignty != Sovereignty.REBELLIOUS)
+                        {
+                            // Draws borders between polities
+                            borderId = region.claimant.GetOverlord().id;
+                        } else
+                        {
+                            // Makes rebellions draw borders
+                            borderId = region.claimant.id;
+                        }
                         color = regionOwner.displayColor;
                         if (region.claimant.capital == region && region.claimant.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
@@ -581,7 +589,6 @@ public partial class MapManager : Node2D
 
     struct ColorData()
     {
-        public Color[] colors;
         public float opacity;
     }
 }

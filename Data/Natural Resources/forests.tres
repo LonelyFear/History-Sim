@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://b6u4oql33y5ik"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_hu46h"]
+
+[resource]
+script = ExtResource("1_hu46h")
+name = "Forests"
+description = "Forests."
+name = "Forests"
+metadata/_custom_type_script = "uid://1h5mxderppvp"

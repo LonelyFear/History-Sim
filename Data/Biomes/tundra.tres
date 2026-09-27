@@ -1,11 +1,12 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://bwb0asudd0ql7"]
 
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_a3x3f"]
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_v3h0v"]
+[ext_resource type="Resource" uid="uid://dpkypndxul2wr" path="res://Data/Natural Resources/farmland.tres" id="2_466tt"]
 
 [resource]
 script = ExtResource("1_v3h0v")
 name = "Tundra"
-type = 2
 minElevation = 0.0
 maxMoisture = 300.0
 maxTemperature = 10.0
@@ -14,3 +15,7 @@ navigability = 0.8
 arability = 0.15
 survivability = 0.4
 color = Color(0.6627451, 0.63529414, 0.56078434, 1)
+naturalResources = Dictionary[ExtResource("1_a3x3f"), float]({
+ExtResource("2_466tt"): 0.1
+})
+name = "Tundra"

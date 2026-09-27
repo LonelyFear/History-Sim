@@ -235,12 +235,8 @@ public class SimManager
                         {
                             continue;
                         }
-                        //int nx = Mathf.PosMod(x + dx, worldSize.X);
-                        //int ny = Mathf.PosMod(y + dy, worldSize.Y);
-                        if (newTile.GetBiome().type == Biome.BiomeType.WATER)
+                        if (newTile.GetBiome().type == Defines.BiomeType.WATER)
                         {
-                            newTile.navigability = Mathf.Clamp(newTile.navigability * 1.5f, 0f, 1f);
-                            newTile.arability = Mathf.Clamp(newTile.arability * 1.5f, 0f, 1f);
                             newTile.coastal = true;
                         }
                     }

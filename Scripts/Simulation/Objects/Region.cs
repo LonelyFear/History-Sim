@@ -176,27 +176,8 @@ public partial class Region : PopObject, ISaveable
     public void InitRegion()
     {
         LoadStats();
-        NameRegion();
-        GetBiomeResources();    
-    }
-
-    public void GetBiomeResources()
-    {
-        foreach (var pair in biomes)
-        {
-            string biomeId = pair.Key;
-            Biome biome = AssetManager.GetBiome(biomeId);
-
-            for (int i = 0; i < pair.Value; i++)
-            {
-                foreach (ResourceDeposit deposit in biome.naturalResources)
-                {
-                    NaturalResource resource = deposit.resource;
-                    if (!naturalResources.ContainsKey(resource.id)) naturalResources.Add(resource.id, 0);
-                    naturalResources[resource.id] += deposit.maxAmount;
-                }                
-            }
-        }        
+        NameRegion();   
+        CountNaturalResources();
     }
     public void NameRegion()
     {
@@ -284,7 +265,6 @@ public partial class Region : PopObject, ISaveable
             }
             if (tile.IsLand())
             {
-                
                 landCount++;
                 arableLand += tile.arability;
                 navigability += tile.navigability;
@@ -298,13 +278,27 @@ public partial class Region : PopObject, ISaveable
         GetTerrainType(terrainTypes);
 
         navigability /= Mathf.Max(landCount, 1);
+        fertility = arableLand/landCount;
+        switch (terrainType)
+        {
+            case TerrainType.MOUNTAINS:
+                navigability *= 0.1f;
+                fertility *= 0.25f;
+                break;
+            case TerrainType.HILLS:
+                navigability *= 0.25f;
+                fertility *= 0.5f;
+                break;
+            case TerrainType.RIVER:
+                fertility += 0.25f;
+                break;
+        }
         navigability = Mathf.Clamp(navigability, 0, 1);
 
         avgTemperature /= tiles.Count;
         avgRainfall /= tiles.Count;
         avgElevation /= tiles.Count;
-        fertility = arableLand/landCount;
-
+        
         for (int month = 0; month < 12; month++)
         {
             avgMonthlyTemps[month] /= tiles.Count;
@@ -344,6 +338,25 @@ public partial class Region : PopObject, ISaveable
         else
         {
             habitable = false;
+        }
+    }
+    public void CountNaturalResources()
+    {
+        foreach (Vector2I tilePos in tiles)
+        {
+            Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
+            foreach (NaturalResource resource in tile.GetBiome().naturalResources.Keys)
+            {
+                float resourceAmount = tile.GetBiome().naturalResources[resource];
+                
+                if (naturalResources.ContainsKey(resource.id))
+                {
+                    naturalResources[resource.id] += resourceAmount;
+                } else
+                {
+                    naturalResources[resource.id] = resourceAmount;
+                }
+            }
         }
     }
     public void RandomStateFormation()

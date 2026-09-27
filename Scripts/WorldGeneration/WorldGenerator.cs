@@ -251,18 +251,18 @@ public class WorldGenerator
                 Color waterColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(cells[x, y].elevation/seaFloorDepth, 0f, 1f));
 
                 float hf = cells[x, y].elevation/(WorldHeight * (1f - SeaLevel));
-                bool isWater = AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER;
-                bool isIce = AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.ICE;
+                bool isWater = AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER;
+                bool isIce = AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.ICE;
                 
                 switch (mapMode)
                 {
                     case TerrainMapMode.HEIGHTMAP:
                         image.SetPixel(x, y, Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor, mountainColor], hf));
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             image.SetPixel(x, y, waterColor);
                         }      
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.ICE)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.ICE)
                         {
                             //image.SetPixel(x, y, Color.FromHtml(AssetManager.GetBiome(cells[x, y].biomeId).color));
                         }
@@ -270,7 +270,7 @@ public class WorldGenerator
                         //image.SetPixel(x, y, new Color(heightNorm, heightNorm, heightNorm));
                         break;  
                     case TerrainMapMode.HEIGHTMAP_REALISTIC:
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             image.SetPixel(x, y, waterColor);
                         }
@@ -317,7 +317,7 @@ public class WorldGenerator
                     case TerrainMapMode.DEBUG_COAST:
                         Color pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(0,0,0,0)], Mathf.Clamp(cells[x, y].coastDist / 30f, 0, 1));
                         Color baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             baseColor = waterColor;
                         }
@@ -326,7 +326,7 @@ public class WorldGenerator
                     case TerrainMapMode.DEBUG_RAINFALL:
                         pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(0,0,1), new Color(1,1,0)], cells[x,y].GetAnnualRainfall()/3500f);
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             baseColor = waterColor;
                         }
@@ -335,7 +335,7 @@ public class WorldGenerator
                     case TerrainMapMode.DEBUG_WIND:
                         pressureColor = Utility.MultiColourLerp([new Color(0,0,0), new Color(1,0,0)], cells[x, y].julyWindVel.Length()/8.6f);
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             baseColor = waterColor;
                         }
@@ -344,7 +344,7 @@ public class WorldGenerator
                     case TerrainMapMode.DEBUG_TEMP:
                         pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(1,1,1), new Color(1,0,0)], Mathf.InverseLerp(-40, 40, cells[x,y].GetAverageTemp()));
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             baseColor = waterColor;
                         }
@@ -353,7 +353,7 @@ public class WorldGenerator
                     case TerrainMapMode.DEBUG_LATITUDE:
                         pressureColor = Utility.MultiColourLerp([new Color(0,0,1), new Color(1,1,0)], y / (float)WorldSize.Y);
                         baseColor = Utility.MultiColourLerp([lowFlatColor, lowHillColor, highHillColor], hf);
-                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Biome.BiomeType.WATER)
+                        if (AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER)
                         {
                             baseColor = waterColor;
                         }

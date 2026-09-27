@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://b5s4dewp0ft30"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_eo1ku"]
+
+[resource]
+script = ExtResource("1_eo1ku")
+name = "Metal Deposits"
+description = "Metal Deposits
+"
+name = "Metal Deposits"
+metadata/_custom_type_script = "uid://1h5mxderppvp"

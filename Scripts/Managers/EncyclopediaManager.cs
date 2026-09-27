@@ -59,6 +59,8 @@ public partial class EncyclopediaManager : CanvasLayer
 	}
 	public void OpenTab(Variant metaData)
 	{
+		OpenEncyclopedia();
+
 		string meta = metaData.ToString();
 		if (meta.Contains("Index"))
         {
@@ -72,9 +74,10 @@ public partial class EncyclopediaManager : CanvasLayer
     {
 		ulong id = objectType switch
 		{
-			"state" => 0,
-			"region" => 1,
-			"character" => 2,
+			"stateIndex" => 0,
+			"regionIndex" => 1,
+			"characterIndex" => 2,
+			"warIndex" => 2,
 			_ => 9999999
 		};
         // TODO: Implement
@@ -95,6 +98,8 @@ public partial class EncyclopediaManager : CanvasLayer
     }
 	public void OpenTab(string fullId)
 	{
+		OpenEncyclopedia();
+
 		ulong id = NamedObject.GetNumFromId(fullId);
 
 		// If we already have a tab open for this object switch to it
@@ -132,7 +137,7 @@ public partial class EncyclopediaManager : CanvasLayer
 			return;
 		}
 		Control infoTab = infoTabs[id];
-		encyclopediaMenu.CurrentTab = 0;
+		encyclopediaMenu.CurrentTab -= 1;
 		encyclopediaMenu.CloseTab(infoTab);
 		infoTabs.Remove(id);
     }

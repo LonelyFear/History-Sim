@@ -4,7 +4,7 @@ using Godot;
 [GlobalClass]
 public partial class Good : SimResource
 {
-    [Export] public string name = "New Good";
+    [Export] public new string name = "New Good";
     [Export(PropertyHint.MultilineText)] public string description = "A new good.";
     
     [ExportCategory("Trade")]

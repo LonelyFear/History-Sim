@@ -4,8 +4,8 @@ using Godot.Collections;
 [GlobalClass]
 public partial class Biome : SimResource
 {
-    [Export] public string name = "New Sim Resource";
-    [Export] public BiomeType type;
+    [Export] public new string name = "New Biome";
+    [Export] public Defines.BiomeType type = Defines.BiomeType.LAND;
 
     [ExportCategory("Constraints")]
     [ExportGroup("Elevation")]
@@ -20,16 +20,11 @@ public partial class Biome : SimResource
 
     [ExportCategory("Stats")]
     [Export(PropertyHint.Range, "0, 1, 0.01")] public float navigability = 0.0f;
-    [Export(PropertyHint.Range, "0, 1, 0.01")] public float arability = 0.0f;
+    [Export(PropertyHint.Range)] public float arability = 0.0f;
     [Export(PropertyHint.Range, "0, 1, 0.01")] public float survivability = 0.0f;
     [Export] public Color color = new("FFFFFF");
-    [Export] public ResourceDeposit[] naturalResources = [];
 
-    public enum BiomeType
-    {
-        ICE,
-        WATER,
-        LAND
-    }
+    [ExportCategory("Resources")]
+    [Export] public Dictionary<NaturalResource, float> naturalResources = [];
 }
 

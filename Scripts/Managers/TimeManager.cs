@@ -28,7 +28,7 @@ public partial class TimeManager : Node
     public MapManager mapManager;
     [Export] SimManagerHolder simHolder;
     bool simStart = false;
-    Task tickTask;
+    //Task tickTask;
     Task monthTask;
     Task yearTask;
     Task drawTask;
@@ -94,7 +94,7 @@ public partial class TimeManager : Node
         if (currentTime >= waitTime)
         {
             currentTime = 0;
-            bool tickDone = tickTask == null || tickTask.IsCompleted;
+            bool tickDone = true;//tickTask == null || tickTask.IsCompleted;
             bool yearDone = yearTask == null || yearTask.IsCompleted;
             bool monthDone = monthTask == null || monthTask.IsCompleted;
             

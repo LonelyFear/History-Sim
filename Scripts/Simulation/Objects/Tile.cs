@@ -37,10 +37,10 @@ public class Tile : Cell
 
 		switch (GetBiome().type)
 		{
-			case Biome.BiomeType.LAND:
+			case Defines.BiomeType.LAND:
 				terrainType = TerrainType.LAND;
 				break;
-			case Biome.BiomeType.WATER:
+			case Defines.BiomeType.WATER:
 				if (biomeId == "river")
 				{
 					terrainType = TerrainType.RIVER;
@@ -63,15 +63,10 @@ public class Tile : Cell
 		{
 			if (elevation > WorldGenerator.MountainThreshold)
 			{
-				navigability *= 0.1f;
-				arability *= 0.25f;
-				survivalbility *= 0.8f;
 				terrainType = TerrainType.MOUNTAINS;
 			}
 			else if (elevation > WorldGenerator.HillThreshold)
 			{
-				navigability *= 0.25f;
-				arability *= 0.5f;
 				terrainType = TerrainType.HILLS;
 			}
 		}

@@ -2,8 +2,8 @@ using Godot;
 using System.Collections.Generic;
 public class HydrologyGenerator()
 {
-    Dictionary<Vector2I, Vector2I> flowDirMap;
-    float[,] waterFlow;
+    //Dictionary<Vector2I, Vector2I> flowDirMap;
+    //float[,] waterFlow;
     /*
     public void CalculateFlowDirection(WorldGenerator world)
     {

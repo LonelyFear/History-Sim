@@ -1,28 +1,14 @@
 [gd_resource type="Resource" script_class="Biome" format=3 uid="uid://dx4o6sohihmyb"]
 
-[ext_resource type="Resource" uid="uid://h7lq26qaeqwj" path="res://Data/Natural Resources/grain.tres" id="1_4snuj"]
 [ext_resource type="Script" uid="uid://df1g7f3tn2xfx" path="res://Scripts/Resources/Biome.cs" id="1_5665a"]
-[ext_resource type="Script" uid="uid://bfrkeorgcmvpt" path="res://Scripts/Resources/ResourceDeposit.cs" id="2_3ll7l"]
-[ext_resource type="Resource" uid="uid://dyq612icm2abh" path="res://Data/Natural Resources/fish.tres" id="3_indbt"]
-
-[sub_resource type="Resource" id="Resource_7ux8j"]
-script = ExtResource("2_3ll7l")
-resource = ExtResource("1_4snuj")
-maxAmount = 1.0
-minAmount = 1.0
-metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
-
-[sub_resource type="Resource" id="Resource_wgekc"]
-script = ExtResource("2_3ll7l")
-resource = ExtResource("3_indbt")
-maxAmount = 1.0
-minAmount = 1.0
-metadata/_custom_type_script = "uid://bfrkeorgcmvpt"
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_rdxtx"]
+[ext_resource type="Resource" uid="uid://dpkypndxul2wr" path="res://Data/Natural Resources/farmland.tres" id="2_4snuj"]
 
 [resource]
 script = ExtResource("1_5665a")
 name = "River"
-type = 2
-arability = 1.0
+arability = 1.25
 color = Color(0.2784314, 0.58431375, 0.77254903, 1)
-naturalResources = [SubResource("Resource_7ux8j"), SubResource("Resource_wgekc")]
+naturalResources = Dictionary[ExtResource("1_rdxtx"), float]({
+ExtResource("2_4snuj"): 1.0
+})

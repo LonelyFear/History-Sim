@@ -36,9 +36,11 @@ public partial class EconomyBox : InfoPanelBox
             }
             else if (infoHolder.selectedObject is Alliance a)
             {
-                zoneRegion = a?.leadState.capital;
+                zoneRegion = a?.
+				leadState?.
+				capital;
             }
         }
-		tradeZoneLabel.Text = $"Trade Zone: {(zoneRegion.tradeZone == null ? "None" : NamedObject.GenerateUrlText(zoneRegion.tradeZone, zoneRegion.tradeZone.name))}";
+		tradeZoneLabel.Text = $"Trade Zone: {(zoneRegion?.tradeZone == null ? "None" : NamedObject.GenerateUrlText(zoneRegion.tradeZone, zoneRegion.tradeZone.name))}";
     }
 }

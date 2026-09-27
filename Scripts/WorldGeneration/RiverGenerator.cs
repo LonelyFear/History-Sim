@@ -29,7 +29,7 @@ public class RiverGenerator
 
                 float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.25f);
 
-                bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Biome.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
+                bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Defines.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
 
                 if (posGood)
                 {

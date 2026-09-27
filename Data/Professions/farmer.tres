@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SocialClass" format=3 uid="uid://d2c7p3l6cb1oj"]
+
+[ext_resource type="Script" uid="uid://dhnxatibayyv3" path="res://Scripts/Resources/SocialClass.cs" id="1_i0s30"]
+
+[resource]
+script = ExtResource("1_i0s30")
+name = "Farmer"
+description = "Farmers."
+metadata/_custom_type_script = "uid://dhnxatibayyv3"

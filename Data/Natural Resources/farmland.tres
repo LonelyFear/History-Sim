@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NaturalResource" format=3 uid="uid://dpkypndxul2wr"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_t8opy"]
+
+[resource]
+script = ExtResource("1_t8opy")
+name = "Farmland"
+description = "Fertile farmland."
+name = "Farmland"
+metadata/_custom_type_script = "uid://1h5mxderppvp"

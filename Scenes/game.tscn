@@ -51,7 +51,7 @@
 [ext_resource type="Texture2D" uid="uid://qyiufmqook10" path="res://Sprites/Icons/Crate Tab Icon.png" id="41_wr3wg"]
 [ext_resource type="Script" uid="uid://dm80ni1pwsu8b" path="res://Scripts/UI/InfoPanelBox.cs" id="42_fnkle"]
 [ext_resource type="Script" uid="uid://b7otfafxlep3u" path="res://Scripts/UI/HoverText.cs" id="42_jcvim"]
-[ext_resource type="Script" uid="uid://y6dbljc821m" path="res://Scenes/DemographicsBox.cs" id="42_wr3wg"]
+[ext_resource type="Script" uid="uid://y6dbljc821m" path="res://Scripts/UI/DemographicsBox.cs" id="42_wr3wg"]
 [ext_resource type="Script" uid="uid://cv5nuwudhbqr6" path="res://Scripts/UI/LeadershipBox.cs" id="43_wr3wg"]
 [ext_resource type="Script" uid="uid://clmuvck1mxus6" path="res://Scripts/EconomyBox.cs" id="44_6xvgv"]
 
@@ -673,7 +673,7 @@ script = ExtResource("28_v2cs8")
 mapMode = 7
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
-[node name="InfoHolder" type="VBoxContainer" parent="UI" unique_id=83497120 node_paths=PackedStringArray("mapManager", "selectionManager", "focusTabBar", "nameLabel", "typeLabel")]
+[node name="InfoHolder" type="VBoxContainer" parent="UI" unique_id=83497120 node_paths=PackedStringArray("mapManager", "selectionManager", "focusTabBar", "nameLabel", "typeLabel", "encyclopedia", "encyclopediaButton")]
 anchors_preset = -1
 anchor_top = 0.35
 anchor_right = 0.25
@@ -686,6 +686,8 @@ selectionManager = NodePath("../../SelectionManager")
 focusTabBar = NodePath("TabBar")
 nameLabel = NodePath("Panel/MarginContainer/VBoxContainer/NameAndClose/NameType/Name")
 typeLabel = NodePath("Panel/MarginContainer/VBoxContainer/NameAndClose/NameType/Type")
+encyclopedia = NodePath("../../Encyclopedia")
+encyclopediaButton = NodePath("Panel/MarginContainer/VBoxContainer/EncyclopediaButton")
 
 [node name="TabBar" type="TabBar" parent="UI/InfoHolder" unique_id=1462659835]
 layout_mode = 2
@@ -756,6 +758,11 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
+[node name="EncyclopediaButton" type="Button" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer" unique_id=1588379564]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+text = "View In Encyclopedia"
+
 [node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer" unique_id=1177022685]
 layout_mode = 2
 
@@ -777,7 +784,7 @@ theme_override_constants/margin_bottom = 0
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="DemographicsBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=309550292 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager", "populationLabel", "foundedLabel", "ageLabel", "strengthLabel", "techLabel")]
+[node name="DemographicsBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=309550292 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager", "populationLabel", "foundedLabel", "ageLabel", "strengthLabel", "fertilityLabel", "techLabel")]
 layout_mode = 2
 script = ExtResource("42_wr3wg")
 infoHolder = NodePath("../../../../../../..")
@@ -787,6 +794,7 @@ populationLabel = NodePath("PopulationLabel")
 foundedLabel = NodePath("FoundLabel")
 ageLabel = NodePath("AgeLabel")
 strengthLabel = NodePath("StrengthLabel")
+fertilityLabel = NodePath("FertilityLabel")
 techLabel = NodePath("TechLabel")
 
 [node name="Label" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=1852763623]
@@ -821,6 +829,12 @@ theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
 text = "Strength: 100"
 
+[node name="FertilityLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=1462217840]
+layout_mode = 2
+theme = ExtResource("4_exi56")
+theme_override_font_sizes/font_size = 25
+text = "Strength: 100"
+
 [node name="TechLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=192843572]
 visible = false
 layout_mode = 2
@@ -831,10 +845,11 @@ Mil - 1/20
 Soc - 1/20
 Ind - 0/20"
 
-[node name="LeadershipBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1567667305 node_paths=PackedStringArray("govtLabel", "leaderLabel", "leaderAgeLabel", "stabLabel", "infoHolder", "mapManager", "selectionManager")]
+[node name="LeadershipBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1567667305 node_paths=PackedStringArray("encyclopedia", "govtLabel", "leaderLabel", "leaderAgeLabel", "stabLabel", "infoHolder", "mapManager", "selectionManager")]
 visible = false
 layout_mode = 2
 script = ExtResource("43_wr3wg")
+encyclopedia = NodePath("../../../../../../../../../Encyclopedia")
 govtLabel = NodePath("GovtLabel")
 leaderLabel = NodePath("LeaderLabel")
 leaderAgeLabel = NodePath("LeaderAge")

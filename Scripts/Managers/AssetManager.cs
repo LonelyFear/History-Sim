@@ -10,9 +10,10 @@ public static class AssetManager
     public static Dictionary<string, Good> goods = [];
     public static Dictionary<string, NaturalResource> naturalResources = [];
 
-    public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output, bool deepSearch = true) where ResType : SimResource
+    public static void LoadResources<ResType>(string resPath, Dictionary<string, ResType> output) where ResType : SimResource
     {    
-        var resourceList = ResourceLoader.ListDirectory(resPath);
+        string[] resourceList = ResourceLoader.ListDirectory(resPath);
+        GD.Print(resourceList);
         foreach (string fileName in resourceList)
         {
             ResType res = GD.Load<ResType>(resPath.PathJoin(fileName));

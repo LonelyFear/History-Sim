@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Building" format=3 uid="uid://c3gr6cr0rrr0i"]
+
+[ext_resource type="Script" uid="uid://1h5mxderppvp" path="res://Scripts/Resources/NaturalResource.cs" id="1_vfwop"]
+[ext_resource type="Script" uid="uid://dx1p4tbn1qrov" path="res://Scripts/Resources/Building.cs" id="2_4wwf8"]
+[ext_resource type="Resource" uid="uid://d2c7p3l6cb1oj" path="res://Data/Professions/farmer.tres" id="3_3w7hw"]
+
+[sub_resource type="Curve" id="Curve_87c41"]
+_limits = [1.0, 2.0, 0.0, 20.0]
+_data = [Vector2(0, 1), 0.0, 0.05, 0, 1, Vector2(20, 2), 0.05, 0.0, 1, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_jo66n"]
+_limits = [1.0, 2.0, 0.0, 20.0]
+_data = [Vector2(0, 1), 0.0, 0.03333333, 0, 1, Vector2(15, 1.5), 0.03333333, 0.10000001, 1, 1, Vector2(20, 2), 0.10000001, 0.0, 1, 0]
+point_count = 3
+metadata/_snap_enabled = true
+metadata/_snap_count = 20
+
+[resource]
+script = ExtResource("2_4wwf8")
+name = "Farms"
+description = "Farmlands"
+productionTechScaling = 1
+preIndustrialMultiplierCurve = SubResource("Curve_jo66n")
+industrialMultiplierCurve = SubResource("Curve_87c41")
+workerClass = ExtResource("3_3w7hw")
+metadata/_custom_type_script = "uid://dx1p4tbn1qrov"

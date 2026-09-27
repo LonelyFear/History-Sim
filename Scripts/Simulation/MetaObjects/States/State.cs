@@ -57,6 +57,7 @@ public partial class State : Polity, ISaveable
     [Key(56)] public HashSet<ulong?> enemyIds = [];
     [IgnoreMember] public HashSet<State> enemies = [];
     [Key(57)] public HashSet<ulong?> claimIds = [];
+    [Key(59)] public bool ongoingRebellion = false;
     [IgnoreMember] public HashSet<Region> claims = [];
     // References
     [IgnoreMember] public Culture culture;
@@ -179,9 +180,35 @@ public partial class State : Polity, ISaveable
     {
         capitualated = false; 
         if (capital != null && capital.owner != capital.claimant){
+            State occupier = capital.owner;
             capitualated = true; 
+            // Check for civil conflicts
+            if (occupier.GetOverlord() == this.GetOverlord())
+            {
+                War civilWar = this.GetOverlord().GetWarWithState(occupier);
 
-            capital.owner.GetOverlord().AddVassal(this, Sovereignty.PUPPET);
+                // Makes sure that we dont switch the side of a war lead
+                if (!civilWar.warLeaderIds.ContainsValue(id) && sovereignty != Sovereignty.INDEPENDENT)
+                {
+                    if (occupier.sovereignty == Sovereignty.REBELLIOUS)
+                    {
+                        // Rebel side
+                        sovereignty = Sovereignty.REBELLIOUS;
+                        // Switches side
+                        civilWar.AddParticipant(this, War.WarSide.AGRESSOR);
+                    } else
+                    {
+                        // Government side
+                        sovereignty = Sovereignty.PROVINCE;
+                        // Switches side
+                        civilWar.AddParticipant(this, War.WarSide.DEFENDER);
+                    }                    
+                }
+            } else
+            {
+                // Normal Wars
+                occupier.GetOverlord().AddVassal(this, Sovereignty.PUPPET);
+            }
             foreach (Region claim in claims)
             {
                 AddRegion(claim, true);
@@ -193,25 +220,27 @@ public partial class State : Polity, ISaveable
         if (rng.NextSingle() < collapseChanceCurve.Sample(stability) * baseCollapseChance)
         {
             List<State> potentialRebels = GetRebelliousVassals();
-            bool inCivilConflict = StateDiplomacyManager.InWarOfType(this, WarType.CIVIL_WAR) || StateDiplomacyManager.InWarOfType(this, WarType.REVOLT);
-
-            if (potentialRebels.Count < 1 && !inCivilConflict)
+            //ongoingRebellion = StateDiplomacyManager.InWarOfType(this, WarType.CIVIL_WAR) || StateDiplomacyManager.InWarOfType(this, WarType.REVOLT);
+            
+            if (potentialRebels.Count < 1 && ongoingRebellion)
             {
                 return true;
             }
 
-            if (!inCivilConflict)
+            if (!ongoingRebellion && potentialRebels.Count > 0)
             {
+                ongoingRebellion = true;
                 // Starts a civil war
                 State leadRebel = potentialRebels[0];
                 leadRebel.sovereignty = Sovereignty.REBELLIOUS;
-                War civilWar = ObjectManager.StartWar( WarType.CIVIL_WAR, leadRebel, this);
+                War civilWar = ObjectManager.StartWar(WarType.CIVIL_WAR, leadRebel, this);
 
                 foreach (State rebel in potentialRebels)
                 {
                     if (rebel == leadRebel) continue;
                     rebel.sovereignty = Sovereignty.REBELLIOUS;
                     civilWar.AddParticipant(rebel, War.WarSide.AGRESSOR);
+                    rebel.ongoingRebellion = true;
                 }
                 //GD.Print(leadRebel.IsEnemyWithState(this));
             }                
@@ -389,15 +418,20 @@ public partial class State : Polity, ISaveable
     public override int GetArmyPower()
     {
         float size = regions.Count;
-        float wealth = totalWealth;
-        foreach (State vassal in vassals)
-        {
-            if (vassal.sovereignty == Sovereignty.REBELLIOUS) continue;
+        float wealth = totalWealth;        
 
-            wealth += vassal.totalWealth;
-            size += vassal.regions.Count;
+        if (sovereignty == Sovereignty.INDEPENDENT)
+        {
+            foreach (State vassal in vassals)
+            {
+                if (vassal.sovereignty == Sovereignty.REBELLIOUS) continue;
+
+                wealth += vassal.totalWealth;
+                size += vassal.regions.Count;
+            }            
         }
-        return Mathf.RoundToInt(wealth/(size) * (tech.militaryLevel + 1));
+        
+        return Mathf.RoundToInt(wealth/size * (tech.militaryLevel + 1));
     }
     public override int GetManpower()
     {

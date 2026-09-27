@@ -81,9 +81,16 @@ public partial class Alliance : Polity
     public override int GetArmyPower()
     {
         int ap = 0;
-        foreach (State state in memberStates)
+
+        if (type == AllianceType.REALM)
         {
-            ap += state.armyPower;
+            ap = leadState.armyPower;
+        } else
+        {
+            foreach (State state in memberStates)
+            {
+                ap += state.armyPower;
+            }            
         }
         return ap;
     }

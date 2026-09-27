@@ -22,10 +22,6 @@ public partial class Character : NamedObject
     [Key(11)] public List<ulong> parentIds = [];
     [Key(12)] public List<ulong?> childIds = [];
     [Key(13)] public Dictionary<ulong, int> relationsIds = [];
-    // Health
-    [Key(14)] public int health = 100;
-    [Key(15)] public float healthDecreaseChance = 0.075f;
-
     // Character Personality
     // Personality changes interaction/actions
     [Key(16)]
@@ -34,6 +30,7 @@ public partial class Character : NamedObject
         {"agression", 0.5f},
         {"leadership", 0.5f},
         {"ambition", 0.5f},
+        {"expansionism", 0.5f},
     };
     [Key(17)] public Gender gender = Gender.MALE;
 
@@ -165,13 +162,25 @@ public partial class Character : NamedObject
 
         string ambitionString = GetPersonalityLevel("ambition") switch
         {
-            TraitLevel.HIGH => $"incredibly ambitious and independent",
+            TraitLevel.HIGH => $"incredibly ambitious",
             TraitLevel.MEDIUM => $"idk",
-            TraitLevel.LOW => $"reserved and loyal",
+            TraitLevel.LOW => $"reserved",
             _ => "idk"
         };
         if (GetPersonalityLevel("leadership") != TraitLevel.MEDIUM)
-        desc += $"{pronoun.Capitalize()} {(dead ? "was" : "is")} also {ambitionString}. ";
+        desc += $"{pronoun.Capitalize()} {(dead ? "was" : "is")} also {ambitionString} ";
+
+        string expansionistString = GetPersonalityLevel("expansionist") switch
+        {
+            TraitLevel.HIGH => $"highly expansionist",
+            TraitLevel.MEDIUM => $"idk",
+            TraitLevel.LOW => $"content",
+            _ => "idk"
+        };
+        if (GetPersonalityLevel("leadership") != TraitLevel.MEDIUM)
+        desc += $" and {expansionistString}. ";
+        else
+        desc += $". ";
         return desc;
     }
     

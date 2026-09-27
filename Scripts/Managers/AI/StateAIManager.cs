@@ -93,7 +93,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
            
 
             if (war.warLeaderIds[side] != state.id) continue;
-            bool surrendered = state.capitualated || state.sovereignty != Sovereignty.INDEPENDENT;
+            bool surrendered = state.capitualated || (state.sovereignty != Sovereignty.INDEPENDENT && state.sovereignty != Sovereignty.REBELLIOUS);
 
             switch (war.warType)
             {
@@ -114,12 +114,15 @@ public partial class StateAIManager : UtilityAi.AiAgent
                             foreach (State rebel in war.sideIds[side].Select(id => ObjectManager.GetState(id)))
                             {
                                 rebel.sovereignty = Sovereignty.PROVINCE;
-                            }                            
+                                rebel.ongoingRebellion = false;
+                            }         
+                            state.stability += 0.3f;                   
                         } 
                         else
                         {
                             // Government Defeat
                             state.RemoveAllVassals();
+                            state.ongoingRebellion = false;
                         }
                         war.EndWar();
                         relations.truce = TimeManager.YearsToTicks(5);
@@ -164,14 +167,27 @@ public partial class StateAIManager : UtilityAi.AiAgent
         } 
         else
         {
+            // Agressive Diplomacy
             if (rng.NextSingle() < warChanceMultiplier)
             {
                 if (state.CanFightState(target))
                 {
-                    // Tries to go to war
-                    ObjectManager.StartWar(WarType.CONQUEST, state, target);                  
+                    // Wars
+                    float warInitiateChance = state.GetCombatPower()/target.GetCombatPower();
+                    warInitiateChance += leader.GetPersonalityLevel("expansionism") switch
+                    {
+                        TraitLevel.HIGH => 0.5f,
+                        TraitLevel.MEDIUM => 0f,
+                        TraitLevel.LOW => -0.5f,
+                        _ => 0f,
+                    };
+                    if (rng.NextSingle() < warInitiateChance)
+                    {
+                        ObjectManager.StartWar(WarType.CONQUEST, state, target);   
+                    }
+                                   
                 } 
-                else if (state.IsAlliedToState(target) && rng.NextSingle() < warChanceMultiplier)
+                else if (state.IsAlliedToState(target))
                 {
                     // Breaks alliance
                     state.GetAllianceOfType(AllianceType.ALLIANCE)?.RemoveMember(state);
