@@ -408,7 +408,7 @@ public partial class State : Polity, ISaveable
         } 
         else if (sovereignty == Sovereignty.REBELLIOUS)
         {
-            return (int)(this.GetWarWithState(ObjectManager.GetState(liegeId))?.GetSideArmyPower(War.WarSide.AGRESSOR));
+            return ObjectManager.GetState(this.GetWarWithState(ObjectManager.GetState(liegeId)).warLeaderIds[War.WarSide.AGRESSOR]).armyPower;
         } 
         else
         {
@@ -428,9 +428,24 @@ public partial class State : Polity, ISaveable
 
                 wealth += vassal.totalWealth;
                 size += vassal.regions.Count;
-            }            
+            }    
+        } 
+        // Rebellion Strength
+        else if (sovereignty == Sovereignty.REBELLIOUS)
+        {
+            War rebellion = this.GetWarWithState(ObjectManager.GetState(liegeId));
+            if (rebellion.warLeaderIds[War.WarSide.AGRESSOR] == id)
+            {
+                foreach (State rebel in rebellion.sideIds[War.WarSide.AGRESSOR].Select(id => ObjectManager.GetState(id)))
+                {
+                    if (rebel != this)
+                    {
+                        wealth += rebel.totalWealth;
+                        size += rebel.regions.Count;                    
+                    }
+                }                
+            }
         }
-        
         return Mathf.RoundToInt(wealth/size * (tech.militaryLevel + 1));
     }
     public override int GetManpower()

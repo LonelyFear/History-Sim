@@ -214,6 +214,7 @@ focus_mode = 0
 theme = ExtResource("2_ktv3r")
 theme_override_constants/h_separation = 7
 theme_override_font_sizes/font_size = 40
+button_pressed = true
 text = "Generate Rivers?"
 
 [node name="AdvancedCheckbox" type="CheckButton" parent="WorldSettingsPanel/MarginContainer/VBoxContainer/WorldSettingsScrollContainer/MarginContainer/WorldSettingsContainer" unique_id=1095888726 node_paths=PackedStringArray("heightmapCheckbox")]

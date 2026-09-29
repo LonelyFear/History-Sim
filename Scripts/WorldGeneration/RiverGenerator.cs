@@ -27,7 +27,7 @@ public class RiverGenerator
                 Vector2I pos = new(px, py);
                 Cell cell = world.cells[pos.X, pos.Y];
 
-                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.25f);
+                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.25f) * Convert.ToInt32(cell.GetAverageTemp() > 0f);
 
                 bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Defines.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
 
@@ -54,70 +54,118 @@ public class RiverGenerator
 
     void GenerateRivers(WorldGenerator world)
     {
-        int maxAttempts = 10000;
         foreach (Vector2I riverStart in validPositions)
         {
-
-            Vector2I pos = riverStart;
-            List<Vector2I> currentRiver = [];
+            Vector2I riverEnd = Vector2I.MinValue;
+            HashSet<Vector2I> visitedCells = [];
+            PriorityQueue<Vector2I, float> oceanFrontier = new();
+            oceanFrontier.Enqueue(riverStart, float.MaxValue);
             bool endFound = false;
-            bool waterEnd = false;
-            int attempts = 0;
-            currentRiver.Add(pos);
-            while (!endFound && currentRiver.Count <= maxRiverLength && attempts < maxAttempts)
+            try
             {
-                attempts++;
-                Vector2I lowestPos = pos;
-                float lowestElevation = world.cells[pos.X, pos.Y].elevation + 200;
-                //float nearb
+                while (oceanFrontier.Count > 0 && !endFound)
+                {
+                    // Finds Nearest Mouth for River (Respecting Height)
+                    Vector2I currentPos = oceanFrontier.Dequeue();
+                    Cell currentCell = world.cells[currentPos.X, currentPos.Y];
+                    for (int dx = -1; dx < 2; dx++)
+                    {
+                        for (int dy = -1; dy < 2; dy++)
+                        {
+                            Vector2I borderPos = new(Mathf.PosMod(currentPos.X + dx, world.WorldSize.X), Mathf.PosMod(currentPos.Y + dy, world.WorldSize.Y));
+                            Cell borderCell = world.cells[borderPos.X, borderPos.Y];
+
+                            if (!visitedCells.Contains(borderPos))
+                            {
+                                float heightDifference = currentCell.elevation - borderCell.elevation;
+                                oceanFrontier.Enqueue(borderPos, -heightDifference);
+                                visitedCells.Add(borderPos);
+
+                                if (borderCell.elevation < 0 || rivers[borderPos.X, borderPos.Y])
+                                {
+                                    riverEnd = borderPos;
+                                    endFound = true;
+                                }
+                            }
+                        }
+                    }
+                }                
+            } 
+            catch (Exception e)
+            {
+                GD.PushError(e);
+            }
+
+            //rivers[riverStart.X, riverStart.Y] = true;
+            //if (riverEnd != Vector2I.MinValue) rivers[riverEnd.X, riverEnd.Y] = true;
+            
+            // Paths to Mouth
+            PriorityQueue<Vector2I, float> frontier = new();
+            Dictionary<Vector2I, float> costSoFar = [];
+            Dictionary<Vector2I, Vector2I> cameFrom = [];
+            List<Vector2I> path = [];
+
+            frontier.Enqueue(riverStart, 0);
+            costSoFar[riverStart] = 0;
+            cameFrom[riverStart] = Vector2I.MinValue;
+
+
+            while (frontier.Count > 0)
+            {
+                Vector2I currentPos = frontier.Dequeue();
+                Cell currentCell = world.cells[currentPos.X, currentPos.Y];
+
+                if (currentPos == riverEnd || currentCell.elevation < 0 || (rivers[currentPos.X, currentPos.Y] && currentPos != riverStart))
+                {
+                    riverEnd = currentPos;
+                    break;
+                }
+
                 for (int dx = -1; dx < 2; dx++)
                 {
                     for (int dy = -1; dy < 2; dy++)
                     {
-                        if (!includeDiagonals && dx != 0 && dy != 0)
+                        //if (dx != 0 && dy != 0) continue;
+
+                        Vector2I borderPos = new(Mathf.PosMod(currentPos.X + dx, world.WorldSize.X), Mathf.PosMod(currentPos.Y + dy, world.WorldSize.Y));
+                        Cell borderCell = world.cells[borderPos.X, borderPos.Y];
+
+                        float heightDifference = currentCell.elevation - borderCell.elevation;
+                        float newCost = costSoFar[currentPos] - heightDifference;
+
+                        if (!costSoFar.TryGetValue(borderPos, out float value) || newCost < value)
                         {
-                            continue;
-                        }
-                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, world.WorldSize.X), Mathf.PosMod(pos.Y + dy, world.WorldSize.Y));
-                        if (world.cells[next.X, next.Y].elevation <= lowestElevation && !currentRiver.Contains(next))
-                        {
-                            lowestElevation = world.cells[next.X, next.Y].elevation;
-                            lowestPos = next;
+                            costSoFar[borderPos] = newCost;
+                            frontier.Enqueue(borderPos, newCost + Heuristic(riverEnd, borderPos));
+                            cameFrom[borderPos] = currentPos;
                         }
                     }
                 }
-                currentRiver.Add(lowestPos);
-                if (world.cells[lowestPos.X, lowestPos.Y].elevation < 0)
-                {
-                    endFound = true;
-                    waterEnd = true;
-                }
-                else if (lowestPos == pos)
-                {
-                    endFound = true;
-                }
-                pos = lowestPos;
             }
-            if (currentRiver.Count >= minRiverLength && endFound)
-            { 
-                if (waterEnd || !riverMustEndInWater) AddRiverToGlobal(currentRiver);
-                else invalidRivers += 1;
-            }
-            else
+
+            if (cameFrom.ContainsKey(riverEnd))
             {
-                invalidRivers += 1;
+                Vector2I nextInPath = riverEnd;
+                while (nextInPath != Vector2I.MinValue)
+                {
+                    path.Add(nextInPath);
+                    nextInPath = cameFrom[nextInPath];
+                }            
+            }
+            
+            if (path.Count > minRiverLength)
+            {
+                foreach (Vector2I pos in path)
+                {
+                    rivers[pos.X, pos.Y] = true;
+                }
             }
         }
     }
-
-    void AddRiverToGlobal(List<Vector2I> river)
+    static float Heuristic(Vector2 posA, Vector2 posB)
     {
-        foreach (Vector2I pos in river)
-        {
-            rivers[pos.X, pos.Y] = true;
-        }
+        return posA.DistanceSquaredTo(posB);
     }
-
     void BiomeRivers(WorldGenerator world)
     {
         for (int x = 0; x < world.WorldSize.X; x++)

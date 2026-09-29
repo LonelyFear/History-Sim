@@ -502,6 +502,10 @@ expand_icon = true
 [node name="StatsEditSeparator" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=232604395]
 layout_mode = 2
 
+[node name="GodModeButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=434171356]
+layout_mode = 2
+text = "God Mode"
+
 [node name="EditorButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=713008555]
 visible = false
 layout_mode = 2
@@ -833,7 +837,8 @@ text = "Strength: 100"
 layout_mode = 2
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 25
-text = "Strength: 100"
+text = "Fertility: 100%
+Navigability: 100%"
 
 [node name="TechLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=192843572]
 visible = false
@@ -1197,9 +1202,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -141.0
-offset_top = -100.0
+offset_top = -168.0
 offset_right = 141.0
-offset_bottom = 100.0
+offset_bottom = 32.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_force_pass_scroll_events = false

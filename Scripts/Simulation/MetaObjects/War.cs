@@ -102,7 +102,7 @@ public partial class War : NamedObject
             }
         }  
     }
-    public int GetSideArmyPower(WarSide side)
+    public int GetSideCombatPower(WarSide side)
     {
         int power = 0;
         foreach (ulong parcipant in sideIds[side])
@@ -110,7 +110,7 @@ public partial class War : NamedObject
             State state = ObjectManager.GetState(parcipant);
             if (state.capitualated) continue;
             
-            power += state.armyPower;
+            power += state.GetCombatPower();
         }
         return power;
     }
