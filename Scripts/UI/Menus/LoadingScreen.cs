@@ -119,7 +119,7 @@ public partial class LoadingScreen : Control
 
                 try
                 {
-                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.REALISTIC));
+                    map.SetMapImageTexture(generator.GetTerrainImage(TerrainMapMode.HEIGHTMAP_REALISTIC));
                 } catch (Exception e)
                 {
                     GD.PushError(e);

@@ -1261,6 +1261,7 @@ theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
 
 [node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("selectionManager", "map", "simHolder")]
+visible = false
 offset_right = 40.0
 offset_bottom = 23.0
 theme = ExtResource("4_exi56")

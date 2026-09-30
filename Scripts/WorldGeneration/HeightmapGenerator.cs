@@ -49,7 +49,7 @@ public class HeightmapGenerator
         float pixelPerX = 4320 / (float)worldSize.X;
         float pixelPerY = 2160 / (float)worldSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
-        int[,] realElevation = ReadBinaryHeightModel("Data/Earth2014.SUR2014.5min.geod.bin", 4320, 2160);
+        int[,] realElevation = ReadBinaryHeightModel("Data/Earth2014.RET2014.5min.geod.bin", 4320, 2160);
         tiles = new TerrainCell[worldSize.X, worldSize.Y];
 
         for (int x = 0; x < worldSize.X; x++)

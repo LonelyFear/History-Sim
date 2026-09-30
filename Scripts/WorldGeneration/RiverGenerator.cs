@@ -4,14 +4,13 @@ using Godot;
 
 public class RiverGenerator
 {
-    public int attemptedRivers = 100;
+    public int attemptedRivers = 50;
     public float minRiverDist = 5f;
     public float minRiverLength = 5;
     public bool includeDiagonals = true;
     public float maxRiverLength = Mathf.Inf;
     public bool riverMustEndInWater = true;
     public int minRiverHeight = 1000;
-    int invalidRivers = 0;
     HashSet<Vector2I> validPositions = [];
     bool[,] rivers;
     void GeneratePoints(WorldGenerator world)
@@ -27,16 +26,13 @@ public class RiverGenerator
                 Vector2I pos = new(px, py);
                 Cell cell = world.cells[pos.X, pos.Y];
 
-                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.25f) * Convert.ToInt32(cell.GetAverageTemp() > 0f);
+                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.1f) * Convert.ToInt32(cell.GetAverageTemp() > -5f);
 
                 bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Defines.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
 
                 if (posGood)
                 {
                     validPositions.Add(pos);
-                } else
-                {
-                    invalidRivers++;
                 }
             }           
         }
@@ -49,7 +45,6 @@ public class RiverGenerator
         GeneratePoints(world);
         GenerateRivers(world);
         BiomeRivers(world);
-        GD.Print("Generated " + (attemptedRivers - invalidRivers) + " rivers");
     }
 
     void GenerateRivers(WorldGenerator world)
