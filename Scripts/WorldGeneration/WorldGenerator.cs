@@ -18,10 +18,6 @@ public class WorldGenerator
     
     [Key(0)]
     public Vector2I WorldSize { get; set; } = new Vector2I(360, 180) ;
-    [IgnoreMember]
-    public float Width;
-    [IgnoreMember]
-    public float Height;
     [Key(1)]
     public float WorldMult { get; set; } = 3f;
     [Key(2)]
