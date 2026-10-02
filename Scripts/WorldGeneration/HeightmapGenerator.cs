@@ -742,7 +742,7 @@ public class HeightmapGenerator
                 {
                     TerrainCell cell = tiles[x,y];
                     // Gets noise that mimics erosion
-                    float n = GetSlopeDependentNoise(x, y, noise, 10, 0.008f, 1f, 2.0f, 0.5f);
+                    float n = GetSlopeDependentNoise(x, y, noise, 10, 0.015f, 1f, 2.0f, 0.5f);
                     // Normalizes Noise
                     float noiseValue = Mathf.InverseLerp(-1, 1, n);
                     // Maximum and minimum values for debug
@@ -762,7 +762,7 @@ public class HeightmapGenerator
                     } else
                     {
                         // Above Water
-                        heightmap[x, y] += Mathf.Lerp(-0.03f, 0.15f, noiseValue);
+                        heightmap[x, y] += Mathf.Lerp(-0.02f, 0.1f, noiseValue);
                     }
                 }
             }

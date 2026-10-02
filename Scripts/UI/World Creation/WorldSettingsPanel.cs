@@ -5,7 +5,6 @@ public partial class WorldSettingsPanel : Panel
 {
 	[Export] LineEdit nameEdit;
 	[Export] NumberLineEdit seedEdit;
-	[Export] NumberLineEdit eventSeedEdit;
 	[Export] OptionButton sizeDropdown;
 	[Export] CheckBox heightmapCheckbox;
 	[Export] CheckBox riverCheckbox;
@@ -35,10 +34,6 @@ public partial class WorldSettingsPanel : Panel
         {
             seed = rng.Next(-99999999, 99999999);
         }
-        if (!int.TryParse(eventSeedEdit.Text, out int eventsSeed))
-        {
-            eventsSeed = rng.Next(-99999999, 99999999);
-        }
 		if (worldName.Length < 1)
 		{
 			worldName = NameGenerator.GenerateRandomName(3, 5, new Random(seed), ["", "a", "ia", "al", "ica", "en", "una", "eth", "ar", "or", "inia"]);
@@ -51,7 +46,6 @@ public partial class WorldSettingsPanel : Panel
 		{
 			worldName = worldName,
 			worldSeed = seed,
-			eventsSeed = eventsSeed,
 			largeContinents = (int)largeContinents.Value,
 			smallContinents = (int)smallContinents.Value,
 			landCoverage = 1f - ((landCoverageDropdown.Selected + 2)/10f),

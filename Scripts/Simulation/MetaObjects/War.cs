@@ -119,6 +119,11 @@ public partial class War : NamedObject
         dead = true;
         foreach (State state in participantIds.ToArray().Select(ObjectManager.GetState))
         {
+            if (state.sovereignty == Sovereignty.REBELLIOUS)
+            {
+                if (state.GetLiege() != null) state.sovereignty = Sovereignty.PUPPET;
+                else state.sovereignty = Sovereignty.INDEPENDENT;
+            }
             RemoveParticipant(state);
         }
         // Clears all participants (Needed for claim transfer)
