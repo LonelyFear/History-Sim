@@ -79,7 +79,7 @@ public partial class Character : NamedObject
 
         dead = true;
         tickDestroyed = sim.timeManager.ticks;
-        ObjectManager.CreateHistoricalEvent([this, role == CharacterRole.LEADER ? state : null], EventType.DEATH);
+        _ = new CharacterDeathEvent(this);
 
         if (state == null) return;
         
@@ -115,7 +115,7 @@ public partial class Character : NamedObject
         string pronoun = pronouns[intGender];
         string w = dead ? "was" : "is";
 
-        string desc = $"{name} {w} a character born in {sim.timeManager.GetStringDate(tickCreated, true)} to ";
+        string desc = $"{name} {w} a character born in {TimeManager.GetStringDate(tickCreated)} to ";
 
         if (parentIds.Count <= 0)
         {
@@ -144,9 +144,9 @@ public partial class Character : NamedObject
         // Personality
         string agressionString = GetPersonalityLevel("agression") switch
         {
-            TraitLevel.HIGH => "an Agressive stance on affairs",
-            TraitLevel.MEDIUM => "a Neutral stance on affairs",
-            TraitLevel.LOW => "a Passive stance on affairs",
+            TraitLevel.HIGH => "an hawkish stance on affairs",
+            TraitLevel.MEDIUM => "a neutral stance on affairs",
+            TraitLevel.LOW => "a passive stance on affairs",
             _ => "an Arbitrary stance, making desicions on a whim"
         };
         desc += $"{pronoun.Capitalize()} {(dead ? "had" : "has")} {agressionString}, and ";
@@ -168,19 +168,24 @@ public partial class Character : NamedObject
             _ => "idk"
         };
         if (GetPersonalityLevel("leadership") != TraitLevel.MEDIUM)
-        desc += $"{pronoun.Capitalize()} {(dead ? "was" : "is")} also {ambitionString} ";
-
-        string expansionistString = GetPersonalityLevel("expansionist") switch
         {
-            TraitLevel.HIGH => $"highly expansionist",
-            TraitLevel.MEDIUM => $"idk",
-            TraitLevel.LOW => $"content",
+            desc += $"{pronoun.Capitalize()} {(dead ? "was" : "is")} also {ambitionString} ";
+        }
+        string expansionistString = GetPersonalityLevel("expansionism") switch
+        {
+            TraitLevel.HIGH => $"{(dead ? "had" : "holds")} positive views of expansion.",
+            TraitLevel.MEDIUM => $"{(dead ? "had" : "holds")} neutral views of expansion.",
+            TraitLevel.LOW => $"{(dead ? "had" : "holds")} negative views of expansion.",
             _ => "idk"
         };
         if (GetPersonalityLevel("leadership") != TraitLevel.MEDIUM)
-        desc += $" and {expansionistString}. ";
+        {
+            desc += $"and {expansionistString}. ";
+        }
         else
-        desc += $". ";
+        {
+            desc += $". ";
+        }
         return desc;
     }
     

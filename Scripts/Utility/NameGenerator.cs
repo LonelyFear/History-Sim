@@ -16,12 +16,6 @@ public static class NameGenerator
         //string[] roots = FileAccess.Open(@"Data/Names/NationRoots.txt", FileAccess.ModeFlags.Read).GetAsArray();
         string[] suffixes = FileAccess.Open(@"Data/Names/NationSuffixes.txt", FileAccess.ModeFlags.Read).GetAsArray();
         
-        string InsertVowel(string root){
-            if (!vowels.ToCharArray().Contains(name[name.Length - 1]) && !vowels.ToCharArray().Contains(root[0])){
-                return vowels.ToCharArray()[rng.Next(0, vowels.Length - 1)] + root;
-            }
-            return root;
-        }
         /*
         name += prefixes[rng.Next(0, prefixes.Length - 1)];
         for (int i = 0; i < rng.Next(0, 2); i++){

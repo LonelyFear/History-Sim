@@ -433,7 +433,6 @@ public static class ObjectManager
         war.warLeaderIds[War.WarSide.DEFENDER] = defenderLeader.id;
         war.InitWar();
         
-        CreateHistoricalEvent([agressorLeader, defenderLeader], EventType.WAR_DECLARATION);
         war.AddParticipant(agressorLeader, War.WarSide.AGRESSOR);
         war.AddParticipant(defenderLeader, War.WarSide.DEFENDER);
         war.NameWar();
@@ -463,40 +462,6 @@ public static class ObjectManager
         }
         simManager.oceanIds.Add(ocean.id, ocean);
         return ocean;
-    }
-    public static void CreateHistoricalEvent(NamedObject[] relevantObjects, EventType eventType)
-    {
-        HistoricalEvent historicalEvent = new HistoricalEvent()
-        {
-            objIds = relevantObjects.Select(obj => obj == null ? "nullObject" : obj.GetFullId()).ToList(),
-            tickOccured = timeManager.ticks,
-            id = GetId(),
-            type = eventType
-        };
-        try
-        {
-            historicalEvent.InitEvent();
-        } catch (Exception e)
-        {
-            GD.PushError(e);
-        }
-         
-        
-        foreach (NamedObject obj in relevantObjects)
-        {
-            if (obj == null) continue;
-            obj.eventIds.Add(historicalEvent.id);
-        }
-        simManager.historicalEventIds.TryAdd(historicalEvent.id, historicalEvent);
-    }
-    public static void DeleteHistoricalEvent(HistoricalEvent historicalEvent)
-    {
-        foreach (string fullId in historicalEvent.objIds)
-        {
-            NamedObject obj = NamedObject.GetNamedObject(fullId);
-            obj.eventIds.Remove(historicalEvent.id);
-        }  
-        simManager.historicalEventIds.Remove(historicalEvent.id, out HistoricalEvent _);      
     }
     public static HistoricalEvent GetHistoricalEvent(ulong? id)
     {

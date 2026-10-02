@@ -12,7 +12,7 @@ public partial class TimeManager : Node
     public delegate void TickEventHandler();
     [Signal]
     public delegate void YearEventHandler();
-    string[] months = { "January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+    static readonly string[] months = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     public const uint ticksPerDay = 14;
     public const uint ticksPerMonth = 28;
@@ -262,24 +262,13 @@ public partial class TimeManager : Node
         }
         return months[GetMonth(tick) - 1];
     }
-    public string GetStringDate(uint tick = 0, bool useMonth = false){
-        if (tick == 0)
-        {
-            tick = ticks;
-        }
+    public static string GetStringDate(uint tick){
         string date = "";
-        if (useMonth)
-        {
-            string month = months[GetMonth(tick) - 1];
-            string year = GetYear(tick).ToString();
-            date = $"{month} of {year}";   
-        } else
-        {
-            string day = GetDay(tick).ToString("00");
-            string month = GetMonth(tick).ToString("00");
-            string year = GetYear(tick).ToString("0000");
-            date = $"{month}/{day}/{year}";            
-        }
+        
+        string month = months[GetMonth(tick) - 1];
+        string year = GetYear(tick).ToString();
+        date = $"{month} of {year}";   
+
         return date;
     }
 }

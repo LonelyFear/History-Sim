@@ -231,7 +231,7 @@ public class WorldGenerator
                         else
                         {
                             Color biomeColor = AssetManager.GetBiome(cells[x, y].biomeId).color;
-                            Color darkerColor = Utility.MultiColourLerp([new Color(0, 0, 0), biomeColor], 0.2f);
+                            Color darkerColor = Utility.MultiColourLerp([new Color(0, 0, 0), biomeColor], 0.5f);
 
                             image.SetPixel(x, y, Utility.MultiColourLerp([darkerColor, biomeColor], hf));
                         }                        

@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Godot;
 using MessagePack;
@@ -18,7 +15,7 @@ public abstract class NamedObject
     [Key(3)] public ulong id { get; set; }
     [Key(4)] public string name { get; set; }
     [Key(5)] public string description { get; set; }
-    [Key(6)] public List<ulong> eventIds = [];
+    [Key(6)] public List<HistoricalEvent> historicalEvents = [];
     [IgnoreMember] public static Random rng = null;
     public virtual void PrepareForSave()
     {
@@ -60,15 +57,14 @@ public abstract class NamedObject
     public string GenerateHistoryText()
     {
         string text = "This object doesnt have any recorded history yet.";
-        if (eventIds.Count < 1)
+        if (historicalEvents.Count < 1)
         {
             return text;
         }
         text = "";
-        foreach (ulong eventId in eventIds)
+        foreach (HistoricalEvent historicalEvent in historicalEvents)
         {
-            HistoricalEvent historicalEvent = ObjectManager.GetHistoricalEvent(eventId);
-            text += $"{historicalEvent.GetEventText()}\n";
+            text += $"{TimeManager.GetStringDate(historicalEvent.tickOccured)}: {historicalEvent.text}\n";
         }
         return text;
     }

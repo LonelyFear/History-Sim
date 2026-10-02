@@ -318,7 +318,7 @@ public partial class State : Polity, ISaveable
         if (newLeader != null)
         {
             SetLeader(newLeader);
-            ObjectManager.CreateHistoricalEvent([this, newLeader], EventType.SUCCESSION);
+            _ = new NewLeaderEvent(this, newLeader);
         }
     }
     public void SetLeader(Character character)
