@@ -4,37 +4,44 @@ using Godot;
 
 public class RiverGenerator
 {
-    public int attemptedRivers = 50;
-    public float minRiverDist = 5f;
+    public int minRiverDist = 5;
     public float minRiverLength = 5;
-    public bool includeDiagonals = true;
     public float maxRiverLength = Mathf.Inf;
-    public bool riverMustEndInWater = true;
-    public int minRiverHeight = 1000;
+    public int minRiverHeight = 700;
     HashSet<Vector2I> validPositions = [];
     bool[,] rivers;
     void GeneratePoints(WorldGenerator world)
     {
         Random rng = world.rng;
-        for (int x = 0; x < world.WorldSize.X/minRiverDist; x++)
+        int gridX = Mathf.FloorToInt(world.WorldSize.X/minRiverDist);
+        int gridY = Mathf.FloorToInt(world.WorldSize.Y/minRiverDist);
+        for (int gx = 0; gx < gridX; gx++)
         {
-            for (int y = 0; y < world.WorldSize.Y/minRiverDist; y++)
+            for (int gy = 0; gy < gridY; gy++)
             {
-                int px = (int)(x * minRiverDist);
-                int py = (int)(y * minRiverDist);
-
-                Vector2I pos = new(px, py);
-                Cell cell = world.cells[pos.X, pos.Y];
-
-                float riverSpawnChance = Mathf.Clamp(cell.GetAnnualRainfall()/1500f, 0f, 0.1f) * Convert.ToInt32(cell.GetAverageTemp() > -5f);
-
-                bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Defines.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
-
-                if (posGood)
+                int attempts = Mathf.RoundToInt(10 * world.WorldMult);
+                while (attempts > 0)
                 {
-                    validPositions.Add(pos);
+                    attempts--;
+                    int px = (gx * minRiverDist) + rng.Next(0, minRiverDist);
+                    int py = (gy * minRiverDist) + rng.Next(0, minRiverDist);
+
+                    Vector2I pos = new(px, py);
+
+                    Cell cell = world.cells[pos.X, pos.Y];
+
+                    float riverSpawnChance = Mathf.Max(cell.GetAnnualRainfall()-500, 0)/1000f * Convert.ToInt32(cell.GetAverageTemp() > -5f);
+
+                    bool posGood = !validPositions.Contains(pos) && cell.elevation > minRiverHeight && AssetManager.GetBiome(cell.biomeId).type == Defines.BiomeType.LAND && rng.NextSingle() < riverSpawnChance; 
+
+                    if (posGood)
+                    {
+                        validPositions.Add(pos);
+                        attempts = 0;
+                    }                    
                 }
-            }           
+                
+            }            
         }
         GD.Print("Attempting to generate " + validPositions.Count + " rivers");
     }

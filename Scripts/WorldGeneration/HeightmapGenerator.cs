@@ -20,7 +20,7 @@ public class HeightmapGenerator
     Vector2I worldSize;
     float worldMult;
     float seaLevel;
-
+    
     WorldGenerator world;
     Dictionary<Vector2I, VoronoiRegion> points;
     Curve amplitudeCurve = GD.Load<Curve>("res://Curves/Landforms/AmplitudeCurve.tres");
@@ -31,6 +31,7 @@ public class HeightmapGenerator
     // Public Variables
     public float seaFloorLevel = 0.1f;
     public float landCoverage = 0.4f;
+    float shelfDepth = 0.03f;
     const float slopeErosionThreshold = 0.1f;
     public int largePlates = 7;
     public int smallPlates = 4;
@@ -123,7 +124,7 @@ public class HeightmapGenerator
     public void GenerateHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
-        seaLevel = world.SeaLevel;
+        seaLevel = world.SeaLevel - shelfDepth;
         worldSize = world.WorldSize;
 
         worldMult = world.WorldMult;
@@ -709,16 +710,16 @@ public class HeightmapGenerator
                     if (cell.region.IsContinental())
                     {
                         // The closer land is to sea the flatter it is, modulated by noise
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 80f, noiseValue)), 0f, 1f);
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 20f, noiseValue)), 0f, 1f);
 
                         // Modulates height by distance to the coast
-                        heightmap[x, y] = 0.1f * coastMultiplier;
+                        heightmap[x, y] = 0.075f * coastMultiplier;
                         // Adds sea level so we are above water
                         heightmap[x, y] += seaLevel;
                     } else
                     {
                         // Undersea Slope to Abyss
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 10f, noiseValue)), 0f, 1f);
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 3f, noiseValue)), 0f, 1f);
                         heightmap[x, y] = Mathf.Lerp(0f, seaLevel, 1f - coastMultiplier);
                         //heightmap[x, y] += seaLevel;                     
                     }
@@ -741,7 +742,7 @@ public class HeightmapGenerator
                 {
                     TerrainCell cell = tiles[x,y];
                     // Gets noise that mimics erosion
-                    float n = GetSlopeDependentNoise(x, y, noise, 8, 0.004f, 1f, 2.0f, 0.5f);
+                    float n = GetSlopeDependentNoise(x, y, noise, 10, 0.008f, 1f, 2.0f, 0.5f);
                     // Normalizes Noise
                     float noiseValue = Mathf.InverseLerp(-1, 1, n);
                     // Maximum and minimum values for debug
@@ -754,7 +755,15 @@ public class HeightmapGenerator
                         maxNoise = n;
                     }
                     // Adjusts our heightmap
-                    heightmap[x, y] += Mathf.Lerp(-0.175f, 0.175f, noiseValue);
+                    if (heightmap[x, y] < seaLevel)
+                    {
+                        // Below Water
+                        heightmap[x, y] += Mathf.Lerp(-0.1f, 0.15f, noiseValue);
+                    } else
+                    {
+                        // Above Water
+                        heightmap[x, y] += Mathf.Lerp(-0.03f, 0.15f, noiseValue);
+                    }
                 }
             }
         });

@@ -120,12 +120,10 @@ public class WorldGenerator
         //HydroMap = new HydrologyGenerator().GenerateHydrologyMap();
         RiverGenerator riverGenerator = new()
         {
-            attemptedRivers = 50000,
-            minRiverDist = 4f,
-            minRiverLength = 8,
+            minRiverDist = Mathf.RoundToInt(5 * WorldMult),
+            minRiverLength = 5,
             maxRiverLength = 100000,
             minRiverHeight = 500,
-            riverMustEndInWater = true
         };
 
         try
