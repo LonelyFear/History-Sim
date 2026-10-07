@@ -172,8 +172,8 @@ public partial class ObjectInfo : Panel
                 yearAge = TimeManager.GetYear(war.GetAge());
                 monthAge = TimeManager.GetMonth(war.GetAge());
                 specialLabel.Text += "\n" + $"{war.name}";
-                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
-                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.attackerLeader.id}]{war.attackerLeader.name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.defenderLeader.id}]{war.defenderLeader.name}[/url][/color]";
                 specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
             }
         } else {
@@ -211,8 +211,8 @@ public partial class ObjectInfo : Panel
                 yearAge = TimeManager.GetYear(war.GetAge());
                 monthAge = TimeManager.GetMonth(war.GetAge());
                 specialLabel.Text += "\n" + $"{war.name}";
-                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.warLeaderIds[War.WarSide.AGRESSOR]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.AGRESSOR]).name}[/url][/color]";
-                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.warLeaderIds[War.WarSide.DEFENDER]}]{ObjectManager.GetState(war.warLeaderIds[War.WarSide.DEFENDER]).name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Agressor: [color=blue][url=s{war.attackerLeader.id}]{war.attackerLeader.name}[/url][/color]";
+                specialLabel.Text += "\n" + $"Defender: [color=blue][url=s{war.defenderLeader.id}]{war.defenderLeader.name}[/url][/color]";
                 specialLabel.Text += "\n" + $"Age: {yearAge} year(s), {monthAge} month(s)"; ;
             }
         } else {

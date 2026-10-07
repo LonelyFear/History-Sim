@@ -1,7 +1,13 @@
 using Godot;
 using MessagePack;
+
 [Union(0, typeof(NewLeaderEvent))]
-[Union(1, typeof(CharacterDeathEvent))]
+[Union(1, typeof(NewOverlordLeaderEvent))]
+[Union(2, typeof(CharacterDeathEvent))]
+[Union(3, typeof(DeclareWarEvent))]
+[Union(4, typeof(EndWarEvent))]
+
+[MessagePackObject]
 public abstract class HistoricalEvent
 {
     [IgnoreMember] public static TimeManager timeManager;

@@ -215,7 +215,7 @@ public class WorldGenerator
 
                 float seaFloorDepth = -WorldHeight * SeaLevel;
                 Color waterColor = Utility.MultiColourLerp([shallowWatersColor, deepWatersColor], Mathf.Clamp(cells[x, y].elevation/seaFloorDepth, 0f, 1f));
-
+                Biome biome = AssetManager.GetBiome(cells[x, y].biomeId);
                 float hf = cells[x, y].elevation/(WorldHeight * (1f - SeaLevel));
                 bool isWater = AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.WATER;
                 bool isIce = AssetManager.GetBiome(cells[x, y].biomeId).type == Defines.BiomeType.ICE;
@@ -223,14 +223,17 @@ public class WorldGenerator
                 switch (mapMode)
                 {
                     case TerrainMapMode.HEIGHTMAP_REALISTIC:
-                        if (isWater || cells[x, y].biomeId == "river")
+                        if (isWater)
                         {
                             image.SetPixel(x, y, waterColor);
                         }
-                        //terrainImage.SetPixel(x, y, oceanColor);
+                        else if (biome.id == "river")
+                        {
+                            image.SetPixel(x, y, biome.color);
+                        }
                         else
                         {
-                            Color biomeColor = AssetManager.GetBiome(cells[x, y].biomeId).color;
+                            Color biomeColor = biome.color;
                             Color darkerColor = Utility.MultiColourLerp([new Color(0, 0, 0), biomeColor], 0.5f);
 
                             image.SetPixel(x, y, Utility.MultiColourLerp([darkerColor, biomeColor], hf));

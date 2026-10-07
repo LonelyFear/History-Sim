@@ -703,7 +703,7 @@ public class SimManager
 
                 // Character Death
                 // Calculated monthly, characters have a chance to die if they are old enough
-                if (character.GetAge() > Character.OldAgeYear && rng.NextSingle() < Character.MonthlyOldAgeDeathChance)
+                if (TimeManager.GetYear(character.GetAge()) > Character.OldAgeYear && rng.NextSingle() < Character.MonthlyOldAgeDeathChance)
                 {
                     character.Die();
                 }

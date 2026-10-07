@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using Godot;
 using MessagePack;
@@ -8,33 +9,54 @@ using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
 
 namespace PixelHistory.Objects.Wars;
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public partial class War : NamedObject
 {
-    [Key(7)] public Dictionary<WarSide, List<ulong>> sideIds = [];
-    [Key(8)] public HashSet<ulong?> participantIds {get; private set;} = [];
-    [Key(10)] public Dictionary<WarSide, ulong> warLeaderIds = [];
-    [Key(11)] public WarType warType { get; set; } = WarType.CONQUEST;
+    //[Key(7)] public Dictionary<WarSide, List<ulong>> sideIds = [];
+    [IgnoreMember] public State attackerLeader;
+    [IgnoreMember] public State defenderLeader;
+    [IgnoreMember] public List<State> attackers = [];
+    [IgnoreMember] public List<State> defenders = [];
+    [IgnoreMember] public List<State> participants = [];
+    [Key(7)] ulong attackerLeaderId;
+    [Key(8)] ulong defenderLeaderId;
+    [Key(9)] List<ulong> attackerIds;
+    [Key(10)] List<ulong> defenderIds;
+    [Key(11)] List<ulong> participantIds;
+    [Key(12)] public WarType warType { get; set; } = WarType.CONQUEST;
+    [Key(13)] public WarSide ?victor = null;
+
     public War() {}
-    public void InitWar()
+    public override void PrepareForSave()
     {
-        sideIds[WarSide.AGRESSOR] = [];
-        sideIds[WarSide.DEFENDER] = [];
+        attackerLeaderId = attackerLeader.id;
+        defenderLeaderId = defenderLeader.id;
+        attackerIds = [..attackers.Select(s => s.id)];
+        defenderIds = [..defenders.Select(s => s.id)];
+        participantIds = [..participants.Select(s => s.id)];
+        base.PrepareForSave();
+    }
+    public override void LoadFromSave()
+    {
+        attackerLeader = ObjectManager.GetState(attackerLeaderId);
+        defenderLeader = ObjectManager.GetState(defenderLeaderId);
+        attackers = [..attackerIds.Select(i => ObjectManager.GetState(i))];
+        defenders = [..defenderIds.Select(i => ObjectManager.GetState(i))];
+        participants = [..participantIds.Select(i => ObjectManager.GetState(i))];
+        base.LoadFromSave();
     }
     public void NameWar()
     {
-        State agressor = ObjectManager.GetState(warLeaderIds[WarSide.AGRESSOR]);
-        State defender = ObjectManager.GetState(warLeaderIds[WarSide.DEFENDER]);
         switch (warType)
         {
             case WarType.CONQUEST:
-                name = $"{agressor.baseName}-{defender.baseName} War";
+                name = $"{attackerLeader.baseName}-{defenderLeader.baseName} War";
                 break;
             case WarType.CIVIL_WAR:
-                name = $"{NameGenerator.GetDemonym(defender.baseName)} Civil War";
+                name = $"{NameGenerator.GetDemonym(defenderLeader.baseName)} Civil War";
                 break;
             case WarType.REVOLT:
-                name = $"{NameGenerator.GetDemonym(agressor.baseName)} Rebellion";
+                name = $"{NameGenerator.GetDemonym(attackerLeader.baseName)} Rebellion";
                 break;
         }
     }
@@ -42,82 +64,88 @@ public partial class War : NamedObject
     {
         return (WarSide)Mathf.PosMod((int)side + 1, 2);
     }
-
     public void AddParticipant(State state, WarSide side)
     {
-        if (participantIds.Contains(state.id)) RemoveParticipant(state);
+        if (participants.Contains(state)) RemoveParticipant(state);
 
-        WarSide opposingSide = (WarSide)Mathf.PosMod((int)side + 1, 2);
-
-        sideIds[side].Add(state.id);
-        StateDiplomacyManager.SetEnemies(state, sideIds[opposingSide], true);
-
-        foreach (ulong enemyId in sideIds[opposingSide])
-        {
-            State enemy = ObjectManager.GetState(enemyId);
-            StateDiplomacyManager.SetEnemy(enemy, state, true);
-        }
- 
         state.wars[this] = side;
-        participantIds.Add(state.id);
+        state.lastLiegeId = state.liegeId;
+
+        List<State> alliedSide = GetAllies(state);
+        List<State> enemySide = GetEnemies(state);
+
+        state.SetEnemies(enemySide, true);
+        if (warType == WarType.CIVIL_WAR) GD.Print("War Leads Fighting: " + defenderLeader.IsEnemyWithState(attackerLeader));
+
+        alliedSide.Add(state);
+        participants.Add(state);
     }
 
     public void RemoveParticipant(State state)
     {
         // Gets the side this state is on
-        WarSide side = state.wars[this];  
-        // Checks if we can end the war
-        if (!dead && (sideIds[side].Count == 1 || warLeaderIds[side] == state.id))
-        {
-            EndWar();
-            return;
-        }
-        // Removes us from participants list if the war isnt going to end
-        // (Claim Transfer)
-        if (!dead) participantIds.Remove(state.id);
+        List<State> alliedSide = GetAllies(state);
+        List<State> enemySide = GetEnemies(state);
 
-        // Removes enemies and sided participation
-        if (sideIds[side].Remove(state.id))
-        {
-            // Gets opposition
-            WarSide opposingSide = (WarSide)Mathf.PosMod((int)side + 1, 2);
-            StateDiplomacyManager.SetEnemies(state, sideIds[opposingSide], false);
-
-            // Makes it so our (former) opposition wont fight us
-            foreach (ulong enemyId in sideIds[opposingSide])
-            {
-                State enemy = ObjectManager.GetState(enemyId);
-                StateDiplomacyManager.SetEnemy(enemy, state, false);
-            }
-        }
+        state.SetEnemies(enemySide, false);
         
+        if (IsStateWarLead(state))
+        {
+            SetVictor(GetOtherSide(state.wars[this]));
+        }
+
         // Removes from participants list
-        state.wars.Remove(this, out _);
+        state.wars.Remove(this, out WarSide side);
+        alliedSide.Remove(state);
 
         // Claims
-        foreach (Region region in state.regions)
+        // Gives owner a claim to the conquered land
+        if (!state.capitualated)
         {
-            if (participantIds.Contains(region.owner.GetOverlord().id)) {
-                region.owner.AddClaim(region);
-            }
-        }  
+            foreach (Region region in state.regions)
+            {
+                if (!state.IsEnemyWithState(region.owner))
+                {
+                    region.owner.AddClaim(region);
+                }
+            }              
+        }
+
+        participants.Remove(state);
     }
     public int GetSideCombatPower(WarSide side)
     {
         int power = 0;
-        foreach (ulong parcipant in sideIds[side])
+        List<State> alliedSide = side == WarSide.AGRESSOR ? attackers : defenders;
+
+        foreach (State state in alliedSide)
         {
-            State state = ObjectManager.GetState(parcipant);
             if (state.capitualated) continue;
             
             power += state.GetCombatPower();
         }
         return power;
     }
+    public List<State> GetAllies(State state)
+    {
+        if (state.wars.TryGetValue(this, out WarSide stateSide))
+        {
+            return stateSide == WarSide.AGRESSOR ? attackers : defenders;
+        }
+        return [];
+    }
+    public List<State> GetEnemies(State state)
+    {
+        if (state.wars.TryGetValue(this, out WarSide stateSide))
+        {
+            return stateSide == WarSide.DEFENDER ? attackers : defenders;
+        }
+        return [];
+    }
     public void EndWar()
     {
         dead = true;
-        foreach (State state in participantIds.ToArray().Select(ObjectManager.GetState))
+        foreach (State state in participants.ToArray())
         {
             if (state.sovereignty == Sovereignty.REBELLIOUS)
             {
@@ -127,14 +155,26 @@ public partial class War : NamedObject
             RemoveParticipant(state);
         }
         // Clears all participants (Needed for claim transfer)
-        participantIds = [];
-
+        participants = [];
+        attackerLeader = null;
+        defenderLeader = null;
         ObjectManager.ForgetWar(this);
+    }
+    public bool IsStateWarLead(State state)
+    {
+        return attackerLeader == state || defenderLeader == state;
+    }
+    public void SetVictor(WarSide winner)
+    {
+        if (victor == null){
+            victor = winner;
+        }
     }
     public enum WarSide
     {
-        AGRESSOR,
-        DEFENDER
+        AGRESSOR = 0,
+        DEFENDER = 1,
+        NEUTRAL = 2
     }
 }
 public enum WarType

@@ -427,13 +427,16 @@ public partial class Region : PopObject, ISaveable
         State attacker = owner;
         State enemy = target.owner;
 
-        War war = attacker.GetWarWithState(enemy);
-
         long attackerPower = attacker.GetCombatPower();
         long defenderPower = enemy.GetCombatPower();
 
         if (Battle.CalcBattle(target, attackerPower, defenderPower))
         {
+            if (attacker.IsAlliedToState(target.claimant) && !attacker.enemies.Contains(target.claimant))
+            {
+                target.claimant.AddRegion(target, false);
+                return;
+            }
             attacker.AddRegion(target, false);
         }         
     }
@@ -640,7 +643,7 @@ public partial class Region : PopObject, ISaveable
             return;
         }
 
-        foreach (var pair in simManager.tradeZoneIds)
+        foreach (var pair in simManager.tradeZoneIds.ToArray())
         {
             TradeZone otherTradeZone = pair.Value;
             Region tradeZoneCenter = ObjectManager.GetRegion(otherTradeZone?.centerId);

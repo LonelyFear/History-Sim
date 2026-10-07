@@ -32,7 +32,7 @@ public partial class WorldSettingsPanel : Panel
 
         if (!int.TryParse(seedEdit.Text, out int seed))
         {
-            seed = rng.Next(-99999999, 99999999);
+            seed = rng.Next(-9999999, 9999999);
         }
 		if (worldName.Length < 1)
 		{

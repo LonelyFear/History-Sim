@@ -424,11 +424,11 @@ public class HeightmapGenerator
                         else
                         {
                             // Rift Valleys
-                            minWidth = 5f * Mathf.Lerp(0.2f, 1f, widthNoiseValue);
+                            minWidth = 3f * Mathf.Lerp(0.2f, 1f, widthNoiseValue);
                             boundaryFactor = 1f - (tile.boundaryDist / minWidth);
                             if (tile.boundaryDist <= minWidth)
                             {
-                                heightmap[x, y] -= 0.3f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.5f, 1f, noiseValue);
+                                heightmap[x, y] -= 0.25f * mountainCurve.Sample(boundaryFactor) * Mathf.Clamp(boundary.pressure, 0.5f, 1) * Mathf.Lerp(0.5f, 1f, noiseValue);
                             }                                
                         }
                     } else if (!selfContinental && !boundaryContinental)
@@ -781,9 +781,9 @@ public class HeightmapGenerator
         noise.SetFrequency(frequency);
         for (int i = 0; i < octaves; i++)
         {
-            float n = GetWrappedNoise(noise, p.X, p.Y, worldSize.X);
-            float dx = (GetWrappedNoise(noise, p.X + eps, p.Y, worldSize.X) - GetWrappedNoise(noise, p.X - eps, p.Y, worldSize.X))/(2 * eps);
-            float dy = (GetWrappedNoise(noise, p.X, p.Y + eps, worldSize.X) - GetWrappedNoise(noise, p.X, p.Y - eps, worldSize.X))/(2 * eps);
+            float n = Utility.GetWrappedNoise(noise, p.X, p.Y, worldSize.X);
+            float dx = (Utility.GetWrappedNoise(noise, p.X + eps, p.Y, worldSize.X) - Utility.GetWrappedNoise(noise, p.X - eps, p.Y, worldSize.X))/(2 * eps);
+            float dy = (Utility.GetWrappedNoise(noise, p.X, p.Y + eps, worldSize.X) - Utility.GetWrappedNoise(noise, p.X, p.Y - eps, worldSize.X))/(2 * eps);
             d += new Vector2(dx, dy);
             //GD.Print(d.Length());
             float w = amplitudeCurve.Sample(d.Length());
@@ -797,18 +797,7 @@ public class HeightmapGenerator
         //noise.SetFrequency(frequency);
         return value /= 3f;  
     }
-    public float GetWrappedNoise(FastNoiseLite noise, float x, float y, float width)
-    {
-        
-        float angle = (x/width) * 2f * Mathf.Pi;
-        float radius = width / (2f * Mathf.Pi);
 
-        // Maps point onto circle
-        float nx = radius * Mathf.Cos(angle);
-        float ny = radius * Mathf.Sin(angle);
-
-        return noise.GetNoise(nx, ny, y);
-    }
 
     Dictionary<Vector2I, VoronoiRegion> GeneratePoints()
     {
@@ -906,8 +895,8 @@ public class HeightmapGenerator
 
                     TerrainCell tile = new TerrainCell();
                     // Domain warping
-                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize) * 40), worldSize.X);
-                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize) * 40), worldSize.Y);
+                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize.X) * 40), worldSize.X);
+                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize.Y) * 40), worldSize.Y);
 
                     Vector2I pos = new Vector2I(fx, fy);
                     VoronoiRegion region = null;

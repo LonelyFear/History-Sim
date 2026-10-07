@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://dhtiq4yceyxya"]
+[gd_scene format=3 uid="uid://dhtiq4yceyxya"]
 
 [ext_resource type="Script" uid="uid://bysrp16e6iqw" path="res://Scripts/UI/Encyclopedia/IndexTab.cs" id="1_4vy0u"]
 [ext_resource type="PackedScene" uid="uid://bdfjq5g3ekeka" path="res://Scenes/result.tscn" id="2_sgxn7"]
@@ -18,7 +18,7 @@ thickness = 4
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xfkyp"]
 content_margin_right = 10.0
 
-[node name="IndexTab" type="VBoxContainer" node_paths=PackedStringArray("search", "indexNameLabel", "resultsContainer", "resultsLabel")]
+[node name="IndexTab" type="VBoxContainer" unique_id=274094301 node_paths=PackedStringArray("search", "indexNameLabel", "resultsContainer", "resultsLabel")]
 z_index = 10
 offset_left = 10.0
 offset_top = 32.0
@@ -35,27 +35,44 @@ resultScene = ExtResource("2_sgxn7")
 resultsLabel = NodePath("Results")
 metadata/_tab_index = 1
 
-[node name="IndexName" type="Label" parent="."]
+[node name="IndexName" type="Label" parent="." unique_id=1554965346]
 layout_mode = 2
 theme = ExtResource("2_xfkyp")
 theme_override_font_sizes/font_size = 70
 text = "Object Name"
 
-[node name="HSeparator" type="HSeparator" parent="."]
+[node name="HSeparator" type="HSeparator" parent="." unique_id=2007059104]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_jxw03")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1161160356]
 layout_mode = 2
 
-[node name="DescTitle2" type="Label" parent="HBoxContainer"]
+[node name="FilterTitle" type="Label" parent="HBoxContainer" unique_id=538670421]
+layout_mode = 2
+theme = ExtResource("2_xfkyp")
+theme_override_font_sizes/font_size = 30
+text = "Filter:"
+
+[node name="OptionButton" type="OptionButton" parent="HBoxContainer" unique_id=1402871064]
+layout_mode = 2
+theme = ExtResource("2_xfkyp")
+selected = 0
+item_count = 1
+popup/item_0/text = "None"
+popup/item_0/id = 0
+
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer" unique_id=396234787]
+layout_mode = 2
+
+[node name="SearchTitle" type="Label" parent="HBoxContainer" unique_id=841009037]
 layout_mode = 2
 theme = ExtResource("2_xfkyp")
 theme_override_font_sizes/font_size = 30
 text = "Search:"
 
-[node name="LineEdit" type="LineEdit" parent="HBoxContainer"]
+[node name="LineEdit" type="LineEdit" parent="HBoxContainer" unique_id=1354161853]
 custom_minimum_size = Vector2(1000, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_sgxn7")
@@ -63,24 +80,24 @@ theme_override_font_sizes/font_size = 30
 theme_override_styles/focus = SubResource("StyleBoxEmpty_sgxn7")
 placeholder_text = "Search"
 
-[node name="HSeparator2" type="HSeparator" parent="."]
+[node name="HSeparator2" type="HSeparator" parent="." unique_id=1666094723]
 layout_mode = 2
 theme_override_constants/separation = 16
 theme_override_styles/separator = SubResource("StyleBoxLine_jxw03")
 
-[node name="Results" type="Label" parent="."]
+[node name="Results" type="Label" parent="." unique_id=1330249896]
 layout_mode = 2
 theme = ExtResource("2_xfkyp")
 theme_override_font_sizes/font_size = 30
 text = "Results:"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=2020602124]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxEmpty_xfkyp")
 horizontal_scroll_mode = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer" unique_id=2108382682]
 custom_minimum_size = Vector2(1250, 500)
 layout_mode = 2
 size_flags_horizontal = 3

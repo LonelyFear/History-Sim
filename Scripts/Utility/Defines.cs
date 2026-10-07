@@ -31,4 +31,7 @@ public static class Defines
         MILITARY,
         GOVERNMENT
     }
+    // Wars
+    public const int TruceLengthYears = 10;
+    public const float CivilWarStabilityGain = 0.3f;
 }

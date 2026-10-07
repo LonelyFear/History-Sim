@@ -404,7 +404,7 @@ public static class ObjectManager
             name = region.name + " Market"
         };
         zone.AddRegion(region);
-        simManager.tradeZoneIds.Add(zone.id, zone);
+        simManager.tradeZoneIds.TryAdd(zone.id, zone);
         return zone;
     }
     public static void DeleteTradeZone(TradeZone tradeZone)
@@ -428,11 +428,10 @@ public static class ObjectManager
             id = GetId(),
             warType = warType,
             tickCreated = timeManager.ticks,
+            attackerLeader = agressorLeader,
+            defenderLeader = defenderLeader
         };
-        war.warLeaderIds[War.WarSide.AGRESSOR] = agressorLeader.id;
-        war.warLeaderIds[War.WarSide.DEFENDER] = defenderLeader.id;
-        war.InitWar();
-        
+
         war.AddParticipant(agressorLeader, War.WarSide.AGRESSOR);
         war.AddParticipant(defenderLeader, War.WarSide.DEFENDER);
         war.NameWar();
@@ -462,19 +461,6 @@ public static class ObjectManager
         }
         simManager.oceanIds.Add(ocean.id, ocean);
         return ocean;
-    }
-    public static HistoricalEvent GetHistoricalEvent(ulong? id)
-    {
-        if (id == null)
-        {
-            return null;
-        }
-        try {
-            return simManager.historicalEventIds[(ulong)id];
-        } catch {
-            //GD.PushWarning(e);
-            return null;
-        }        
     }
     static ulong GetId()
     {

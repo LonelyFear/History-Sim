@@ -51,22 +51,17 @@ static class StateDiplomacyManager
     public static void SetEnemy(this State state, State target, bool isEnemy)
     {
         if (isEnemy && state.enemies.Add(target)) {
-            target.enemies.Add(target);
-            
+            target.enemies.Add(state);
         }
         else if (state.enemies.Remove(target)){
-            target.enemies.Remove(target);
-            
+            target.enemies.Remove(state);
         };
-
-        //state.relations[target].enemy = isEnemy;
-        //target.relations[state].enemy = isEnemy;
     }
-    public static void SetEnemies(this State state, IEnumerable<ulong> stateIds, bool isEnemy)
+    public static void SetEnemies(this State state, IEnumerable<State> newEnemies, bool isEnemy)
     {
-        foreach (ulong stateId in stateIds)
+        foreach (State target in newEnemies)
         {
-            SetEnemy(state, ObjectManager.GetState(stateId), isEnemy);     
+            state.SetEnemy(target, isEnemy);     
         }
     }
 
@@ -94,7 +89,7 @@ static class StateDiplomacyManager
         foreach (var pair in state.wars)
         {
             War war = pair.Key;
-            if (war.participantIds.Contains(target.id))
+            if (war.participants.Contains(target))
             {
                 return war;
             }
@@ -115,10 +110,21 @@ static class StateDiplomacyManager
     public static bool CanFightState(this State state, State target)
     {
         DiplomaticRelations relations = state.relations[target];
-        bool rightSovereignty = state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT;
-        bool noTruce = state.relations.ContainsKey(target) && relations.truce < 1;
+        bool bothIndependent = state.sovereignty == Sovereignty.INDEPENDENT && target.sovereignty == Sovereignty.INDEPENDENT;
+        bool noTruce = relations.truce < 1;
+        bool fightingTogether = false;
 
-        return rightSovereignty && noTruce && relations.opinion < -0.2f && !IsAlliedToState(state, target) && state.borderingStates.Contains(target);
+        foreach (var pair in state.wars)
+        {
+            War war = pair.Key;
+            if (war.GetAllies(state).Contains(target))
+            {
+                fightingTogether = true;
+                break;
+            }
+        }
+
+        return bothIndependent && noTruce && !fightingTogether && relations.opinion < -0.2f && !state.IsAlliedToState(target) && !state.IsEnemyWithState(target) && state.borderingStates.Contains(target);
     }
     public static bool IsEnemyWithState(this State state, State otherState)
     {
@@ -187,12 +193,17 @@ static class StateDiplomacyManager
             vassal.UpdateRealm(); 
         }        
     }
-    public static void AddVassal(this State state, State vassal, Sovereignty sovereignty)
+    public static void AddVassal(this State state, State vassal, Sovereignty sovereignty, bool wartime = false)
     {
         if (sovereignty == Sovereignty.INDEPENDENT || state.vassals.Contains(vassal) || vassal == state) return;
 
-        vassal.GetLiege()?.RemoveVassal(vassal);
-
+        State lastLiege = vassal.GetLiege();
+        lastLiege?.RemoveVassal(vassal);
+        if (!wartime)
+        {
+            vassal.lastLiegeId = lastLiege?.id;
+        }
+        
         vassal.sovereignty = sovereignty;
         vassal.liegeId = state.id;
         state.vassals.Add(vassal);
@@ -234,6 +245,10 @@ static class StateDiplomacyManager
         }
     }
     public static State GetLiege(this State state)
+    {
+        return ObjectManager.GetState(state.liegeId);
+    }
+    public static State GetLastLiege(this State state)
     {
         return ObjectManager.GetState(state.liegeId);
     }

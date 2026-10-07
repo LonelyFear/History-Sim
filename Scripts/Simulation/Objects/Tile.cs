@@ -41,12 +41,6 @@ public class Tile : Cell
 				terrainType = TerrainType.LAND;
 				break;
 			case Defines.BiomeType.WATER:
-				if (biomeId == "river")
-				{
-					terrainType = TerrainType.RIVER;
-					break;
-				}
-
 				renderOverlay = false;
 				terrainType = TerrainType.DEEP_WATER;
 				if (elevation > -800f)

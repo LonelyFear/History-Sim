@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_5665a")
 name = "River"
-arability = 1.25
+arability = 1.0
 color = Color(0.2784314, 0.58431375, 0.77254903, 1)
 naturalResources = Dictionary[ExtResource("1_rdxtx"), float]({
 ExtResource("2_4snuj"): 1.0

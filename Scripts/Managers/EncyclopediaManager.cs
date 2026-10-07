@@ -77,11 +77,10 @@ public partial class EncyclopediaManager : CanvasLayer
 			"stateIndex" => 0,
 			"regionIndex" => 1,
 			"characterIndex" => 2,
-			"warIndex" => 2,
+			"warIndex" => 3,
 			_ => 9999999
 		};
-        // TODO: Implement
-		GD.Print(objectType);
+		//GD.Print(objectType);
 		// If we already have a tab open for this object switch to it
 		if (infoTabs.ContainsKey(id))
 		{

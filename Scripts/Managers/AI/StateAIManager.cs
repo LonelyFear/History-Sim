@@ -84,51 +84,63 @@ public partial class StateAIManager : UtilityAi.AiAgent
         foreach (var pair in state.wars)
         {
             War war = pair.Key;
+            
 
             War.WarSide side = pair.Value;
-            War.WarSide enemySide = War.GetOtherSide(side);
+            State enemyWarLead = side == War.WarSide.AGRESSOR ? war.defenderLeader : war.attackerLeader;
+            DiplomaticRelations relations = (enemyWarLead == null || !state.relations.TryGetValue(enemyWarLead, out var value)) ? null : value;
 
-            State enemyWarLead = ObjectManager.GetState(war.warLeaderIds[enemySide]);
-            DiplomaticRelations relations = state.relations[enemyWarLead];
-           
+            bool diplomaticEnd = relations != null && relations.opinion + (TimeManager.TicksToYears(war.GetAge())/50f) > 0 && rng.NextSingle() < 0.25f;
+            if (diplomaticEnd && war.warType != WarType.CIVIL_WAR)
+            {
+                war.victor = War.WarSide.NEUTRAL;
+            }
 
-            if (war.warLeaderIds[side] != state.id) continue;
-            bool surrendered = state.capitualated || (state.sovereignty != Sovereignty.INDEPENDENT && state.sovereignty != Sovereignty.REBELLIOUS);
+            if (war.victor == null || !war.IsStateWarLead(state)) continue;
 
             switch (war.warType)
             {
                 case WarType.CONQUEST:
                     // Conquest Wars
-                    if (surrendered || relations.opinion + (TimeManager.TicksToYears(war.GetAge())/50f) > 0 && rng.NextSingle() < 0.25f)
+                    bool whitePeace = diplomaticEnd && rng.NextSingle() < 0.1f;
+                    // White Peace
+                    if (whitePeace)
                     {
-                        war.EndWar();
-                        relations.truce = TimeManager.YearsToTicks(5);
+                        foreach (State participant in war.participants)
+                        {
+                            participant.RemoveOccupation();
+                            participant.AddAllClaims();
+                            participant.GetLastLiege()?.AddVassal(participant, Sovereignty.PUPPET);
+                        }
                     }
+                    // Otherwise the war ends in white peace
+                    _ = new EndWarEvent(war, whitePeace);
+                    war.EndWar();
+                    if (relations != null) relations.truce = TimeManager.YearsToTicks(Defines.TruceLengthYears);
                     break; 
                 case WarType.CIVIL_WAR:
-                    if (surrendered)
+                    if (war.victor == War.WarSide.AGRESSOR)
                     {
-                        if (side == War.WarSide.AGRESSOR)
+                        // Rebels Defeat
+                        foreach (State rebel in war.attackers)
                         {
-                            // Rebels Defeat
-                            foreach (State rebel in war.sideIds[side].Select(id => ObjectManager.GetState(id)))
-                            {
-                                rebel.sovereignty = Sovereignty.PROVINCE;
-                                rebel.ongoingRebellion = false;
-                            }         
-                            state.stability += 0.3f;                   
-                        } 
-                        else
-                        {
-                            // Government Defeat
-                            state.RemoveAllVassals();
-                            state.ongoingRebellion = false;
-                        }
-                        war.EndWar();
-                        relations.truce = TimeManager.YearsToTicks(5);
+                            rebel.sovereignty = Sovereignty.PROVINCE;
+                            rebel.ongoingRebellion = false;
+                        }         
+                        state.stability += Defines.CivilWarStabilityGain;                 
+                    } 
+                    else
+                    {
+                        // Government Defeat
+                        state.RemoveAllVassals();
+                        state.ongoingRebellion = false;
                     }
+                    new EndWarEvent(war);  
+                    war.EndWar();
+                    if (relations != null) relations.truce = TimeManager.YearsToTicks(Defines.TruceLengthYears);
                     break;
             }
+
         }
     }
     public void UpdateDiplomacy(DiplomaticRelations relations)
@@ -183,7 +195,10 @@ public partial class StateAIManager : UtilityAi.AiAgent
                     };
                     if (rng.NextSingle() < warInitiateChance)
                     {
-                        ObjectManager.StartWar(WarType.CONQUEST, state, target);   
+                        War war = ObjectManager.StartWar(WarType.CONQUEST, state, target);
+
+                        _ = new DeclareWarEvent(state, target, war);
+                        return;
                     }
                                    
                 } 

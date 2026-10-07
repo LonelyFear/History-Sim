@@ -9,7 +9,7 @@ public class CharacterDeathEvent : HistoricalEvent
     {
         State state = character.state;
         text = $"{NamedObject.GenerateUrlText(character, character.name)} died at age {TimeManager.GetYear(character.GetAge())}.";
-        if (state.leader == character)
+        if (state?.leader == character)
         {
             text += $" He was the leader of the {NamedObject.GenerateUrlText(state, state.name)}";
             state.historicalEvents.Add(this);

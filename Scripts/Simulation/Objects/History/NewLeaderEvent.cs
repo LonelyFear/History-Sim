@@ -10,5 +10,9 @@ public class NewLeaderEvent : HistoricalEvent
         text = $"{NamedObject.GenerateUrlText(character, character.name)} became the new leader of the {NamedObject.GenerateUrlText(state, state.name)}.";
         character.historicalEvents.Add(this);
         state.historicalEvents.Add(this);
+        foreach (State vassal in state.vassals)
+        {
+            _ = new NewOverlordLeaderEvent(state, character, vassal);
+        }
     }
 }

@@ -296,15 +296,9 @@ public partial class MapManager : Node2D
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
                     if (regionOwner != null)
                     {
-                        if (region.claimant.sovereignty != Sovereignty.REBELLIOUS)
-                        {
-                            // Draws borders between polities
-                            borderId = region.claimant.GetOverlord().id;
-                        } else
-                        {
-                            // Makes rebellions draw borders
-                            borderId = region.claimant.id;
-                        }
+                        // Draws borders between polities
+                        borderId = region.claimant.GetOverlord().id;
+                        
                         color = regionOwner.displayColor;
                         if (region.claimant.capital == region && region.claimant.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
                         {
@@ -467,7 +461,7 @@ public partial class MapManager : Node2D
                 }
                 break;
             case MapModes.WEALTH:
-                if (region.habitable && region.pops.Count > 0)
+                if (region.habitable)
                 {
                     float factor = region.wealth / simManager.maxWealth;
                     //if (simManager.useNewEconomy) factor = region.economy.prices["grain"]/20f;
@@ -476,7 +470,7 @@ public partial class MapManager : Node2D
                 }
                 break;
             case MapModes.TRADE_WEIGHT:
-                if (region.habitable && region.pops.Count > 0)
+                if (region.habitable)
                 {
                     color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
                     if (region.tradeZone != null)

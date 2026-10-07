@@ -8,7 +8,7 @@ using PixelHistory.Objects.States.Base;
 public partial class Character : NamedObject
 {
     // Constants
-    [IgnoreMember] public const int OldAgeYear = 60;
+    [IgnoreMember] public const int OldAgeYear = 50;
     [IgnoreMember] public const float OldAgeDeathChance = 0.05f;
     [IgnoreMember] public static readonly float MonthlyOldAgeDeathChance = 1f - Mathf.Pow(1f - OldAgeDeathChance, 0.0833f);
     // Ignored Members   

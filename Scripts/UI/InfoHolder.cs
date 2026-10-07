@@ -22,7 +22,16 @@ public partial class InfoHolder : VBoxContainer
 		encyclopediaButton.Pressed += () =>
 		{
 			encyclopedia.OpenEncyclopedia();
-			encyclopedia.OpenTab(selectedObject.GetFullId());
+			
+			string idToOpen = selectedObject.GetFullId();
+			if (selectedObject is Alliance alliance)
+			{
+				if (alliance.type == AllianceType.REALM)
+				{
+					idToOpen = alliance.leadState.GetFullId();
+				}
+			}
+			encyclopedia.OpenTab(idToOpen);
 		};
 	}
 

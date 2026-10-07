@@ -6,6 +6,7 @@ using MessagePack;
 using PixelHistory.Objects.States.AI;
 using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.Wars;
+using System.Threading;
 
 namespace PixelHistory.Objects.States.Base;
 [MessagePackObject(AllowPrivate = true)]
@@ -49,6 +50,7 @@ public partial class State : Polity, ISaveable
     [Key(51)] public Dictionary<ulong, War.WarSide> warIds { get; set; } = [];
     [IgnoreMember] public Dictionary<War, War.WarSide> wars { get; set; } = [];
     [Key(52)] public ulong? liegeId {get; set; } = null;
+    [Key(60)] public ulong? lastLiegeId {get; set; } = null;
     [Key(53)] public List<ulong?> allianceIds = [];
     [IgnoreMember] public List<Alliance> alliances = [];
     [Key(54)] public HashSet<ulong?> vassalIds { get; set; } = [];
@@ -59,6 +61,15 @@ public partial class State : Polity, ISaveable
     [Key(57)] public HashSet<ulong?> claimIds = [];
     [Key(59)] public bool ongoingRebellion = false;
     [IgnoreMember] public HashSet<Region> claims = [];
+    [IgnoreMember] public State occupier {get
+        {
+            if (capital.owner != capital.claimant)
+            {
+                return capital.owner;
+            }
+            return null;
+        }
+    }
     // References
     [IgnoreMember] public Culture culture;
     [IgnoreMember] Pop _rulingPop;
@@ -180,43 +191,69 @@ public partial class State : Polity, ISaveable
     {
         capitualated = false; 
         if (capital != null && capital.owner != capital.claimant){
-            State occupier = capital.owner;
             capitualated = true; 
             // Check for civil conflicts
-            if (occupier.GetOverlord() == this.GetOverlord())
+            War war = this.GetOverlord().GetWarWithState(occupier);
+            RemoveOccupation();
+            if (occupier.GetOverlord() == this.GetOverlord() && war?.warType == WarType.CIVIL_WAR)
             {
-                War civilWar = this.GetOverlord().GetWarWithState(occupier);
-
-                // Makes sure that we dont switch the side of a war lead
-                if (!civilWar.warLeaderIds.ContainsValue(id) && sovereignty != Sovereignty.INDEPENDENT)
+                if (occupier.sovereignty == Sovereignty.REBELLIOUS)
                 {
-                    if (occupier.sovereignty == Sovereignty.REBELLIOUS)
+                    GD.Print("We lost the civil war!");
+                    war.RemoveParticipant(this);
+                    if (sovereignty != Sovereignty.INDEPENDENT)
                     {
                         // Rebel side
                         sovereignty = Sovereignty.REBELLIOUS;
                         // Switches side
-                        civilWar.AddParticipant(this, War.WarSide.AGRESSOR);
-                    } else
+                        war.AddParticipant(this, War.WarSide.AGRESSOR);                            
+                    } 
+                } 
+                else
+                {
+                    if (this.GetLiege() != null)
                     {
                         // Government side
-                        sovereignty = Sovereignty.PROVINCE;
-                        // Switches side
-                        civilWar.AddParticipant(this, War.WarSide.DEFENDER);
-                    }                    
-                }
-            } else
+                        sovereignty = Sovereignty.PROVINCE;                        
+                    }
+                    // Switches side
+                    war.RemoveParticipant(this);
+                }                 
+            } 
+            else
             {
-                // Normal Wars
-                occupier.GetOverlord().AddVassal(this, Sovereignty.PUPPET);
+                occupier.GetOverlord().AddVassal(this, Sovereignty.PUPPET, true);
             }
-            foreach (Region claim in claims)
-            {
-                AddRegion(claim, true);
-            }            
+            AddAllClaims();
         }
     } 
+    public void AddAllClaims()
+    {
+        foreach (Region claim in claims)
+        {
+            AddRegion(claim, true);
+        } 
+        
+    }
+    public void RemoveOccupation()
+    {
+        foreach (Region region in regions)
+        {
+            region.claimant?.AddRegion(region, true);
+        }        
+    }
+    public void ClaimAllRegions()
+    {
+        foreach (Region region in regions)
+        {
+            AddClaim(region);
+        }    
+    }
     public bool StateCollapse()
     {
+        // Die if our capital isnt ours
+        if (capital.claimant != this) return true;
+
         if (rng.NextSingle() < collapseChanceCurve.Sample(stability) * baseCollapseChance)
         {
             List<State> potentialRebels = GetRebelliousVassals();
@@ -242,6 +279,7 @@ public partial class State : Polity, ISaveable
                     civilWar.AddParticipant(rebel, War.WarSide.AGRESSOR);
                     rebel.ongoingRebellion = true;
                 }
+                _ = new DeclareWarEvent(leadRebel, this, civilWar);
                 //GD.Print(leadRebel.IsEnemyWithState(this));
             }                
 
@@ -359,13 +397,13 @@ public partial class State : Polity, ISaveable
                 break;
         }
     }
-    public void AddRegion(Region region, bool includeClaimant)
+    public void AddRegion(Region region, bool includeClaim)
     {
         if (region == null || regions.Contains(region)) return;
 
         region.owner?.RemoveRegion(region);
         region.owner = this;
-        if (includeClaimant) AddClaim(region);
+        if (includeClaim) AddClaim(region);
 
         regions.Add(region);
 
@@ -408,7 +446,7 @@ public partial class State : Polity, ISaveable
         } 
         else if (sovereignty == Sovereignty.REBELLIOUS)
         {
-            return ObjectManager.GetState(this.GetWarWithState(ObjectManager.GetState(liegeId)).warLeaderIds[War.WarSide.AGRESSOR]).armyPower;
+            return this.GetWarWithState(ObjectManager.GetState(liegeId)).attackerLeader.armyPower;
         } 
         else
         {
@@ -418,6 +456,7 @@ public partial class State : Polity, ISaveable
     public override int GetArmyPower()
     {
         float size = regions.Count;
+        float pop = population;
         float wealth = totalWealth;        
 
         if (sovereignty == Sovereignty.INDEPENDENT)
@@ -428,25 +467,27 @@ public partial class State : Polity, ISaveable
 
                 wealth += vassal.totalWealth;
                 size += vassal.regions.Count;
+                pop += vassal.population;
             }    
         } 
         // Rebellion Strength
         else if (sovereignty == Sovereignty.REBELLIOUS)
         {
             War rebellion = this.GetWarWithState(ObjectManager.GetState(liegeId));
-            if (rebellion.warLeaderIds[War.WarSide.AGRESSOR] == id)
+            if (rebellion.attackerLeader == this)
             {
-                foreach (State rebel in rebellion.sideIds[War.WarSide.AGRESSOR].Select(id => ObjectManager.GetState(id)))
+                foreach (State rebel in rebellion.attackers)
                 {
                     if (rebel != this)
                     {
                         wealth += rebel.totalWealth;
-                        size += rebel.regions.Count;                    
+                        size += rebel.regions.Count;
+                        pop += rebel.population;                   
                     }
                 }                
             }
         }
-        return Mathf.RoundToInt(wealth/size * (tech.militaryLevel + 1));
+        return Mathf.RoundToInt(Mathf.Pow(wealth, 0.666)/size * (tech.militaryLevel + 1)) * 20;
     }
     public override int GetManpower()
     {
@@ -454,7 +495,7 @@ public partial class State : Polity, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 5 + (tech.societyLevel * 2) * 100;
+        return 10000;
     }
     public int GetMaxVassals() {
         return 5;

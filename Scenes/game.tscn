@@ -54,6 +54,7 @@
 [ext_resource type="Script" uid="uid://y6dbljc821m" path="res://Scripts/UI/DemographicsBox.cs" id="42_wr3wg"]
 [ext_resource type="Script" uid="uid://cv5nuwudhbqr6" path="res://Scripts/UI/LeadershipBox.cs" id="43_wr3wg"]
 [ext_resource type="Script" uid="uid://clmuvck1mxus6" path="res://Scripts/EconomyBox.cs" id="44_6xvgv"]
+[ext_resource type="Script" uid="uid://dcg6vujyu57iu" path="res://Scripts/UI/WarsBox.cs" id="46_8lpvs"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mucmn"]
 shader = ExtResource("8_cwurv")
@@ -932,7 +933,6 @@ text = "Trade Zone: Joma Market"
 fit_content = true
 
 [node name="DiplomacyBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=2021864065 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager")]
-visible = false
 layout_mode = 2
 script = ExtResource("42_fnkle")
 infoHolder = NodePath("../../../../../../..")
@@ -949,20 +949,19 @@ text = "Diplomacy:"
 [node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DiplomacyBox" unique_id=1407304133]
 layout_mode = 2
 
-[node name="WealthLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DiplomacyBox" unique_id=456571061]
+[node name="WealthLabel" type="RichTextLabel" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DiplomacyBox" unique_id=1498383316]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 25
 text = "No Active Relations"
 
-[node name="WarsBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=198281987 node_paths=PackedStringArray("infoHolder", "mapManager", "selectionManager")]
+[node name="WarsBox" type="VBoxContainer" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=198281987 node_paths=PackedStringArray("warsLabel", "infoHolder", "mapManager", "selectionManager")]
 visible = false
 layout_mode = 2
-script = ExtResource("42_fnkle")
+script = ExtResource("46_8lpvs")
+warsLabel = NodePath("WarsLabel")
 infoHolder = NodePath("../../../../../../..")
 mapManager = NodePath("../../../../../../../../../Map Manager")
 selectionManager = NodePath("../../../../../../../../../SelectionManager")
-visibleTypes = PackedStringArray("state", "alliance")
 metadata/_custom_type_script = "uid://dm80ni1pwsu8b"
 
 [node name="Label" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=1652206535]
@@ -973,11 +972,14 @@ text = "Wars:"
 [node name="HSeparator" type="HSeparator" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=87392162]
 layout_mode = 2
 
-[node name="WealthLabel" type="Label" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=233956187]
+[node name="WarsLabel" type="RichTextLabel" parent="UI/InfoHolder/Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=830169652]
 layout_mode = 2
 theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/normal_font_size = 25
+bbcode_enabled = true
 text = "No Active Wars"
+fit_content = true
+scroll_active = false
 
 [node name="HoverText" type="RichTextLabel" parent="UI" unique_id=1534067496 node_paths=PackedStringArray("selectionManager", "mapManager")]
 anchors_preset = -1
@@ -1261,7 +1263,6 @@ theme_override_font_sizes/font_size = 32
 text = "Save Simulation"
 
 [node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("selectionManager", "map", "simHolder")]
-visible = false
 offset_right = 40.0
 offset_bottom = 23.0
 theme = ExtResource("4_exi56")

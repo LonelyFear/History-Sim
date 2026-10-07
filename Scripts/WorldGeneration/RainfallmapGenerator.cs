@@ -11,7 +11,7 @@ public class RainfallMapGenerator
     Curve precipitationCurve = GD.Load<Curve>("res://Curves/Climate/PrecipitationCurve.tres");
     Curve evaporationCurve = GD.Load<Curve>("res://Curves/EvaporationCurve.tres");
     Curve daylightCurve = GD.Load<Curve>("res://Curves/DaylightCurve.tres");
-    Curve windPressureCurve = GD.Load<Curve>("res://Curves/WindPressureCurve.tres");
+    //Curve windPressureCurve = GD.Load<Curve>("res://Curves/WindPressureCurve.tres");
     public void GenerateRainfallMap(WorldGenerator world){
         this.world = world;
 
@@ -177,6 +177,10 @@ public class RainfallMapGenerator
         0.49239;
 
         PET = 16.0 * (dayLength/12.0) * 1d * Math.Pow(10.0 * temp/heatIndex, a);
+        if (temp > 26)
+        {
+            PET = -415.85 + 30.533224 * temp - 0.43 * Math.Pow(temp, 2);
+        }
         if (double.IsNaN(PET))
         {
             PET = 0;

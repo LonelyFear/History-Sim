@@ -161,15 +161,16 @@ public static class Utility
         //GD.Print(dy);
         return new Vector2I(Mathf.RoundToInt(Mathf.PosMod(pointA.X + dx / 2f, worldSize.X)), Mathf.RoundToInt(Mathf.PosMod(pointA.Y + dy / 2f, worldSize.Y)));
     }
-    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, Vector2I worldSize)
+    public static float GetWrappedNoise(this FastNoiseLite noise, float x, float y, float width)
     {
-        float theta = 2 * float.Pi * (x / worldSize.X);
+        float angle = (x/width) * 2f * Mathf.Pi;
+        float radius = width / (2f * Mathf.Pi);
 
-        float nx = Mathf.Cos(theta);
-        float ny = Mathf.Sin(theta);
+        // Maps point onto circle
+        float nx = radius * Mathf.Cos(angle);
+        float ny = radius * Mathf.Sin(angle);
 
-        float noiseValue = noise.GetNoise(nx, ny, y);
-        return noiseValue;
+        return noise.GetNoise(nx, ny, y);
     }
     public static Color MultiColourLerp(Color[] colours, float t) {
 

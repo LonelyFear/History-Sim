@@ -56,6 +56,11 @@ public class RiverGenerator
 
     void GenerateRivers(WorldGenerator world)
     {
+        FastNoiseLite meanderNoise = new(world.rng.Next());
+        meanderNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        meanderNoise.SetFractalOctaves(8);
+        meanderNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+
         foreach (Vector2I riverStart in validPositions)
         {
             Vector2I riverEnd = Vector2I.MinValue;
@@ -83,7 +88,7 @@ public class RiverGenerator
                                 oceanFrontier.Enqueue(borderPos, -heightDifference);
                                 visitedCells.Add(borderPos);
 
-                                if (borderCell.elevation < 0 || rivers[borderPos.X, borderPos.Y])
+                                if (AssetManager.GetBiome(borderCell.biomeId).type == Defines.BiomeType.WATER || rivers[borderPos.X, borderPos.Y])
                                 {
                                     riverEnd = borderPos;
                                     endFound = true;
@@ -97,9 +102,6 @@ public class RiverGenerator
             {
                 GD.PushError(e);
             }
-
-            //rivers[riverStart.X, riverStart.Y] = true;
-            //if (riverEnd != Vector2I.MinValue) rivers[riverEnd.X, riverEnd.Y] = true;
             
             // Paths to Mouth
             PriorityQueue<Vector2I, float> frontier = new();
@@ -131,8 +133,10 @@ public class RiverGenerator
 
                         Vector2I borderPos = new(Mathf.PosMod(currentPos.X + dx, world.WorldSize.X), Mathf.PosMod(currentPos.Y + dy, world.WorldSize.Y));
                         Cell borderCell = world.cells[borderPos.X, borderPos.Y];
+                        float noiseValue = Mathf.InverseLerp(-1, 1, meanderNoise.GetWrappedNoise(borderPos.X, borderPos.Y, world.WorldSize.X));
+                        float borderElevation = borderCell.elevation + (float)Math.Round(noiseValue * 10, 3);
 
-                        float heightDifference = currentCell.elevation - borderCell.elevation;
+                        float heightDifference = currentCell.elevation - borderElevation;
                         float newCost = costSoFar[currentPos] - heightDifference;
 
                         if (!costSoFar.TryGetValue(borderPos, out float value) || newCost < value)
