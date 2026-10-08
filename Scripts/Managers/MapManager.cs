@@ -306,7 +306,6 @@ public partial class MapManager : Node2D
                         }
                     }                 
                 }
-
                 if (selectionManager.IsRegionSelected())
                 {
                     State selectedState = selectionManager.GetSelectedState();

@@ -208,7 +208,7 @@ public class SimManager
             r.LoadFromSave();
             r.LoadStats();
         });
-        BorderingRegions();
+        CalcBorderingRegions();
 
         statesIds.Values.ToList().ForEach(r => r.LoadFromSave());
         cultureIds.Values.ToList().ForEach(r => r.LoadFromSave());
@@ -244,7 +244,7 @@ public class SimManager
             }
         }
     }
-    public void BorderingRegions()
+    public void CalcBorderingRegions()
     {
         foreach (var pair in regionIds)
         {
@@ -303,7 +303,9 @@ public class SimManager
         if (simLoadedFromSave)
         {
             RebuildAfterSave();
-            BorderingRegions();
+            
+            regionIds.Values.AsParallel().ForAll(region => region.GetNavalBorders());
+
             timeManager.ForceGameSpeed(TimeManager.GameSpeed.PAUSED);
         }
         else
@@ -313,8 +315,12 @@ public class SimManager
             RegionGenerator regionGen = new(this);
             regionGen.GenerateRegions();
 
+            CalcBorderingRegions();
+
             OceanGenerator oceanGenerator = new(this);
             oceanGenerator.GenerateOceans();
+
+            regionIds.Values.AsParallel().ForAll(region => region.GetNavalBorders());
         }
         simHolder.InvokeEvent();
 
@@ -576,7 +582,6 @@ public class SimManager
         {
             State state = pair.Value; 
             state.tech = state.rulingPop.tech;
-            state.maxSize = 6 + state.rulingPop.tech.societyLevel;
             state.culture = state.rulingPop.culture;
 
             countedPerformanceInfo["Ruling Pop Time"] += stopwatch.Elapsed.TotalMilliseconds;

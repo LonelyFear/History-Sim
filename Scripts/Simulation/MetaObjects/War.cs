@@ -75,7 +75,7 @@ public partial class War : NamedObject
         List<State> enemySide = GetEnemies(state);
 
         state.SetEnemies(enemySide, true);
-        if (warType == WarType.CIVIL_WAR) GD.Print("War Leads Fighting: " + defenderLeader.IsEnemyWithState(attackerLeader));
+        //if (warType == WarType.CIVIL_WAR) GD.Print("War Leads Fighting: " + defenderLeader.IsEnemyWithState(attackerLeader));
 
         alliedSide.Add(state);
         participants.Add(state);

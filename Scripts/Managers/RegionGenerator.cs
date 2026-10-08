@@ -325,7 +325,6 @@ public class RegionGenerator
             region.InitRegion();
         }
         RemoveEmptyRegions();     
-        simManager.BorderingRegions();   
     }
     
     public void GenerateRegions()

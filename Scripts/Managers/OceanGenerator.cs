@@ -31,7 +31,7 @@ public class OceanGenerator
                 Region region = frontier.Dequeue();
                 foreach (Region border in region.borderingRegions)
                 {
-                    if (border.isWater && border.ocean == null)
+                    if ((border.isWater || border.coastal) && border.ocean == null)
                     {
                         border.ocean = ocean;
                         oceanRegions.Add(border);

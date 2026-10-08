@@ -133,6 +133,8 @@ public partial class Region : PopObject, ISaveable
             return (int)((populationDensity + additionalPopulation) * arableLand);
         }
     }
+    [Key(49)] public Tech tech;
+
     public override void PrepareForSave()
     {
         base.PrepareForSave();
@@ -211,10 +213,29 @@ public partial class Region : PopObject, ISaveable
                     } 
                     Tile border = simManager.tiles[nPos.X, nPos.Y];
                     Region borderRegion = ObjectManager.GetRegion(border.regionId);
-                    AddBorder(borderRegion);                        
+                    
+                    AddBorder(borderRegion);   
+                    if (!isWater && !coastal) coastal = borderRegion.isWater;                     
                 }
             }
         }
+    }
+    public void GetNavalBorders()
+    {
+        if (coastal)
+        {
+            foreach (Region region in simManager.regionIds.Values)
+            {
+                if (region.coastal)
+                {
+                    float dist = region.gridPos.DistanceTo(gridPos);
+                    if (dist <= 5 && region.ocean == ocean && ocean != null)
+                    {
+                        AddBorder(region);
+                    }
+                }
+            }  
+        }       
     }
     public void AddBorder(Region region)
     {
@@ -269,12 +290,9 @@ public partial class Region : PopObject, ISaveable
                 arableLand += tile.arability;
                 navigability += tile.navigability;
             }
-            if (tile.coastal)
-            {
-                coastal = true;
-            }            
         }
         isWater = (tiles.Count - waterCount) == 0;
+
         GetTerrainType(terrainTypes);
 
         navigability /= Mathf.Max(landCount, 1);

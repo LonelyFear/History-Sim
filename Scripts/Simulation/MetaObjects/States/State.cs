@@ -31,8 +31,6 @@ public partial class State : Polity, ISaveable
     [Key(38)] public Sovereignty sovereignty = Sovereignty.INDEPENDENT;
     //[Key(39)] public StateDiplomacyManager diplomacy;
 
-    [Key(41)] public int maxSize = 1;
-
     // Government   
     [Key(42)] public List<ulong?> characterIds = [];
     [Key(43)] public float stability = 1;
@@ -199,7 +197,6 @@ public partial class State : Polity, ISaveable
             {
                 if (occupier.sovereignty == Sovereignty.REBELLIOUS)
                 {
-                    GD.Print("We lost the civil war!");
                     war.RemoveParticipant(this);
                     if (sovereignty != Sovereignty.INDEPENDENT)
                     {
@@ -211,11 +208,8 @@ public partial class State : Polity, ISaveable
                 } 
                 else
                 {
-                    if (this.GetLiege() != null)
-                    {
-                        // Government side
-                        sovereignty = Sovereignty.PROVINCE;                        
-                    }
+                    // Government side
+                    sovereignty = Sovereignty.PROVINCE;                        
                     // Switches side
                     war.RemoveParticipant(this);
                 }                 
@@ -487,7 +481,7 @@ public partial class State : Polity, ISaveable
                 }                
             }
         }
-        return Mathf.RoundToInt(Mathf.Pow(wealth, 0.666)/size * (tech.militaryLevel + 1)) * 20;
+        return Mathf.RoundToInt(Mathf.Pow(wealth, 0.666)/size * (tech.militaryLevel + 1));
     }
     public override int GetManpower()
     {
@@ -495,7 +489,7 @@ public partial class State : Polity, ISaveable
     }
     public int GetMaxRegionsCount()
     {
-        return 10000;
+        return 5 * (tech.societyLevel * 2);
     }
     public int GetMaxVassals() {
         return 5;
