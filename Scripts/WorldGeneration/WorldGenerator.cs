@@ -15,7 +15,8 @@ public class WorldGenerator
     public const float MaxRainfall = 3500;
     public const float MinRainfall = 50;
     public const int WorldHeight = 10000;
-    
+    [IgnoreMember] public static Vector2I BaseWorldSize { get; set; } = new Vector2I(360, 180);
+
     [Key(0)]
     public Vector2I WorldSize { get; set; } = new Vector2I(360, 180) ;
     [Key(1)]
@@ -293,7 +294,6 @@ public class Cell
     [Key(12)] public float coastDist;
     [Key(13)] public string biomeId = "rock";
     [Key(14)] public string classification;
-    [Key(15)] public Color heightmapRegionColor;
     [IgnoreMember] public float januaryWindOffset;
     [IgnoreMember] public float julyWindOffset;
     public float GetTempForMonth(int month)

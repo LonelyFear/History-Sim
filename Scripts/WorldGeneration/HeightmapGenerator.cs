@@ -17,9 +17,10 @@ public class HeightmapGenerator
     List<Plate> plates = [];
     List<VoronoiRegion> continentalRegions = [];
     List<VoronoiRegion> voronoiRegions = [];
-    Vector2I worldSize;
-    float worldMult;
-    float seaLevel;
+    Vector2I heightmapSize;
+    const int HeightmapWorldSizeMult = 4;
+    const float slopeErosionThreshold = 0.1f;
+    float baseSeaLevel;
     
     WorldGenerator world;
     Dictionary<Vector2I, VoronoiRegion> points;
@@ -29,10 +30,9 @@ public class HeightmapGenerator
     Curve oceanRidgeCurve = GD.Load<Curve>("res://Curves/Landforms/OceanRidgeCurve.tres");
 
     // Public Variables
-    public float seaFloorLevel = 0.1f;
     public float landCoverage = 0.4f;
     float shelfDepth = 0.02f;
-    const float slopeErosionThreshold = 0.1f;
+    
     public int largePlates = 7;
     public int smallPlates = 4;
     public int largeContinents = 4;
@@ -41,17 +41,17 @@ public class HeightmapGenerator
     public void UseEarthHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
-        worldSize = world.WorldSize;
-        int[,] map = new int[worldSize.X, worldSize.Y];
-        float pixelPerX = 4320 / (float)worldSize.X;
-        float pixelPerY = 2160 / (float)worldSize.Y;
+        heightmapSize = world.WorldSize;
+        int[,] map = new int[heightmapSize.X, heightmapSize.Y];
+        float pixelPerX = 4320 / (float)heightmapSize.X;
+        float pixelPerY = 2160 / (float)heightmapSize.Y;
         world.Stage = WorldGenStage.CONTINENTS;
         int[,] realElevation = ReadBinaryHeightModel("Data/Earth2014.RET2014.5min.geod.bin", 4320, 2160);
-        tiles = new HeightmapCell[worldSize.X, worldSize.Y];
+        tiles = new HeightmapCell[heightmapSize.X, heightmapSize.Y];
 
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 tiles[x,y] = new HeightmapCell()
                 {
@@ -65,9 +65,9 @@ public class HeightmapGenerator
         }    
 
         Queue<HeightmapCell> tilesToCheck = new();
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 for (int dx = -1; dx < 2; dx++)
                 {
@@ -77,7 +77,7 @@ public class HeightmapGenerator
                         {
                             continue;
                         }
-                        Vector2I next = new Vector2I(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                        Vector2I next = new Vector2I(Mathf.PosMod(x + dx, heightmapSize.X), Mathf.PosMod(y + dy, heightmapSize.Y));
                         if (!tiles[x,y].coastal && map[x,y] > 0 && map[next.X, next.Y] < 0)
                         {
                             tiles[x,y].coastal = true;
@@ -94,12 +94,18 @@ public class HeightmapGenerator
     }
     public void DeliverHeightData(int[,] heightData)
     {
-        for (int x = 0; x < worldSize.X; x++)
+        float pixelPerX = heightData.GetLength(0) / (float)world.WorldSize.X;
+        float pixelPerY = heightData.GetLength(1) / (float)world.WorldSize.Y;
+
+        for (int x = 0; x < world.WorldSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < world.WorldSize.Y; y++)
             {
-                world.cells[x,y].elevation = heightData[x,y];
-                world.cells[x,y].coastDist = tiles[x,y].coastDist;
+                int px = (int)(x * pixelPerX);
+                int py = (int)(y * pixelPerY);
+
+                world.cells[x,y].elevation = heightData[px,py];
+                world.cells[x,y].coastDist = tiles[px,py].coastDist;
             }
         }
     }
@@ -124,20 +130,20 @@ public class HeightmapGenerator
     public void GenerateHeightmap(WorldGenerator worldAssigned)
     {
         world = worldAssigned;
-        seaLevel = world.SeaLevel - shelfDepth;
-        worldSize = world.WorldSize;
+        baseSeaLevel = world.SeaLevel - shelfDepth;
 
-        worldMult = world.WorldMult;
+        heightmapSize = WorldGenerator.BaseWorldSize * (int)HeightmapWorldSizeMult;
+
         smallContinents = world.SmallContinents;
         landCoverage = world.LandCoverage;
         GD.Print(landCoverage);
 
-        int[,] map = new int[worldSize.X, worldSize.Y];
+        int[,] map = new int[heightmapSize.X, heightmapSize.Y];
 
-        heightmap = new float[worldSize.X, worldSize.Y];
+        heightmap = new float[heightmapSize.X, heightmapSize.Y];
 
-        tiles = new HeightmapCell[worldSize.X, worldSize.Y];
-        GD.Print(worldSize);
+        tiles = new HeightmapCell[heightmapSize.X, heightmapSize.Y];
+        GD.Print(heightmapSize);
         points = GeneratePoints();
         GenerateRegions();
         PlaceContinentSeeds();
@@ -158,40 +164,32 @@ public class HeightmapGenerator
         }
         HydraulicErosion(10);
         
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 int seaLevelElevation = (int)(WorldGenerator.WorldHeight * world.SeaLevel);
-                map[x,y] = (int)(heightmap[x,y] * WorldGenerator.WorldHeight) - seaLevelElevation;  
-                world.cells[x,y].coastDist = tiles[x,y].coastDist;  
-
-                world.cells[x,y].heightmapRegionColor = tiles[x,y].region.color; 
-                if (tiles[x,y].region.seed == new Vector2I(x, y))
-                {
-                    world.cells[x,y].heightmapRegionColor = new Color(1,1,0);
-                }
-                
+                map[x,y] = (int)(heightmap[x,y] * WorldGenerator.WorldHeight) - seaLevelElevation;   
             }
         }
         DeliverHeightData(map);
     }
     public void ThermalErosion()
     {
-        float[,] newHeights = new float[worldSize.X, worldSize.Y];
+        float[,] newHeights = new float[heightmapSize.X, heightmapSize.Y];
         int divisions = 1;
         Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            for (int x = heightmapSize.X / divisions * (i - 1); x < heightmapSize.X / divisions * i; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     HeightmapCell tile = tiles[x, y];
                     for (int dx = -1; dx <= 1; dx++)
                     {
                         for (int dy = -1; dy <= 1; dy++)
                         {
-                            Vector2I testPos = new(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                            Vector2I testPos = new(Mathf.PosMod(x + dx, heightmapSize.X), Mathf.PosMod(y + dy, heightmapSize.Y));
                             HeightmapCell testTile = tiles[testPos.X, testPos.Y];
                             float slope = heightmap[testPos.X, testPos.Y] - heightmap[x,y];
 
@@ -210,9 +208,9 @@ public class HeightmapGenerator
                 }
             }
         });
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 heightmap[x,y] = newHeights[x,y];
             }
@@ -223,12 +221,12 @@ public class HeightmapGenerator
         float sedimentCapacityFactor = 4; // Multiplier for how much sediment a droplet can carry
         float minSedimentCapacity = .01f; // Minimum sediment capacity a droplet can have
         // Uses an array to handle mergers later
-        List<Droplet>[,] gridDroplets = new List<Droplet>[worldSize.X, worldSize.Y];
+        List<Droplet>[,] gridDroplets = new List<Droplet>[heightmapSize.X, heightmapSize.Y];
 
         // Initializes droplet lists
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 gridDroplets[x,y] = [];
             }
@@ -243,7 +241,7 @@ public class HeightmapGenerator
             {
                 for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
                 {
-                    for (int y = 0; y < worldSize.Y; y++)
+                    for (int y = 0; y < heightmapSize.Y; y++)
                     {
                         if (gridDroplets[x,y].Count > 0) continue;
                         Droplet droplet = new Droplet()
@@ -267,9 +265,9 @@ public class HeightmapGenerator
             {
                 for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
                 {
-                    for (int y = 0; y < worldSize.Y; y++)
+                    for (int y = 0; y < heightmapSize.Y; y++)
                     {
-                        if (heightmap[x,y] < seaLevel) continue;
+                        if (heightmap[x,y] < baseSeaLevel) continue;
                         Droplet droplet = gridDroplets[x, y][0];
 
                         float cellOffsetX = droplet.pos.X - x;
@@ -289,7 +287,7 @@ public class HeightmapGenerator
                         // Gets new droplet position going downhill
                         Vector2 newPos = droplet.pos - Vector2.Normalize(gradient);
                         // Wraps new pos
-                        newPos = new Vector2(Mathf.PosMod(newPos.X, worldSize.X), Mathf.PosMod(newPos.Y, worldSize.Y));
+                        newPos = new Vector2(Mathf.PosMod(newPos.X, heightmapSize.X), Mathf.PosMod(newPos.Y, heightmapSize.Y));
                         // Gets height at new position
                         float newHeight = Utility.BilinearInterpolation(heightmap, newPos.X, newPos.Y);
                         // Gets change in height
@@ -306,9 +304,9 @@ public class HeightmapGenerator
 
                             // Deposits sediment with bilerp
                             heightmap[x, y] += amountToDeposit * (1 - cellOffsetX) * (1 - cellOffsetY);
-                            heightmap[Mathf.PosMod(x + 1, worldSize.X), y] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
-                            heightmap[x, Mathf.PosMod(y + 1, worldSize.Y)] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
-                            heightmap[Mathf.PosMod(x + 1, worldSize.X), Mathf.PosMod(y + 1, worldSize.Y)] += amountToDeposit * cellOffsetX * cellOffsetY;                         
+                            heightmap[Mathf.PosMod(x + 1, heightmapSize.X), y] += amountToDeposit * cellOffsetX * (1 - cellOffsetY);
+                            heightmap[x, Mathf.PosMod(y + 1, heightmapSize.Y)] += amountToDeposit * (1 - cellOffsetX) * cellOffsetY;
+                            heightmap[Mathf.PosMod(x + 1, heightmapSize.X), Mathf.PosMod(y + 1, heightmapSize.Y)] += amountToDeposit * cellOffsetX * cellOffsetY;                         
                         } else
                         {
                             // Erode a fraction of the droplet's current carry capacity.
@@ -316,18 +314,18 @@ public class HeightmapGenerator
                             droplet.sediment += amountToErode;
                             // Erodes using bilerp
                             heightmap[x, y] -= amountToErode * (1 - cellOffsetX) * (1 - cellOffsetY);
-                            heightmap[Mathf.PosMod(x + 1, worldSize.X), y] -= amountToErode * cellOffsetX * (1 - cellOffsetY);
-                            heightmap[x, Mathf.PosMod(y + 1, worldSize.Y)] -= amountToErode * (1 - cellOffsetX) * cellOffsetY;
-                            heightmap[Mathf.PosMod(x + 1, worldSize.X), Mathf.PosMod(y + 1, worldSize.Y)] -= amountToErode * cellOffsetX * cellOffsetY; 
+                            heightmap[Mathf.PosMod(x + 1, heightmapSize.X), y] -= amountToErode * cellOffsetX * (1 - cellOffsetY);
+                            heightmap[x, Mathf.PosMod(y + 1, heightmapSize.Y)] -= amountToErode * (1 - cellOffsetX) * cellOffsetY;
+                            heightmap[Mathf.PosMod(x + 1, heightmapSize.X), Mathf.PosMod(y + 1, heightmapSize.Y)] -= amountToErode * cellOffsetX * cellOffsetY; 
                         }
 
                         // Removes droplet from current cell
                         gridDroplets[x,y].Remove(droplet);
                         // Adds droplet to new cell
 
-                        lock (gridDroplets[Mathf.PosMod((int)newPos.X, worldSize.X), Mathf.PosMod((int)newPos.Y, worldSize.Y)])
+                        lock (gridDroplets[Mathf.PosMod((int)newPos.X, heightmapSize.X), Mathf.PosMod((int)newPos.Y, heightmapSize.Y)])
                         {
-                            gridDroplets[Mathf.PosMod((int)newPos.X, worldSize.X), Mathf.PosMod((int)newPos.Y, worldSize.Y)].Add(droplet);
+                            gridDroplets[Mathf.PosMod((int)newPos.X, heightmapSize.X), Mathf.PosMod((int)newPos.Y, heightmapSize.Y)].Add(droplet);
                         }
                         
                         droplet.pos = newPos;
@@ -344,7 +342,7 @@ public class HeightmapGenerator
             {
                 for (int x = world.WorldSize.X / divisions * (i - 1); x < world.WorldSize.X / divisions * i; x++)
                 {
-                    for (int y = 0; y < worldSize.Y; y++)
+                    for (int y = 0; y < heightmapSize.Y; y++)
                     {
                         int dropletCount = gridDroplets[x,y].Count;
                         if (dropletCount <= 1) continue;
@@ -388,9 +386,9 @@ public class HeightmapGenerator
         int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            for (int x = heightmapSize.X / divisions * (i - 1); x < heightmapSize.X / divisions * i; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     float minWidth = 0f;
                     HeightmapCell tile = tiles[x, y];
@@ -465,9 +463,9 @@ public class HeightmapGenerator
     }
     public void GetTectonicPressure()
     {
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 HeightmapCell tile = tiles[x, y];
                 if (!tile.fault)
@@ -481,7 +479,7 @@ public class HeightmapGenerator
                 {
                     for (int dy = -10; dy <= 10; dy++)
                     {
-                        Vector2 testPos = new Vector2(Mathf.PosMod(x + dx, worldSize.X), Mathf.PosMod(y + dy, worldSize.Y));
+                        Vector2 testPos = new Vector2(Mathf.PosMod(x + dx, heightmapSize.X), Mathf.PosMod(y + dy, heightmapSize.Y));
                         HeightmapCell next = tiles[(int)testPos.X, (int)testPos.Y];
                         if (next.region.plate != tile.region.plate)
                         {
@@ -572,9 +570,9 @@ public class HeightmapGenerator
         int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            for (int x = heightmapSize.X / divisions * (i - 1); x < heightmapSize.X / divisions * i; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     VoronoiRegion region = tiles[x, y].region;
                     Vector2I pos = new Vector2I(x, y);
@@ -586,7 +584,7 @@ public class HeightmapGenerator
                             {
                                 continue;
                             }
-                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, heightmapSize.X), Mathf.PosMod(pos.Y + dy, heightmapSize.Y));
                             VoronoiRegion neighbor = tiles[next.X, next.Y].region;
                             if (neighbor.plate != region.plate)
                             {
@@ -611,7 +609,7 @@ public class HeightmapGenerator
             }
         }
 
-        HashSet<HeightmapCell> measuredTiles = new(worldSize.X * worldSize.Y);
+        HashSet<HeightmapCell> measuredTiles = new(heightmapSize.X * heightmapSize.Y);
 
         GetDists(tilesToCheck, false);
     }
@@ -671,9 +669,9 @@ public class HeightmapGenerator
         float minNoiseValue = float.MaxValue;
         float maxErosionValue= float.MinValue;
         float minErosionValue = float.MaxValue;
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 float value = heightNoise.GetNoise(x, y);
                 float er = erosion.GetNoise(x * scale, y * scale);
@@ -698,9 +696,9 @@ public class HeightmapGenerator
         int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            for (int x = heightmapSize.X / divisions * (i - 1); x < heightmapSize.X / divisions * i; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     HeightmapCell cell = tiles[x,y];
                     // Normalizes Noise
@@ -710,17 +708,17 @@ public class HeightmapGenerator
                     if (cell.region.IsContinental())
                     {
                         // The closer land is to sea the flatter it is, modulated by noise
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 20f, noiseValue)), 0f, 1f);
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (HeightmapWorldSizeMult * Mathf.Lerp(0, 20f, noiseValue)), 0f, 1f);
 
                         // Modulates height by distance to the coast
                         heightmap[x, y] = 0.075f * coastMultiplier;
                         // Adds sea level so we are above water
-                        heightmap[x, y] += seaLevel;
+                        heightmap[x, y] += baseSeaLevel;
                     } else
                     {
                         // Undersea Slope to Abyss
-                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (worldMult * Mathf.Lerp(0, 3f, noiseValue)), 0f, 1f);
-                        heightmap[x, y] = Mathf.Lerp(0f, seaLevel, 1f - coastMultiplier);
+                        coastMultiplier = Mathf.Clamp(tiles[x, y].coastDist / (HeightmapWorldSizeMult * Mathf.Lerp(0, 3f, noiseValue)), 0f, 1f);
+                        heightmap[x, y] = Mathf.Lerp(0f, baseSeaLevel, 1f - coastMultiplier);
                         //heightmap[x, y] += seaLevel;                     
                     }
                 }
@@ -736,13 +734,13 @@ public class HeightmapGenerator
 
         Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            for (int x = heightmapSize.X / divisions * (i - 1); x < heightmapSize.X / divisions * i; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     HeightmapCell cell = tiles[x,y];
                     // Gets noise that mimics erosion
-                    float n = GetSlopeDependentNoise(x, y, noise, 10, 0.015f, 1f, 2.0f, 0.5f);
+                    float n = GetSlopeDependentNoise(x, y, noise, 10, 0.007f, 1f, 2.0f, 0.5f);
                     // Normalizes Noise
                     float noiseValue = Mathf.InverseLerp(-1, 1, n);
                     // Maximum and minimum values for debug
@@ -755,7 +753,7 @@ public class HeightmapGenerator
                         maxNoise = n;
                     }
                     // Adjusts our heightmap
-                    if (heightmap[x, y] < seaLevel)
+                    if (heightmap[x, y] < baseSeaLevel)
                     {
                         // Below Water
                         heightmap[x, y] += Mathf.Lerp(-0.1f, 0.15f, noiseValue);
@@ -781,9 +779,9 @@ public class HeightmapGenerator
         noise.SetFrequency(frequency);
         for (int i = 0; i < octaves; i++)
         {
-            float n = Utility.GetWrappedNoise(noise, p.X, p.Y, worldSize.X);
-            float dx = (Utility.GetWrappedNoise(noise, p.X + eps, p.Y, worldSize.X) - Utility.GetWrappedNoise(noise, p.X - eps, p.Y, worldSize.X))/(2 * eps);
-            float dy = (Utility.GetWrappedNoise(noise, p.X, p.Y + eps, worldSize.X) - Utility.GetWrappedNoise(noise, p.X, p.Y - eps, worldSize.X))/(2 * eps);
+            float n = Utility.GetWrappedNoise(noise, p.X, p.Y, heightmapSize.X);
+            float dx = (Utility.GetWrappedNoise(noise, p.X + eps, p.Y, heightmapSize.X) - Utility.GetWrappedNoise(noise, p.X - eps, p.Y, heightmapSize.X))/(2 * eps);
+            float dy = (Utility.GetWrappedNoise(noise, p.X, p.Y + eps, heightmapSize.X) - Utility.GetWrappedNoise(noise, p.X, p.Y - eps, heightmapSize.X))/(2 * eps);
             d += new Vector2(dx, dy);
             //GD.Print(d.Length());
             float w = amplitudeCurve.Sample(d.Length());
@@ -801,8 +799,8 @@ public class HeightmapGenerator
 
     Dictionary<Vector2I, VoronoiRegion> GeneratePoints()
     {
-        ppcx = Mathf.RoundToInt(worldSize.X / (float)gridSizeX);
-        ppcy = Mathf.RoundToInt(worldSize.Y / (float)gridSizeY);
+        ppcx = Mathf.RoundToInt(heightmapSize.X / (float)gridSizeX);
+        ppcy = Mathf.RoundToInt(heightmapSize.Y / (float)gridSizeY);
         Dictionary<Vector2I, VoronoiRegion> point = [];
         for (int i = 0; i < gridSizeX; i++) {
             for (int j = 0; j < gridSizeY; j++)
@@ -864,7 +862,7 @@ public class HeightmapGenerator
         }
         foreach (VoronoiRegion otherSeed in continentSeeds)
         {
-            if (Utility.WrappedDistance(region.seed, otherSeed.seed, worldSize) < worldSize.X / 6f)
+            if (Utility.WrappedDistance(region.seed, otherSeed.seed, heightmapSize) < heightmapSize.X / 6f)
             {
                 return false;
             }
@@ -883,20 +881,20 @@ public class HeightmapGenerator
         yNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         yNoise.SetFractalOctaves(8);
         yNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), worldSize));
+        GD.Print(new Vector2I(-3, 2).WrappedMidpoint(new Vector2I(5, 2), heightmapSize));
 
         int divisions = 8;
         Parallel.For(1, divisions + 1, (parallelIterator) =>
         {
-            for (int x = worldSize.X / divisions * (parallelIterator - 1); x < worldSize.X / divisions * parallelIterator; x++)
+            for (int x = heightmapSize.X / divisions * (parallelIterator - 1); x < heightmapSize.X / divisions * parallelIterator; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
 
                     HeightmapCell tile = new HeightmapCell();
                     // Domain warping
-                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, worldSize.X) * 40), worldSize.X);
-                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, worldSize.Y) * 40), worldSize.Y);
+                    int fx = (int)Mathf.PosMod(x + (xNoise.GetWrappedNoise(x, y, heightmapSize.X) * 40), heightmapSize.X);
+                    int fy = (int)Mathf.PosMod(y + (yNoise.GetWrappedNoise(x, y, heightmapSize.Y) * 40), heightmapSize.Y);
 
                     Vector2I pos = new Vector2I(fx, fy);
                     VoronoiRegion region = null;
@@ -911,7 +909,7 @@ public class HeightmapGenerator
                         {
                             int gridX = Mathf.PosMod(gx - i, gridSizeX);
                             int gridY = Mathf.PosMod(gy - j, gridSizeY);
-                            float dist = pos.WrappedDistanceSquared(points[new Vector2I(gridX, gridY)].seed, worldSize);
+                            float dist = pos.WrappedDistanceSquared(points[new Vector2I(gridX, gridY)].seed, heightmapSize);
                             distances.Enqueue(points[new Vector2I(gridX, gridY)], dist);
                         }
                     }
@@ -949,7 +947,7 @@ public class HeightmapGenerator
                         {
                             continue;
                         }
-                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                        Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, heightmapSize.X), Mathf.PosMod(pos.Y + dy, heightmapSize.Y));
                         if (remainingCells.Contains(next))
                         {
                             cellsToEvaluate.Enqueue(next);
@@ -975,9 +973,9 @@ public class HeightmapGenerator
         // Grows regions into enclaves
         Queue<HeightmapCell> cellsJoined = new Queue<HeightmapCell>();
 
-        for (int x = 0; x < worldSize.X; x++)
+        for (int x = 0; x < heightmapSize.X; x++)
         {
-            for (int y = 0; y < worldSize.Y; y++)
+            for (int y = 0; y < heightmapSize.Y; y++)
             {
                 if (tiles[x,y].region != null)
                 {
@@ -998,7 +996,7 @@ public class HeightmapGenerator
                     {
                         continue;
                     }
-                    Vector2I next = new Vector2I(Mathf.PosMod(cell.pos.X + dx, worldSize.X), Mathf.PosMod(cell.pos.Y + dy, worldSize.Y));
+                    Vector2I next = new Vector2I(Mathf.PosMod(cell.pos.X + dx, heightmapSize.X), Mathf.PosMod(cell.pos.Y + dy, heightmapSize.Y));
                     HeightmapCell nextCell = tiles[next.X, next.Y];
                     if (nextCell.region == null)
                     {
@@ -1012,9 +1010,9 @@ public class HeightmapGenerator
         Parallel.For(1, divisions + 1, (parallelIterator) =>
         {
             // Gets Region Borders
-            for (int x = worldSize.X / divisions * (parallelIterator - 1); x < worldSize.X / divisions * parallelIterator; x++)
+            for (int x = heightmapSize.X / divisions * (parallelIterator - 1); x < heightmapSize.X / divisions * parallelIterator; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     VoronoiRegion region = tiles[x, y].region;
                     Vector2I pos = new Vector2I(x, y);
@@ -1026,7 +1024,7 @@ public class HeightmapGenerator
                             {
                                 continue;
                             }
-                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, heightmapSize.X), Mathf.PosMod(pos.Y + dy, heightmapSize.Y));
                             VoronoiRegion neighbor = tiles[next.X, next.Y].region;
                             if (neighbor != region)
                             {
@@ -1057,9 +1055,9 @@ public class HeightmapGenerator
         int divisions = 8;
         Parallel.For(1, divisions + 1, (i) =>
         {
-            for (int x = worldSize.X / divisions * (i - 1); x < worldSize.X / divisions * i; x++)
+            for (int x = heightmapSize.X / divisions * (i - 1); x < heightmapSize.X / divisions * i; x++)
             {
-                for (int y = 0; y < worldSize.Y; y++)
+                for (int y = 0; y < heightmapSize.Y; y++)
                 {
                     VoronoiRegion region = tiles[x, y].region;
                     Vector2I pos = new(x, y);
@@ -1071,7 +1069,7 @@ public class HeightmapGenerator
                             {
                                 continue;
                             }
-                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, worldSize.X), Mathf.PosMod(pos.Y + dy, worldSize.Y));
+                            Vector2I next = new Vector2I(Mathf.PosMod(pos.X + dx, heightmapSize.X), Mathf.PosMod(pos.Y + dy, heightmapSize.Y));
                             VoronoiRegion neighbor = tiles[next.X, next.Y].region;
                             if (neighbor != region)
                             {
@@ -1111,7 +1109,7 @@ public class HeightmapGenerator
     }
     void GetDists(Queue<HeightmapCell> tilesToCheck, bool coast)
     {
-        HashSet<HeightmapCell> measuredTiles = new(worldSize.X * worldSize.Y);
+        HashSet<HeightmapCell> measuredTiles = new(heightmapSize.X * heightmapSize.Y);
 
         while (tilesToCheck.Count > 0)
         {
@@ -1124,7 +1122,7 @@ public class HeightmapGenerator
                     {
                         continue;
                     }
-                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, worldSize.X), Mathf.PosMod(currentTile.pos.Y + dy, worldSize.Y));
+                    Vector2I next = new(Mathf.PosMod(currentTile.pos.X + dx, heightmapSize.X), Mathf.PosMod(currentTile.pos.Y + dy, heightmapSize.Y));
                     HeightmapCell neighbor = tiles[next.X, next.Y];  
                     if (((coast && !neighbor.coastal) || (!coast && !neighbor.fault)) && !measuredTiles.Contains(neighbor))
                     {
