@@ -48,8 +48,7 @@ public partial class LoadingScreen : Control
         // Gives world name
         sim = new SimManager()
         {
-            worldName = worldSettings.worldName,
-            eventSeed = worldSettings.eventsSeed
+            worldName = worldSettings.worldName
         };        
     }
     public override void _Process(double delta)
@@ -58,7 +57,6 @@ public partial class LoadingScreen : Control
         {
             if (!firstFrameDone)
             {
-                LoadWorldSettings();
                 if (savePath != null && DirAccess.Open(savePath) != null)
                 {
                     WorldGenerator loadedWorld = WorldGenerator.LoadFromSave(savePath);
@@ -72,6 +70,9 @@ public partial class LoadingScreen : Control
                             sim = loadedSim;
                         }                    
                     }
+                } else
+                {
+                    LoadWorldSettings();
                 }
                 firstFrameDone = true;
 

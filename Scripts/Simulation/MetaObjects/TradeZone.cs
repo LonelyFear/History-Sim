@@ -11,7 +11,22 @@ public class TradeZone : NamedObject
     [IgnoreMember] public HashSet<Region> regions { get; set; } = [];
     [Key(9)] public Color color { get; set; }
     [Key(10)]  public ulong? controllerId { get; set; } = null;
-    [Key(11)] public float totalMarketWeight = 1f;
+    [Key(11)] public float totalMarketWeight = 1f; 
+       
+    [IgnoreMember] public Region _center;
+    [IgnoreMember] public Region center
+    {
+        get
+        {
+            _center ??= ObjectManager.GetRegion(centerId);
+            return _center;
+        } 
+        set
+        {
+            centerId = value.id;
+            _center = value;
+        }         
+    }
 
     public override void PrepareForSave()
     {

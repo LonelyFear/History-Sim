@@ -124,12 +124,88 @@ public partial class Alliance : Polity
         }
         return mp;
     }
+
     public override void CountPopulation()
     {        
         regions = [..memberStates.SelectMany(state => state.regions)];
-        base.CountPopulation();
+        long countedP = 0;
+        long countedW = 0;
+        Dictionary<string, long> countedProfessions = [];
+        Dictionary<ulong, long> cCultures = [];
+
+        HashSet<State> borders = [];
+    
+        float countedWealth = 0;
+        float countedBaseWealth = 0;
+        int occRegions = 0;
+        Tech newAvg = new();
+
+        foreach (State state in memberStates)
+        {
+            newAvg.militaryLevel += state.tech.militaryLevel;
+            newAvg.societyLevel += state.tech.societyLevel;
+            newAvg.industryLevel += state.tech.industryLevel;
+            
+            // Adds up population to state total
+            countedP += state.population;
+            countedW += state.workforce;
+            countedWealth += state.totalWealth;
+            countedBaseWealth += state.baseWealth;
+
+            foreach (State border in state.borderingStates)
+            {
+                // Extends our border with the state
+                State[] statesToEvaluate = [border, border.GetLiege()];
+                foreach (State evaluatedState in statesToEvaluate)
+                {
+                    if (evaluatedState == null) continue;
+                    borders.Add(evaluatedState);
+                }                
+            }
+            // Counts up socialClasses
+            CountClasses(state, countedProfessions);
+            CountCultures(state, cCultures);
+        }
+        
+        // Updates values
+        occupiedLand = occRegions;
+        borderingStates = borders;
+        
+        totalWealth = countedWealth;
+        baseWealth = countedBaseWealth;
+    
+        professions = countedProfessions;
+        cultureIds = cCultures;
+        population = countedP;
+        workforce = countedW;
+        dependents = population - workforce;
+
+        manpower = GetManpower();
+        armyPower = GetArmyPower();
+
+        // Tech
+        newAvg.militaryLevel /= Mathf.Max(memberStates.Count, 1);
+        newAvg.societyLevel /= Mathf.Max(memberStates.Count, 1);
+        newAvg.industryLevel /= Mathf.Max(memberStates.Count, 1);
+        averageTech = newAvg;
     }
 
+    public override int GetSize()
+    {
+        int size = regions.Count;
+        if (type == AllianceType.REALM)
+        {
+            size = 0;
+            foreach (State state in memberStates)
+            {
+                if (state.sovereignty != Sovereignty.REBELLIOUS)
+                {
+                    size += state.GetSize();
+                }
+            }
+        }
+        return size;
+    }
 }
 public enum AllianceType
 {

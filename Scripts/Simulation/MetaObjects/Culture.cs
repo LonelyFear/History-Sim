@@ -11,7 +11,7 @@ public class Culture : PopObject
         tickDestroyed = simManager.timeManager.ticks;
         foreach (Pop pop in pops)
         {
-            RemovePop(pop, this);
+            RemovePop(pop);
         }
     }
 

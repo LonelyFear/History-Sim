@@ -99,11 +99,11 @@ public static class ObjectManager
         }
         lock (culture)
         {
-            culture.AddPop(pop, culture);
+            culture.AddPop(pop);
         }
         lock (region)
         {
-            region.AddPop(pop, region);
+            region.AddPop(pop);
         }
 
         return pop;
@@ -120,8 +120,8 @@ public static class ObjectManager
             
 
         }
-        pop.region?.RemovePop(pop, pop.region);
-        pop.culture?.RemovePop(pop, pop.culture);
+        pop.region?.RemovePop(pop);
+        pop.culture?.RemovePop(pop);
         simManager.popsIds.Remove(pop.id);
     }
     public static Pop GetPop(ulong? id)
@@ -156,7 +156,7 @@ public static class ObjectManager
     {
         foreach (Pop pop in culture.pops)
         {
-            culture.RemovePop(pop, culture);
+            culture.RemovePop(pop);
         }
         simManager.cultureIds.Remove(culture.id);
     }
@@ -444,7 +444,7 @@ public static class ObjectManager
         if (!war.dead) war.EndWar();
         simManager.warIds.Remove(war.id, out _);          
     }
-    public static Ocean CreateOcean(Region[] waterRegions)
+    public static Ocean CreateOcean(IEnumerable<Region> waterRegions, IEnumerable<Region> coastalRegions)
     {
         float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
         float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
@@ -453,9 +453,11 @@ public static class ObjectManager
         {
             id = GetId(),
             color = new Color(r, g, b),
-            waterRegions = [..waterRegions]
+            waterRegions = [..waterRegions],
+            coastalRegions = [..coastalRegions]
         };
-        foreach (Region region in waterRegions)
+        Region[] regions = [..waterRegions, ..coastalRegions];
+        foreach (Region region in regions)
         {
             region.ocean = ocean;
         }

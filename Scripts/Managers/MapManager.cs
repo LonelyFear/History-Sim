@@ -418,8 +418,15 @@ public partial class MapManager : Node2D
                 colorData.opacity = 1f;
                 if (region.habitable && region.pops.Count > 0)
                 {
-                    long regionPopulation = 1000 * (int)Mathf.Pow(RegionGenerator.tilesPerRegion, 2);
-                    color = new Color(0, region.population / Mathf.Max(simManager.highestPopulation, regionPopulation), 0, 1);
+                    long minRecordedPopulation = 1000 * (int)Mathf.Pow(RegionGenerator.tilesPerRegion, 2);
+                    if (simManager.highestPopulation > minRecordedPopulation && region.population > simManager.highestPopulation * 0.7f)
+                    {
+                        // Shows top 70% of populations in a different color
+                        color = Utility.MultiColourLerp([new Color("green"), new Color("white")], region.population / (float)simManager.highestPopulation);
+                    } else
+                    {
+                        color = Utility.MultiColourLerp([new Color("black"), new Color("green")], region.population / Mathf.Max(simManager.highestPopulation * 0.7f, minRecordedPopulation));
+                    }
                 }
                 else if (region.habitable)
                 {
@@ -455,17 +462,20 @@ public partial class MapManager : Node2D
             case MapModes.TECH:
                 if (region.population > 0)
                 {
-                    region.GetAverageTech();
-                    color = new Color(region.averageTech.militaryLevel / 20f, region.averageTech.industryLevel / 20f, region.averageTech.societyLevel / 20f);
+                    color = new Color(region.tech.militaryLevel / 20f, region.tech.industryLevel / 20f, region.tech.societyLevel / 20f);
                 }
                 break;
             case MapModes.WEALTH:
                 if (region.habitable)
                 {
-                    float factor = region.wealth / simManager.maxWealth;
-                    //if (simManager.useNewEconomy) factor = region.economy.prices["grain"]/20f;
-                    
-                    color = Utility.MultiColourLerp([new Color("black"), new Color("yellow")], factor);
+                    if (region.wealth > simManager.maxWealth * 0.7f)
+                    {
+                        // Shows top 70% of wealth in a different color
+                        color = Utility.MultiColourLerp([new Color("yellow"), new Color("white")], region.wealth / simManager.maxWealth);
+                    } else
+                    {
+                        color = Utility.MultiColourLerp([new Color("black"), new Color("yellow")], region.wealth / (simManager.maxWealth * 0.7f));
+                    }
                 }
                 break;
             case MapModes.TRADE_WEIGHT:
@@ -543,7 +553,7 @@ public partial class MapManager : Node2D
         {
             Tile tile = simManager.tiles[tilePos.X, tilePos.Y];
             Color finalColor = color;
-            if (centralColor != null && tilePos == r.centerPos)
+            if (centralColor != null && r.owner?.capital == r)
             {
                 finalColor = (Color)centralColor;
             }

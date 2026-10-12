@@ -12,6 +12,7 @@ using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.States.AI;
 using FileAccess = Godot.FileAccess;
 using PixelHistory.Objects.Wars;
+using System.Runtime.Serialization;
 
 public enum RegionStyle
 {
@@ -77,8 +78,7 @@ public class SimManager
     [IgnoreMember] public bool simLoadedFromSave = false;
 
     // Random
-    public int eventSeed;
-    public Random rng = new Random();
+    [IgnoreMember] public Random rng = new Random();
 
     // Events
     public delegate void ObjectDeletedEvent(ulong id);
@@ -120,6 +120,8 @@ public class SimManager
         statesIds.Values.ToList().ForEach(r => r.PrepareForSave());
         cultureIds.Values.ToList().ForEach(r => r.PrepareForSave());
         allianceIds.Values.ToList().ForEach(r => r.PrepareForSave());
+        warIds.Values.ToList().ForEach(r => r.PrepareForSave());
+        oceanIds.Values.ToList().ForEach(r => r.PrepareForSave());
 
         tick = timeManager.ticks;
 
@@ -292,10 +294,6 @@ public class SimManager
     }
     public void OnWorldgenFinished()
     {
-        GD.Print("Events Seed: " + eventSeed);
-        //rng = new Random(eventSeed);
-        
-        GD.Print(rng.ToString());
         AssignSimManager();
         AssignRandom();
         worldSize = worldGenerator.WorldSize;
@@ -333,12 +331,26 @@ public class SimManager
         {
             double nodeChance = 0.004;
             //GD.Print(region.Migrateable());
-            if (rng.NextDouble() <= nodeChance && region.Migrateable())
+            if (rng.NextDouble() <= nodeChance && region.population == 0 && region.Migrateable())
             {
-                long startingPopulation = rng.Next(600, 1200);
                 
-                Culture culture = ObjectManager.CreateCulture();
-                ObjectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), region, new Tech(), culture, "farmer");
+                
+                List<Region> seededRegions = [region];
+                foreach (Region border in region.borderingRegions)
+                {
+                    if (border.Migrateable() && border.population == 0 && rng.NextSingle() < 0.5f) seededRegions.Add(border);
+                    foreach (Region borderBorder in border.borderingRegions)
+                    {
+                        if (!seededRegions.Contains(borderBorder) && borderBorder.Migrateable() && borderBorder.population == 0 && rng.NextSingle() < 0.2f) seededRegions.Add(borderBorder);
+                    }                    
+                }
+
+                Culture culture = ObjectManager.CreateCulture(); 
+                foreach (Region seed in seededRegions)
+                {
+                    int startingPopulation = rng.Next(600, 1200)/seededRegions.Count;        
+                    ObjectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), seed, new Tech(), culture, "farmer");                    
+                }
             }
         }
     }
@@ -425,6 +437,7 @@ public class SimManager
         uint countedPoppedRegions = 0;
 
         long worldPop = 0;
+        long highPop = 0;
         //int regionBatches = 8;
         ulong rStartTime = Time.GetTicksMsec();
 
@@ -449,6 +462,7 @@ public class SimManager
                     {
                         region.StateBordering();
                     }
+                    if (region.corePop != null) region.tech = region.corePop.tech;
                 }
 
                 region.linkUpdateCountdown--;
@@ -502,7 +516,7 @@ public class SimManager
 
                 if (region.owner != null && !region.conquered)
                 {
-                    Region borderToActOn = region.PickRandomBorder();
+                    Region borderToActOn = region.directBorderRegions.PickRandom(rng);
                     if (region.frontier)
                     {
                         region.NeutralConquest(borderToActOn);
@@ -516,7 +530,7 @@ public class SimManager
                 {
                     countedPoppedRegions += 1;
                     worldPop += region.population;
-                    highestPopulation = (long)Mathf.Max(highestPopulation, region.population);
+                    highPop = (long)Mathf.Max(highPop, region.population);
                     newMaxWealth = Mathf.Max(newMaxWealth, region.wealth);
                     newMaxTradeWeight = Mathf.Max(region.tradeWeight, newMaxTradeWeight);                    
                 }
@@ -534,6 +548,7 @@ public class SimManager
 
         populatedRegions = countedPoppedRegions;
         worldPopulation = worldPop;
+        highestPopulation = highPop;
 
         regionPerformanceInfo = countedPerformanceInfo;
     }
@@ -674,13 +689,13 @@ public class SimManager
     }
     public void UpdateAlliances()
     {
+        Partitioner<Alliance> partitioner = Partitioner.Create(allianceIds.Values);
         foreach (var pair in allianceIds)
         {
             Alliance alliance = pair.Value;
             if (alliance.leadState == null) alliance.Die();
             if (alliance.dead) ObjectManager.DeleteAlliance(alliance);
         }
-        Partitioner<Alliance> partitioner = Partitioner.Create(allianceIds.Values);
         Parallel.ForEach(partitioner, alliance =>
         {
             alliance.tech = alliance.averageTech;
@@ -698,7 +713,7 @@ public class SimManager
                 if (character.dead)
                 {
                     // Deletes characters after 200 years if they are dead
-                    if (TimeManager.GetYear(character.GetAge()) > 200)
+                    if (TimeManager.GetYear(timeManager.ticks - character.tickDestroyed) > 100)
                     {
                         ObjectManager.DeleteCharacter(character);
                     }

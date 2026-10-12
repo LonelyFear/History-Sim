@@ -54,10 +54,9 @@ public abstract partial class Polity : PopObject
 
         foreach (Region region in regions)
         {
-            region.GetAverageTech();
-            newAvg.militaryLevel += region.averageTech.militaryLevel;
-            newAvg.societyLevel += region.averageTech.societyLevel;
-            newAvg.industryLevel += region.averageTech.industryLevel;
+            newAvg.militaryLevel += region.tech.militaryLevel;
+            newAvg.societyLevel += region.tech.societyLevel;
+            newAvg.industryLevel += region.tech.industryLevel;
             
             // Adds up population to state total
             countedP += region.population;
@@ -119,7 +118,10 @@ public abstract partial class Polity : PopObject
     }
     public abstract int GetArmyPower();
     public abstract int GetManpower();
-
+    public virtual int GetSize()
+    {
+        return regions.Count;
+    }
     protected void CountClasses(PopObject obj, Dictionary<string, long> output)
     {
         foreach (string professionId in obj.professions.Keys)

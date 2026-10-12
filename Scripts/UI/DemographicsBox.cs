@@ -48,7 +48,8 @@ public partial class DemographicsBox : VBoxContainer
 		if (infoHolder.selectedObject is Polity polity)
 		{
 			strengthLabel.Visible = true;
-			strengthLabel.Text = $"Strength: {polity.armyPower}";			
+			strengthLabel.Text = $"Strength: {polity.armyPower:#,##0}";		
+			strengthLabel.Text += $"\nSize: {polity.GetSize():#,##0}";		
 		}
 
 		fertilityLabel.Visible = false;

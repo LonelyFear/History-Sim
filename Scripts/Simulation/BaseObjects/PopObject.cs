@@ -105,44 +105,39 @@ public abstract class PopObject : NamedObject
         workforce = countedWorkforce;
     }
 
-    public void AddPop(Pop pop, PopObject popObject)
+    public virtual void AddPop(Pop pop)
     {
-        if (!pops.Contains(pop))
+        if (pops.Add(pop))
         {
-            pops.Add(pop);
-            switch (popObject)
+            switch (this)
             {
                 case Culture:
-                    if (pop.culture != null)
-                    {
-                        pop.culture.RemovePop(pop, popObject);
-                    }                    
-                    pop.culture = (Culture)popObject;
+                    pop.culture?.RemovePop(pop);                    
+                    pop.culture = this as Culture;
                     break;
                 case Region:
-                    if (pop.region != null)
-                    {
-                        pop.region.RemovePop(pop, popObject);
-                    }
-                    pop.region = (Region)popObject;
+                    pop.region?.RemovePop(pop);
+                    pop.region = this as Region;
                     break;
             }
             ChangePopulation(pop.workforce, pop.dependents, pop.socialClass.id, pop.culture);
         }
     }
-    public void RemovePop(Pop pop, PopObject popObject)
+    public virtual void RemovePop(Pop pop)
     {
-        pops.Remove(pop);
-        ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
-        switch (popObject)
-        {     
-            case Culture:
-                pop.culture = null;
-                break;
-            case Region:
-                pop.region = null;
-                break;    
-        } 
+        if (pops.Remove(pop))
+        {
+            ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
+            switch (this)
+            {     
+                case Culture:
+                    pop.culture = null;
+                    break;
+                case Region:
+                    pop.region = null;
+                    break;    
+            }             
+        }
     }
     public virtual void ChangePopulation(long workforceChange, long dependentChange, string professionId, Culture culture)
     {

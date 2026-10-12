@@ -2,6 +2,7 @@ using Godot;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.Wars;
 using System;
+using System.Linq;
 
 public partial class WarsBox : InfoPanelBox
 {
@@ -31,7 +32,7 @@ public partial class WarsBox : InfoPanelBox
                 //warsLabel.Text += $"{NamedObject.GenerateUrlText(war, war.name)}: {(pair.Value == War.WarSide.AGRESSOR ? "Attacker" : "Defender")}\n";
             }
             
-            foreach (State enemy in state.enemies)
+            foreach (State enemy in state.enemies.ToArray())
             {
                 warsLabel.Text += $"War with {enemy.baseName}\n";
             }

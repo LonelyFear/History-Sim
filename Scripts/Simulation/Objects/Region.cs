@@ -18,18 +18,18 @@ public partial class Region : PopObject, ISaveable
     [Key(19)] public bool coastal { get; set; }
     [Key(20)] public bool isWater { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
-    [Key(48)] public float fertility;
+    [Key(48)] public float fertility { get; set; }
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
-    [Key(28)] public Vector2I centerPos;
-    [Key(44)] public Vector2I gridPos;
+    [Key(28)] public Vector2I centerPos { get; set; } 
+    [Key(44)] public Vector2I gridPos { get; set; } 
     // trade
     [Key(29)] ulong? tradeZoneId { get; set; } = null;
     [Key(30)] public bool isTradeZoneCenter { get; set; } = false;  
     [Key(24)] public float baseWealth { get; set; }
     [Key(25)] public float wealth { get; set; }  
-    [Key(31)] public float tradeIncome = 0;
-    [Key(32)] public float taxIncome = 0;
-    [Key(33)] public int zoneSize = 1;
+    [Key(31)] public float tradeIncome { get; set; } = 0;
+    [Key(32)] public float taxIncome { get; set; }  = 0;
+    [Key(33)] public int zoneSize { get; set; }  = 1;
 
     [Key(34)] public ulong? tradeLinkId { get; set; }
     [Key(35)] public bool tradedUp { get; set; }
@@ -37,22 +37,24 @@ public partial class Region : PopObject, ISaveable
     // Oceans
     [IgnoreMember] public Ocean ocean = null;
 
-    [IgnoreMember] public float navigability { get; set; }
-    [IgnoreMember] public float avgTemperature { get; set; }
-    [IgnoreMember] public float[] avgMonthlyTemps { get; set; } = new float[12];
-    [IgnoreMember] public float avgRainfall { get; set; }
-    [IgnoreMember] public float[] avgMonthlyRainfall { get; set; } = new float[12];
-    [IgnoreMember] public float avgElevation { get; set; }
-    [IgnoreMember] public Dictionary<string, int> biomes { get; set; }
+    [IgnoreMember] public float navigability;
+    [IgnoreMember] public float avgTemperature;
+    [IgnoreMember] public float[] avgMonthlyTemps = new float[12];
+    [IgnoreMember] public float avgRainfall;
+    [IgnoreMember] public float[] avgMonthlyRainfall = new float[12];
+    [IgnoreMember] public float avgElevation;
+    [IgnoreMember] public Dictionary<string, int> biomes;
     [Key(36)] public int landCount { get; set; }
     [Key(37)] public TerrainType terrainType { get; set; }
     
     [Key(38)] public ulong? claimantId { get; set; }
     [Key(39)] public ulong? ownerId { get; set; }
+    [Key(50)] public ulong? corePopId { get; set; }
     [Key(46)] public Dictionary<string, float> naturalResources = [];
 
     // Demographics
     [IgnoreMember] public List<Region> borderingRegions { get; set; } = [];
+    [IgnoreMember] public List<Region> directBorderRegions { get; set; } = [];
     [IgnoreMember] Dictionary<Region, List<Region>> regionPaths = [];
 
     // Buildings
@@ -119,7 +121,20 @@ public partial class Region : PopObject, ISaveable
             _claimant = value;
         } 
     } 
-
+    [IgnoreMember] Pop _corePop;
+    [IgnoreMember] public Pop corePop { 
+        get
+        {
+            if (_corePop == null && corePopId != null) 
+                _corePop = ObjectManager.GetPop(corePopId);
+            return _corePop;
+        } 
+        set
+        {
+            corePopId = value?.id;
+            _corePop = value;
+        } 
+    } 
     [Key(40)] public bool border { get; set; }
     [Key(41)] public bool frontier { get; set; }
     [IgnoreMember] public float arableLand { get; set; }
@@ -129,12 +144,18 @@ public partial class Region : PopObject, ISaveable
     {
         get
         {
-            int additionalPopulation = (int)((tradeIncome + taxIncome) * (averageTech.societyLevel +  1));
-            return (int)((populationDensity + additionalPopulation) * arableLand);
+            float techBonus = 1f + (tech.societyLevel/4f);
+            int additionalPopulation = Mathf.RoundToInt(tradeIncome + taxIncome);
+            int newMaxPopulation = Mathf.RoundToInt((populationDensity + additionalPopulation) * arableLand * techBonus);
+
+            return newMaxPopulation;
         }
     }
     [Key(49)] public Tech tech;
-
+    public void UpdateMaxPopulation()
+    {
+        
+    }
     public override void PrepareForSave()
     {
         base.PrepareForSave();
@@ -148,6 +169,23 @@ public partial class Region : PopObject, ISaveable
         linkedRegions = [..linkedRegionIds.Select(r => ObjectManager.GetRegion(r))];
         //buildings = [..buildingIds.Select(AssetManager.GetBuilding)];
         //economy.LoadFromSave();
+    }
+    public override void AddPop(Pop pop)
+    {
+        base.AddPop(pop);
+        corePop ??= pop;
+    }
+    public override void RemovePop(Pop pop)
+    {
+        base.RemovePop(pop);
+        if (pop == corePop)
+        {
+            corePop = null;
+        }
+        if (pops.Count > 0)
+        {
+            corePop = pops.ToArray()[0];
+        }
     }
 
     public void AddTile(Tile tile)
@@ -215,6 +253,7 @@ public partial class Region : PopObject, ISaveable
                     Region borderRegion = ObjectManager.GetRegion(border.regionId);
                     
                     AddBorder(borderRegion);   
+                    directBorderRegions.Add(borderRegion);
                     if (!isWater && !coastal) coastal = borderRegion.isWater;                     
                 }
             }
@@ -222,19 +261,43 @@ public partial class Region : PopObject, ISaveable
     }
     public void GetNavalBorders()
     {
-        if (coastal)
+        if (coastal  && ocean != null)
         {
+            Queue<Region> landReachableRegions = new([this]);
+            HashSet<Region> potentialNavalConnections = [];
+            HashSet<Region> evaluatedRegions = [this];
             foreach (Region region in simManager.regionIds.Values)
             {
                 if (region.coastal)
                 {
                     float dist = region.gridPos.DistanceTo(gridPos);
-                    if (dist <= 5 && region.ocean == ocean && ocean != null)
+                    if (dist > 1.4f && dist <= 5 && region.ocean == ocean)
                     {
-                        AddBorder(region);
+                        potentialNavalConnections.Add(region);
                     }
                 }
             }  
+            
+            while (landReachableRegions.Count > 0)
+            {
+                Region region = landReachableRegions.Dequeue();
+                if (region.gridPos.DistanceSquaredTo(gridPos) >= 144) break;
+
+                foreach (Region border in region.directBorderRegions)
+                {
+                    potentialNavalConnections.Remove(border);
+                    if (!border.isWater && !evaluatedRegions.Contains(border))
+                    {
+                        landReachableRegions.Enqueue(border);
+                        evaluatedRegions.Add(border);
+                    }
+                }
+            }
+
+            foreach (Region navalConnection in potentialNavalConnections)
+            {
+                AddBorder(navalConnection);
+            }
         }       
     }
     public void AddBorder(Region region)
@@ -379,7 +442,7 @@ public partial class Region : PopObject, ISaveable
     }
     public void RandomStateFormation()
     {
-        if (rng.NextSingle() < 0.0005f && population > 1000)
+        if (rng.NextSingle() < Defines.RandomStateFormationChance * (tech.societyLevel + 1) && population > 500)
         {
             ObjectManager.CreateState(this);
             
@@ -422,7 +485,7 @@ public partial class Region : PopObject, ISaveable
     public void NeutralConquest(Region target)
     {
         bool checks = !target.conquered && target != null && target.pops.Count != 0 && target.owner == null;
-        if (!checks || owner.regions.Count >= owner.GetMaxRegionsCount()) return;
+        if (!checks) return;
 
         long attackerPower;
         attackerPower = owner.armyPower;
@@ -634,25 +697,25 @@ public partial class Region : PopObject, ISaveable
     }
     public int GetBaseTradeWeight()
     {
-        float populationTradeWeight = population * 0.001f;
+        float populationTradeWeight = population * 0.0005f;
 
         float zoneSizeTradeWeight = 0;
         if (isTradeZoneCenter && tradeZone != null)
         {
-            zoneSizeTradeWeight = tradeZone.GetZoneSize();
+            zoneSizeTradeWeight = tradeZone.GetZoneSize() * 0.5f;
         }
 
         float politySizeTradeWeight = 0f;
         if (owner != null && owner.capital == this)
         {
             politySizeTradeWeight = owner.regions.Count;
-            if (owner.sovereignty == Sovereignty.INDEPENDENT)
+            if (owner.sovereignty == Sovereignty.INDEPENDENT && owner.GetRealm() != null)
             {
-                politySizeTradeWeight = owner.GetPolity().regions.Count;
+                politySizeTradeWeight = owner.GetRealm().GetSize();
             }
         }
 
-        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * navigability);
+        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * fertility);
     } 
     public void ZoneTrade()
     {
@@ -770,14 +833,9 @@ public partial class Region : PopObject, ISaveable
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;
-        if (arableLand / landCount <= 0.2f)
+        if (fertility <= 0.1f)
         {
             migrateable = false;
-        }
-
-        if (pop != null)
-        {
-            return (migrateable && habitable) || isWater;
         }
         return migrateable && habitable;
     }
@@ -794,6 +852,18 @@ public partial class Region : PopObject, ISaveable
             }
         }
         return region;
+    }
+    public Pop[] GetLinkedPops()
+    {
+        List<Pop> linkedPops = [..pops];
+        foreach (Region region in borderingRegions)
+        {
+            linkedPops.AddRange(region.pops);
+        }
+        if (owner != null && owner.capital != this) linkedPops.Add(owner.rulingPop);
+        if (tradeZone != null) linkedPops.AddRange(ObjectManager.GetRegion(tradeZone.centerId).pops);
+
+        return [..linkedPops];
     }
     public override string GenerateDescription()
     {

@@ -25,6 +25,7 @@ public class OceanGenerator
             Queue<Region> frontier = new();
             frontier.Enqueue(seed);
             List<Region> oceanRegions = [seed];
+            List<Region> coastalRegions = [];
 
             while (frontier.Count > 0)
             {
@@ -34,13 +35,22 @@ public class OceanGenerator
                     if ((border.isWater || border.coastal) && border.ocean == null)
                     {
                         border.ocean = ocean;
-                        oceanRegions.Add(border);
+                        
+                        if (border.coastal)
+                        {
+                            coastalRegions.Add(border);
+                        } else
+                        {
+                            oceanRegions.Add(border);
+                        }
+                        
+
                         frontier.Enqueue(border);
                         unassignedRegions.Remove(border);
                     }
                 }
             }
-            ObjectManager.CreateOcean([..oceanRegions]);
+            ObjectManager.CreateOcean(oceanRegions, coastalRegions);
         }
     }
 }

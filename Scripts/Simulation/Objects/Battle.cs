@@ -20,7 +20,6 @@ public class Battle{
         double defendPower = Mathf.Round(baseDefenderPower * Mathf.Lerp(0.5, 1.5, NamedObject.rng.NextDouble()));
 
         defendPower *= Mathf.Lerp(1.2f, 2.2f, 1f - site.navigability);
-        if (site.owner?.capital == site) defendPower  *= 2f;
 
         double totalPower = attackPower + defendPower;
 

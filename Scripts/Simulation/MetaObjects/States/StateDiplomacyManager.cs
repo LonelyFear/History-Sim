@@ -29,6 +29,7 @@ static class StateDiplomacyManager
                     if (!state.wars.ContainsKey(allyWarPair.Key))
                     {
                         War war = allyWarPair.Key;
+                        if (state.sovereignty == Sovereignty.INDEPENDENT && war.warType != WarType.CONQUEST) continue;
 
                         lock (war)
                         {
@@ -106,6 +107,17 @@ static class StateDiplomacyManager
             }
         }
         return false;
+    }
+    public static War GetWarOfType(this State state, WarType type)
+    {
+        foreach (var pair in state.wars)
+        {
+            if (pair.Key.warType == type)
+            {
+                return pair.Key;
+            }
+        }
+        return null;
     }
     public static bool CanFightState(this State state, State target)
     {

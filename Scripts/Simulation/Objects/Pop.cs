@@ -32,7 +32,6 @@ public partial class Pop
     [IgnoreMember] public static Random rng = null;
     [Key(18)] public float wealth { get; set; } = 0f;
     [Key(19)] public int ownedLand { get; set; } = 0;
-    [Key(21)] public Direction lastDirection = Direction.RIGHT;
     [Key(22)] string socialClassId = "farmer";
     [IgnoreMember] public Dictionary<string, float> goodsDemands = [];
     // Reference Types
@@ -41,10 +40,7 @@ public partial class Pop
     {
         get
         {
-            if (_socialClass == null)
-            {
-                _socialClass = AssetManager.GetSocialClass(socialClassId);
-            }
+            _socialClass ??= AssetManager.GetSocialClass(socialClassId);
             return _socialClass;
         } set
         {
@@ -60,8 +56,7 @@ public partial class Pop
     [IgnoreMember] public Culture culture { 
         get
         {
-            if (_culture == null) 
-                _culture = ObjectManager.GetCulture(cultureId);
+            _culture ??= ObjectManager.GetCulture(cultureId);
             return _culture;
         }
         set
@@ -74,8 +69,7 @@ public partial class Pop
     [IgnoreMember] public Region region { 
         get
         {
-            if (_region == null) 
-                _region = ObjectManager.GetRegion(regionId);
+            _region ??= ObjectManager.GetRegion(regionId);
             return _region;
         }
         set
@@ -134,23 +128,69 @@ public partial class Pop
     }
 
     public void TechnologyUpdate()
-    {
-        if (region.owner == null) return;
+    {      
+        float militaryTechChance = Defines.BaseRedTechSeedChance * region.fertility;
+        float societyTechChance = Defines.BaseBlueTechSeedChance * region.fertility + (tech.militaryLevel * Defines.BlueTechBonus);
+        float industryTechChance = Defines.BaseIndTechSeedChance * region.fertility;
+
+        // Tech Seeding
         
-        float militaryTechChance = 0.001f * region.fertility;
-        float societyTechChance = 0.001f * region.fertility;
-        float industryTechChance = 0.05f * region.fertility;
-        if (rng.NextSingle() < militaryTechChance && tech.militaryLevel < 20)
+        // Military Advancement
+        if (rng.NextSingle() < militaryTechChance && region.owner?.capital == region && region.owner.enemies.Count > 0)
         {
-            tech.militaryLevel += 1;
+            tech.militaryLevel = Mathf.Clamp(tech.militaryLevel + 1, 0, 20);                
         }
-        if (rng.NextSingle() < societyTechChance && tech.societyLevel < 20)
+        // Society Advancement
+        if (rng.NextSingle() < societyTechChance && tech.societyLevel < Mathf.Min(3 + tech.militaryLevel, 20))
         {
-            tech.societyLevel += 1;
+            tech.societyLevel = Mathf.Clamp(tech.societyLevel + 1, 0, 20);
         }
-        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && tech.industryLevel < 20 && rng.NextSingle() < industryTechChance)
+        // Industrial Advancement
+        if (tech.societyLevel >= 20 && tech.militaryLevel >= 20 && rng.NextSingle() < industryTechChance)
         {
-            tech.industryLevel += 1;
+            tech.industryLevel = Mathf.Clamp(tech.industryLevel + 1, 0, 20);
+        }
+
+        // Tech Spread
+        
+        foreach (Pop linkedPop in region.GetLinkedPops())
+        {
+            if (linkedPop == this || linkedPop == null) continue;
+
+            if (linkedPop.region == null)
+            {
+                GD.Print("The pop has no region?");
+                continue;
+            } 
+
+            float redTechSpreadChance = Defines.BaseRedTechSpreadChance * linkedPop.region.navigability;
+            if (linkedPop.culture != culture) redTechSpreadChance *= 0.5f;
+            if (region.owner != null)
+            {
+                if (linkedPop.region.owner != region.owner) redTechSpreadChance *= 0.5f;
+                if (region.owner.enemies.Contains(linkedPop.region.owner)) redTechSpreadChance *= 0.5f;
+            }
+
+            if (rng.NextSingle() < redTechSpreadChance)
+            {
+                linkedPop.tech.militaryLevel = Mathf.Max(tech.militaryLevel, linkedPop.tech.militaryLevel);
+            }
+            
+            // Blue Tech Transfer
+            if (rng.NextSingle() < Defines.BlueTechSpreadChance)
+            {
+                float culturalPower = 1f + (population * 0.01f * tech.societyLevel * region.fertility);
+                float culturalDefense = 1f + (linkedPop.population * 0.01f * linkedPop.tech.societyLevel);
+                if (culture != linkedPop.culture) culturalDefense *= 1.2f;
+                
+                float succesfulTransferChance = (culturalPower - culturalDefense)/(culturalPower + culturalDefense);
+
+                if (rng.NextSingle() < succesfulTransferChance)
+                {
+                    linkedPop.tech.societyLevel = tech.societyLevel;
+                }                
+            }
+
         }
     }
     public float CalculatePoliticalPower()
@@ -233,9 +273,7 @@ public partial class Pop
         movedWorkforce = Math.Clamp(movedWorkforce, 0, workforce);
         movedDependents = Math.Clamp(movedDependents, 0, dependents);
 
-        Pop newPop = ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, socialClass.id);
-        newPop.lastDirection = lastDirection;
-        
+        ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, socialClass.id);
         ChangePopulation(-movedWorkforce, -movedDependents);     
     }
     public float GetDeathRate()

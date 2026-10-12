@@ -23,7 +23,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
     // Constants
     [IgnoreMember] const int ticksBetweenTickRecalc = 4;
     [IgnoreMember] const float warChanceMultiplier = 0.01f;
-    [IgnoreMember] const float allyChanceMultiplier = 0.01f;
+    [IgnoreMember] const float allyChanceMultiplier = 0.0025f;
     [IgnoreMember] const float diploChangeChance = 0.25f;
 
     // Curves
@@ -97,7 +97,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
             }
 
             if (war.victor == null || !war.IsStateWarLead(state)) continue;
-
+            if (relations != null) relations.truce = TimeManager.YearsToTicks(Defines.TruceLengthYears);
             switch (war.warType)
             {
                 case WarType.CONQUEST:
@@ -116,28 +116,25 @@ public partial class StateAIManager : UtilityAi.AiAgent
                     // Otherwise the war ends in white peace
                     _ = new EndWarEvent(war, whitePeace);
                     war.EndWar();
-                    if (relations != null) relations.truce = TimeManager.YearsToTicks(Defines.TruceLengthYears);
                     break; 
                 case WarType.CIVIL_WAR:
-                    if (war.victor == War.WarSide.AGRESSOR)
+                    if (war.victor == War.WarSide.DEFENDER)
                     {
                         // Rebels Defeat
                         foreach (State rebel in war.attackers)
                         {
                             rebel.sovereignty = Sovereignty.PROVINCE;
-                            rebel.ongoingRebellion = false;
                         }         
-                        state.stability += Defines.CivilWarStabilityGain;                 
+                        war.defenderLeader.stability += Defines.CivilWarStabilityGain;                 
                     } 
                     else
                     {
+                        //GD.Print("Government Defeat");
                         // Government Defeat
-                        state.RemoveAllVassals();
-                        state.ongoingRebellion = false;
+                        war.defenderLeader.RemoveAllVassals();
                     }
-                    new EndWarEvent(war);  
+                    _ = new EndWarEvent(war);  
                     war.EndWar();
-                    if (relations != null) relations.truce = TimeManager.YearsToTicks(Defines.TruceLengthYears);
                     break;
             }
 
@@ -153,7 +150,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
         if (relations.opinion > 0)
         {
             // Positive
-            float goodwill = relations.opinion;
+            float goodwill = Mathf.Max(relations.opinion - 0.5f, 0) * 2f;
 
             if (rng.NextSingle() < goodwill * allyChanceMultiplier)
             {
@@ -168,7 +165,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
                     Alliance otherAlliance = target.GetAllianceOfType(AllianceType.ALLIANCE);
                     foreach (State member in otherAlliance.memberStates)
                     {
-                        if (state.relations.TryGetValue(member, out relations) && relations.opinion < 0)
+                        if (state.relations.TryGetValue(member, out relations) && rng.NextSingle() < relations.opinion)
                         {
                             return;
                         }
