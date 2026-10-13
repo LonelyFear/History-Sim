@@ -77,15 +77,12 @@ public static class ObjectManager
     }
     public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string socialClass)
     {
-        simManager.currentBatch++;
-        if (simManager.currentBatch > 12)
-        {
-            simManager.currentBatch = 1;
-        }
+        simManager.currentPopBatch = (uint)Mathf.PosMod(simManager.currentPopBatch + 1, 12) + 1;
+        
         Pop pop = new Pop()
         {
             id = GetId(),
-            batchId = simManager.currentBatch,
+            batchId = simManager.currentPopBatch,
             socialClass = AssetManager.GetSocialClass(socialClass),
             tech = tech,
             workforce = workforce,

@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Godot;
 
@@ -14,14 +10,9 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
     static readonly string[] months = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    public const uint ticksPerDay = 14;
-    public const uint ticksPerMonth = 28;
-    public const uint ticksPerYear = ticksPerMonth*12;
-    uint monthCounter = 0;
-    uint yearCounter = 0;
+    public const uint monthsPerTick = 1;
+    public const uint ticksPerYear = monthsPerTick*12;
     public uint ticks = 0;
-    public ulong tickStartTime = 0;
-    public double tickDelta = 1;
     public ulong monthStartTime = 0;
     public double monthDelta = 1;
     public SimManager simManager;
@@ -29,20 +20,14 @@ public partial class TimeManager : Node
     [Export] SimManagerHolder simHolder;
     bool simStart = false;
     //Task tickTask;
-    Task monthTask;
-    Task yearTask;
-    Task drawTask;
-    bool doYear = true;
-    bool doMonth = true;
-    bool didMonth = false;
-    [Export]
-    public bool debuggerMode = false;
-    double waitTime;
+    Task tickTask = Task.CompletedTask;
+    Task drawTask = Task.CompletedTask;
     double currentTime;
     public GameSpeed gameSpeed = GameSpeed.UNLIMITED;
     GameSpeed lastSpeed = GameSpeed.UNLIMITED;
     [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
+
     public override void _Ready()
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
@@ -54,7 +39,6 @@ public partial class TimeManager : Node
     {
         simStart = true;
         simManager = simHolder.simManager;
-        TickGame();
 	}
     public void ForceGameSpeed(GameSpeed desiredSpeed)
     {
@@ -83,143 +67,67 @@ public partial class TimeManager : Node
         }
 
         UpdateGameSpeed();
-        GetWaitTime();
         currentTime += delta;
 
         if (forcePause)
         {
             return;
         }
-
-        if (currentTime >= waitTime)
+        
+        if (simStart && tickTask.IsCompleted)
         {
-            currentTime = 0;
-            bool tickDone = true;//tickTask == null || tickTask.IsCompleted;
-            bool yearDone = yearTask == null || yearTask.IsCompleted;
-            bool monthDone = monthTask == null || monthTask.IsCompleted;
-            
-            if (simStart && tickDone)
-            {
-                if (doMonth && !debuggerMode)
-                {
-                    doMonth = false;
-                    monthTask = Task.Run(simManager.SimMonth);
-                }
-                if (monthDone)
-                {
-                    if (monthTask == null || monthTask.IsCompleted)
-                    {
-                        didMonth = true;
-                    }
-                    if (doYear && !debuggerMode)
-                    {
-                        doYear = false;
-                        yearTask = Task.Run(simManager.SimYear);
-                    }
-                    if (yearDone)
-                    {
-                        tickDelta = (Time.GetTicksMsec() - (double)tickStartTime) / 1000d;
-                        if (didMonth)
-                        {
-                            didMonth = false;
-                            monthDelta = (Time.GetTicksMsec() - (double)monthStartTime) / 1000d;
-                        }
-                        TickGame();
-                    }
-
-                }
-            }
+            tickTask = UpdateTimeManager();
+        } 
+        // TODO: Move this function to a more fitting place
+        if (drawTask.IsCompleted) {
+            drawTask = RenderGame();
         }
-        RenderGame();
     }
-    void RenderGame()
+    async Task UpdateTimeManager()
     {
-        bool drawDone = drawTask == null || drawTask.IsCompleted;
+        if (currentTime <= GetWaitTime()) return;
+        currentTime = 0;
+        
+        double monthStartTime = Time.GetTicksMsec(); 
+        await Task.Run(simManager.SimMonth);
+
+        if (Mathf.PosMod(ticks, ticksPerYear) == 0){
+            await Task.Run(simManager.SimYear);
+        }
+
+        monthDelta = (Time.GetTicksMsec() -monthStartTime) / 1000d;
+        ticks += monthsPerTick;
+    }
+    async Task RenderGame()
+    {
         // Hides region overlay 
         if (!mapManager.showRegionsCheckbox.ButtonPressed)
         {
             mapManager.regionOverlay.Visible = false;
         }
-        if (drawDone && mapManager.showRegionsCheckbox.ButtonPressed)
+        if (drawTask.IsCompleted && mapManager.showRegionsCheckbox.ButtonPressed)
         {
-            // Shows region overlat
+            // Shows region overlay
             mapManager.regionOverlay.Visible = true;
-            // Makes sure we have a buffer for the shader
-            if (drawTask != null && drawTask.IsCompletedSuccessfully)
-            {
-                mapManager.RunShader();
-            } 
-
-            // Runs draw async
-            // Draw tasks creats buffers for shaders so we dont want to run on first tick
-            MapModes[] specialMapModes = [MapModes.RAINFALL, MapModes.TEMPERATURE, MapModes.CONTINENTIALITY, MapModes.DAY_LENGTH];
-            // 
-            
-            // Only runs on ALL regions when we need to
-            drawTask = Task.Run(() => mapManager.UpdateRegionColors(simManager.regionIds.Values));
+            // Gets our buffers
+            await Task.Run(() => mapManager.UpdateRegionColors(simManager.regionIds.Values));  
+            // Runs the shader 
+            mapManager.RunShader();
         }     
     }
-    void GetWaitTime()
+    float GetWaitTime()
     {
-        double monthTime = (double)ticksPerMonth / ticksPerDay;
-        switch (gameSpeed)
+        return gameSpeed switch
         {
-            case GameSpeed.PAUSED:
-                waitTime = float.MaxValue;
-                break;
-            case GameSpeed.ONE_MONTH_PER_SECOND:
-                waitTime = 1d / monthTime;
-                break;
-            case GameSpeed.SIX_MONTHS_PER_SECOND:
-                waitTime = 1d / (6 * monthTime);
-                break;
-            case GameSpeed.ONE_YEAR_PER_SECOND:
-                waitTime = 1d / (12 * monthTime);
-                break;
-            case GameSpeed.FIVE_YEARS_PER_SECOND:
-                waitTime = 1d / (60 * monthTime);
-                break;
-            case GameSpeed.ONE_DECADE_PER_SECOND:
-                waitTime = 1d / (120 * monthTime);
-                break;
-            case GameSpeed.UNLIMITED:
-                waitTime = 0;
-                break;
-        }        
-    }
+            GameSpeed.PAUSED => float.MaxValue,
+            GameSpeed.ONE_MONTH_PER_SECOND => 1f / monthsPerTick,
+            GameSpeed.SIX_MONTHS_PER_SECOND => 1f / (6 * monthsPerTick),
+            GameSpeed.ONE_YEAR_PER_SECOND => 1f / (12 * monthsPerTick),
+            GameSpeed.FIVE_YEARS_PER_SECOND => 1f / (60 * monthsPerTick),
+            GameSpeed.ONE_DECADE_PER_SECOND => 1f / (120 * monthsPerTick),
+            _ => 0,
+        };
 
-    void TickGame(){
-        tickStartTime = Time.GetTicksMsec();   
-
-        ticks += ticksPerDay;
-        monthCounter += ticksPerDay;
-        yearCounter += ticksPerDay; 
-        if (monthCounter >= ticksPerMonth)
-        {
-            monthCounter = 0;
-            monthStartTime = Time.GetTicksMsec(); 
-
-            if (!debuggerMode)
-            {
-                doMonth = true;
-            }
-            else
-            {
-                simManager.SimMonth();
-            }
-        }
-        
-        if (yearCounter >= ticksPerYear){
-            yearCounter = 0;
-            if (!debuggerMode)
-            {
-                doYear = true;
-            }
-            else
-            {
-                simManager.SimYear();
-            }
-        }
     }
 
     public enum GameSpeed{
@@ -231,16 +139,8 @@ public partial class TimeManager : Node
         ONE_DECADE_PER_SECOND,
         UNLIMITED
     }
-    public uint GetDay(uint tick = 0)
-    {
-        if (tick == 0)
-        {
-            tick = ticks;
-        }
-        return (uint)Mathf.PosMod(tick, ticksPerMonth);
-    }
     public static uint GetMonth(uint tick){
-        return (uint)Mathf.PosMod(tick/(float)ticksPerMonth, 12) + 1;
+        return (uint)Mathf.PosMod(tick, 12) + 1;
     }
     public static uint GetYear(uint tick)
     {

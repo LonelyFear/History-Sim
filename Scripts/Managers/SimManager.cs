@@ -12,7 +12,6 @@ using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.States.AI;
 using FileAccess = Godot.FileAccess;
 using PixelHistory.Objects.Wars;
-using System.Runtime.Serialization;
 
 public enum RegionStyle
 {
@@ -73,7 +72,7 @@ public class SimManager
     [IgnoreMember] public ConcurrentDictionary<ulong, HistoricalEvent> historicalEventIds = [];
 
     // Misc
-    public uint currentBatch = 2;
+    public uint currentPopBatch = 0;
     public ulong currentId = 20;
     [IgnoreMember] public bool simLoadedFromSave = false;
 
@@ -89,7 +88,7 @@ public class SimManager
 
     // Constants
     [IgnoreMember] public static RegionStyle regionStyle = RegionStyle.Square;
-    [IgnoreMember] public const int regionGlobalWidth = 16;
+    [IgnoreMember] public const int RegionGlobalWidth = 16;
 
     // Performance
     [IgnoreMember] public Dictionary<string, double> stepPerformanceInfo = new(){
@@ -107,12 +106,12 @@ public class SimManager
 
     public Vector2I GlobalToTilePos(Vector2 pos)
     {
-        return (Vector2I)(pos / (terrainMap.Scale * regionGlobalWidth));
+        return (Vector2I)(pos / (terrainMap.Scale * RegionGlobalWidth));
     }
 
     public Vector2 TileToGlobalPos(Vector2 regionPos)
     {
-        return regionPos * (terrainMap.Scale * regionGlobalWidth);
+        return regionPos * (terrainMap.Scale * RegionGlobalWidth);
     }
     public void SaveSimToFile(string path)
     {
@@ -391,24 +390,18 @@ public class SimManager
             if (isInBatch)
             {
                 pop.GrowPop();
-                pop.TechnologyUpdate();   
-            } 
-            if (isInBatch)
-            {
+                pop.TechnologyUpdate();  
                 pop.Migrate();
-            }   
-                      
+            } 
+       
             lock (this)
             {
                 if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())
                 {
                     highestTech = pop.tech;
-                }                
+                }    
+                techAvg = techAvg.AddTech(pop.tech);             
             }    
-            lock (this)
-            {
-                techAvg = techAvg.AddTech(pop.tech); 
-            }
         });
 
         averageTech.fIndustryLevel = techAvg.industryLevel / (float)popsIds.Count;
@@ -614,7 +607,7 @@ public class SimManager
 
             if (state.sovereignty != Sovereignty.INDEPENDENT)
             {
-                state.timeAsVassal += TimeManager.ticksPerMonth;
+                state.timeAsVassal += TimeManager.monthsPerTick;
             }
 
             state.JoinObligateWars();

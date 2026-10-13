@@ -638,7 +638,7 @@ public partial class Region : PopObject, ISaveable
     public float GetTradeIncome()
     {
         float newIncome = baseWealth * 0.1f;
-        foreach (Region linkedRegion in linkedRegions)
+        foreach (Region linkedRegion in linkedRegions.ToArray())
         {
             newIncome += linkedRegion.GetTradeIncome();
         }       
@@ -853,17 +853,21 @@ public partial class Region : PopObject, ISaveable
         }
         return region;
     }
-    public Pop[] GetLinkedPops()
+    public IEnumerable<Pop> GetLinkedPops()
     {
         List<Pop> linkedPops = [..pops];
-        foreach (Region region in borderingRegions)
-        {
-            linkedPops.AddRange(region.pops);
-        }
-        if (owner != null && owner.capital != this) linkedPops.Add(owner.rulingPop);
-        if (tradeZone != null) linkedPops.AddRange(ObjectManager.GetRegion(tradeZone.centerId).pops);
 
-        return [..linkedPops];
+        lock (this)
+        {
+            foreach (Region region in borderingRegions)
+            {
+                linkedPops.AddRange(region.pops);
+            }
+            if (owner != null && owner.capital != this) linkedPops.Add(owner.rulingPop);
+            if (tradeZone != null) linkedPops.AddRange(ObjectManager.GetRegion(tradeZone.centerId).pops);            
+        }
+
+        return linkedPops;
     }
     public override string GenerateDescription()
     {
