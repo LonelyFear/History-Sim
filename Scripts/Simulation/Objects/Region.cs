@@ -479,19 +479,19 @@ public partial class Region : PopObject, ISaveable
                 border = true;
             }
         }  
-
     }
 
 
     public void NeutralConquest(Region target)
     {
-        bool checks = !target.conquered && target != null && target.pops.Count != 0 && target.owner == null;
+        bool canColonize = (owner.tech.industryLevel > 0.5 || target.population > 0) && target.habitable;
+        bool checks = !target.conquered  && canColonize && target.owner == null;
         if (!checks) return;
 
         long attackerPower;
         attackerPower = owner.armyPower;
 
-        if (Battle.CalcBattle(target, attackerPower, 5000))
+        if (Battle.CalcBattle(target, attackerPower, 5000 * Math.Min(target.population, 1)))
         {
             owner.AddRegion(target, true);
         }
@@ -803,7 +803,7 @@ public partial class Region : PopObject, ISaveable
             return;
         }
 
-        Queue<Pop> popsToCheck = new Queue<Pop>(pops);
+        Queue<Pop> popsToCheck = new(pops);
         while (popsToCheck.Count > 0)
         {
             Pop pop = popsToCheck.Dequeue();
@@ -834,7 +834,7 @@ public partial class Region : PopObject, ISaveable
     public bool Migrateable(Pop pop = null)
     {
         bool migrateable = true;
-        if (fertility <= 0.1f)
+        if (fertility <= 0.11f)
         {
             migrateable = false;
         }

@@ -201,8 +201,8 @@ public partial class Pop
             // Blue Tech Transfer
             if (rng.NextSingle() < Defines.BlueTechSpreadChance)
             {
-                float culturalPower = 1f + (population * 0.01f * tech.societyLevel * region.fertility);
-                float culturalDefense = 1f + (linkedPop.population * 0.01f * linkedPop.tech.societyLevel);
+                float culturalPower = 1f + (population * 0.01f * tech.societyLevel);
+                float culturalDefense = 1f + (linkedPop.population * 0.01f * linkedPop.tech.societyLevel)/linkedPop.region.navigability;
                 if (culture != linkedPop.culture) culturalDefense *= 1.2f;
                 
                 float succesfulTransferChance = (culturalPower - culturalDefense)/(culturalPower + culturalDefense);

@@ -290,22 +290,23 @@ public partial class MapManager : Node2D
         switch (drawnMapMode)
         {
             case MapModes.REALM:
+                
                 if (region.pops.Count > 0)
                 {
                     borderId = 1;
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
-                    if (regionOwner != null)
-                    {
-                        // Draws borders between polities
-                        borderId = region.claimant.GetOverlord().id;
-                        
-                        color = regionOwner.displayColor;
-                        if (region.claimant.capital == region && region.claimant.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
-                        {
-                            color = region.claimant.capitalColor;
-                        }
-                    }                 
                 }
+                if (regionOwner != null)
+                {
+                    // Draws borders between polities
+                    borderId = region.claimant.GetOverlord().id;
+                    
+                    color = regionOwner.displayColor;
+                    if (region.claimant.capital == region && region.claimant.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
+                    {
+                        color = region.claimant.capitalColor;
+                    }
+                }                 
                 if (selectionManager.IsRegionSelected())
                 {
                     State selectedState = selectionManager.GetSelectedState();
@@ -331,17 +332,17 @@ public partial class MapManager : Node2D
                 {
                     borderId = 1;
                     color = new Color(0.2f, 0.2f, 0.2f, 1);
-                    if (region.owner != null)
-                    {
-                        borderId = region.claimant.id;
-
-                        color = region.owner.displayColor;
-                        if (region.claimant.capital == region && includeCapital)
-                        {
-                            color = region.claimant.capitalColor;
-                        }
-                    }                 
                 }
+                if (region.owner != null)
+                {
+                    borderId = region.claimant.id;
+
+                    color = region.owner.displayColor;
+                    if (region.claimant.capital == region && includeCapital)
+                    {
+                        color = region.claimant.capitalColor;
+                    }
+                }                 
                
                 if (selectionManager.IsRegionSelected())
                 {

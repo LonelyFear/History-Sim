@@ -459,13 +459,13 @@ public class SimManager
                 {
                     region.MergePops();
                     region.DistributeWealth();
-
-                    if (region.owner != null)
-                    {
-                        region.StateBordering();
-                    }
                     if (region.corePop != null) region.tech = region.corePop.tech;
                 }
+                
+                if (region.owner != null)
+                {
+                    region.StateBordering();
+                }                
 
                 region.linkUpdateCountdown--;
                 region.GetTradeWeight();
