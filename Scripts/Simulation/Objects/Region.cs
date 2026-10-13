@@ -145,17 +145,18 @@ public partial class Region : PopObject, ISaveable
         get
         {
             float techBonus = 1f + (tech.societyLevel/4f);
-            int additionalPopulation = Mathf.RoundToInt(tradeIncome + taxIncome);
-            int newMaxPopulation = Mathf.RoundToInt((populationDensity + additionalPopulation) * arableLand * techBonus);
+            float indBonus = 1f + (tech.industryLevel/10f);
+
+            int additionalPopulation = (int)((tradeIncome + taxIncome) * arableLand) ;
+            int baseMaxPopulation = (int)(populationDensity * arableLand);
+
+            int newMaxPopulation = Mathf.RoundToInt(((baseMaxPopulation * techBonus) + additionalPopulation) * indBonus);
 
             return newMaxPopulation;
         }
     }
     [Key(49)] public Tech tech;
-    public void UpdateMaxPopulation()
-    {
-        
-    }
+
     public override void PrepareForSave()
     {
         base.PrepareForSave();
@@ -856,18 +857,18 @@ public partial class Region : PopObject, ISaveable
     public IEnumerable<Pop> GetLinkedPops()
     {
         List<Pop> linkedPops = [..pops];
-
-        lock (this)
+        
+        foreach (Region region in borderingRegions)
         {
-            foreach (Region region in borderingRegions)
+            foreach (Pop pop in region.pops.ToArray())
             {
-                linkedPops.AddRange(region.pops);
+                linkedPops.Add(pop);
             }
-            if (owner != null && owner.capital != this) linkedPops.Add(owner.rulingPop);
-            if (tradeZone != null) linkedPops.AddRange(ObjectManager.GetRegion(tradeZone.centerId).pops);            
         }
+        if (owner != null && owner.capital != this) linkedPops.Add(owner.rulingPop);
+        if (tradeZone != null) linkedPops.AddRange(ObjectManager.GetRegion(tradeZone.centerId).pops);  
 
-        return linkedPops;
+        return linkedPops; 
     }
     public override string GenerateDescription()
     {

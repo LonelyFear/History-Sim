@@ -159,23 +159,45 @@ public partial class Pop
 
             if (linkedPop.region == null)
             {
-                GD.Print("The pop has no region?");
+                //GD.Print("The pop has no region?");
                 continue;
             } 
 
+            float indTechSpreadChance = Defines.BaseIndTechSpreadChance * linkedPop.region.navigability;
             float redTechSpreadChance = Defines.BaseRedTechSpreadChance * linkedPop.region.navigability;
-            if (linkedPop.culture != culture) redTechSpreadChance *= 0.5f;
+            if (linkedPop.culture != culture)
+            {
+                redTechSpreadChance *= 0.5f;
+                indTechSpreadChance *= 0.25f;
+            } 
             if (region.owner != null)
             {
-                if (linkedPop.region.owner != region.owner) redTechSpreadChance *= 0.5f;
-                if (region.owner.enemies.Contains(linkedPop.region.owner)) redTechSpreadChance *= 0.5f;
+                if (linkedPop.region.owner != region.owner)
+                {
+                    redTechSpreadChance *= 0.5f;
+                    indTechSpreadChance *= 0.5f;
+                } 
+                if (linkedPop.region.owner == region.owner) indTechSpreadChance *= 2f;
+                
+                if (region.owner.enemies.Contains(linkedPop.region.owner))
+                {
+                    redTechSpreadChance *= 0.5f;
+                    indTechSpreadChance *= 0.5f;
+                } 
             }
 
+            // Innovation Spread
             if (rng.NextSingle() < redTechSpreadChance)
             {
                 linkedPop.tech.militaryLevel = Mathf.Max(tech.militaryLevel, linkedPop.tech.militaryLevel);
             }
-            
+
+            // Industry Spread
+            if (rng.NextSingle() < indTechSpreadChance && linkedPop.tech.societyLevel >= 20 && linkedPop.tech.militaryLevel >= 20)
+            {
+                linkedPop.tech.industryLevel = Mathf.Max(tech.industryLevel, linkedPop.tech.industryLevel);
+            }    
+
             // Blue Tech Transfer
             if (rng.NextSingle() < Defines.BlueTechSpreadChance)
             {

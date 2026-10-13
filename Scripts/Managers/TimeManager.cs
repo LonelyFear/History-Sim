@@ -10,11 +10,11 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
     static readonly string[] months = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    public const uint monthsPerTick = 1;
-    public const uint ticksPerYear = monthsPerTick*12;
+    public const uint MonthsPerTick = 6;
+    public const uint TicksPerYear = 12/MonthsPerTick;
     public uint ticks = 0;
     public ulong monthStartTime = 0;
-    public double monthDelta = 1;
+    public double tickDelta = 1;
     public SimManager simManager;
     public MapManager mapManager;
     [Export] SimManagerHolder simHolder;
@@ -88,15 +88,15 @@ public partial class TimeManager : Node
         if (currentTime <= GetWaitTime()) return;
         currentTime = 0;
         
-        double monthStartTime = Time.GetTicksMsec(); 
+        double tickStartTime = Time.GetTicksMsec(); 
         await Task.Run(simManager.SimMonth);
 
-        if (Mathf.PosMod(ticks, ticksPerYear) == 0){
+        if (Mathf.PosMod(ticks, TicksPerYear) == 0){
             await Task.Run(simManager.SimYear);
         }
 
-        monthDelta = (Time.GetTicksMsec() -monthStartTime) / 1000d;
-        ticks += monthsPerTick;
+        tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
+        ticks ++;
     }
     async Task RenderGame()
     {
@@ -120,11 +120,11 @@ public partial class TimeManager : Node
         return gameSpeed switch
         {
             GameSpeed.PAUSED => float.MaxValue,
-            GameSpeed.ONE_MONTH_PER_SECOND => 1f / monthsPerTick,
-            GameSpeed.SIX_MONTHS_PER_SECOND => 1f / (6 * monthsPerTick),
-            GameSpeed.ONE_YEAR_PER_SECOND => 1f / (12 * monthsPerTick),
-            GameSpeed.FIVE_YEARS_PER_SECOND => 1f / (60 * monthsPerTick),
-            GameSpeed.ONE_DECADE_PER_SECOND => 1f / (120 * monthsPerTick),
+            GameSpeed.ONE_MONTH_PER_SECOND => 1f / MonthsPerTick,
+            GameSpeed.SIX_MONTHS_PER_SECOND => 1f / (6/MonthsPerTick),
+            GameSpeed.ONE_YEAR_PER_SECOND => 1f / (12/MonthsPerTick),
+            GameSpeed.FIVE_YEARS_PER_SECOND => 1f / (60/MonthsPerTick),
+            GameSpeed.ONE_DECADE_PER_SECOND => 1f / (120/MonthsPerTick),
             _ => 0,
         };
 
@@ -140,19 +140,19 @@ public partial class TimeManager : Node
         UNLIMITED
     }
     public static uint GetMonth(uint tick){
-        return (uint)Mathf.PosMod(tick, 12) + 1;
+        return (uint)Mathf.PosMod(tick * MonthsPerTick, 12) + 1;
     }
     public static uint GetYear(uint tick)
     {
-        return tick / ticksPerYear;
+        return tick / TicksPerYear;
     }
     public static uint YearsToTicks(int years)
     {
-        return (uint)(years * ticksPerYear);
+        return (uint)(years * TicksPerYear);
     }
     public static float TicksToYears(uint ticks)
     {
-        return ticks / (float)ticksPerYear;
+        return ticks / (float)TicksPerYear;
     }
     public string GetStringMonth(uint tick = 0)
     {

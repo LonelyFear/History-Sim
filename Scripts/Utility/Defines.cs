@@ -42,8 +42,9 @@ public static class Defines
     public const float BaseRedTechSeedChance = 0.008f;
     public const float BaseBlueTechSeedChance = 0.0005f;
     public const float BlueTechBonus = 0.0002f;
-    public const float BaseIndTechSeedChance = 0.05f;
+    public const float BaseIndTechSeedChance = 0.005f;
     public const float BaseRedTechSpreadChance = 0.005f;
+    public const float BaseIndTechSpreadChance = 0.0005f;
     public const float BlueTechSpreadChance = 0.0005f;
 
     // States

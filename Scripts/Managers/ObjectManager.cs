@@ -77,7 +77,7 @@ public static class ObjectManager
     }
     public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string socialClass)
     {
-        simManager.currentPopBatch = (uint)Mathf.PosMod(simManager.currentPopBatch + 1, 12) + 1;
+        simManager.currentPopBatch = (uint)Mathf.PosMod(simManager.currentPopBatch + 1, TimeManager.TicksPerYear);
         
         Pop pop = new Pop()
         {

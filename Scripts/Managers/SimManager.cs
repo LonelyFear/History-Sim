@@ -363,10 +363,13 @@ public class SimManager
         //countedPerformanceInfo["Economy Time"] = 0; 
         //countedPerformanceInfo["Growth Time"] = 0; 
         //countedPerformanceInfo["Migration Time"] = 0; 
-        countedPerformanceInfo["Parallel Time"] = 0;
+        countedPerformanceInfo["Migration-Growth Time"] = 0;
+        countedPerformanceInfo["Technology Time"] = 0;
 
         Stopwatch stopwatch = Stopwatch.StartNew();
         Tech techAvg = new();
+
+        // Deletion and Averages
         foreach (var pair in popsIds.ToArray())
         {
             Pop pop = pair.Value;
@@ -375,41 +378,47 @@ public class SimManager
             {
                 ObjectManager.DestroyPop(pop);
             }
+
+            if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())
+            {
+                highestTech = pop.tech;
+            }    
+            techAvg = techAvg.AddTech(pop.tech);        
         }
         countedPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
-        
         stopwatch.Restart();
 
+        // Migration & Growth
         var partitioner = Partitioner.Create(popsIds.ToArray());
         Parallel.ForEach(partitioner, (popsPair) =>
         {
             Pop pop = popsPair.Value;
-            bool isInBatch = pop.batchId == TimeManager.GetMonth(timeManager.ticks);
             pop.politicalPower = pop.CalculatePoliticalPower(); 
               
-            if (isInBatch)
+            if (pop.batchId == Mathf.PosMod(currentPopBatch, TimeManager.TicksPerYear))
             {
                 pop.GrowPop();
-                pop.TechnologyUpdate();  
                 pop.Migrate();
             } 
-       
-            lock (this)
-            {
-                if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())
-                {
-                    highestTech = pop.tech;
-                }    
-                techAvg = techAvg.AddTech(pop.tech);             
-            }    
         });
+        countedPerformanceInfo["Migration-Growth Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        stopwatch.Restart();
+
+        // Technology
+        Parallel.ForEach(partitioner, (popsPair) =>
+        {
+            Pop pop = popsPair.Value;
+            if (pop.batchId == Mathf.PosMod(currentPopBatch, TimeManager.TicksPerYear))
+            {
+                pop.TechnologyUpdate();  
+            }           
+        });
+        countedPerformanceInfo["Technology Time"] += stopwatch.Elapsed.TotalMilliseconds;
 
         averageTech.fIndustryLevel = techAvg.industryLevel / (float)popsIds.Count;
         averageTech.fMilitaryLevel = techAvg.militaryLevel / (float)popsIds.Count;
         averageTech.fScienceLevel = techAvg.scienceLevel / (float)popsIds.Count;
         averageTech.fSocietyLevel = techAvg.societyLevel / (float)popsIds.Count;
-
-        countedPerformanceInfo["Parallel Time"] += stopwatch.Elapsed.TotalMilliseconds;
         popsPerformanceInfo = countedPerformanceInfo;
     }
     public void UpdateRegions()
@@ -496,7 +505,7 @@ public class SimManager
                 if (region.CanUpdateTrade())
                 {
                     region.LinkTrade();
-                    region.linkUpdateCountdown = 12;
+                    region.linkUpdateCountdown = (int)TimeManager.TicksPerYear;
                 }
                 
                 countedPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
@@ -604,11 +613,6 @@ public class SimManager
             }
             countedPerformanceInfo["Succession Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();  
-
-            if (state.sovereignty != Sovereignty.INDEPENDENT)
-            {
-                state.timeAsVassal += TimeManager.monthsPerTick;
-            }
 
             state.JoinObligateWars();
             state.UpdateRelations();  

@@ -22,6 +22,7 @@ public abstract class PopObject : NamedObject
     [Key(14)] public Dictionary<ulong, long> cultureIds { get; set; } = [];
     [Key(15)] public ulong? largestCultureId { get; set; } = null;
     [Key(16)] public Tech averageTech { get; set; }
+    [IgnoreMember] object locker = new();
     public PopObject()
     {
         foreach (string professionId in AssetManager.professions.Keys)
@@ -106,37 +107,44 @@ public abstract class PopObject : NamedObject
     }
 
     public virtual void AddPop(Pop pop)
-    {
-        if (pops.Add(pop))
+    {   
+        lock (locker)
         {
-            switch (this)
+            if (pops.Add(pop))
             {
-                case Culture:
-                    pop.culture?.RemovePop(pop);                    
-                    pop.culture = this as Culture;
-                    break;
-                case Region:
-                    pop.region?.RemovePop(pop);
-                    pop.region = this as Region;
-                    break;
-            }
-            ChangePopulation(pop.workforce, pop.dependents, pop.socialClass.id, pop.culture);
+                switch (this)
+                {
+                    case Culture:
+                        pop.culture?.RemovePop(pop);                    
+                        pop.culture = this as Culture;
+                        break;
+                    case Region:
+                        pop.region?.RemovePop(pop);
+                        pop.region = this as Region;
+                        break;
+                }
+                ChangePopulation(pop.workforce, pop.dependents, pop.socialClass.id, pop.culture);
+            }            
         }
+
     }
     public virtual void RemovePop(Pop pop)
     {
-        if (pops.Remove(pop))
+        lock (locker)
         {
-            ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
-            switch (this)
-            {     
-                case Culture:
-                    pop.culture = null;
-                    break;
-                case Region:
-                    pop.region = null;
-                    break;    
-            }             
+            if (pops.Remove(pop))
+            {
+                ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
+                switch (this)
+                {     
+                    case Culture:
+                        pop.culture = null;
+                        break;
+                    case Region:
+                        pop.region = null;
+                        break;    
+                }             
+            }            
         }
     }
     public virtual void ChangePopulation(long workforceChange, long dependentChange, string professionId, Culture culture)
