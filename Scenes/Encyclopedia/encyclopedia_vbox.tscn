@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://mnq8ih52343i"]
 
-[ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Resources & Themes/panel.stylebox" id="1_o0bgu"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_27ckr"]
+[ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Themes/panel.stylebox" id="1_o0bgu"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_27ckr"]
 [ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="3_gcgyi"]
 [ext_resource type="Script" uid="uid://dc6x1mkx6ucm" path="res://Scripts/UI/Encyclopedia/EncyclopediaMainMenu.cs" id="4_ith5f"]
 

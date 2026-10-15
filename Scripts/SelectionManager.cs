@@ -88,7 +88,7 @@ public partial class SelectionManager : Node2D
 	public Culture GetSelectedCulture()
 	{
 		if (selectedRegion == null) return null;
-		return ObjectManager.GetCulture(selectedRegion.largestCultureId);
+		return selectedRegion.largestCulture;
 	}
 	public TradeZone GetSelectedTradeZone()
 	{

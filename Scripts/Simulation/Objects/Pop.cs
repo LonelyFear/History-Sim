@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using MessagePack;
+using PixelHistory.Objects.States.Diplomacy;
+using Sovereignty = PixelHistory.Objects.States.Base.Sovereignty;
+
 [MessagePackObject(AllowPrivate = true)]
 public partial class Pop
 {
@@ -19,6 +22,7 @@ public partial class Pop
     [Key(9)] public double happiness { get; set; } = 1;
     [Key(10)] public double loyalty { get; set; } = 1;
     [Key(11)] public double politicalPower { get; set; } = 1;
+    [Key(23)] public Color localCulture = new Color("red");
     
     [Key(12)] public ulong? regionId { get; set; }
 
@@ -79,8 +83,6 @@ public partial class Pop
         }
     }
 
-    [IgnoreMember] public const float maxGoodMarketShare = 0.9f;
-
     public void ChangePopulation(int wfChange, int dfChange)
     {
         wfChange = Math.Max(wfChange, -workforce);
@@ -91,7 +93,6 @@ public partial class Pop
         population += wfChange + dfChange;    
 
         culture.ChangePopulation(wfChange, dfChange, socialClass.id, culture);
-        region.ChangePopulation(wfChange, dfChange, socialClass.id, culture);
     }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
@@ -99,7 +100,7 @@ public partial class Pop
         {
             return false;
         }
-        return a != b && a.socialClass == b.socialClass && Culture.CheckCultureSimilarity(a.culture, b.culture);
+        return a != b && a.socialClass == b.socialClass && a.culture.GetSimilarity(b.culture) < Defines.MinCultureDifference;
     }
     public Pop ChangeSocialClass(int convertedWorkforce, int convertedDependents, SocialClass newSocialClass)
     {
@@ -120,7 +121,7 @@ public partial class Pop
             return this;
         }
         // Makes a new pop with the new socialClass
-        Pop newWorkers = ObjectManager.CreatePop(convertedWorkforce, convertedDependents, region, tech, culture, newSocialClass.id);
+        Pop newWorkers = ObjectManager.CreatePop(convertedWorkforce, convertedDependents, region, tech, culture, newSocialClass.id, localCulture);
         // And removes the people who switched to the new socialClass
         ChangePopulation(-convertedWorkforce, -convertedDependents);
         // Land Stuff
@@ -215,6 +216,48 @@ public partial class Pop
 
         }
     }
+    public void ShiftCulture()
+    {
+        // TODO: Culture Shifting
+        if (rng.NextSingle() < Defines.BaseCultureDriftChance)
+        {
+            localCulture.R += Mathf.Lerp(-1, 1, rng.NextSingle()) * 0.05f;
+            localCulture.G += Mathf.Lerp(-1, 1, rng.NextSingle()) * 0.05f;
+            localCulture.B += Mathf.Lerp(-1, 1, rng.NextSingle()) * 0.05f;
+        }
+        if (rng.NextSingle() < Defines.BaseRegionDriftChance)
+        {
+            Color largestLocalCulture = region.pops.MaxBy(p => p.population).localCulture;
+            localCulture.R += Mathf.Sign(largestLocalCulture.R - localCulture.R) * 0.05f;
+            localCulture.G += Mathf.Sign(largestLocalCulture.G - localCulture.G) * 0.05f;
+            localCulture.B += Mathf.Sign(largestLocalCulture.B - localCulture.B) * 0.05f;            
+        }
+        if (region.owner != null && rng.NextSingle() < Defines.BaseStateDriftChance)
+        {
+            Color stateCulture = region.owner.GetOverlord().rulingPop.localCulture;
+
+            localCulture.R += Mathf.Sign(stateCulture.R - localCulture.R) * 0.05f;
+            localCulture.G += Mathf.Sign(stateCulture.G - localCulture.G) * 0.05f;
+            localCulture.B += Mathf.Sign(stateCulture.B - localCulture.B) * 0.05f;            
+        }
+
+        localCulture.Clamp(new Color(0.3f, 0.3f, 0.3f), new Color("white"));
+        
+        if (culture == null || culture.GetSimilarity(localCulture) > Defines.MinCultureDifference)
+        {
+            foreach (Culture joiningCulture in ObjectManager.simManager.cultureIds.Values)
+            {
+                // Sees if another culture better fits this pop
+                if (joiningCulture.GetSimilarity(localCulture) < Defines.MinCultureDifference)
+                {
+                    joiningCulture.AddPop(this);
+                    return;
+                }
+            }    
+
+            ObjectManager.CreateCulture(localCulture).AddPop(this);         
+        }
+    }
     public float CalculatePoliticalPower()
     {
         float popSizePoliticalPower = workforce * 0.005f;
@@ -295,7 +338,7 @@ public partial class Pop
         movedWorkforce = Math.Clamp(movedWorkforce, 0, workforce);
         movedDependents = Math.Clamp(movedDependents, 0, dependents);
 
-        ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, socialClass.id);
+        ObjectManager.CreatePop(movedWorkforce, movedDependents, destination, tech, culture, socialClass.id, localCulture);
         ChangePopulation(-movedWorkforce, -movedDependents);     
     }
     public float GetDeathRate()

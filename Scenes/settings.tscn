@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://ckabkohaushu" path="res://Scenes/menuBg.tscn" id="1_aaqfp"]
 [ext_resource type="Script" uid="uid://bptdbuxvlqlnb" path="res://Scripts/settings.gd" id="1_j2dne"]
 [ext_resource type="Script" uid="uid://0voqtrcc5gk0" path="res://Scripts/UI/World Creation/WorldSettingsPanel.cs" id="2_j2dne"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="3_6kysc"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="3_6kysc"]
 [ext_resource type="FontFile" uid="uid://d2h2sdgqnuwuy" path="res://Fonts/DungeonFont.ttf" id="4_6vr2p"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_f60ng"]

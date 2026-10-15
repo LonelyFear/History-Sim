@@ -36,9 +36,9 @@ public partial class InfoTab : BaseEncyclopediaTab
 			// Culture Chart
 			cultureChart.Clear();
 			cultureList.Text = "";
-			foreach (var pair in popObject.cultureIds.OrderBy(c => c.Value))
+			foreach (var pair in popObject.cultures.OrderBy(c => c.Value))
 			{
-				Culture culture = ObjectManager.GetCulture(pair.Key);
+				Culture culture = pair.Key;
 				float cultureSize = pair.Value;
 				cultureChart.AddElement(culture.name, cultureSize, culture.color);
 				cultureList.Text += $"{NamedObject.GenerateUrlText(culture, "■ " + culture.name, culture.color)} - {cultureSize/popObject.population:0%}\n";

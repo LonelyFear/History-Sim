@@ -43,21 +43,16 @@ public abstract partial class Polity : PopObject
         long countedP = 0;
         long countedW = 0;
         Dictionary<string, long> countedProfessions = [];
-        Dictionary<ulong, long> cCultures = [];
+        Dictionary<Culture, long> cCultures = [];
 
         HashSet<State> borders = [];
     
         float countedWealth = 0;
         float countedBaseWealth = 0;
         int occRegions = 0;
-        Tech newAvg = new();
 
         foreach (Region region in regions)
-        {
-            newAvg.militaryLevel += region.tech.militaryLevel;
-            newAvg.societyLevel += region.tech.societyLevel;
-            newAvg.industryLevel += region.tech.industryLevel;
-            
+        {       
             // Adds up population to state total
             countedP += region.population;
             countedW += region.workforce;
@@ -102,19 +97,15 @@ public abstract partial class Polity : PopObject
             professions[pair.Key] = pair.Value;
         }
         
-        cultureIds = cCultures;
+        cultures = cCultures;
+        largestCulture = cCultures.MaxBy(cc => cc.Value).Key;
+
         population = countedP;
         workforce = countedW;
         dependents = population - workforce;
 
         manpower = GetManpower();
         armyPower = GetArmyPower();
-
-        // Tech
-        newAvg.militaryLevel /= Mathf.Max(regions.Count, 1);
-        newAvg.societyLevel /= Mathf.Max(regions.Count, 1);
-        newAvg.industryLevel /= Mathf.Max(regions.Count, 1);
-        averageTech = newAvg;
     }
     public abstract int GetArmyPower();
     public abstract int GetManpower();
@@ -133,15 +124,15 @@ public abstract partial class Polity : PopObject
             }
         }    
     }
-    protected void CountCultures(PopObject obj, Dictionary<ulong, long> output)
+    protected void CountCultures(PopObject obj, Dictionary<Culture, long> output)
     {
         // Counts up cultures
-        foreach (ulong cultureId in obj.cultureIds.Keys)
+        foreach (Culture culture in obj.cultures.Keys)
         {
-            // Adds objal culture population to state population
-            if (!output.TryAdd(cultureId, obj.cultureIds[cultureId]))
+            // Adds obj culture population to state population
+            if (!output.TryAdd(culture, obj.cultures[culture]))
             {
-                output[cultureId] += obj.cultureIds[cultureId];
+                output[culture] += obj.cultures[culture];
             }
         }        
     }

@@ -5,6 +5,7 @@ using PixelHistory.Objects.States.Diplomacy;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -436,10 +437,10 @@ public partial class MapManager : Node2D
                 break;
             case MapModes.CULTURE:
 
-                if (region.largestCultureId != null && region.habitable)
+                if (region.largestCulture != null && region.habitable)
                 {
-                    borderId = (ulong)region.largestCultureId;
-                    color = ObjectManager.GetCulture(region.largestCultureId).color;
+                    borderId = region.largestCulture.id;
+                    color = region.largestCulture.color;
                 }
                 else if (region.habitable)
                 {
@@ -449,12 +450,12 @@ public partial class MapManager : Node2D
                 if (selectionManager.IsRegionSelected())
                 {
                     Culture culture = selectionManager.GetSelectedCulture();
-                    if (region.cultureIds.TryGetValue(culture.id, out long population) && population > 0 && region.largestCultureId != culture.id && region.habitable)
+                    if (region.cultures.TryGetValue(culture, out long population) && population > 0 && region.largestCulture != culture && region.habitable)
                     {
                         color = culture.color;
                         color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
                     }
-                    else if (region.largestCultureId != culture.id || !region.habitable)
+                    else if (region.largestCulture != culture || !region.habitable)
                     {
                         color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
                     }

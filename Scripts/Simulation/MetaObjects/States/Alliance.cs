@@ -131,21 +131,16 @@ public partial class Alliance : Polity
         long countedP = 0;
         long countedW = 0;
         Dictionary<string, long> countedProfessions = [];
-        Dictionary<ulong, long> cCultures = [];
+        Dictionary<Culture, long> cCultures = [];
 
         HashSet<State> borders = [];
     
         float countedWealth = 0;
         float countedBaseWealth = 0;
         int occRegions = 0;
-        Tech newAvg = new();
 
         foreach (State state in memberStates)
         {
-            newAvg.militaryLevel += state.tech.militaryLevel;
-            newAvg.societyLevel += state.tech.societyLevel;
-            newAvg.industryLevel += state.tech.industryLevel;
-            
             // Adds up population to state total
             countedP += state.population;
             countedW += state.workforce;
@@ -175,19 +170,13 @@ public partial class Alliance : Polity
         baseWealth = countedBaseWealth;
     
         professions = countedProfessions;
-        cultureIds = cCultures;
+        cultures = cCultures;
         population = countedP;
         workforce = countedW;
         dependents = population - workforce;
 
         manpower = GetManpower();
         armyPower = GetArmyPower();
-
-        // Tech
-        newAvg.militaryLevel /= Mathf.Max(memberStates.Count, 1);
-        newAvg.societyLevel /= Mathf.Max(memberStates.Count, 1);
-        newAvg.industryLevel /= Mathf.Max(memberStates.Count, 1);
-        averageTech = newAvg;
     }
 
     public override int GetSize()

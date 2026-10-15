@@ -6,8 +6,6 @@ using MessagePack;
 
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
-using PixelHistory.Objects.Wars;
-using System.Security.Claims;
 
 [MessagePackObject(AllowPrivate = true)]
 public partial class Region : PopObject, ISaveable
@@ -272,7 +270,7 @@ public partial class Region : PopObject, ISaveable
                 if (region.coastal)
                 {
                     float dist = region.gridPos.DistanceTo(gridPos);
-                    if (dist > 1.4f && dist <= 5 && region.ocean == ocean)
+                    if (dist > 1f && dist <= 5 && region.ocean == ocean)
                     {
                         potentialNavalConnections.Add(region);
                     }
@@ -282,7 +280,7 @@ public partial class Region : PopObject, ISaveable
             while (landReachableRegions.Count > 0)
             {
                 Region region = landReachableRegions.Dequeue();
-                if (region.gridPos.DistanceSquaredTo(gridPos) >= 144) break;
+                if (region.gridPos.DistanceTo(gridPos) >= 12) break;
 
                 foreach (Region border in region.directBorderRegions)
                 {
@@ -926,9 +924,9 @@ public partial class Region : PopObject, ISaveable
         {
             text += $"Cultures Breakdown:\n";
 
-            foreach (var cultureSizePair in cultureIds.OrderByDescending(pair => pair.Value))
+            foreach (var cultureSizePair in cultures.OrderByDescending(pair => pair.Value))
             {
-                Culture culture = ObjectManager.GetCulture(cultureSizePair.Key);
+                Culture culture = cultureSizePair.Key;
                 long localPopulation = cultureSizePair.Value;
                 
                 // Skips if the culture is too small

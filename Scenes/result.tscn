@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://bdfjq5g3ekeka"]
+[gd_scene format=3 uid="uid://bdfjq5g3ekeka"]
 
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="1_m2k5w"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="1_m2k5w"]
 
 [node name="Result" type="Button"]
 theme = ExtResource("1_m2k5w")

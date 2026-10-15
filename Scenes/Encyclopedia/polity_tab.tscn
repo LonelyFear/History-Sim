@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://8kvblrpf5g8"]
 
-[ext_resource type="Script" uid="uid://bwobde3dx2lv" path="res://Scripts/UI/Encyclopedia/PolityTab.cs" id="1_tbcit"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_0jkeo"]
+[ext_resource type="Script" path="res://Scripts/UI/Encyclopedia/PolityTab.cs" id="1_tbcit"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_0jkeo"]
 [ext_resource type="Script" uid="uid://bp5y8uk5vspts" path="res://Scripts/UI/Sim Stats/PieChart.cs" id="3_hssvn"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]

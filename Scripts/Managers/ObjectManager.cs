@@ -75,11 +75,11 @@ public static class ObjectManager
         simManager.regionIds.Add(region.id, region);
         return region;
     }
-    public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string socialClass)
+    public static Pop CreatePop(int workforce, int dependents, Region region, Tech tech, Culture culture, string socialClass, Color localCulture)
     {
         simManager.currentPopBatch = (uint)Mathf.PosMod(simManager.currentPopBatch + 1, TimeManager.TicksPerYear);
         
-        Pop pop = new Pop()
+        Pop pop = new()
         {
             id = GetId(),
             batchId = simManager.currentPopBatch,
@@ -88,6 +88,7 @@ public static class ObjectManager
             workforce = workforce,
             dependents = dependents,
             population = workforce + dependents,
+            localCulture = localCulture
         };
 
         lock (simManager.popsIds)
@@ -133,19 +134,15 @@ public static class ObjectManager
             return null;
         }
     }
-    public static Culture CreateCulture()
+    public static Culture CreateCulture(Color color)
     {
-        float r = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
-        float g = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
-        float b = Mathf.Lerp(0.2f, 1f, simManager.rng.NextSingle());
-        Culture culture = new Culture()
+        Culture culture = new()
         {
             id = GetId(),
             name = NameGenerator.GenerateCultureName(simManager.rng),
-            color = new Color(r, g, b),
+            color = color,
             tickCreated = timeManager.ticks,
         };
-
         simManager.cultureIds.Add(culture.id, culture);
         return culture;
     }

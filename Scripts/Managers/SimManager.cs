@@ -343,12 +343,28 @@ public class SimManager
                         if (!seededRegions.Contains(borderBorder) && borderBorder.Migrateable() && borderBorder.population == 0 && rng.NextSingle() < 0.2f) seededRegions.Add(borderBorder);
                     }                    
                 }
+                float widthProportion = region.centerPos.X / (float)worldSize.X;
+                float heightProportion = region.centerPos.Y / (float)worldSize.Y;
+                float r = heightProportion;
+                float g = 1f - widthProportion;
+                float b = (1f - heightProportion) * widthProportion;
+                
+                Color newCultureColor = new(r,g,b);
+                Culture culture = ObjectManager.CreateCulture(newCultureColor);
 
-                Culture culture = ObjectManager.CreateCulture(); 
+                foreach (Culture otherCulture in cultureIds.Values)
+                {
+                    if (otherCulture != culture && otherCulture.GetSimilarity(culture) < Defines.MinCultureDifference)
+                    {
+                        culture = otherCulture;
+                        break;
+                    }
+                }
+
                 foreach (Region seed in seededRegions)
                 {
                     int startingPopulation = rng.Next(600, 1200)/seededRegions.Count;        
-                    ObjectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), seed, new Tech(), culture, "farmer");                    
+                    ObjectManager.CreatePop((int)(startingPopulation * 0.25f), (int)(startingPopulation * 0.75f), seed, new Tech(), culture, "farmer", culture.color);                    
                 }
             }
         }
@@ -377,13 +393,15 @@ public class SimManager
             if (pop.region == null || pop.population <= 1)
             {
                 ObjectManager.DestroyPop(pop);
+                continue;
             }
 
             if (pop.tech.GetAdvancement() > highestTech.GetAdvancement())
             {
                 highestTech = pop.tech;
             }    
-            techAvg = techAvg.AddTech(pop.tech);        
+            techAvg = techAvg.AddTech(pop.tech);
+            if (pop.batchId == Mathf.PosMod(currentPopBatch, TimeManager.TicksPerYear)) pop.ShiftCulture();
         }
         countedPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
@@ -458,6 +476,7 @@ public class SimManager
                 if (region.pops.Count > 0)
                 {
                     region.MergePops();
+                    region.CountPopulation();
                     region.DistributeWealth();
                     if (region.corePop != null) region.tech = region.corePop.tech;
                 }
@@ -695,7 +714,7 @@ public class SimManager
         }
         Parallel.ForEach(partitioner, alliance =>
         {
-            alliance.tech = alliance.averageTech;
+            alliance.tech = alliance.leadState.tech;
             alliance.CountPopulation();  
         });            
     }

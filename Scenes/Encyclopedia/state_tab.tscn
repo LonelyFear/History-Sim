@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bjs33eu77j4gi"]
 
 [ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_km4me"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_hlivg"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_hlivg"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]
 content_margin_left = 4.0

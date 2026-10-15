@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bl4uuhft253r1"]
 
 [ext_resource type="Script" uid="uid://djk2ubw6at3yu" path="res://Scripts/UI/Encyclopedia/InfoTab.cs" id="1_q0aqs"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_tbcit"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_tbcit"]
 [ext_resource type="Script" uid="uid://bp5y8uk5vspts" path="res://Scripts/UI/Sim Stats/PieChart.cs" id="3_h5edq"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6xtfp"]

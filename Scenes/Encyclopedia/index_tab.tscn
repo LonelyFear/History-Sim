@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bysrp16e6iqw" path="res://Scripts/UI/Encyclopedia/IndexTab.cs" id="1_4vy0u"]
 [ext_resource type="PackedScene" uid="uid://bdfjq5g3ekeka" path="res://Scenes/result.tscn" id="2_sgxn7"]
-[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Resources & Themes/main_menu.theme" id="2_xfkyp"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_xfkyp"]
 [ext_resource type="FontFile" uid="uid://cf6ixk7i7r1jp" path="res://Fonts/monogram-extended.ttf" id="3_sgxn7"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_jxw03"]

@@ -7,7 +7,7 @@ using MessagePack;
 [Union(0, typeof(Culture))]
 [Union(1, typeof(Region))]
 [Union(2, typeof(Polity))]
-[MessagePackObject(keyAsPropertyName: true)]
+[MessagePackObject]
 public abstract class PopObject : NamedObject
 {
     [Key(7)] public long population { get; set; } = 0;
@@ -19,9 +19,24 @@ public abstract class PopObject : NamedObject
     [Key(12)] public HashSet<ulong> popsIds { get; set; }
     [IgnoreMember] public static TimeManager timeManager;
     [Key(13)] public Dictionary<string, long> professions { get; set; } = new Dictionary<string, long>();
-    [Key(14)] public Dictionary<ulong, long> cultureIds { get; set; } = [];
-    [Key(15)] public ulong? largestCultureId { get; set; } = null;
-    [Key(16)] public Tech averageTech { get; set; }
+    [Key(14)] protected Dictionary<ulong, long> cultureIds { get; set; } = [];
+    [IgnoreMember] public Dictionary<Culture, long> cultures { get; set; } = [];
+    [Key(15)] protected ulong? largestCultureId { get; set; } = null;
+    [IgnoreMember] Culture _largestCulture;
+    [IgnoreMember] public Culture largestCulture
+    {
+        get
+        {
+            if (_largestCulture == null && largestCultureId != null) 
+                _largestCulture = ObjectManager.GetCulture(largestCultureId);
+            return _largestCulture;
+        } 
+        set
+        {
+            largestCultureId = value?.id;
+            _largestCulture = value;
+        }         
+    }
     [IgnoreMember] object locker = new();
     public PopObject()
     {
@@ -33,28 +48,12 @@ public abstract class PopObject : NamedObject
     public override void PrepareForSave()
     {
         popsIds = pops.Count > 0 ? [.. pops.Select(p => p.id)] : null;
+        cultureIds = new Dictionary<ulong, long>(cultures.Select(pair => new KeyValuePair<ulong, long>(pair.Key.id, pair.Value)).ToDictionary());
     }
     public override void LoadFromSave()
     {
         pops = popsIds == null ? [] : [.. popsIds.Select(p => ObjectManager.GetPop(p))];
-    }
-
-    public virtual void GetAverageTech()
-    {
-        Tech newAvg = new();
-        //Culture currentLargest = null;
-        foreach (Pop pop in pops)
-        {
-            newAvg.militaryLevel += pop.tech.militaryLevel;
-            newAvg.societyLevel += pop.tech.societyLevel;
-            newAvg.industryLevel += pop.tech.industryLevel;
-        }
-        int popCount = Mathf.Max(pops.Count, 1);
-        newAvg.militaryLevel /= popCount;
-        newAvg.societyLevel /= popCount;
-        newAvg.industryLevel /= popCount;
-        
-        averageTech = newAvg;
+        cultures = new Dictionary<Culture, long>(cultureIds.Select(pair => new KeyValuePair<Culture, long>(ObjectManager.GetCulture(pair.Key), pair.Value)).ToDictionary());
     }
     public virtual void CountPopulation()
     {
@@ -69,18 +68,17 @@ public abstract class PopObject : NamedObject
         //Culture currentLargest = null;
         foreach (Pop pop in pops)
         {
-            newAvg = new()
-            {
-                militaryLevel = 20,
-                societyLevel = newAvg.societyLevel + pop.tech.societyLevel,
-                industryLevel = newAvg.industryLevel + pop.tech.industryLevel              
-            };
-
             countedPopulation += pop.population;
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
 
-            countedProfessions[pop.socialClass.id] += pop.workforce;
+            if (!countedProfessions.ContainsKey(pop.socialClass.id))
+            {
+                countedProfessions.Add(pop.socialClass.id, pop.workforce);
+            } else
+            {
+                countedProfessions[pop.socialClass.id] += pop.workforce;
+            } 
             if (!countedCultures.ContainsKey(pop.culture))
             {
                 countedCultures.Add(pop.culture, pop.population);
@@ -90,17 +88,11 @@ public abstract class PopObject : NamedObject
                 countedCultures[pop.culture] += pop.population;
             }
         }
-        averageTech = new()
-        {
-            militaryLevel = newAvg.militaryLevel / pops.Count,
-            societyLevel = newAvg.societyLevel / pops.Count,
-            industryLevel = newAvg.industryLevel / pops.Count              
-        };
         
-        foreach (var pair in countedProfessions)
-        {
-            professions[pair.Key] = pair.Value;
-        }
+        professions = countedProfessions;
+        cultures = countedCultures;
+        largestCulture = countedCultures.MaxBy(cc => cc.Value).Key;
+
         population = countedPopulation;
         dependents = countedDependents;
         workforce = countedWorkforce;
@@ -169,21 +161,21 @@ public abstract class PopObject : NamedObject
         }
 
         // Cultures
-        lock (cultureIds)
+        lock (cultures)
         {
-            if (!cultureIds.ContainsKey(culture.id))
+            if (!cultures.ContainsKey(culture))
             {
-                cultureIds.Add(culture.id, workforceChange + dependentChange);
+                cultures.Add(culture, workforceChange + dependentChange);
             } else
             {
-                cultureIds[culture.id] += workforceChange + dependentChange;
+                cultures[culture] += workforceChange + dependentChange;
             }            
         }
 
         // Updates largest culture
-        if (largestCultureId == null || cultureIds[culture.id] > cultureIds[(ulong)largestCultureId])
+        if (largestCulture == null || cultures[culture] > cultures[largestCulture])
         {
-            largestCultureId = culture.id;
+            largestCulture = culture;
         }
     }
 }

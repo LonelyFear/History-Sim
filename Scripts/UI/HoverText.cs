@@ -28,7 +28,7 @@ public partial class HoverText : RichTextLabel
 					if (polity != null) Text += $", {polity.name}";
 					break;
 				case MapModes.CULTURE:
-					Culture culture = ObjectManager.GetCulture(hoveredRegion.largestCultureId);
+					Culture culture = hoveredRegion.largestCulture;
 					if (culture != null) Text += $", {culture.name}";
 					break;
 			}
