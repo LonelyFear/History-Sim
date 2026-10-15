@@ -82,7 +82,7 @@ public partial class Pop
             _region = value;
         }
     }
-
+    [IgnoreMember] static FastNoiseLite cultureNoise = new();
     public void ChangePopulation(int wfChange, int dfChange)
     {
         wfChange = Math.Max(wfChange, -workforce);
@@ -165,7 +165,7 @@ public partial class Pop
             } 
 
             float indTechSpreadChance = Defines.BaseIndTechSpreadChance * linkedPop.region.navigability;
-            float redTechSpreadChance = Defines.BaseRedTechSpreadChance * linkedPop.region.navigability;
+            float redTechSpreadChance = Defines.BaseRedTechSpreadChance * linkedPop.region.navigability + (tech.industryLevel * Defines.BaseRedTechSpreadChance);
             if (linkedPop.culture != culture)
             {
                 redTechSpreadChance *= 0.5f;
@@ -200,7 +200,7 @@ public partial class Pop
             }    
 
             // Blue Tech Transfer
-            if (rng.NextSingle() < Defines.BlueTechSpreadChance)
+            if (rng.NextSingle() < Defines.BlueTechSpreadChance + (tech.industryLevel * Defines.BaseRedTechSpreadChance))
             {
                 float culturalPower = 1f + (population * 0.01f * tech.societyLevel);
                 float culturalDefense = 1f + (linkedPop.population * 0.01f * linkedPop.tech.societyLevel)/linkedPop.region.navigability;
@@ -221,9 +221,9 @@ public partial class Pop
         // TODO: Culture Shifting
         if (rng.NextSingle() < Defines.BaseCultureDriftChance)
         {
-            localCulture.R += Mathf.Lerp(-1, 1, rng.NextSingle()) * 0.05f;
-            localCulture.G += Mathf.Lerp(-1, 1, rng.NextSingle()) * 0.05f;
-            localCulture.B += Mathf.Lerp(-1, 1, rng.NextSingle()) * 0.05f;
+            localCulture.R += cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y) * 0.05f;
+            localCulture.G += cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y) * 0.05f;
+            localCulture.B += cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y) * 0.05f;
         }
         if (rng.NextSingle() < Defines.BaseRegionDriftChance)
         {
@@ -232,7 +232,7 @@ public partial class Pop
             localCulture.G += Mathf.Sign(largestLocalCulture.G - localCulture.G) * 0.05f;
             localCulture.B += Mathf.Sign(largestLocalCulture.B - localCulture.B) * 0.05f;            
         }
-        if (region.owner != null && rng.NextSingle() < Defines.BaseStateDriftChance)
+        if (region.owner != null && region.owner.GetOverlord().rulingPop != null && rng.NextSingle() < Defines.BaseStateDriftChance)
         {
             Color stateCulture = region.owner.GetOverlord().rulingPop.localCulture;
 
@@ -241,7 +241,12 @@ public partial class Pop
             localCulture.B += Mathf.Sign(stateCulture.B - localCulture.B) * 0.05f;            
         }
 
-        localCulture.Clamp(new Color(0.3f, 0.3f, 0.3f), new Color("white"));
+        foreach (Pop linkedPop in region.GetLinkedPops())
+        {
+            // Culture Shift Among Linked Pops
+        }
+
+        localCulture = localCulture.Clamp(new Color(0.2f, 0.2f, 0.2f), new Color("white"));
         
         if (culture == null || culture.GetSimilarity(localCulture) > Defines.MinCultureDifference)
         {
