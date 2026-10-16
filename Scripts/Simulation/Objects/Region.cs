@@ -913,53 +913,6 @@ public partial class Region : PopObject, ISaveable
 
         return desc;        
     }
-
-    public override string GenerateStatsText()
-    {
-        string text = $"Name: {name}";
-        text += $"\nPopulation: {population:#,###0}\n";
-        
-
-        if (population > 0)
-        {
-            text += $"Cultures Breakdown:\n";
-
-            foreach (var cultureSizePair in cultures.OrderByDescending(pair => pair.Value))
-            {
-                Culture culture = cultureSizePair.Key;
-                long localPopulation = cultureSizePair.Value;
-                
-                // Skips if the culture is too small
-                if (localPopulation < 1) continue;
-
-                text += GenerateUrlText(culture, culture.name) + ":\n";
-                text += $"  Population: {localPopulation:#,###0} ";
-
-                float culturePercentage = localPopulation/(float)population;
-                text += $"({culturePercentage:P0})\n";
-            }     
-            text += $"\nWorkforce: {workforce:#,###0}\n";
-            /*
-            text += $"Professions Breakdown:\n";     
-
-            foreach (var socialClassSizePair in socialClasss.OrderByDescending(pair => pair.Key))
-            {
-                SocialClass socialClass = socialClassSizePair.Key;
-                long localPopulation = socialClassSizePair.Value;
-                
-                // Skips if the culture is too small
-                if (Pop.FromNativePopulation(localPopulation) < 1) continue;
-                text += $"{socialClass.ToString().Capitalize()}\n";
-
-                text += $"  Workers: {Pop.FromNativePopulation(localPopulation):#,###0} ";
-
-                float percentage = localPopulation/(float)workforce;
-                text += $"({percentage:P0})\n";
-            } 
-            */  
-        }
-        return text;
-    }
     public static List<Region> GetPath(Region start, Region target, bool mustBeInhabited = false, int maxDist = -1)
     {
         PriorityQueue<Region, float> frontier = new();

@@ -130,9 +130,9 @@ public partial class Pop
 
     public void TechnologyUpdate()
     {      
-        float militaryTechChance = Defines.BaseRedTechSeedChance * region.fertility;
-        float societyTechChance = Defines.BaseBlueTechSeedChance * region.fertility + (tech.militaryLevel * Defines.BlueTechBonus);
-        float industryTechChance = Defines.BaseIndTechSeedChance * region.fertility;
+        float militaryTechChance = Defines.RedTechSeedChance * region.fertility;
+        float societyTechChance = Defines.BlueTechSeedChance * region.fertility + (tech.militaryLevel * Defines.RedTechBonus);
+        float industryTechChance = Defines.IndTechSeedChance * region.fertility;
 
         // Tech Seeding
         
@@ -164,8 +164,8 @@ public partial class Pop
                 continue;
             } 
 
-            float indTechSpreadChance = Defines.BaseIndTechSpreadChance * linkedPop.region.navigability;
-            float redTechSpreadChance = Defines.BaseRedTechSpreadChance * linkedPop.region.navigability + (tech.industryLevel * Defines.BaseRedTechSpreadChance);
+            float indTechSpreadChance = Defines.IndTechSpreadChance * linkedPop.region.navigability;
+            float redTechSpreadChance = Defines.RedTechSpreadChance * linkedPop.region.navigability + (tech.industryLevel * Defines.IndTechBonus);
             if (linkedPop.culture != culture)
             {
                 redTechSpreadChance *= 0.5f;
@@ -200,7 +200,7 @@ public partial class Pop
             }    
 
             // Blue Tech Transfer
-            if (rng.NextSingle() < Defines.BlueTechSpreadChance + (tech.industryLevel * Defines.BaseRedTechSpreadChance))
+            if (rng.NextSingle() < Defines.BlueTechSpreadChance + (tech.industryLevel * Defines.BlueTechSpreadChance))
             {
                 float culturalPower = 1f + (population * 0.01f * tech.societyLevel);
                 float culturalDefense = 1f + (linkedPop.population * 0.01f * linkedPop.tech.societyLevel)/linkedPop.region.navigability;
@@ -221,9 +221,10 @@ public partial class Pop
         // TODO: Culture Shifting
         if (rng.NextSingle() < Defines.BaseCultureDriftChance)
         {
-            localCulture.R += cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y) * 0.05f;
-            localCulture.G += cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y) * 0.05f;
-            localCulture.B += cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y) * 0.05f;
+            float noiseValue = cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y);
+            localCulture.R += noiseValue * 0.025f;
+            localCulture.G += noiseValue * 0.025f;
+            localCulture.B += noiseValue * 0.025f;
         }
         if (rng.NextSingle() < Defines.BaseRegionDriftChance)
         {

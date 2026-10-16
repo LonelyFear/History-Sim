@@ -195,6 +195,18 @@ public partial class Alliance : Polity
         }
         return size;
     }
+
+    public override string GenerateDescription()
+    {
+        if (type == AllianceType.REALM) return leadState.GenerateDescription();
+        return base.GenerateDescription();
+    }
+    public override string GenerateHistoryText()
+    {
+        if (type == AllianceType.REALM) return leadState.GenerateHistoryText();
+        return base.GenerateHistoryText();
+    }
+
 }
 public enum AllianceType
 {

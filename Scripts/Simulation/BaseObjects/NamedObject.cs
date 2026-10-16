@@ -54,7 +54,7 @@ public abstract class NamedObject
         dead = true;
         tickDestroyed = simManager.timeManager.ticks;        
     }
-    public string GenerateHistoryText()
+    public virtual string GenerateHistoryText()
     {
         string text = "This object doesnt have any recorded history yet.";
         if (historicalEvents.Count < 1)

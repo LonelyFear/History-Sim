@@ -30,18 +30,30 @@ public partial class InfoTab : BaseEncyclopediaTab
 		objHist.Text = loadedObj.GenerateHistoryText();
 
 		PopObject popObject = loadedObj as PopObject;
-		chartsContainer.Visible = popObject != null && popObject.population > 0;
+
+		chartsContainer.Visible = popObject != null && popObject.population > 0 && popObject.GetType() != typeof(Culture);
 		if (chartsContainer.Visible)
 		{
 			// Culture Chart
 			cultureChart.Clear();
 			cultureList.Text = "";
-			foreach (var pair in popObject.cultures.OrderBy(c => c.Value))
+			float remainingPopulation = popObject.population;
+			foreach (var pair in popObject.cultures.OrderByDescending(c => c.Value).Take(5))
 			{
 				Culture culture = pair.Key;
 				float cultureSize = pair.Value;
+				float proportion = cultureSize/popObject.population;
+				if (proportion < 0.01f) break;
+
+				remainingPopulation -= cultureSize;
+
 				cultureChart.AddElement(culture.name, cultureSize, culture.color);
-				cultureList.Text += $"{NamedObject.GenerateUrlText(culture, "■ " + culture.name, culture.color)} - {cultureSize/popObject.population:0%}\n";
+				cultureList.Text += $"{NamedObject.GenerateUrlText(culture, "■ " + culture.name, culture.color)} - {cultureSize:#,##0} ({proportion:0.#%})\n";
+			}
+			if (remainingPopulation > 0)
+			{
+				cultureChart.AddElement("Other", remainingPopulation, new Color("white"));
+				cultureList.Text += $"■ Other - {remainingPopulation:#,##0}  ({remainingPopulation/popObject.population:0.#%})\n";
 			}
 			cultureChart.QueueRedraw();
 		}

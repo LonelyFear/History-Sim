@@ -24,13 +24,6 @@ public partial class InfoHolder : VBoxContainer
 			encyclopedia.OpenEncyclopedia();
 			
 			string idToOpen = selectedObject.GetFullId();
-			if (selectedObject is Alliance alliance)
-			{
-				if (alliance.type == AllianceType.REALM)
-				{
-					idToOpen = alliance.leadState.GetFullId();
-				}
-			}
 			encyclopedia.OpenTab(idToOpen);
 		};
 	}

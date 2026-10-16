@@ -11,9 +11,9 @@
 [ext_resource type="Script" uid="uid://c0oiega1yip5i" path="res://Scripts/Managers/TimeManager.cs" id="7_ewbju"]
 [ext_resource type="Script" uid="uid://bsfhsvwfmgl58" path="res://Scripts/UI/TerrainMap.cs" id="7_nnt18"]
 [ext_resource type="Shader" uid="uid://qmdpy6hf1r20" path="res://Shaders/world_wrapping.gdshader" id="8_cwurv"]
-[ext_resource type="Script" uid="uid://ca4hg87crqxlm" path="res://Scripts/Managers/EncyclopediaManager.cs" id="8_iivbl"]
 [ext_resource type="PackedScene" uid="uid://bl4uuhft253r1" path="res://Scenes/Encyclopedia/info_tab.tscn" id="9_7nbq1"]
 [ext_resource type="Script" uid="uid://dpouv3r71up2q" path="res://Scripts/UI/Menus/GameUI.cs" id="11_7nbq1"]
+[ext_resource type="Script" uid="uid://77e4chl7ptvx" path="res://Scripts/UI/Encyclopedia/EncyclopediaManager.cs" id="11_8lpvs"]
 [ext_resource type="Script" uid="uid://cn00mfk0hsqbx" path="res://Scripts/UI/Sim Stats/tps_label.gd" id="11_exi56"]
 [ext_resource type="Script" uid="uid://drq8bb8atmw4g" path="res://Scripts/UI/Debug/FrameBreakdown.cs" id="12_ewbju"]
 [ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/Encyclopedia/index_tab.tscn" id="12_mg4q0"]
@@ -157,7 +157,7 @@ scale = Vector2(16, 16)
 centered = false
 
 [node name="Encyclopedia" type="CanvasLayer" parent="." unique_id=339626827 node_paths=PackedStringArray("timeManager", "encyclopediaMenu", "mainMenu", "encyclopediaHolder", "gameUi", "playerCamera", "closeEncyclopediaButton", "simHolder", "selectionManager", "mapManager")]
-script = ExtResource("8_iivbl")
+script = ExtResource("11_8lpvs")
 infoTabScene = ExtResource("9_7nbq1")
 indexTabScene = ExtResource("12_mg4q0")
 timeManager = NodePath("../Time Manager")
