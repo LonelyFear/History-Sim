@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -18,7 +18,7 @@ public abstract class PopObject : NamedObject
     [IgnoreMember] public HashSet<Pop> pops = [];
     [Key(12)] public HashSet<ulong> popsIds { get; set; }
     [IgnoreMember] public static TimeManager timeManager;
-    [Key(13)] public Dictionary<string, long> professions { get; set; } = new Dictionary<string, long>();
+    [Key(13)] public Dictionary<string, long> professions { get; set; } = [];
     [Key(14)] protected Dictionary<ulong, long> cultureIds { get; set; } = [];
     [IgnoreMember] public Dictionary<Culture, long> cultures { get; set; } = [];
     [Key(15)] protected ulong? largestCultureId { get; set; } = null;
@@ -37,7 +37,8 @@ public abstract class PopObject : NamedObject
             _largestCulture = value;
         }         
     }
-    [IgnoreMember] object locker = new();
+    [IgnoreMember] protected readonly Dictionary<Culture, long> countedCultures = [];
+    [IgnoreMember] protected readonly Dictionary<string, long> countedProfessions = [];
     public PopObject()
     {
         foreach (string professionId in AssetManager.professions.Keys)
@@ -61,8 +62,8 @@ public abstract class PopObject : NamedObject
         long countedDependents = 0;
         long countedWorkforce = 0;
 
-        Dictionary<Culture, long> countedCultures = [];
-        Dictionary<string, long> countedProfessions = [];
+        countedCultures.Clear();
+        countedProfessions.Clear();
 
         Tech newAvg = new();
         //Culture currentLargest = null;
@@ -72,21 +73,11 @@ public abstract class PopObject : NamedObject
             countedWorkforce += pop.workforce;
             countedDependents += pop.dependents;
 
-            if (!countedProfessions.ContainsKey(pop.socialClass.id))
-            {
-                countedProfessions.Add(pop.socialClass.id, pop.workforce);
-            } else
-            {
-                countedProfessions[pop.socialClass.id] += pop.workforce;
-            } 
-            if (!countedCultures.ContainsKey(pop.culture))
-            {
-                countedCultures.Add(pop.culture, pop.population);
-            }
-            else
-            {
-                countedCultures[pop.culture] += pop.population;
-            }
+            countedProfessions.TryGetValue(pop.socialClass.id, out long classSize);
+            countedProfessions[pop.socialClass.id] = classSize + pop.workforce;
+
+            countedCultures.TryGetValue(pop.culture, out long cultureSize);
+            countedCultures[pop.culture] = cultureSize + pop.population;
         }
         
         professions = countedProfessions;
@@ -100,82 +91,73 @@ public abstract class PopObject : NamedObject
 
     public virtual void AddPop(Pop pop)
     {   
+        bool popAdded = false;
         lock (locker)
         {
-            if (pops.Add(pop))
-            {
-                switch (this)
-                {
-                    case Culture:
-                        pop.culture?.RemovePop(pop);                    
-                        pop.culture = this as Culture;
-                        break;
-                    case Region:
-                        pop.region?.RemovePop(pop);
-                        pop.region = this as Region;
-                        break;
-                }
-                ChangePopulation(pop.workforce, pop.dependents, pop.socialClass.id, pop.culture);
-            }            
+            popAdded = pops.Add(pop);           
         }
 
+        if (popAdded)
+        {
+            ChangePopulation(pop.workforce, pop.dependents, pop.socialClass.id, pop.culture);
+            switch (this)
+            {
+                case Culture:
+                    pop.culture?.RemovePop(pop);                    
+                    pop.culture = this as Culture;
+                    break;
+                case Region:
+                    pop.region?.RemovePop(pop);
+                    pop.region = this as Region;
+                    break;
+            }
+        }              
     }
     public virtual void RemovePop(Pop pop)
     {
+        bool popRemoved = false;
         lock (locker)
         {
-            if (pops.Remove(pop))
-            {
-                ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
-                switch (this)
-                {     
-                    case Culture:
-                        pop.culture = null;
-                        break;
-                    case Region:
-                        pop.region = null;
-                        break;    
-                }             
-            }            
+            popRemoved = pops.Remove(pop);           
+        }
+
+        if (popRemoved)
+        {
+            ChangePopulation(-pop.workforce, -pop.dependents, pop.socialClass.id, pop.culture);
+            switch (this)
+            {     
+                case Culture:
+                    pop.culture = null;
+                    break;
+                case Region:
+                    pop.region = null;
+                    break;    
+            }               
         }
     }
     public virtual void ChangePopulation(long workforceChange, long dependentChange, string professionId, Culture culture)
     {
         // Updates numbers
-        lock (this)
+        lock (locker)
         {
             workforce += workforceChange;
             dependents += dependentChange;
-            population += workforceChange + dependentChange;            
-        }
-        // Updates Demographics
-        lock (professionId)
-        {
-            if (!professions.ContainsKey(professionId))
-            {
-                professions.Add(professionId, workforceChange);
-            } else
-            {
-                professions[professionId] += workforceChange;
-            }            
-        }
+            population += workforceChange + dependentChange;  
+            // Updates Demographics
+            professions.TryGetValue(professionId, out long profSize);
+            professions[professionId] = profSize + workforceChange;    
 
-        // Cultures
-        lock (cultures)
-        {
-            if (!cultures.ContainsKey(culture))
-            {
-                cultures.Add(culture, workforceChange + dependentChange);
-            } else
-            {
-                cultures[culture] += workforceChange + dependentChange;
-            }            
-        }
+            // Cultures
+            if (culture == null) return;
 
-        // Updates largest culture
-        if (largestCulture == null || cultures[culture] > cultures[largestCulture])
-        {
-            largestCulture = culture;
+            cultures.TryGetValue(culture, out long cultureSize);
+            cultures[culture] = cultureSize + workforceChange + dependentChange;            
+
+            // Updates largest culture
+            if (largestCulture == null || cultures[culture] > cultures[largestCulture])
+            {
+                largestCulture = culture;                     
+            }
         }
     }
 }

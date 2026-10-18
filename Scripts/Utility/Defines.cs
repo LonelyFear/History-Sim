@@ -53,7 +53,7 @@ public static class Defines
     
     // Cultures
     public const float MinCultureDifference = 0.1f;
-    public const float BaseCultureDriftChance = 0.003f;
+    public const float BaseCultureDriftChance = 0.001f;
     public const float BaseRegionDriftChance = 0.001f;
     public const float BaseStateDriftChance = 0.1f;
 }

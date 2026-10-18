@@ -129,6 +129,7 @@ public partial class State : Polity, ISaveable
             _capital = value;
         } 
     }
+
     public override void PrepareForSave()
     {
         base.PrepareForSave();
@@ -508,7 +509,7 @@ public partial class State : Polity, ISaveable
                 }                
             }
         }
-        float basePower = 1f + (totalMilTech/size * (wealth/size));
+        float basePower = (totalMilTech + 1)/size * (wealth/size);
         return Mathf.FloorToInt(basePower);
     }
     public override int GetManpower()

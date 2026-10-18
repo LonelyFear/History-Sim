@@ -10,7 +10,7 @@ public partial class TimeManager : Node
     public delegate void YearEventHandler();
     static readonly string[] months = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    public const uint MonthsPerTick = 1;
+    public const uint MonthsPerTick = 3;
     public const uint TicksPerYear = 12/MonthsPerTick;
     public uint ticks = 0;
     public ulong monthStartTime = 0;

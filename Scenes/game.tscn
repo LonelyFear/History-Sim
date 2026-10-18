@@ -226,6 +226,7 @@ grow_vertical = 2
 mouse_filter = 1
 
 [node name="PauseIcon" type="TextureRect" parent="UI/Bars" unique_id=2116343609 node_paths=PackedStringArray("timeManager")]
+modulate = Color(1, 1, 1, 0.50980395)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

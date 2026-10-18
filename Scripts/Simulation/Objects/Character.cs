@@ -57,7 +57,8 @@ public partial class Character : NamedObject
             LeaveState();
         }
         state = target;
-        state.characterIds.Add(id);
+
+        lock (target.locker) target.characterIds.Add(id);
     }
     public void LeaveState()
     {
@@ -66,8 +67,8 @@ public partial class Character : NamedObject
         if (state.leader == this)
         {
             state.RemoveLeader();
-        }
-        state.characterIds.Remove(id);
+        }   
+        lock (state.locker) state.characterIds.Remove(id); 
         state = null;
     }    
     public void SetRole(CharacterRole newRole)
@@ -76,7 +77,6 @@ public partial class Character : NamedObject
     }
     public override void Die()
     {
-
         dead = true;
         tickDestroyed = sim.timeManager.ticks;
         _ = new CharacterDeathEvent(this);

@@ -489,7 +489,7 @@ public partial class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.armyPower;
 
-        if (Battle.CalcBattle(target, attackerPower, 5000 * Math.Min(target.population, 1)))
+        if (Battle.CalcBattle(target, attackerPower, 3000 * Math.Min(target.population, 1)))
         {
             owner.AddRegion(target, true);
         }
@@ -696,6 +696,7 @@ public partial class Region : PopObject, ISaveable
     }
     public int GetBaseTradeWeight()
     {
+        float fertilityTradeWeight = fertility * 20;
         float populationTradeWeight = population * 0.0005f;
 
         float zoneSizeTradeWeight = 0;
@@ -714,7 +715,7 @@ public partial class Region : PopObject, ISaveable
             }
         }
 
-        return (int)((populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * fertility);
+        return (int)((fertilityTradeWeight + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * fertility);
     } 
     public void ZoneTrade()
     {

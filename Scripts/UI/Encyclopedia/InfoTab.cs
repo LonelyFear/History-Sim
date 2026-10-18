@@ -26,7 +26,7 @@ public partial class InfoTab : BaseEncyclopediaTab
 		objName.Text = loadedObj.name;
 		objType.Text = loadedObj.GetTypeName();
 		objDesc.Text = loadedObj.GenerateDescription();
-		objStats.Text = loadedObj.GenerateStatsText();
+		objStats.Text = GetStatsText();
 		objHist.Text = loadedObj.GenerateHistoryText();
 
 		PopObject popObject = loadedObj as PopObject;
@@ -57,5 +57,26 @@ public partial class InfoTab : BaseEncyclopediaTab
 			}
 			cultureChart.QueueRedraw();
 		}
+	}
+	
+	public string GetStatsText()
+	{
+		string statsText = "";
+		switch (loadedObj)
+		{
+			case PopObject:
+				PopObject popObject = loadedObj as PopObject;
+				statsText += $"Population: {popObject.population:#,##0}\n";
+				if (popObject is Polity polity)
+				{
+					float farmerMultiplier = 10f;
+					float wealthFactor = (farmerMultiplier * polity.baseWealth) + polity.totalWealth;
+					float baseWealthProportion = Mathf.Clamp(farmerMultiplier * polity.baseWealth / wealthFactor, 0, 1);
+					statsText += $"Farmers: {polity.population * baseWealthProportion:#,##0} - ({baseWealthProportion:0.#%})\n";
+					statsText += $"Merchants: {polity.population * (1f - baseWealthProportion):#,##0} - ({1f - baseWealthProportion:0.#%})\n";				
+				}
+				break;
+		}
+		return statsText;
 	}
 }

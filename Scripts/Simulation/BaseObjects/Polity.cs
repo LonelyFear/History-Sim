@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -42,10 +43,11 @@ public abstract partial class Polity : PopObject
     {
         long countedP = 0;
         long countedW = 0;
-        Dictionary<string, long> countedProfessions = [];
-        Dictionary<Culture, long> cCultures = [];
 
-        HashSet<State> borders = [];
+        countedCultures.Clear();
+        countedProfessions.Clear();
+
+        borderingStates.Clear();
     
         float countedWealth = 0;
         float countedBaseWealth = 0;
@@ -75,30 +77,24 @@ public abstract partial class Polity : PopObject
                     foreach (State state in statesToEvaluate)
                     {
                         if (state == null) continue;
-                        borders.Add(state);
+                        borderingStates.Add(state);
                     }
                 }
             }
 
             // Counts up socialClasses
             CountClasses(region, countedProfessions);
-            CountCultures(region, cCultures);
+            CountCultures(region, countedCultures);
         }
         
         // Updates values
         occupiedLand = occRegions;
-        borderingStates = borders;
-        
         totalWealth = countedWealth;
         baseWealth = countedBaseWealth;
         
-        foreach (var pair in countedProfessions)
-        {
-            professions[pair.Key] = pair.Value;
-        }
-        
-        cultures = cCultures;
-        largestCulture = cCultures.MaxBy(cc => cc.Value).Key;
+        professions = countedProfessions;
+        cultures = countedCultures;
+        largestCulture = countedCultures.MaxBy(cc => cc.Value).Key;
 
         population = countedP;
         workforce = countedW;

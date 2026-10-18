@@ -17,15 +17,10 @@ public abstract class NamedObject
     [Key(5)] public string description { get; set; }
     [Key(6)] public List<HistoricalEvent> historicalEvents = [];
     [IgnoreMember] public static Random rng = null;
-    public virtual void PrepareForSave()
-    {
-
-    }
-    public virtual void LoadFromSave()
-    {
-
-    }
-
+    [IgnoreMember] public readonly object locker = new();
+    
+    public virtual void PrepareForSave() {}
+    public virtual void LoadFromSave() {}
     public uint TicksBetween(uint start, uint end)
     {
         return end - start;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Godot;
 using MessagePack;
 using PixelHistory.Objects.States.Diplomacy;
@@ -83,16 +84,19 @@ public partial class Pop
         }
     }
     [IgnoreMember] static FastNoiseLite cultureNoise = new();
-    public void ChangePopulation(int wfChange, int dfChange)
+    [IgnoreMember] public readonly object locker = new();
+    
+    public void ChangePopulation(int wfChange, int dpChange)
     {
         wfChange = Math.Max(wfChange, -workforce);
-        dfChange = Math.Max(dfChange, -dependents);
+        dpChange = Math.Max(dpChange, -dependents);
 
         workforce += wfChange;
-        dependents += dfChange;
-        population += wfChange + dfChange;    
+        dependents += dpChange;
+        population += wfChange + dpChange;    
 
-        culture.ChangePopulation(wfChange, dfChange, socialClass.id, culture);
+        culture.ChangePopulation(wfChange, dpChange, socialClass.id, culture);
+        //region.ChangePopulation(wfChange, dpChange, socialClass.id, culture);
     }
     public static bool CanPopsMerge(Pop a, Pop b)
     {
@@ -210,7 +214,7 @@ public partial class Pop
 
                 if (rng.NextSingle() < succesfulTransferChance)
                 {
-                    linkedPop.tech.societyLevel = tech.societyLevel;
+                    lock (linkedPop.locker) linkedPop.tech.societyLevel = tech.societyLevel;
                 }                
             }
 
@@ -222,9 +226,9 @@ public partial class Pop
         if (rng.NextSingle() < Defines.BaseCultureDriftChance)
         {
             float noiseValue = cultureNoise.GetNoise(region.gridPos.X + region.GetAge(), region.gridPos.Y);
-            localCulture.R += noiseValue * 0.025f;
-            localCulture.G += noiseValue * 0.025f;
-            localCulture.B += noiseValue * 0.025f;
+            localCulture.R += noiseValue * 0.05f;
+            localCulture.G += noiseValue * 0.05f;
+            localCulture.B += noiseValue * 0.05f;
         }
         if (rng.NextSingle() < Defines.BaseRegionDriftChance)
         {
@@ -241,27 +245,23 @@ public partial class Pop
             localCulture.G += Mathf.Sign(stateCulture.G - localCulture.G) * 0.05f;
             localCulture.B += Mathf.Sign(stateCulture.B - localCulture.B) * 0.05f;            
         }
-
-        foreach (Pop linkedPop in region.GetLinkedPops())
-        {
-            // Culture Shift Among Linked Pops
-        }
-
         localCulture = localCulture.Clamp(new Color(0.2f, 0.2f, 0.2f), new Color("white"));
         
         if (culture == null || culture.GetSimilarity(localCulture) > Defines.MinCultureDifference)
         {
-            foreach (Culture joiningCulture in ObjectManager.simManager.cultureIds.Values)
+            lock (locker)
             {
-                // Sees if another culture better fits this pop
-                if (joiningCulture.GetSimilarity(localCulture) < Defines.MinCultureDifference)
+                foreach (Culture joiningCulture in ObjectManager.simManager.cultureIds.Values)
                 {
-                    joiningCulture.AddPop(this);
-                    return;
+                    // Sees if another culture better fits this pop
+                    if (joiningCulture.GetSimilarity(localCulture) < Defines.MinCultureDifference)
+                    {
+                        joiningCulture.AddPop(this);
+                        return;
+                    }
                 }
-            }    
-
-            ObjectManager.CreateCulture(localCulture).AddPop(this);         
+                ObjectManager.CreateCulture(localCulture).AddPop(this);                
+            }   
         }
     }
     public float CalculatePoliticalPower()

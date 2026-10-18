@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public partial class FrameBreakdown : VBoxContainer
@@ -33,62 +34,30 @@ public partial class FrameBreakdown : VBoxContainer
 				currentTime = updateDelay;
 				stepTimeLabel.Text = $"Total Step Time: {simManager.totalStepTime:#,##0.0ms}";
 
-				popTimeMenu.Text = $"Pops Time ({simManager.stepPerformanceInfo["Pops"]:#,##0.0ms})";
-				foreach (var pair in simManager.popsPerformanceInfo)
-                {
-					int index = Array.IndexOf(simManager.popsPerformanceInfo.Keys.ToArray(), pair.Key);
-					string newText = $"{pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
-					if (popTimeMenu.GetPopup().ItemCount > simManager.popsPerformanceInfo.Count)
-					{
-						popTimeMenu.GetPopup().SetItemText(index, newText);
-					} else
-					{
-						popTimeMenu.GetPopup().AddItem(newText);
-					}
-                }
+				SetPerformanceMenuText(popTimeMenu, "Pops Time", "Pops", simManager.popsPerformanceInfo);
 
-				regionTimeMenu.Text = $"Regions Time ({simManager.stepPerformanceInfo["Regions"]:#,##0.0ms})";
-				foreach (var pair in simManager.regionPerformanceInfo)
-                {
-					int index = Array.IndexOf(simManager.regionPerformanceInfo.Keys.ToArray(), pair.Key);
-					string newText = $"{pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
-					if (regionTimeMenu.GetPopup().ItemCount > simManager.regionPerformanceInfo.Count)
-					{
-						regionTimeMenu.GetPopup().SetItemText(index, newText);
-					} else
-					{
-						regionTimeMenu.GetPopup().AddItem(newText);
-					}
-                }	
+				SetPerformanceMenuText(regionTimeMenu, "Regions Time", "Regions", simManager.regionPerformanceInfo);
 
-				stateTimeMenu.Text = $"States Time ({simManager.stepPerformanceInfo["States"]:#,##0.0ms})";
-				foreach (var pair in simManager.statePerformanceInfo)
-                {
-					int index = Array.IndexOf(simManager.statePerformanceInfo.Keys.ToArray(), pair.Key);
-					string newText = $"{pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
-					if (stateTimeMenu.GetPopup().ItemCount > simManager.statePerformanceInfo.Count)
-					{
-						stateTimeMenu.GetPopup().SetItemText(index, newText);
-					} else
-					{
-						stateTimeMenu.GetPopup().AddItem(newText);
-					}
-                }	
+				SetPerformanceMenuText(stateTimeMenu, "States Time", "States", simManager.statePerformanceInfo);
 
-				miscTimeMenu.Text = $"Misc Time ({simManager.stepPerformanceInfo["Misc"]:#,##0.0ms})";
-				foreach (var pair in simManager.stepPerformanceInfo)
-                {
-					int index = Array.IndexOf(simManager.stepPerformanceInfo.Keys.ToArray(), pair.Key);
-					string newText = $"{pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
-					if (miscTimeMenu.GetPopup().ItemCount > simManager.stepPerformanceInfo.Count)
-					{
-						miscTimeMenu.GetPopup().SetItemText(index, newText);
-					} else
-					{
-						miscTimeMenu.GetPopup().AddItem(newText);
-					}
-                }
+				SetPerformanceMenuText(miscTimeMenu, "Misc Time", "Misc", simManager.miscPerformanceInfo);
 			}
 		}
     }
+	void SetPerformanceMenuText(MenuButton menu, string menuTitle, string menuKey, Dictionary<string, double> performanceInfo)
+	{
+		menu.Text = $"{menuTitle} ({simManager.stepPerformanceInfo[menuKey]:#,##0.0ms})";
+		foreach (var pair in performanceInfo)
+		{
+			int index = Array.IndexOf([..performanceInfo.Keys], pair.Key);
+			string newText = $"{pair.Key}: " + pair.Value.ToString("#,##0.0ms\n");
+			if (menu.GetPopup().ItemCount > performanceInfo.Count)
+			{
+				menu.GetPopup().SetItemText(index, newText);
+			} else
+			{
+				menu.GetPopup().AddItem(newText);
+			}
+		}		
+	}
 }

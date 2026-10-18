@@ -102,6 +102,9 @@ public class SimManager
     [IgnoreMember] public Dictionary<string, double> regionPerformanceInfo = [];
     [IgnoreMember] public Dictionary<string, double> statePerformanceInfo = [];
     [IgnoreMember] public Dictionary<string, double> miscPerformanceInfo = [];
+    //[IgnoreMember] public Dictionary<string, double> countedPerformanceInfo = [];
+    [IgnoreMember] Stopwatch stepStopwatch = Stopwatch.StartNew();
+    [IgnoreMember] Stopwatch processStopwatch = Stopwatch.StartNew();
     [IgnoreMember] public Vector2 terrainMapScale;
 
     public Vector2I GlobalToTilePos(Vector2 pos)
@@ -372,7 +375,7 @@ public class SimManager
     // Updating pops
     public void UpdatePops()
     {
-        Dictionary<string, double> countedPerformanceInfo = new();
+        Dictionary<string, double> countedPerformanceInfo = [];
         Stopwatch totalTime = Stopwatch.StartNew();
 
         countedPerformanceInfo["Destroy Time"] = 0; 
@@ -401,9 +404,8 @@ public class SimManager
                 highestTech = pop.tech;
             }    
             techAvg = techAvg.AddTech(pop.tech);
-            if (pop.batchId == Mathf.PosMod(currentPopBatch, TimeManager.TicksPerYear)) pop.ShiftCulture();
         }
-        countedPerformanceInfo["Destroy Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["Destroy Time"] = stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
 
         // Migration & Growth
@@ -419,7 +421,7 @@ public class SimManager
                 pop.Migrate();
             } 
         });
-        countedPerformanceInfo["Migration-Growth Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["Migration-Growth Time"] = stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
 
         // Technology
@@ -431,7 +433,7 @@ public class SimManager
                 pop.TechnologyUpdate();  
             }           
         });
-        countedPerformanceInfo["Technology Time"] += stopwatch.Elapsed.TotalMilliseconds;
+        countedPerformanceInfo["Technology Time"] = stopwatch.Elapsed.TotalMilliseconds;
 
         averageTech.fIndustryLevel = techAvg.industryLevel / (float)popsIds.Count;
         averageTech.fMilitaryLevel = techAvg.militaryLevel / (float)popsIds.Count;
@@ -441,7 +443,7 @@ public class SimManager
     }
     public void UpdateRegions()
     {
-        Dictionary<string, double> countedPerformanceInfo = new();
+        Dictionary<string, double> countedPerformanceInfo = [];
 
         float newMaxWealth = 0;
         int newMaxTradeWeight = 0;
@@ -579,7 +581,7 @@ public class SimManager
     }
     public void UpdateStates()
     {
-        Dictionary<string, double> countedPerformanceInfo = new();
+        Dictionary<string, double> countedPerformanceInfo = [];
         countedPerformanceInfo["Delete Time"] = 0;
         countedPerformanceInfo["Parallel Time"] = 0;
         countedPerformanceInfo["Ruling Pop Time"] = 0;
@@ -720,75 +722,72 @@ public class SimManager
     }
     public void UpdateCharacters()
     {
+        foreach (var pair in characterIds)
+        {
+            Character character = pair.Value;
+            // Dead character stuff
+            if (character.dead)
+            {
+                // Deletes characters after 100 years if they are dead
+                if (TimeManager.GetYear(timeManager.ticks - character.tickDestroyed) > 100)
+                {
+                    ObjectManager.DeleteCharacter(character);
+                }
+                
+                continue;
+            }
+
+            // Character Death
+            // Calculated monthly, characters have a chance to die if they are old enough
+            if (TimeManager.GetYear(character.GetAge()) > Character.OldAgeYear && rng.NextSingle() < Character.MonthlyOldAgeDeathChance)
+            {
+                character.Die();
+            }                    
+        }      
+    }
+    public void SimMonth()
+    {
+        stepStopwatch.Restart();
+        processStopwatch.Restart();
         try
         {
-            foreach (var pair in characterIds)
-            {
-                Character character = pair.Value;
-                // Dead character stuff
-                if (character.dead)
-                {
-                    // Deletes characters after 200 years if they are dead
-                    if (TimeManager.GetYear(timeManager.ticks - character.tickDestroyed) > 100)
-                    {
-                        ObjectManager.DeleteCharacter(character);
-                    }
-                    
-                    continue;
-                }
+            UpdatePops();
+            stepPerformanceInfo["Pops"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
 
-                // Character Death
-                // Calculated monthly, characters have a chance to die if they are old enough
-                if (TimeManager.GetYear(character.GetAge()) > Character.OldAgeYear && rng.NextSingle() < Character.MonthlyOldAgeDeathChance)
-                {
-                    character.Die();
-                }
-            }            
+            UpdateRegions();
+            stepPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
+            UpdateTradeZones();
+            stepPerformanceInfo["Trade Zones"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
+            UpdateStates();
+            stepPerformanceInfo["States"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();
+
+            Stopwatch miscStopwatch = Stopwatch.StartNew();
+            UpdateCharacters();
+            miscPerformanceInfo["Characters"] = miscStopwatch.Elapsed.TotalMilliseconds;
+            miscStopwatch.Restart();
+
+            UpdateCultures();
+            miscPerformanceInfo["Cultures"] = miscStopwatch.Elapsed.TotalMilliseconds;
+            miscStopwatch.Restart();
+
+            UpdateAlliances();
+            miscPerformanceInfo["Alliances & States"] = miscStopwatch.Elapsed.TotalMilliseconds;
+            miscStopwatch.Restart();
+
+            stepPerformanceInfo["Misc"] = processStopwatch.Elapsed.TotalMilliseconds;
+            processStopwatch.Restart();            
         } catch (Exception e)
         {
             GD.PushError(e);
         }
-
-    }
-    public void SimMonth()
-    {
-        Stopwatch stepStopwatch = Stopwatch.StartNew();
-        Dictionary<string, double> countedPerformanceInfo = new();
-        try
-        {
-            Stopwatch processStopwatch = Stopwatch.StartNew();
-            UpdatePops();
-            countedPerformanceInfo["Pops"] = processStopwatch.Elapsed.TotalMilliseconds;
-            processStopwatch.Restart();
-
-            UpdateRegions();
-            countedPerformanceInfo["Regions"] = processStopwatch.Elapsed.TotalMilliseconds;
-            processStopwatch.Restart();
-
-            UpdateTradeZones();
-            countedPerformanceInfo["Trade Zones"] = processStopwatch.Elapsed.TotalMilliseconds;
-            processStopwatch.Restart();
-
-            UpdateStates();
-            countedPerformanceInfo["States"] = processStopwatch.Elapsed.TotalMilliseconds;
-            processStopwatch.Restart();
-
-            UpdateCharacters();
-            UpdateCultures();
-            UpdateAlliances();
-            countedPerformanceInfo["Misc"] = processStopwatch.Elapsed.TotalMilliseconds;
-            processStopwatch.Restart();
-          
-        } catch  (Exception e)
-        {
-            GD.PushError(e);
-        }
-        stepPerformanceInfo = countedPerformanceInfo;
+        //stepPerformanceInfo = countedStepPerformanceInfo;
         totalStepTime = stepStopwatch.Elapsed.TotalMilliseconds;
     }
-    public void SimYear()
-    {
-
-    }
-    
+    public void SimYear() {}
 }

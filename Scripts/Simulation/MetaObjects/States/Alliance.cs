@@ -130,10 +130,10 @@ public partial class Alliance : Polity
         regions = [..memberStates.SelectMany(state => state.regions)];
         long countedP = 0;
         long countedW = 0;
-        Dictionary<string, long> countedProfessions = [];
-        Dictionary<Culture, long> cCultures = [];
 
-        HashSet<State> borders = [];
+        countedCultures.Clear();
+        countedProfessions.Clear();
+        borderingStates.Clear();
     
         float countedWealth = 0;
         float countedBaseWealth = 0;
@@ -154,23 +154,24 @@ public partial class Alliance : Polity
                 foreach (State evaluatedState in statesToEvaluate)
                 {
                     if (evaluatedState == null) continue;
-                    borders.Add(evaluatedState);
+                    borderingStates.Add(evaluatedState);
                 }                
             }
             // Counts up socialClasses
             CountClasses(state, countedProfessions);
-            CountCultures(state, cCultures);
+            CountCultures(state, countedCultures);
         }
         
         // Updates values
         occupiedLand = occRegions;
-        borderingStates = borders;
         
         totalWealth = countedWealth;
         baseWealth = countedBaseWealth;
     
         professions = countedProfessions;
-        cultures = cCultures;
+        cultures = countedCultures;
+        largestCulture = countedCultures.MaxBy(cc => cc.Value).Key;
+        
         population = countedP;
         workforce = countedW;
         dependents = population - workforce;
