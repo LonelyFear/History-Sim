@@ -22,7 +22,11 @@ public partial class Region : PopObject, ISaveable
     [Key(44)] public Vector2I gridPos { get; set; } 
     // trade
     [Key(29)] ulong? tradeZoneId { get; set; } = null;
-    [Key(30)] public bool isTradeZoneCenter { get; set; } = false;  
+    [IgnoreMember] public bool isTradeZoneCenter { get
+        {
+            return tradeZone?.center == this;
+        }
+    } 
     [Key(24)] public float baseWealth { get; set; }
     [Key(25)] public float wealth { get; set; }  
     [Key(31)] public float tradeIncome { get; set; } = 0;
@@ -61,7 +65,7 @@ public partial class Region : PopObject, ISaveable
     // References
     [Key(45)] public HashSet<ulong> linkedRegionIds = [];
     [IgnoreMember] public HashSet<Region> linkedRegions = [];
-    [IgnoreMember] public List<(Region, Region)> tradeRouteLinks = new List<(Region, Region)>();
+    [IgnoreMember] public List<(Region, Region)> tradeCenterPairs = [];
     [IgnoreMember] TradeZone _tradeZone;
     [IgnoreMember] public TradeZone tradeZone
     {
@@ -154,6 +158,7 @@ public partial class Region : PopObject, ISaveable
         }
     }
     [Key(49)] public Tech tech;
+    [IgnoreMember] readonly List<float> tradeWeights = [];
 
     public override void PrepareForSave()
     {
@@ -487,9 +492,9 @@ public partial class Region : PopObject, ISaveable
         if (!checks) return;
 
         long attackerPower;
-        attackerPower = owner.armyPower;
+        attackerPower = owner.GetCombatPower();
 
-        if (Battle.CalcBattle(target, attackerPower, 3000 * Math.Min(target.population, 1)))
+        if (Battle.CalcBattle(target, attackerPower, 5000))
         {
             owner.AddRegion(target, true);
         }
@@ -551,148 +556,116 @@ public partial class Region : PopObject, ISaveable
     {
         // Default is that we are linked to nobody
         Region selectedLink = null;
+        bool highestLocalTradeWeight = true;
 
-        // Default is that we are not a tradeZone center
-        bool newTradeZoneCenterStatus = true;
-
-        // Loops over borders
-        foreach (Region region in borderingRegions)
+        foreach (Region potentialLink in borderingRegions)
         {
-            // If we have an equal or lower weight to a region then we cant be tradeZone leader
-            if (region.tradeWeight >= tradeWeight)
-            {
-                newTradeZoneCenterStatus = false;
+            if (potentialLink.tradeWeight >= tradeWeight) highestLocalTradeWeight = false;
 
-                // We can only link to regions with a HIGHER trade weight
-                if (region.tradeWeight != tradeWeight)
-                {    
-                    // If this region has a greater trade weight than our current link, link to it
-                    if (selectedLink == null || region.tradeWeight > selectedLink.tradeWeight)
-                    {
-                        selectedLink = region;
-                    }
-                }                
-            }
-        }
-
-        // Joins tradeZone of region we linked to if it has a tradeZone
-        if (selectedLink != null && selectedLink.tradeZone != tradeZone)
-        {
-            TradeZone tradeZoneJoined = selectedLink.tradeZone;
-            if (tradeZoneJoined != null)
+            // Links our cell to a cell with higher demand
+            if (potentialLink.tradeWeight > tradeWeight)
             {
-                lock (tradeZoneJoined)
+                // If this potentialLink has a greater trade weight than our current link, link to it
+                if (selectedLink == null || potentialLink.tradeWeight > selectedLink.tradeWeight)
                 {
-                    tradeZoneJoined.AddRegion(this);
-                }                 
+                    selectedLink = potentialLink;
+                }         
             }
- 
         }
 
-        isTradeZoneCenter = newTradeZoneCenterStatus;
-
-        // If we are a tradeZone center and we dont have a tradeZone or are in someone elses tradeZone
-        if (isTradeZoneCenter && (tradeZone == null || tradeZone.centerId != id))
+        if (selectedLink != null)
         {
-            // Then create a new tradeZone
-            tradeZone = ObjectManager.CreateTradeZone(this);
-        }
-
-        // Then, on whatever tradeZone we just created, if we are no longer a tradeZone center
-        if (!isTradeZoneCenter && tradeZone != null && tradeZone.centerId == id)
+            if (tradeZone?.center == this)
+            {
+                // If we have a trade zone delete it
+                ObjectManager.DeleteTradeZone(tradeZone);
+            }            
+            if (selectedLink.tradeZone != tradeZone)
+            {
+                // Join new link's trade zone
+                selectedLink.tradeZone?.AddRegion(this);
+            }
+        } 
+        else
         {
-            // Then delete the tradeZone
-            ObjectManager.DeleteTradeZone(tradeZone);
-            // And erase all trade routes
-            EraseTradeRoutes();
+            if (highestLocalTradeWeight && (tradeZone == null || tradeZone.center != this))
+            {
+                // Then create a new tradeZone
+                tradeZone = ObjectManager.CreateTradeZone(this);
+            }       
         }
         
         // Finally updates our trade link
         SetTradeLink(selectedLink);
     }
-    public void SetTradeLink(Region link)
+    public void SetTradeLink(Region newTradeLink)
     {
-        tradeLink?.linkedRegions.Remove(this);
-        tradeLink = link;
-        tradeLink?.linkedRegions.Add(this);
+        if (tradeLink != null && tradeLink.linkedRegions.Remove(this))
+        {
+            Region nextLink = tradeLink.tradeLink;
+            while (nextLink != null && nextLink.linkedRegions.Remove(this))
+            {
+                nextLink = nextLink.tradeLink;
+            }
+        }        
+        if (newTradeLink != null && newTradeLink.linkedRegions.Add(this))
+        {
+            Region nextLink = newTradeLink.tradeLink;
+            while (nextLink != null && nextLink.linkedRegions.Add(this))
+            {
+                nextLink = nextLink.tradeLink;
+            }         
+        }        
+        tradeLink = newTradeLink;       
     }
     public void GetTaxIncome()
     {
-        float newTaxIncome = 0;
+        if (owner == null)
+        {
+            taxIncome = 0;
+            return;
+        } 
         State taxingState = owner?.GetRealm() == null ? owner : owner.GetRealm().leadState;
         Polity taxingPolity = owner?.GetPolity();
 
-        if (taxingPolity != null)
+        float distributedTaxes = taxingPolity.baseWealth * taxingState.taxRate;
+        if (taxingState.capital == this)
         {
-            float totalOwnerTaxes = taxingPolity.baseWealth * taxingState.taxRate;
-            if (taxingState.capital == this)
-            {
-                newTaxIncome = totalOwnerTaxes * 0.1f;
-            }
-            float taxInvestment = totalOwnerTaxes * 0.9f;
-            newTaxIncome += taxInvestment/taxingPolity.regions.Count;
+            taxIncome = distributedTaxes * 0.1f;
+            return;
         }
-        taxIncome = newTaxIncome;
+        taxIncome = (distributedTaxes * 0.9f)/taxingPolity.regions.Count;
     }
     public float GetTradeIncome()
     {
-        float newIncome = baseWealth * 0.1f;
-        foreach (Region linkedRegion in linkedRegions.ToArray())
-        {
-            newIncome += linkedRegion.GetTradeIncome();
-        }       
-        tradeIncome = newIncome;
+        tradeIncome = linkedRegions.Sum(link => link.baseWealth) * 0.2f;
         return tradeIncome;
     }
     
-    // Trade weight
-    // Trade works almost like gravity, more trade weight means that more tiles link to you
+    // Demand Propagation
     public void GetTradeWeight()
     {
-        int baseTradeWeight = GetBaseTradeWeight();
-
-        // Current depth in tradeZone expansion
         int depth = 0;
-
-        // The maximum depth we will go before stopping, determines the growth range of tradeZones
-        // Region in tradeZones will traverse up the link chain, ether reaching the maximum depth or tradeZone center
-        // The further the chain goes the less impact the higher trade weights have
-        int maxDepth = 7;
-
-        List<float> tradeWeights = [];
+        tradeWeights.Clear();
         float multiplier = 1.0f;
         Region currentRegion = this;
-        do // For each step
+
+        do
         {
-            // Increases depth by one
             depth++;
-            // Trade weight decay factor
-            multiplier -= 0.1f;
-            // We get the region that our current region is linked to
+            multiplier -= 1f/Defines.MaxTradeWeightDepth;
             Region nextRegion = currentRegion.tradeLink;
 
             // If the region is linked
             if (nextRegion != null)
             {
-                // Adds the weight to the chain multiplied by multiplier
-                // Note that this uses base trade weight so tradeZones dont expand forever
                 tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier);
-                // Then continues
-                currentRegion = nextRegion;
             }
-        // This goes on until we have reached the maximum depth or we have reached the trade center
-        } while (currentRegion != null && depth < maxDepth);
+            currentRegion = nextRegion;
+        } while (currentRegion != null && depth < Defines.MaxTradeWeightDepth);
 
-        
-        tradeWeight = baseTradeWeight;
-        // If we have anything in the chain
-        if (tradeWeights.Count > 0)
-        {
-            // Our trade weight is set to the highest of the largest value in the chain and our base trade weight
-            // This simulates how a tradeZone center is going to be shipping goods to the rest of its tradeZone
-            //GD.Print(tradeWeight + " vs " + baseTradeWeight);
-            tradeWeight = (int)Mathf.Max(tradeWeights.Max(), baseTradeWeight);
-        }
+        float highestTradeWeight = tradeWeights.Count > 0 ? tradeWeights.Max() : 0;
+        tradeWeight = Mathf.RoundToInt(Math.Max(highestTradeWeight, GetBaseTradeWeight()));
     }
     public int GetBaseTradeWeight()
     {
@@ -717,66 +690,37 @@ public partial class Region : PopObject, ISaveable
 
         return (int)((fertilityTradeWeight + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * fertility);
     } 
-    public void ZoneTrade()
+    public void EstablishTradeRoutes()
     {
-        if (!isTradeZoneCenter || tradeZone?.centerId != id)
-        {
-            return;
-        }
-
         foreach (var pair in simManager.tradeZoneIds.ToArray())
         {
-            TradeZone otherTradeZone = pair.Value;
-            Region tradeZoneCenter = ObjectManager.GetRegion(otherTradeZone?.centerId);
-            if (tradeZoneCenter == null) continue;
+            Region tradeZoneCenter = pair.Value.center;
 
             if (!regionPaths.TryGetValue(tradeZoneCenter, out List<Region> path))
             {
-                path = GetPath(this, tradeZoneCenter, true, 20);
+                path = GetPath(this, tradeZoneCenter, true, Defines.MaxTradeRouteLength);
 
-                lock (regionPaths)
-                {
-                    regionPaths[tradeZoneCenter] = path;
-                }
-                lock (tradeZoneCenter.regionPaths)
-                {
-                    tradeZoneCenter.regionPaths[this] = path;
-                }
+                regionPaths[tradeZoneCenter] = path;
+                tradeZoneCenter.regionPaths[this] = path;
 
                 foreach (Region tradeRoute in path)
                 {
-                    lock (tradeRoute)
-                    {
-                        tradeRoute.tradeRouteLinks.Add((this, tradeZoneCenter));
-                    }
+                    tradeRoute.tradeCenterPairs.Add((this, tradeZoneCenter));
                 }                
             }
 
         }
     }
-    public void EraseTradeRoutes()
-    {
-        foreach (var pathPair in regionPaths)
-        {
-            foreach (Region tradeRoute in pathPair.Value)
-            {
-                lock (tradeRoute)
-                {
-                    tradeRoute.tradeRouteLinks.Add((this, pathPair.Key));
-                }
-            }             
-        }
-    }
     public void GetRouteIncome()
     {
-        foreach ((Region, Region) tradingCities in tradeRouteLinks.ToArray())
+        foreach ((Region, Region) tradingPairs in tradeCenterPairs.ToArray())
         {
-            if (!tradingCities.Item1.isTradeZoneCenter || !tradingCities.Item2.isTradeZoneCenter)
+            if (!tradingPairs.Item1.isTradeZoneCenter || !tradingPairs.Item2.isTradeZoneCenter)
             {
-                tradeRouteLinks.Remove(tradingCities);
+                tradeCenterPairs.Remove(tradingPairs);
                 continue;
             }
-            tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingCities.Item1.tradeIncome, tradingCities.Item2.tradeIncome)* 0.5f);
+            tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingPairs.Item1.tradeIncome, tradingPairs.Item2.tradeIncome) * 0.5f);
         }
     }
     public void UpdateWealth()
@@ -865,7 +809,7 @@ public partial class Region : PopObject, ISaveable
             }
         }
         if (owner != null && owner.capital != this) linkedPops.Add(owner.rulingPop);
-        if (tradeZone != null) linkedPops.AddRange(ObjectManager.GetRegion(tradeZone.centerId).pops);  
+        if (tradeZone != null) linkedPops.AddRange(tradeZone.center.pops);  
 
         return linkedPops; 
     }

@@ -494,7 +494,7 @@ public class SimManager
                 // Tax Income
                 region.GetTaxIncome();
                 // Base Trade Income
-                if (region.tradeLink == null) region.GetTradeIncome();
+                region.GetTradeIncome();
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
@@ -516,10 +516,8 @@ public class SimManager
                 }
                 
                 // Economy
-                if (region.tradeLink == null) region.ZoneTrade();
+                if (region.isTradeZoneCenter) region.EstablishTradeRoutes();
             
-                region.CalcBaseWealth();
-                
                 countedPerformanceInfo["Trade Route Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
@@ -528,7 +526,9 @@ public class SimManager
                     region.LinkTrade();
                     region.linkUpdateCountdown = (int)TimeManager.TicksPerYear;
                 }
-                
+                // Base Wealth
+                region.CalcBaseWealth();
+
                 countedPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 

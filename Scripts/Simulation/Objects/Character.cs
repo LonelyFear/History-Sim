@@ -57,8 +57,7 @@ public partial class Character : NamedObject
             LeaveState();
         }
         state = target;
-
-        lock (target.locker) target.characterIds.Add(id);
+        target.characterIds.Add(id);
     }
     public void LeaveState()
     {
@@ -68,7 +67,7 @@ public partial class Character : NamedObject
         {
             state.RemoveLeader();
         }   
-        lock (state.locker) state.characterIds.Remove(id); 
+        state.characterIds.Remove(id); 
         state = null;
     }    
     public void SetRole(CharacterRole newRole)

@@ -483,16 +483,13 @@ public partial class MapManager : Node2D
             case MapModes.TRADE_WEIGHT:
                 if (region.habitable)
                 {
-                    color = Utility.MultiColourLerp([new Color(0f, 0f, 0f), new Color(1f, 1f, 1f)], region.tradeWeight / simManager.maxTradeWeight);
+                    color = new Color(0f, 0f, 0f);
                     if (region.tradeZone != null)
                     {
                         borderId = region.tradeZone.id;
                         color = region.tradeZone.color;
                     }
-                    if (region.isTradeZoneCenter && includeCapital)
-                    {
-                        color = new Color(1f, 1f, 0f);
-                    }
+                    if (region.isTradeZoneCenter && includeCapital) color = new Color("Yellow");
                 }   
                 break;
             case MapModes.TERRAIN_TYPE:

@@ -390,11 +390,11 @@ public static class ObjectManager
     }
     public static TradeZone CreateTradeZone(Region region)
     {
-        TradeZone zone = new TradeZone()
+        TradeZone zone = new()
         {
             id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
-            centerId = region.id,
+            center = region,
             name = region.name + " Market"
         };
         zone.AddRegion(region);

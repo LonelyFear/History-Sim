@@ -56,4 +56,8 @@ public static class Defines
     public const float BaseCultureDriftChance = 0.001f;
     public const float BaseRegionDriftChance = 0.001f;
     public const float BaseStateDriftChance = 0.1f;
+
+    // Trade
+    public const int MaxTradeWeightDepth = 10;
+    public const int MaxTradeRouteLength = 20;
 }
