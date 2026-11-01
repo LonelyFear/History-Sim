@@ -659,7 +659,7 @@ public partial class Region : PopObject, ISaveable
             // If the region is linked
             if (nextRegion != null)
             {
-                tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier);
+                tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier * nextRegion.fertility);
             }
             currentRegion = nextRegion;
         } while (currentRegion != null && depth < Defines.MaxTradeWeightDepth);
