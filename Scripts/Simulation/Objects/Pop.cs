@@ -326,7 +326,7 @@ public partial class Pop
             float movedPercentage = 0;
             lock (region)
             {
-                movedPercentage = (region.population - region.maxPopulation) / (float)population;
+                movedPercentage = (region.population - region.maxPopulation) / (float)region.maxPopulation;
             }
             
             int movedDependents = (int)(dependents * movedPercentage);
@@ -354,19 +354,7 @@ public partial class Pop
     }
     public float GetBirthRate()
     {
-        float birthRate = baseBirthRate;
-        if (population <= 2)
-        {
-            return 0;
-        }
-        lock (region)
-        {
-            if (region.population < region.maxPopulation * 0.5f)
-            {
-                //birthRate *= 1.5f;
-            }            
-        }
-
+        float birthRate = baseBirthRate;       
         return birthRate;
     }
     public void GrowPop()

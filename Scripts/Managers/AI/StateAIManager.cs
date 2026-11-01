@@ -182,7 +182,7 @@ public partial class StateAIManager : UtilityAi.AiAgent
                 if (state.CanFightState(target))
                 {
                     // Wars
-                    float warInitiateChance = state.GetCombatPower()/target.GetCombatPower();
+                    float warInitiateChance = state.GetCombatPower()/Mathf.Max(target.GetCombatPower(), 1f);
                     warInitiateChance += leader.GetPersonalityLevel("expansionism") switch
                     {
                         TraitLevel.HIGH => 0.5f,

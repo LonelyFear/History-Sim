@@ -23,34 +23,21 @@ public partial class DebugLabel : Label
             Position = GetGlobalMousePosition();
             Region region = selectionManager.hoveredRegion;
             
+            /*
             if (region != null && region.owner != null){
                 Text = "\n Claimant: " + (region.claimant == null ? "None" : region.claimant.name);
                 Text += "\n Owner: " + (region.owner == null ? "None" : region.owner.name);
-                /*
-                State state = region.owner;
-                //string leaderText = "Leader: None";
-                Text = "State: " + state.name;
-                AddLine("Population: " + state.population.ToString("#,###0"));
-                AddLine("Relations: ");
-                try
-                {
-                    foreach (var pair in state.relations.ToArray())
-                    {
-                        State relationState = pair.Key;
-                        //if (relationState?.sovereignty != Sovereignty.INDEPENDENT) continue;
-                        DiplomaticRelations relation = pair.Value;
-                        AddLine(relationState.name + ": " + Math.Round(relation.opinion * 100));
-                    }                    
-                } catch (Exception e)
-                {
-                    GD.PushError(e);
-                    AddLine("ERROR!");
-                }
-                */
-
             } else {
                 Text = "";
-            }          
+            }   
+            */  
+            if (region != null && region.habitable){
+                Text = $"\n Supply: {region.economy.supplies[Defines.Goods.FOOD]:#,##0}";
+                Text += $"\n Production: {region.economy.production[Defines.Goods.FOOD]:#,##0}";
+                Text += $"\n Demand: {region.economy.demands[Defines.Goods.FOOD]:#,##0}";
+            } else {
+                Text = "";
+            }        
         }
     } 
 

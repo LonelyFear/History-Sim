@@ -2,14 +2,14 @@ using Godot;
 
 public static class Defines
 {
-    public enum GoodsType
+    public enum Goods
     {
-        NONE,
         FOOD,
-        TOOLS,
-        LUXURY,
-        WEAPONS,
+        RAW_MATERIALS,
+        REFINED_GOODS,
+        LUXURY_GOODS
     }
+
     public enum BiomeType
     {
         ICE,
@@ -60,4 +60,7 @@ public static class Defines
     // Trade
     public const int MaxTradeWeightDepth = 10;
     public const int MaxTradeRouteLength = 20;
+
+    // Economy
+    public const float FoodProductionFactor = 600f;
 }

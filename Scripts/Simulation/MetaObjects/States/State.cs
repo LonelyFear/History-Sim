@@ -509,7 +509,7 @@ public partial class State : Polity, ISaveable
                 }                
             }
         }
-        float basePower = (totalMilTech + 1)/size * (wealth/Mathf.Pow(size, 1.5f));
+        float basePower = (totalMilTech + 1)/size * (pop * 0.001f/Mathf.Pow(size, 1.5f));
         return Mathf.FloorToInt(basePower);
     }
     public override int GetManpower()

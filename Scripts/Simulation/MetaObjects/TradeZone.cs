@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
+
+using Goods = Defines.Goods;
+
 [MessagePackObject(AllowPrivate = true)]
 public partial class TradeZone : NamedObject
 {
@@ -10,7 +14,8 @@ public partial class TradeZone : NamedObject
     [Key(9)] public Color color { get; set; }
     [Key(10)]  public ulong? controllerId { get; set; } = null;
     [Key(11)] public float totalMarketWeight = 1f; 
-       
+    [Key(12)] public Economy economy = new();
+
     [IgnoreMember] Region _center;
     [IgnoreMember] public Region center
     {
@@ -25,7 +30,6 @@ public partial class TradeZone : NamedObject
             _center = value;
         }         
     }
-
     public override void PrepareForSave()
     {
         base.PrepareForSave();
@@ -67,13 +71,19 @@ public partial class TradeZone : NamedObject
             }
         }
     }
+    public void AggregateEconomies()
+    {
+        foreach (Region region in regions)
+        {
+            foreach (Goods good in Enum.GetValues(typeof(Goods)))
+            {
+                economy.production[good] = region.economy.production[good] * region.marketConnection;
+                economy.demands[good] = region.economy.demands[good] * region.marketConnection;
+            }
+        }
+    }
     public override void Die()
     {
         ObjectManager.DeleteTradeZone(this);
-    }
-
-    public int GetZoneSize()
-    {
-        return regions.Count;
     }
 }

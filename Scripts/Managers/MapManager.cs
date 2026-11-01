@@ -481,15 +481,30 @@ public partial class MapManager : Node2D
                 }
                 break;
             case MapModes.TRADE_WEIGHT:
+            
                 if (region.habitable)
                 {
                     color = new Color(0f, 0f, 0f);
                     if (region.tradeZone != null)
                     {
                         borderId = region.tradeZone.id;
+                        /*
                         color = region.tradeZone.color;
+                        if (region.isTradeZoneCenter && includeCapital) color = new Color("Yellow");
+                        */
+                        color = Utility.MultiColourLerp([new Color("red"), new Color("yellow"), new Color("green")], region.marketConnection);
                     }
-                    if (region.isTradeZoneCenter && includeCapital) color = new Color("Yellow");
+                    
+                    /*
+                    float surplus = region.supplies[Defines.Goods.FOOD] - region.demands[Defines.Goods.FOOD];
+                    if (surplus > 0)
+                    {
+                        color = Utility.MultiColourLerp([new Color("black"), new Color("green")], surplus/20000f);
+                    } else
+                    {
+                        color = Utility.MultiColourLerp([new Color("black"), new Color("red")], surplus/-10000f);
+                    }
+                    */
                 }   
                 break;
             case MapModes.TERRAIN_TYPE:

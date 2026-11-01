@@ -7,6 +7,8 @@ using MessagePack;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
 
+using Goods = Defines.Goods;
+
 [MessagePackObject(AllowPrivate = true)]
 public partial class Region : PopObject, ISaveable
 {
@@ -15,6 +17,7 @@ public partial class Region : PopObject, ISaveable
     [Key(18)] public bool habitable { get; set; }
     [Key(19)] public bool coastal { get; set; }
     [Key(20)] public bool isWater { get; set; }
+    [Key(56)] public bool hasRiver { get; set; }
     [Key(21)] public int tradeWeight { get; set; } = 0;
     [Key(48)] public float fertility { get; set; }
     [Key(26)] public int linkUpdateCountdown { get; set; } = 12;
@@ -158,7 +161,10 @@ public partial class Region : PopObject, ISaveable
         }
     }
     [Key(49)] public Tech tech;
+    [Key(51)] public Economy economy = new();
+    [Key(52)] public float marketConnection = 1f;
     [IgnoreMember] readonly List<float> tradeWeights = [];
+    
 
     public override void PrepareForSave()
     {
@@ -357,6 +363,10 @@ public partial class Region : PopObject, ISaveable
                 arableLand += tile.arability;
                 navigability += tile.navigability;
             }
+            if (tile.biomeId == "river")
+            {
+                hasRiver = true;
+            }
         }
         isWater = (tiles.Count - waterCount) == 0;
 
@@ -373,9 +383,6 @@ public partial class Region : PopObject, ISaveable
             case TerrainType.HILLS:
                 navigability *= 0.25f;
                 fertility *= 0.5f;
-                break;
-            case TerrainType.RIVER:
-                fertility += 0.25f;
                 break;
         }
         navigability = Mathf.Clamp(navigability, 0, 1);
@@ -525,7 +532,6 @@ public partial class Region : PopObject, ISaveable
             attacker.AddRegion(target, false);
         }         
     }
-    
     public double GetStability()
     {
         double totalPoliticalPower = 0;
@@ -537,208 +543,129 @@ public partial class Region : PopObject, ISaveable
         }
         return totalHappiness / totalPoliticalPower;
     }
-    public double GetLoyalty()
+    public void UpdateTradeWeight()
     {
-        double totalPoliticalPower = 0;
-        double totalHappiness = 0;
-        foreach (Pop pop in pops)
-        {
-            totalPoliticalPower += pop.politicalPower;
-            totalHappiness += pop.politicalPower * pop.happiness;
-        }
-        return totalHappiness / totalPoliticalPower;
-    }
-    public void CalcBaseWealth()
-    {
-        baseWealth = population * 0.005f;
-    }
-    public void LinkTrade()
-    {
-        // Default is that we are linked to nobody
-        Region selectedLink = null;
-        bool highestLocalTradeWeight = true;
+        int depth = 0;
+        tradeWeights.Clear();
+        float newMarketConnection = 1f;
+        float marketConnectionDecay = 1f/Defines.MaxTradeWeightDepth;
 
-        foreach (Region potentialLink in borderingRegions)
+        Region currentRegion = this;       
+        do
         {
-            if (potentialLink.tradeWeight >= tradeWeight) highestLocalTradeWeight = false;
+            depth++;
+            Region nextRegion = currentRegion.tradeLink;
+            newMarketConnection = Mathf.Max(newMarketConnection - Mathf.Lerp(marketConnectionDecay * 2f, marketConnectionDecay, currentRegion.fertility), 0);
 
-            // Links our cell to a cell with higher demand
-            if (potentialLink.tradeWeight > tradeWeight)
+            // If the region is linked
+            if (nextRegion != null)
             {
-                // If this potentialLink has a greater trade weight than our current link, link to it
-                if (selectedLink == null || potentialLink.tradeWeight > selectedLink.tradeWeight)
+                tradeWeights.Add(nextRegion.GetBaseTradeWeight() * newMarketConnection);
+            }
+            currentRegion = nextRegion;
+        } while (currentRegion != null && depth < Defines.MaxTradeWeightDepth);
+
+        float highestTradeWeight = tradeWeights.Count > 0 ? tradeWeights.Max() : 0;
+
+        tradeWeight = Mathf.RoundToInt(Math.Max(highestTradeWeight, GetBaseTradeWeight())); 
+        if (tradeZone == null)
+        {
+            marketConnection = 0;
+        } else
+        {
+            marketConnection = (float)tradeWeight/tradeZone.center.GetBaseTradeWeight();
+        }
+    }
+    public int GetBaseTradeWeight()
+    {
+        float populationTradeWeight = population * 0.001f;
+        float zoneTradeWeight = 0;
+        if (tradeZone?.center == this)
+        {
+            zoneTradeWeight = tradeZone.regions.Count;
+        }
+
+        float baseTradeWeight = (zoneTradeWeight + populationTradeWeight + (10 * fertility)) * fertility;
+        if (hasRiver || coastal) baseTradeWeight *= 1.2f;
+
+        return  Mathf.RoundToInt(baseTradeWeight);
+    }
+    public void UpdateTradeLinks()
+    {
+        Region newTradeLink = null;
+        bool highestLocalTradeWeight = true;
+        foreach (Region border in borderingRegions)
+        {
+            if (border.tradeWeight >= tradeWeight)
+            {
+                highestLocalTradeWeight = false;
+                if (border.tradeWeight > tradeWeight)
                 {
-                    selectedLink = potentialLink;
-                }         
+                    // If this potentialLink has a greater trade weight than our current link, link to it
+                    if (newTradeLink == null || border.tradeWeight > newTradeLink.tradeWeight)
+                    {
+                        newTradeLink = border;
+                    }         
+                }                
             }
         }
-
-        if (selectedLink != null)
+        if (newTradeLink != null)
         {
             if (tradeZone?.center == this)
             {
                 // If we have a trade zone delete it
                 ObjectManager.DeleteTradeZone(tradeZone);
             }            
-            if (selectedLink.tradeZone != tradeZone)
+            if (newTradeLink.tradeZone != tradeZone)
             {
                 // Join new link's trade zone
-                selectedLink.tradeZone?.AddRegion(this);
+                newTradeLink.tradeZone?.AddRegion(this);
             }
         } 
         else
         {
-            if (highestLocalTradeWeight && (tradeZone == null || tradeZone.center != this))
+            if (highestLocalTradeWeight && !isTradeZoneCenter)
             {
                 // Then create a new tradeZone
                 tradeZone = ObjectManager.CreateTradeZone(this);
             }       
         }
-        
-        // Finally updates our trade link
-        SetTradeLink(selectedLink);
+        tradeLink = newTradeLink;
     }
-    public void SetTradeLink(Region newTradeLink)
+    public void UpdateProduction()
     {
-        if (tradeLink != null && tradeLink.linkedRegions.Remove(this))
+        foreach (Goods good in Enum.GetValues<Goods>())
         {
-            Region nextLink = tradeLink.tradeLink;
-            while (nextLink != null && nextLink.linkedRegions.Remove(this))
+            switch (good)
             {
-                nextLink = nextLink.tradeLink;
+                case Goods.FOOD:
+                    float techFactor = 1f + (tech.societyLevel/10f);
+                    float foodProduction = workforce * fertility * Defines.FoodProductionFactor * techFactor;
+                    economy.production[good] = foodProduction;
+                    break;
             }
-        }        
-        if (newTradeLink != null && newTradeLink.linkedRegions.Add(this))
-        {
-            Region nextLink = newTradeLink.tradeLink;
-            while (nextLink != null && nextLink.linkedRegions.Add(this))
-            {
-                nextLink = nextLink.tradeLink;
-            }         
-        }        
-        tradeLink = newTradeLink;       
-    }
-    public void GetTaxIncome()
-    {
-        if (owner == null)
-        {
-            taxIncome = 0;
-            return;
-        } 
-        State taxingState = owner?.GetRealm() == null ? owner : owner.GetRealm().leadState;
-        Polity taxingPolity = owner?.GetPolity();
-
-        float distributedTaxes = taxingPolity.baseWealth * taxingState.taxRate;
-        if (taxingState.capital == this)
-        {
-            taxIncome = distributedTaxes * 0.1f;
-            return;
-        }
-        taxIncome = (distributedTaxes * 0.9f)/taxingPolity.regions.Count;
-    }
-    public float GetTradeIncome()
-    {
-        tradeIncome = linkedRegions.Sum(link => link.baseWealth) * 0.2f;
-        return tradeIncome;
-    }
-    
-    // Demand Propagation
-    public void GetTradeWeight()
-    {
-        int depth = 0;
-        tradeWeights.Clear();
-        float multiplier = 1.0f;
-        Region currentRegion = this;
-
-        do
-        {
-            depth++;
-            multiplier -= 1f/Defines.MaxTradeWeightDepth;
-            Region nextRegion = currentRegion.tradeLink;
-
-            // If the region is linked
-            if (nextRegion != null)
-            {
-                tradeWeights.Add(nextRegion.GetBaseTradeWeight() * multiplier);
-            }
-            currentRegion = nextRegion;
-        } while (currentRegion != null && depth < Defines.MaxTradeWeightDepth);
-
-        float highestTradeWeight = tradeWeights.Count > 0 ? tradeWeights.Max() : 0;
-        tradeWeight = Mathf.RoundToInt(Math.Max(highestTradeWeight, GetBaseTradeWeight()));
-    }
-    public int GetBaseTradeWeight()
-    {
-        float fertilityTradeWeight = fertility * 20;
-        float populationTradeWeight = population * 0.0005f;
-
-        float zoneSizeTradeWeight = 0;
-        if (isTradeZoneCenter && tradeZone != null)
-        {
-            zoneSizeTradeWeight = tradeZone.GetZoneSize() * 0.5f;
-        }
-
-        float politySizeTradeWeight = 0f;
-        if (owner != null && owner.capital == this)
-        {
-            politySizeTradeWeight = owner.regions.Count;
-            if (owner.sovereignty == Sovereignty.INDEPENDENT && owner.GetRealm() != null)
-            {
-                politySizeTradeWeight = owner.GetRealm().GetSize();
-            }
-        }
-
-        return (int)((fertilityTradeWeight + populationTradeWeight + politySizeTradeWeight + zoneSizeTradeWeight) * fertility);
-    } 
-    public void EstablishTradeRoutes()
-    {
-        foreach (var pair in simManager.tradeZoneIds.ToArray())
-        {
-            Region tradeZoneCenter = pair.Value.center;
-
-            if (!regionPaths.TryGetValue(tradeZoneCenter, out List<Region> path))
-            {
-                path = GetPath(this, tradeZoneCenter, true, Defines.MaxTradeRouteLength);
-
-                regionPaths[tradeZoneCenter] = path;
-                tradeZoneCenter.regionPaths[this] = path;
-
-                foreach (Region tradeRoute in path)
-                {
-                    tradeRoute.tradeCenterPairs.Add((this, tradeZoneCenter));
-                }                
-            }
-
+            economy.supplies[good] = economy.production[good] + economy.trade[good];
+            economy.trade[good] = 0;
         }
     }
-    public void GetRouteIncome()
+    public void UpdateDemand()
     {
-        foreach ((Region, Region) tradingPairs in tradeCenterPairs.ToArray())
+        foreach (Goods good in Enum.GetValues<Goods>())
         {
-            if (!tradingPairs.Item1.isTradeZoneCenter || !tradingPairs.Item2.isTradeZoneCenter)
-            {
-                tradeCenterPairs.Remove(tradingPairs);
-                continue;
-            }
-            tradeIncome = Mathf.Max(tradeIncome, Mathf.Min(tradingPairs.Item1.tradeIncome, tradingPairs.Item2.tradeIncome) * 0.5f);
-        }
+            economy.demands[good] = GetGoodDemand(good);
+        }       
     }
-    public void UpdateWealth()
+    public float GetGoodDemand(Goods good)
     {
-        wealth = baseWealth + taxIncome + tradeIncome;
-    }
-    public void DistributeWealth()
-    {
-        foreach (Pop pop in pops)
+        float newDemand = 0;
+        switch (good)
         {
-            pop.wealth = (tradeIncome + taxIncome) * (pop.population / (float)population);
+            case Goods.FOOD:
+                newDemand = population * 1.05f;
+                break;
         }
+        return newDemand;        
     }
-    public bool CanUpdateTrade()
-    {
-        return linkUpdateCountdown < 0 || pops.Count < 0 || tradeLink == null;
-    }
-
     public void MergePops()
     {
         if (pops.Count < 2)
@@ -914,4 +841,4 @@ public partial class Region : PopObject, ISaveable
     {
         return source.centerPos.DistanceSquaredTo(target.centerPos);
     }
-}   
+} 

@@ -466,11 +466,6 @@ public class SimManager
         try
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            foreach (Region region in habitableRegions)
-            {
-                region.UpdateWealth();
-            }
-            
             var partitioner = Partitioner.Create(habitableRegions);
             Parallel.ForEach(partitioner, (region) =>
             {
@@ -479,7 +474,7 @@ public class SimManager
                 {
                     region.MergePops();
                     region.CountPopulation();
-                    region.DistributeWealth();
+                    //region.DistributeWealth();
                     if (region.corePop != null) region.tech = region.corePop.tech;
                 }
                 
@@ -487,21 +482,18 @@ public class SimManager
                 {
                     region.StateBordering();
                 }                
-
                 region.linkUpdateCountdown--;
-                region.GetTradeWeight();
 
-                // Tax Income
-                region.GetTaxIncome();
-                // Base Trade Income
-                region.GetTradeIncome();
+                region.UpdateProduction();
+                region.UpdateDemand();
+                region.UpdateTradeWeight();
             });
             countedPerformanceInfo["Parallel Time"] = stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart(); 
 
             Parallel.ForEach(partitioner, (region) =>
             {
-                region.GetRouteIncome();
+                //region.GetRouteIncome();
             }); 
             countedPerformanceInfo["Trade Route Time"] += stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();        
@@ -514,13 +506,14 @@ public class SimManager
                     region.linkUpdateCountdown = 0;
                     continue;
                 }
-                
+                if (1 == TimeManager.GetMonth(timeManager.ticks)) region.UpdateTradeLinks();
+
                 // Economy
-                if (region.isTradeZoneCenter) region.EstablishTradeRoutes();
+                //if (region.isTradeZoneCenter) region.EstablishTradeRoutes();
             
                 countedPerformanceInfo["Trade Route Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
-
+                /*
                 if (region.CanUpdateTrade())
                 {
                     region.LinkTrade();
@@ -528,7 +521,7 @@ public class SimManager
                 }
                 // Base Wealth
                 region.CalcBaseWealth();
-
+                */
                 countedPerformanceInfo["Economy Time"] += stopwatch.Elapsed.TotalMilliseconds;
                 stopwatch.Restart();
 
