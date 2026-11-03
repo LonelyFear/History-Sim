@@ -5,9 +5,15 @@ using System.Linq;
 
 public partial class EconomyBox : InfoPanelBox
 {
-	[Export] Label wealthLabel;
-	[Export] RichTextLabel tradeZoneLabel;
-	
+	Label wealthLabel;
+	RichTextLabel tradeZoneLabel;
+
+    public override void _Ready()
+    {
+		wealthLabel = GetNode<Label>("WealthLabel");
+		tradeZoneLabel = GetNode<RichTextLabel>("TradeZoneLabel");
+    }
+
 	public override void _Process(double delta)
 	{
 		Visible = (infoHolder.selectedObject is Polity) || (infoHolder.selectedObject is Region) || (infoHolder.selectedObject is TradeZone);	

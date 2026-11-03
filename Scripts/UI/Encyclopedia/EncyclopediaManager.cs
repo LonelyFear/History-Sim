@@ -12,16 +12,17 @@ public partial class EncyclopediaManager : CanvasLayer
 	//[Export] PackedScene polityTabScene;
 	[Export] PackedScene indexTabScene;
 	[Export] TimeManager timeManager;
-	[Export] TabManager encyclopediaMenu;
-	[Export] EncyclopediaMainMenu mainMenu;
-	[Export] Control encyclopediaHolder;
 	[Export] GameUI gameUi;
 	[Export] PlayerCamera playerCamera;
-	[Export] Button closeEncyclopediaButton;
 	[Export] SimManagerHolder simHolder;
 	[Export] SelectionManager selectionManager;
 	[Export] MapManager mapManager;
 	public SimManager simManager;
+
+	TabManager encyclopediaMenu;
+	EncyclopediaMainMenu mainMenu;
+	Control encyclopediaHolder;
+	Button closeEncyclopediaButton;
 	Dictionary<ulong, BaseEncyclopediaTab> infoTabs = [];
 
 	// Called when the node enters the scene tree for the first time.
@@ -33,6 +34,11 @@ public partial class EncyclopediaManager : CanvasLayer
 		encyclopediaMenu.TabClosePressed += CloseTab;
 		closeEncyclopediaButton.Pressed += CloseEncyclopedia;
 		mainMenu.text.MetaClicked += OnMetaClicked;
+
+		encyclopediaMenu = GetNode<TabManager>("%TabManager");
+		mainMenu = GetNode<EncyclopediaMainMenu>("%MainMenu");
+		encyclopediaHolder = GetNode<Control>("EncyclopediaHolder");
+		closeEncyclopediaButton = GetNode<Button>("%ExitEncyclopediaButton");
     }
 	public void OnSimStart()
 	{

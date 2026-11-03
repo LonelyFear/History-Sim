@@ -5,12 +5,6 @@ public partial class TopPanel : Panel
 {
     [ExportCategory("Top Bar")]
 	[Export] Label dateLabel;
-    [Export] Label nameLabel;
-    [Export] Label ageLabel;
-    [ExportCategory("Bottom Bar")]
-    [Export] Label populationLabel;
-    [Export] Label warsLabel;
-    [Export] Label statesLabel;
 
     [ExportCategory("References")]
 	[Export] SimManagerHolder simHolder;
@@ -32,11 +26,5 @@ public partial class TopPanel : Panel
         if (!update) return;
 
         dateLabel.Text = $"Year {TimeManager.GetYear(timeManager.ticks)}";
-        nameLabel.Text = $"World of {simManager.worldName}";
-        ageLabel.Text = $"Age of History";
-
-        populationLabel.Text = $"World Population: {simManager.worldPopulation:#,##0}";
-        warsLabel.Text = $"Wars: {simManager.warIds.Count:#,##0}";
-        statesLabel.Text = $"States: {simManager.statesIds.Count:#,##0}";
     }
 }

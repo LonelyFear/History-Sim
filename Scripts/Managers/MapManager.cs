@@ -246,6 +246,7 @@ public partial class MapManager : Node2D
     }
 
     void CheckMapmodeChange(){
+        if (mapModeUI == null) return;
         MapModes lastMode = mapMode;
         mapMode = (MapModes)mapModeUI.Selected;
         if (mapmodeTask == null || mapmodeTask.IsCompleted )

@@ -1,0 +1,290 @@
+[gd_scene format=3 uid="uid://cnrouajs7jrl2"]
+
+[ext_resource type="Script" uid="uid://cj0k0s1dru788" path="res://Scripts/UI/InfoHolder.cs" id="1_6k5s6"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_jwx38"]
+[ext_resource type="Texture2D" uid="uid://fdl6b4lgpqij" path="res://Sprites/Icons/Cube Tab Icon.png" id="3_hsjsn"]
+[ext_resource type="Texture2D" uid="uid://cbxcrhkoik54u" path="res://Sprites/Icons/Banner Tab Icon.png" id="4_pf6vt"]
+[ext_resource type="Texture2D" uid="uid://dr8j8fmvdbjhj" path="res://Sprites/Icons/Crown Tab Icon.png" id="5_7t167"]
+[ext_resource type="Texture2D" uid="uid://d0ikusbp8bvy2" path="res://Sprites/Icons/Shield Tab Icon.png" id="6_nmd8a"]
+[ext_resource type="Texture2D" uid="uid://dy0pq3ah4prxn" path="res://Sprites/Icons/Rug Tab Icon.png" id="7_xp768"]
+[ext_resource type="Texture2D" uid="uid://qyiufmqook10" path="res://Sprites/Icons/Crate Tab Icon.png" id="8_85w4f"]
+[ext_resource type="Script" uid="uid://y6dbljc821m" path="res://Scripts/UI/DemographicsBox.cs" id="9_qcdvp"]
+[ext_resource type="Script" uid="uid://cv5nuwudhbqr6" path="res://Scripts/UI/LeadershipBox.cs" id="10_2wc5x"]
+[ext_resource type="Script" uid="uid://clmuvck1mxus6" path="res://Scripts/EconomyBox.cs" id="11_bkj7h"]
+[ext_resource type="Script" uid="uid://dm80ni1pwsu8b" path="res://Scripts/UI/InfoPanelBox.cs" id="12_njq0n"]
+[ext_resource type="Script" uid="uid://dcg6vujyu57iu" path="res://Scripts/UI/WarsBox.cs" id="13_bipqf"]
+
+[sub_resource type="DPITexture" id="DPITexture_vm72l"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#fff\" fill-opacity=\".75\" d=\"m1 3 2-2 5 5 5-5 2 2-5 5 5 5-2 2-5-5-5 5-2-2 5-5z\"/></svg>
+"
+
+[node name="InfoHolder" type="VBoxContainer" unique_id=770875322]
+anchors_preset = -1
+anchor_top = 0.35
+anchor_right = 0.25
+anchor_bottom = 0.87
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+script = ExtResource("1_6k5s6")
+
+[node name="TabBar" type="TabBar" parent="." unique_id=377838878]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_constants/icon_max_width = 24
+current_tab = 2
+tab_alignment = 1
+tab_count = 6
+tab_0/tooltip = "Region"
+tab_0/icon = ExtResource("3_hsjsn")
+tab_1/tooltip = "Polity"
+tab_1/icon = ExtResource("4_pf6vt")
+tab_2/tooltip = "Realm"
+tab_2/icon = ExtResource("5_7t167")
+tab_3/tooltip = "Alliance"
+tab_3/icon = ExtResource("6_nmd8a")
+tab_4/tooltip = "Culture"
+tab_4/icon = ExtResource("7_xp768")
+tab_5/tooltip = "Trade Zone"
+tab_5/icon = ExtResource("8_85w4f")
+
+[node name="Panel" type="Panel" parent="." unique_id=725063547]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=819289314]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=692558265]
+layout_mode = 2
+
+[node name="NameAndClose" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1824372143]
+layout_mode = 2
+
+[node name="NameType" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/NameAndClose" unique_id=1806763733]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Name" type="Label" parent="Panel/MarginContainer/VBoxContainer/NameAndClose/NameType" unique_id=727540729]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 40
+text = "Nation Name"
+clip_text = true
+
+[node name="Type" type="Label" parent="Panel/MarginContainer/VBoxContainer/NameAndClose/NameType" unique_id=1797580045]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 22
+text = "Nation"
+clip_text = true
+
+[node name="CloseInfoButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/NameAndClose" unique_id=1851328997]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+icon = SubResource("DPITexture_vm72l")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="EncyclopediaButton" type="Button" parent="Panel/MarginContainer/VBoxContainer" unique_id=1113043830]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "View In Encyclopedia"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer" unique_id=1748095057]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1386708039]
+layout_mode = 2
+size_flags_vertical = 3
+vertical_scroll_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer" unique_id=1089666095]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer" unique_id=1536905670]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="DemographicsBox" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1108907616 node_paths=PackedStringArray("infoHolder")]
+layout_mode = 2
+script = ExtResource("9_qcdvp")
+infoHolder = NodePath("../../../../../../..")
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=2045474951]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "Stats:"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=1215105154]
+layout_mode = 2
+
+[node name="PopulationLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=796127453]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Population: 2,000,000"
+
+[node name="FoundLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=1808901450]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Founded: Month 3 of 997"
+
+[node name="AgeLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=64956324]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Age: 999 years, 6 months"
+
+[node name="StrengthLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=1093150684]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Strength: 100"
+
+[node name="FertilityLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=903169940]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Fertility: 100%
+Navigability: 100%"
+
+[node name="TechLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DemographicsBox" unique_id=2016599102]
+visible = false
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Tech: 
+Mil - 1/20
+Soc - 1/20
+Ind - 0/20"
+
+[node name="LeadershipBox" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=126427563]
+visible = false
+layout_mode = 2
+script = ExtResource("10_2wc5x")
+metadata/_custom_type_script = "uid://dm80ni1pwsu8b"
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=548507098]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "Government:"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=1672815698]
+layout_mode = 2
+
+[node name="GovtLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=1663066611]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Parliamentary Monarchy"
+
+[node name="LeaderLabel" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=1183318292]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/normal_font_size = 25
+bbcode_enabled = true
+text = "Leader: King Jon Doe III"
+fit_content = true
+
+[node name="LeaderAgeLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=1953904666]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Age: 67"
+
+[node name="StabLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/LeadershipBox" unique_id=1222809699]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Stability: 50%"
+
+[node name="EconomyBox" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=2128343304]
+layout_mode = 2
+script = ExtResource("11_bkj7h")
+metadata/_custom_type_script = "uid://dm80ni1pwsu8b"
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=1884246474]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "Economy:"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=1530082541]
+layout_mode = 2
+
+[node name="WealthLabel" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=855685419]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/font_size = 25
+text = "Wealth: 100,000"
+
+[node name="TradeZoneLabel" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/EconomyBox" unique_id=662409482]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/normal_font_size = 25
+bbcode_enabled = true
+text = "Trade Zone: Joma Market"
+fit_content = true
+
+[node name="DiplomacyBox" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=1810050179]
+layout_mode = 2
+script = ExtResource("12_njq0n")
+metadata/_custom_type_script = "uid://dm80ni1pwsu8b"
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DiplomacyBox" unique_id=1185476607]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "Diplomacy:"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DiplomacyBox" unique_id=55125420]
+layout_mode = 2
+
+[node name="WealthLabel" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/DiplomacyBox" unique_id=1293817327]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "No Active Relations"
+
+[node name="WarsBox" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer" unique_id=865343645 node_paths=PackedStringArray("warsLabel")]
+visible = false
+layout_mode = 2
+script = ExtResource("13_bipqf")
+warsLabel = NodePath("WarsLabel")
+metadata/_custom_type_script = "uid://dm80ni1pwsu8b"
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=1810164817]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+text = "Wars:"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=1475245158]
+layout_mode = 2
+
+[node name="WarsLabel" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/ScrollContainer/MarginContainer/VBoxContainer/WarsBox" unique_id=534251973]
+layout_mode = 2
+theme = ExtResource("2_jwx38")
+theme_override_font_sizes/normal_font_size = 25
+bbcode_enabled = true
+text = "No Active Wars"
+fit_content = true
+scroll_active = false

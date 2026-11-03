@@ -28,6 +28,8 @@ public partial class TimeManager : Node
     [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
 
+    double tickStartTime;
+
     public override void _Ready()
     {
         mapManager = GetNode<MapManager>("/root/Game/Map Manager");
@@ -49,6 +51,7 @@ public partial class TimeManager : Node
     }
     void UpdateGameSpeed()
     {
+        if (gameSpeedUI == null) return;
         gameSpeed = (GameSpeed)gameSpeedUI.Selected;
     }
     public override void _Process(double delta)
@@ -88,13 +91,12 @@ public partial class TimeManager : Node
         if (currentTime <= GetWaitTime()) return;
         currentTime = 0;
         
-        double tickStartTime = Time.GetTicksMsec(); 
+        tickStartTime = Time.GetTicksMsec(); 
         await Task.Run(simManager.SimMonth);
 
         if (Mathf.PosMod(ticks, TicksPerYear) == 0){
             await Task.Run(simManager.SimYear);
         }
-
         tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
         ticks ++;
     }

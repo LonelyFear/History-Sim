@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://c2c8qw0bdt7lp"]
+
+[ext_resource type="Script" uid="uid://77e4chl7ptvx" path="res://Scripts/UI/Encyclopedia/EncyclopediaManager.cs" id="1_bh2h8"]
+[ext_resource type="PackedScene" uid="uid://bl4uuhft253r1" path="res://Scenes/Encyclopedia/info_tab.tscn" id="2_wfklt"]
+[ext_resource type="PackedScene" uid="uid://dhtiq4yceyxya" path="res://Scenes/Encyclopedia/index_tab.tscn" id="3_spmns"]
+[ext_resource type="StyleBox" uid="uid://ch0imdw1x0j44" path="res://Godot Themes/panel.stylebox" id="4_1vfgl"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="5_8c0yu"]
+[ext_resource type="PackedScene" uid="uid://bslwmll3j6xsk" path="res://Scenes/tab_manager.tscn" id="6_h8a6y"]
+[ext_resource type="PackedScene" uid="uid://5m67xih57d7m" path="res://Scenes/Encyclopedia/encyclopedia_main_menu.tscn" id="7_dur42"]
+
+[node name="Encyclopedia" type="CanvasLayer" unique_id=1230366444 node_paths=PackedStringArray("encyclopediaMenu", "mainMenu", "encyclopediaHolder", "closeEncyclopediaButton")]
+script = ExtResource("1_bh2h8")
+infoTabScene = ExtResource("2_wfklt")
+indexTabScene = ExtResource("3_spmns")
+encyclopediaMenu = NodePath("EncyclopediaHolder/TabManager")
+mainMenu = NodePath("EncyclopediaHolder/TabMargins/MainMenu")
+encyclopediaHolder = NodePath("EncyclopediaHolder")
+closeEncyclopediaButton = NodePath("EncyclopediaHolder/Panel/ExitEncyclopediaButton")
+
+[node name="EncyclopediaHolder" type="VBoxContainer" parent="." unique_id=369958947]
+visible = false
+offset_right = 1280.0
+offset_bottom = 720.0
+theme_override_constants/separation = 0
+
+[node name="Panel" type="Panel" parent="EncyclopediaHolder" unique_id=1006838756]
+custom_minimum_size = Vector2(0, 35)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("4_1vfgl")
+
+[node name="ExitEncyclopediaButton" type="Button" parent="EncyclopediaHolder/Panel" unique_id=183990371]
+unique_name_in_owner = true
+z_index = 1
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -16.0
+offset_right = 199.0
+offset_bottom = 16.0
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 2
+theme = ExtResource("5_8c0yu")
+theme_override_font_sizes/font_size = 30
+text = "Exit Encyclopedia"
+
+[node name="TabManager" parent="EncyclopediaHolder" unique_id=1800002365 node_paths=PackedStringArray("tabHolder") instance=ExtResource("6_h8a6y")]
+unique_name_in_owner = true
+layout_mode = 2
+tabHolder = NodePath("../TabMargins")
+
+[node name="TabMargins" type="MarginContainer" parent="EncyclopediaHolder" unique_id=1559107716]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="MainMenu" parent="EncyclopediaHolder/TabMargins" unique_id=554748121 instance=ExtResource("7_dur42")]
+unique_name_in_owner = true
+layout_mode = 2

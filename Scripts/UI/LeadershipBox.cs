@@ -5,15 +5,21 @@ using System;
 
 public partial class LeadershipBox : InfoPanelBox
 {
-	[Export] EncyclopediaManager encyclopedia;
+	EncyclopediaManager encyclopedia;
 
 	[ExportCategory("Labels")]
-	[Export] Label govtLabel;
-	[Export] RichTextLabel leaderLabel;
-	[Export] Label leaderAgeLabel;
-	[Export] Label stabLabel;
+	Label govtLabel;
+	RichTextLabel leaderLabel;
+	Label leaderAgeLabel;
+	Label stabLabel;
     public override void _Ready()
     {
+		govtLabel = GetNode<Label>("GovtLabel");
+		leaderLabel = GetNode<RichTextLabel>("LeaderLabel");
+		leaderAgeLabel = GetNode<Label>("LeaderAgeLabel");
+		stabLabel = GetNode<Label>("StabLabel");		
+		
+		encyclopedia = infoHolder.encyclopedia;
         leaderLabel.MetaClicked += encyclopedia.OpenTab;
     }
 

@@ -7,6 +7,10 @@ using System.Linq;
 public partial class WarsBox : InfoPanelBox
 {
     [Export] RichTextLabel warsLabel;
+    public override void _Ready()
+    {
+		warsLabel = GetNode<RichTextLabel>("WarsLabel");
+    }
 
 	public override void _Process(double delta)
 	{

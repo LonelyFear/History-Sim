@@ -7,16 +7,24 @@ public partial class InfoHolder : VBoxContainer
 {
 	[Export] MapManager mapManager;
 	[Export] SelectionManager selectionManager;
-	[Export] TabBar focusTabBar;
-	[Export] Label nameLabel;
-	[Export] Label typeLabel;
-	[Export] EncyclopediaManager encyclopedia;
-	[Export] Button encyclopediaButton;
+	[Export] public EncyclopediaManager encyclopedia;
+
+	TabBar focusTabBar;
+	Label nameLabel;
+	Label typeLabel;
+	Button encyclopediaButton;
+	Button closeInfoButton;
 
 	public NamedObject selectedObject;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		focusTabBar = GetNode<TabBar>("TabBar");
+		nameLabel = GetNode<Label>("%Name");
+		typeLabel = GetNode<Label>("%Type");
+		closeInfoButton = GetNode<Button>("%CloseInfoButton");
+		encyclopediaButton = GetNode<Button>("%EncyclopediaButton");
+
 		focusTabBar.TabChanged += TabSelected;
 		mapManager.mapmodeChanged += OnMapModeChanged;
 		encyclopediaButton.Pressed += () =>
@@ -26,6 +34,18 @@ public partial class InfoHolder : VBoxContainer
 			string idToOpen = selectedObject.GetFullId();
 			encyclopedia.OpenTab(idToOpen);
 		};
+
+		foreach (Node child in FindChildren("*"))
+		{
+			if (child is InfoPanelBox infoPanel)
+			{
+				GD.Print("Hi");
+				infoPanel.infoHolder = this;
+				infoPanel.mapManager = mapManager;
+				infoPanel.selectionManager = selectionManager;
+			}
+		}
+		closeInfoButton.Pressed += () => selectionManager.SelectRegion(null);
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

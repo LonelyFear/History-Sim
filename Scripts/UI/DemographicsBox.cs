@@ -9,13 +9,21 @@ public partial class DemographicsBox : VBoxContainer
 	[Export] SelectionManager selectionManager;
 
 	[ExportCategory("Labels")]
-	[Export] Label populationLabel;
-	[Export] Label foundedLabel;
-	[Export] Label ageLabel;
-	[Export] Label strengthLabel;
-	[Export] Label fertilityLabel;
-	[Export] Label techLabel;
-
+	Label populationLabel;
+	Label foundedLabel;
+	Label ageLabel;
+	Label strengthLabel;
+	Label fertilityLabel;
+	Label techLabel;
+	public override void _Ready()
+	{
+		populationLabel = GetNode<Label>("PopulationLabel");
+		foundedLabel = GetNode<Label>("FoundLabel");
+		ageLabel = GetNode<Label>("AgeLabel");
+		strengthLabel = GetNode<Label>("StrengthLabel");
+		fertilityLabel = GetNode<Label>("FertilityLabel");
+		techLabel = GetNode<Label>("TechLabel");
+	}
 	public override void _Process(double delta)
 	{
 		if (infoHolder.selectedObject == null) return;
