@@ -27,8 +27,7 @@ public partial class TimeManager : Node
     GameSpeed lastSpeed = GameSpeed.UNLIMITED;
     [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
-
-    double tickStartTime;
+    
 
     public override void _Ready()
     {
@@ -91,7 +90,7 @@ public partial class TimeManager : Node
         if (currentTime <= GetWaitTime()) return;
         currentTime = 0;
         
-        tickStartTime = Time.GetTicksMsec(); 
+        double tickStartTime = Time.GetTicksMsec(); 
         await Task.Run(simManager.SimMonth);
 
         if (Mathf.PosMod(ticks, TicksPerYear) == 0){

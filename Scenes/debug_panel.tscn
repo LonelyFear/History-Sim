@@ -1,0 +1,116 @@
+[gd_scene format=3 uid="uid://ck3kuiv6l2wdg"]
+
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="1_vtvnh"]
+[ext_resource type="Script" uid="uid://d1qang7nemn0r" path="res://Scripts/UI/Debug/DebugPanel.cs" id="2_pgu12"]
+
+[sub_resource type="DPITexture" id="DPITexture_vm72l"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#fff\" fill-opacity=\".75\" d=\"m1 3 2-2 5 5 5-5 2 2-5 5 5 5-2 2-5-5-5 5-2-2 5-5z\"/></svg>
+"
+
+[node name="DebugPanel" type="Panel" unique_id=2140855518]
+visible = false
+anchors_preset = -1
+anchor_left = 0.76600003
+anchor_top = 0.1
+anchor_right = 1.0
+anchor_bottom = 0.708
+offset_left = 0.5199585
+offset_bottom = -125.76001
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 2
+theme = ExtResource("1_vtvnh")
+script = ExtResource("2_pgu12")
+
+[node name="DebugMargins" type="MarginContainer" parent="." unique_id=1246085103]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Debug" type="VBoxContainer" parent="DebugMargins" unique_id=1402791953]
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 0
+
+[node name="DebugTitle" type="HBoxContainer" parent="DebugMargins/Debug" unique_id=1322576702]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="DebugMargins/Debug/DebugTitle" unique_id=1371901886]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_vtvnh")
+theme_override_font_sizes/font_size = 40
+text = "Debug Info"
+horizontal_alignment = 1
+
+[node name="CloseButton" type="Button" parent="DebugMargins/Debug/DebugTitle" unique_id=1070684221]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme = ExtResource("1_vtvnh")
+icon = SubResource("DPITexture_vm72l")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="HSeparator" type="HSeparator" parent="DebugMargins/Debug" unique_id=1145268389]
+layout_mode = 2
+
+[node name="TPSLabel" type="Label" parent="DebugMargins/Debug" unique_id=1029804243]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("1_vtvnh")
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 0
+theme_override_font_sizes/font_size = 30
+text = "MTPS: 5
+TPS: 30
+Fps: 300"
+
+[node name="FrameBreakdown" type="VBoxContainer" parent="DebugMargins/Debug" unique_id=2094178261]
+layout_mode = 2
+
+[node name="StepTimeLabel" type="Label" parent="DebugMargins/Debug/FrameBreakdown" unique_id=393649021]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Total Step Time: "
+
+[node name="PopTimeMenu" type="MenuButton" parent="DebugMargins/Debug/FrameBreakdown" unique_id=478902149]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Pops Time"
+flat = false
+alignment = 0
+
+[node name="RegionTimeMenu" type="MenuButton" parent="DebugMargins/Debug/FrameBreakdown" unique_id=525347744]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Region Time"
+flat = false
+alignment = 0
+
+[node name="StateTimeMenu" type="MenuButton" parent="DebugMargins/Debug/FrameBreakdown" unique_id=1697142708]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "States Time"
+flat = false
+alignment = 0
+
+[node name="MiscTimeMenu" type="MenuButton" parent="DebugMargins/Debug/FrameBreakdown" unique_id=2102921831]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Misc Time"
+flat = false
+alignment = 0

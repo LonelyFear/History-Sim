@@ -1,14 +1,13 @@
+using System;
 using Godot;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
-using System;
 
 [GlobalClass]
-public partial class SelectionManager : Node2D
+public partial class SelectionManager : Node
 {
 	[Export] PlayerCamera playerCamera;
 	[Export] SimManagerHolder simHolder;
-	[Export] Button deselectButton;
 	[Export] MapManager mapManager;
 	SimManager simManager;
 
@@ -20,10 +19,10 @@ public partial class SelectionManager : Node2D
 	public Region hoveredRegion {get; private set;}
 	Region selectedRegion = null;
 	public bool selectionEnabled = false;
+
     public override void _Ready()
     {
 		simHolder.simStartEvent += Init;
-        deselectButton.Pressed += () => SelectRegion(null);
 	}
 	public void Init()
 	{
