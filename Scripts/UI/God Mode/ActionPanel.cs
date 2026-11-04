@@ -1,44 +1,36 @@
 using Godot;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 public partial class ActionPanel : Panel
 {
     [Export] SimManagerHolder simHolder;
-    [Export] public Button menuButton;
-    [Export] public Button mainMenuButton;
-    [Export] public Button saveMenuButton;
-    [Export] public Button saveButton;
-    [Export] public Button saveCancelButton;
-    [Export] public OptionButton overwriteButton;
-    [Export] public Panel menuPanel;
-    [Export] Panel saveSimPanel;
     [Export] public Button encyclopediaButton;
     [Export] EncyclopediaManager encyclopediaManager;
-    [Export] public GameUI uiLayer;
+    Label worldPopulationLabel;
+    Label warCountLabel;
+    Label stateCountLabel;
+    SimManager simManager;
 
     public override void _Ready()
     {
-        menuButton.Pressed += OnMenuClick;
-        mainMenuButton.Pressed += OnMainMenu;
+        worldPopulationLabel = GetNode<Label>("%WorldPopulationLabel");
+        warCountLabel = GetNode<Label>("%WarCountLabel");
+        stateCountLabel = GetNode<Label>("%StateCountLabel");
+
         encyclopediaButton.Pressed += OnEncyclopediaClick;
+
+        // Connection
+		simHolder.simStartEvent += () => {simManager = simHolder.simManager;};
     }
-    public void OnMainMenu()
+    public override void _Process(double delta)
     {
-        GetTree().ChangeSceneToPacked(GD.Load<PackedScene>("res://Scenes/main_menu.tscn"));
-        GetNode<Game>("/root/Game").QueueFree();        
+        if (simManager == null) return;
+        
+        worldPopulationLabel.Text = $"World Population: {simManager.worldPopulation:#,##0}";
+        warCountLabel.Text = $"Wars: {simManager.warIds.Count:#,##0}";
+        stateCountLabel.Text = $"States: {simManager.statesIds.Count:#,##0}";
     }
     public void OnEncyclopediaClick()
     {
         encyclopediaManager.OpenEncyclopedia();
-    }
-    public void OnMenuClick()
-    {
-        if (saveSimPanel.Visible) return;
-        menuPanel.Visible = !menuPanel.Visible;
     }
 }

@@ -25,9 +25,8 @@ public partial class TimeManager : Node
     double currentTime;
     public GameSpeed gameSpeed = GameSpeed.UNLIMITED;
     GameSpeed lastSpeed = GameSpeed.UNLIMITED;
-    [Export] OptionButton gameSpeedUI;
     public bool forcePause = false;
-    
+    double tickStartTime;
 
     public override void _Ready()
     {
@@ -41,17 +40,10 @@ public partial class TimeManager : Node
         simStart = true;
         simManager = simHolder.simManager;
 	}
-    public void ForceGameSpeed(GameSpeed desiredSpeed)
+    public void SetGameSpeed(GameSpeed desiredSpeed)
     {
         lastSpeed = gameSpeed;
         gameSpeed = desiredSpeed;
-        gameSpeedUI.Selected = (int)desiredSpeed;
-        UpdateGameSpeed();
-    }
-    void UpdateGameSpeed()
-    {
-        if (gameSpeedUI == null) return;
-        gameSpeed = (GameSpeed)gameSpeedUI.Selected;
     }
     public override void _Process(double delta)
     {
@@ -61,14 +53,13 @@ public partial class TimeManager : Node
         {
             if (gameSpeed == GameSpeed.PAUSED)
             {
-                ForceGameSpeed(lastSpeed);
+                SetGameSpeed(lastSpeed);
             } else
             {
-                ForceGameSpeed(GameSpeed.PAUSED);
+                SetGameSpeed(GameSpeed.PAUSED);
             }
         }
 
-        UpdateGameSpeed();
         currentTime += delta;
 
         if (forcePause)
@@ -90,23 +81,27 @@ public partial class TimeManager : Node
         if (currentTime <= GetWaitTime()) return;
         currentTime = 0;
         
-        double tickStartTime = Time.GetTicksMsec(); 
+        
         await Task.Run(simManager.SimMonth);
 
         if (Mathf.PosMod(ticks, TicksPerYear) == 0){
             await Task.Run(simManager.SimYear);
         }
         tickDelta = (Time.GetTicksMsec() - tickStartTime) / 1000d;
-        ticks ++;
+        tickStartTime = Time.GetTicksMsec(); 
+        
+        ticks++;
     }
     async Task RenderGame()
     {
         // Hides region overlay 
+        /*
         if (!mapManager.showRegionsCheckbox.ButtonPressed)
         {
             mapManager.regionOverlay.Visible = false;
         }
-        if (drawTask.IsCompleted && mapManager.showRegionsCheckbox.ButtonPressed)
+        */
+        if (drawTask.IsCompleted)
         {
             // Shows region overlay
             mapManager.regionOverlay.Visible = true;

@@ -3,16 +3,24 @@ using System;
 
 public partial class TopPanel : Panel
 {
-    [ExportCategory("Top Bar")]
-	[Export] Label dateLabel;
-
     [ExportCategory("References")]
 	[Export] SimManagerHolder simHolder;
 	SimManager simManager;
     [Export] TimeManager timeManager;
     bool update = false;
+
+    Label yearLabel;
+    OptionButton timeDropdown;
     public override void _Ready()
     {
+		yearLabel = GetNode<Label>("%YearLabel");
+		timeDropdown = GetNode<OptionButton>("%TimeDropdown");
+        timeDropdown.ItemSelected += index =>
+
+        {
+            timeManager.SetGameSpeed((TimeManager.GameSpeed)index);
+        };
+
         // Connection
 		simHolder.simStartEvent += OnSimStart;
 	}
@@ -25,6 +33,6 @@ public partial class TopPanel : Panel
     {
         if (!update) return;
 
-        dateLabel.Text = $"Year {TimeManager.GetYear(timeManager.ticks)}";
+        yearLabel.Text = $"Year {TimeManager.GetYear(timeManager.ticks)}";
     }
 }

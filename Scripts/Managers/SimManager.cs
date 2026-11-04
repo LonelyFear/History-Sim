@@ -306,7 +306,7 @@ public class SimManager
             
             regionIds.Values.AsParallel().ForAll(region => region.GetNavalBorders());
 
-            timeManager.ForceGameSpeed(TimeManager.GameSpeed.PAUSED);
+            timeManager.SetGameSpeed(TimeManager.GameSpeed.PAUSED);
         }
         else
         {

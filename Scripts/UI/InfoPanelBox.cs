@@ -8,4 +8,5 @@ public partial class InfoPanelBox : VBoxContainer
 	public InfoHolder infoHolder;
 	public MapManager mapManager;
 	public SelectionManager selectionManager;
+
 }

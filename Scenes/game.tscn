@@ -21,7 +21,6 @@
 [ext_resource type="Texture2D" uid="uid://bftrngyk2d7mo" path="res://Sprites/Icons/16x16 Crown.png" id="20_6uxt2"]
 [ext_resource type="Script" uid="uid://b0m3hits6odum" path="res://Scripts/UI/PauseIcon.cs" id="20_bu0y5"]
 [ext_resource type="Texture2D" uid="uid://eti0xnre28kp" path="res://Sprites/Icons/16x16 Shield.png" id="21_bwj6o"]
-[ext_resource type="Script" uid="uid://e41goq8da66p" path="res://Scripts/UI/Saving/SaveSimPanel.cs" id="22_22asu"]
 [ext_resource type="Texture2D" uid="uid://bjswosc22jdnq" path="res://Sprites/Icons/16x16 Rug.png" id="22_bwj6o"]
 [ext_resource type="Script" uid="uid://dwax1c6st6gtk" path="res://Scripts/UI/Debug/DebugLabel.cs" id="22_vm72l"]
 [ext_resource type="Texture2D" uid="uid://33nbpixfhw8x" path="res://Sprites/Icons/16x16 Flask.png" id="23_f3c8l"]
@@ -35,7 +34,6 @@
 [ext_resource type="Texture2D" uid="uid://bdjtnarj1d4sk" path="res://Sprites/Icons/16x16 Hamburger Menu.png" id="31_ym3tv"]
 [ext_resource type="PackedScene" uid="uid://ck3kuiv6l2wdg" path="res://Scenes/debug_panel.tscn" id="32_lmoi6"]
 [ext_resource type="PackedScene" uid="uid://cnrouajs7jrl2" path="res://Scenes/info_holder.tscn" id="35_631el"]
-[ext_resource type="Script" uid="uid://dqai4dwkt1r7g" path="res://Scripts/UI/OptionsPanel.cs" id="39_bu0y5"]
 [ext_resource type="Script" uid="uid://b7otfafxlep3u" path="res://Scripts/UI/HoverText.cs" id="42_jcvim"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mucmn"]
@@ -82,12 +80,11 @@ playerCamera = NodePath("../PlayerCamera")
 simHolder = NodePath("../Simulation")
 mapManager = NodePath("../Map Manager")
 
-[node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder", "gameSpeedUI")]
+[node name="Time Manager" type="Node" parent="." unique_id=975540197 node_paths=PackedStringArray("simHolder")]
 script = ExtResource("7_ewbju")
 simHolder = NodePath("../Simulation")
-gameSpeedUI = NodePath("../UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo/TimeSpeed")
 
-[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("timeManager", "selectionManager", "regionOverlay", "terrainSprite", "simHolder", "playerCamera", "mapModeUI", "showRegionsCheckbox")]
+[node name="Map Manager" type="Node2D" parent="." unique_id=618181759 node_paths=PackedStringArray("timeManager", "selectionManager", "regionOverlay", "terrainSprite", "simHolder", "playerCamera")]
 z_index = 2
 script = ExtResource("6_85qyi")
 timeManager = NodePath("../Time Manager")
@@ -96,8 +93,6 @@ regionOverlay = NodePath("Region Map")
 terrainSprite = NodePath("../Terrain Map/Terrain Map")
 simHolder = NodePath("../Simulation")
 playerCamera = NodePath("../PlayerCamera")
-mapModeUI = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/MapModeHolder/MapMode")
-showRegionsCheckbox = NodePath("../UI/Bars/Action Panel/ActionBarMargins/ActionBar/ShowRegionsCheckbox")
 
 [node name="Region Map" type="Sprite2D" parent="Map Manager" unique_id=1549420155]
 material = SubResource("ShaderMaterial_mucmn")
@@ -159,17 +154,17 @@ expand_mode = 3
 script = ExtResource("20_bu0y5")
 timeManager = NodePath("../../../Time Manager")
 
-[node name="TopPanel" type="Panel" parent="UI/Bars" unique_id=1976200673 node_paths=PackedStringArray("dateLabel", "simHolder", "timeManager")]
+[node name="TopPanel" type="Panel" parent="UI/Bars" unique_id=1976200673 node_paths=PackedStringArray("simHolder", "timeManager")]
 layout_mode = 1
 anchors_preset = -1
+anchor_left = 0.76600003
 anchor_right = 1.0
 anchor_bottom = 0.1
-offset_left = 981.0
+offset_left = 0.5199585
 grow_horizontal = 2
 mouse_force_pass_scroll_events = false
 theme = ExtResource("4_exi56")
 script = ExtResource("16_22asu")
-dateLabel = NodePath("TopBarMargins/TopBar/TopBarInfo/YearLabel")
 simHolder = NodePath("../../../Simulation")
 timeManager = NodePath("../../../Time Manager")
 
@@ -191,19 +186,21 @@ alignment = 1
 
 [node name="TopBarInfo" type="VBoxContainer" parent="UI/Bars/TopPanel/TopBarMargins/TopBar" unique_id=1658274548]
 layout_mode = 2
+size_flags_horizontal = 3
 alignment = 1
 
 [node name="YearLabel" type="Label" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=293517647]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
 text = "Year 47"
 horizontal_alignment = 1
 
-[node name="TimeSpeed" type="OptionButton" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=1829450767]
+[node name="TimeDropdown" type="OptionButton" parent="UI/Bars/TopPanel/TopBarMargins/TopBar/TopBarInfo" unique_id=1829450767]
+unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
 theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
+alignment = 1
 selected = 6
 item_count = 7
 popup/item_0/text = "Paused"
@@ -221,7 +218,7 @@ popup/item_5/id = 5
 popup/item_6/text = "Unlimited"
 popup/item_6/id = 6
 
-[node name="Action Panel" type="Panel" parent="UI/Bars" unique_id=934192393 node_paths=PackedStringArray("simHolder", "menuButton", "mainMenuButton", "saveMenuButton", "saveButton", "saveCancelButton", "overwriteButton", "menuPanel", "saveSimPanel", "encyclopediaButton", "encyclopediaManager", "uiLayer")]
+[node name="Action Panel" type="Panel" parent="UI/Bars" unique_id=934192393 node_paths=PackedStringArray("simHolder", "encyclopediaButton", "encyclopediaManager")]
 layout_mode = 1
 anchors_preset = -1
 anchor_top = 0.9
@@ -233,17 +230,8 @@ mouse_force_pass_scroll_events = false
 theme = ExtResource("4_exi56")
 script = ExtResource("17_7nbq1")
 simHolder = NodePath("../../../Simulation")
-menuButton = NodePath("ActionBarMargins/ActionBar/MenuButton")
-mainMenuButton = NodePath("../../Options Panel/VBoxContainer/MainMenuButton")
-saveMenuButton = NodePath("../../Options Panel/VBoxContainer/SaveSimButton")
-saveButton = NodePath("../../SaveSimPanel/PanelMargins/PanelContent/SaveOptions/SaveButton")
-saveCancelButton = NodePath("../../SaveSimPanel/PanelMargins/PanelContent/SaveOptions/CancelButton")
-overwriteButton = NodePath("../../SaveSimPanel/PanelMargins/PanelContent/SaveOptionDropdown")
-menuPanel = NodePath("../../Options Panel")
-saveSimPanel = NodePath("../../SaveSimPanel")
 encyclopediaButton = NodePath("ActionBarMargins/ActionBar/EncyclopediaButton")
 encyclopediaManager = NodePath("../../../Encyclopedia")
-uiLayer = NodePath("../..")
 
 [node name="ActionBarMargins" type="MarginContainer" parent="UI/Bars/Action Panel" unique_id=1315838029]
 layout_mode = 1
@@ -261,46 +249,41 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="MapModeHolder" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=525852745]
-visible = false
+[node name="WorldStatsContainer" type="VBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1108151928]
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
+
+[node name="WorldPopulationLabel" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/WorldStatsContainer" unique_id=168640863]
+unique_name_in_owner = true
+layout_mode = 2
+text = "World Population: 1,000,000"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/WorldStatsContainer" unique_id=25625254]
+layout_mode = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/MapModeHolder" unique_id=549775214]
+[node name="WarCountLabel" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/WorldStatsContainer/HBoxContainer" unique_id=755564262]
+unique_name_in_owner = true
 layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-text = "Map Mode:"
+size_flags_horizontal = 3
+text = "Wars: 0"
+horizontal_alignment = 1
 
-[node name="MapMode" type="OptionButton" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/MapModeHolder" unique_id=1964536640]
+[node name="VSeparator" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/WorldStatsContainer/HBoxContainer" unique_id=220868113]
 layout_mode = 2
-focus_mode = 0
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 30
-selected = 0
-item_count = 9
-popup/item_0/text = "Realm"
-popup/item_0/id = 0
-popup/item_1/text = "Polity"
-popup/item_1/id = 1
-popup/item_2/text = "Alliance"
-popup/item_2/id = 2
-popup/item_3/text = "Culture"
-popup/item_3/id = 3
-popup/item_4/text = "Population"
-popup/item_4/id = 4
-popup/item_5/text = "Tech"
-popup/item_5/id = 5
-popup/item_6/text = "Wealth"
-popup/item_6/id = 6
-popup/item_7/text = "Trade Zones"
-popup/item_7/id = 7
-popup/item_8/text = "Terrain Type"
-popup/item_8/id = 8
+
+[node name="StateCountLabel" type="Label" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar/WorldStatsContainer/HBoxContainer" unique_id=2075617553]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "States: 0"
+horizontal_alignment = 1
+
+[node name="StartStatsSeparator2" type="VSeparator" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1720137311]
+layout_mode = 2
 
 [node name="ShowRegionsCheckbox" type="CheckBox" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=761628914]
+unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 0
 theme = ExtResource("4_exi56")
@@ -315,6 +298,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="EncyclopediaButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=189557080]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(65, 0)
 layout_mode = 2
 size_flags_vertical = 3
@@ -327,6 +311,7 @@ icon_alignment = 1
 expand_icon = true
 
 [node name="StatisticsButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=636329146]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(65, 0)
 layout_mode = 2
 size_flags_vertical = 3
@@ -343,11 +328,11 @@ expand_icon = true
 layout_mode = 2
 
 [node name="GodModeButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=434171356]
+unique_name_in_owner = true
 layout_mode = 2
 text = "God Mode"
 
 [node name="EditorButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=713008555]
-visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("4_exi56")
@@ -360,6 +345,7 @@ size_flags_horizontal = 3
 theme_override_styles/separator = SubResource("StyleBoxEmpty_fkdbe")
 
 [node name="MenuButton" type="Button" parent="UI/Bars/Action Panel/ActionBarMargins/ActionBar" unique_id=1471884785]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 size_flags_vertical = 4
@@ -545,154 +531,6 @@ mapManager = NodePath("../../Map Manager")
 [node name="DebugPanel" parent="UI" unique_id=2140855518 node_paths=PackedStringArray("timeManager", "simHolder") instance=ExtResource("32_lmoi6")]
 timeManager = NodePath("../../Time Manager")
 simHolder = NodePath("../../Simulation")
-
-[node name="SaveSimPanel" type="Panel" parent="UI" unique_id=789988692 node_paths=PackedStringArray("saveButton", "cancelButton", "saveOptions", "saveNameEdit", "simHolder", "menuButton")]
-visible = false
-anchors_preset = -1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -216.5
-offset_top = -95.0
-offset_right = 216.5
-offset_bottom = 95.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_vertical = 0
-mouse_force_pass_scroll_events = false
-script = ExtResource("22_22asu")
-saveButton = NodePath("PanelMargins/PanelContent/SaveOptions/SaveButton")
-cancelButton = NodePath("PanelMargins/PanelContent/SaveOptions/CancelButton")
-saveOptions = NodePath("PanelMargins/PanelContent/SaveOptionDropdown")
-saveNameEdit = NodePath("PanelMargins/PanelContent/SaveNameEditor")
-simHolder = NodePath("../../Simulation")
-menuButton = NodePath("../Bars/Action Panel/ActionBarMargins/ActionBar/MenuButton")
-
-[node name="PanelMargins" type="MarginContainer" parent="UI/SaveSimPanel" unique_id=1155545632]
-layout_mode = 1
-anchors_preset = -1
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="PanelContent" type="VBoxContainer" parent="UI/SaveSimPanel/PanelMargins" unique_id=219805128]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="Title" type="Label" parent="UI/SaveSimPanel/PanelMargins/PanelContent" unique_id=1417416091]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_fonts/font = ExtResource("4_nnt18")
-theme_override_font_sizes/font_size = 40
-text = "Saving Simulation"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="SaveOptionDropdown" type="OptionButton" parent="UI/SaveSimPanel/PanelMargins/PanelContent" unique_id=1231302549]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 35
-
-[node name="SaveNameEditor" type="LineEdit" parent="UI/SaveSimPanel/PanelMargins/PanelContent" unique_id=1341581134]
-custom_minimum_size = Vector2(0, 35)
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 35
-placeholder_text = "Save Name
-"
-max_length = 20
-context_menu_enabled = false
-emoji_menu_enabled = false
-
-[node name="SaveOptions" type="HBoxContainer" parent="UI/SaveSimPanel/PanelMargins/PanelContent" unique_id=1479064244]
-layout_mode = 2
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="SaveButton" type="Button" parent="UI/SaveSimPanel/PanelMargins/PanelContent/SaveOptions" unique_id=1650550193]
-layout_mode = 2
-size_flags_horizontal = 3
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 35
-text = "Save"
-
-[node name="CancelButton" type="Button" parent="UI/SaveSimPanel/PanelMargins/PanelContent/SaveOptions" unique_id=1541377738]
-layout_mode = 2
-size_flags_horizontal = 3
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 35
-text = "Cancel"
-
-[node name="Options Panel" type="Panel" parent="UI" unique_id=534514165 node_paths=PackedStringArray("openSavePanelButton", "saveSimPanel", "menuButton")]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -141.0
-offset_top = -168.0
-offset_right = 141.0
-offset_bottom = 32.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_force_pass_scroll_events = false
-script = ExtResource("39_bu0y5")
-openSavePanelButton = NodePath("VBoxContainer/SaveSimButton")
-saveSimPanel = NodePath("../SaveSimPanel")
-menuButton = NodePath("../Bars/Action Panel/ActionBarMargins/ActionBar/MenuButton")
-
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Options Panel" unique_id=602718195]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -111.0
-offset_top = -84.0
-offset_right = 112.0
-offset_bottom = 99.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Label" type="Label" parent="UI/Options Panel/VBoxContainer" unique_id=1836641387]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_fonts/font = ExtResource("4_nnt18")
-theme_override_font_sizes/font_size = 40
-text = "Options"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="HSeparator" type="HSeparator" parent="UI/Options Panel/VBoxContainer" unique_id=1431106254]
-layout_mode = 2
-theme_override_constants/separation = 17
-
-[node name="MainMenuButton" type="Button" parent="UI/Options Panel/VBoxContainer" unique_id=1878807488]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 32
-text = "Main Menu"
-
-[node name="OptionsButton" type="Button" parent="UI/Options Panel/VBoxContainer" unique_id=700138133]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 32
-disabled = true
-text = "Options
-"
-
-[node name="SaveSimButton" type="Button" parent="UI/Options Panel/VBoxContainer" unique_id=1288725362]
-layout_mode = 2
-theme = ExtResource("4_exi56")
-theme_override_font_sizes/font_size = 32
-text = "Save Simulation"
 
 [node name="Debug Label" type="Label" parent="UI" unique_id=2144837463 node_paths=PackedStringArray("selectionManager", "map", "simHolder")]
 offset_right = 40.0

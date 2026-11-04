@@ -27,6 +27,7 @@ public partial class InfoHolder : VBoxContainer
 
 		focusTabBar.TabChanged += TabSelected;
 		mapManager.mapmodeChanged += OnMapModeChanged;
+
 		encyclopediaButton.Pressed += () =>
 		{
 			encyclopedia.OpenEncyclopedia();

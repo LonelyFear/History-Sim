@@ -19,7 +19,7 @@ public partial class LeadershipBox : InfoPanelBox
 		leaderAgeLabel = GetNode<Label>("LeaderAgeLabel");
 		stabLabel = GetNode<Label>("StabLabel");		
 		
-		encyclopedia = infoHolder.encyclopedia;
+		encyclopedia = ((InfoHolder)Owner).encyclopedia;
         leaderLabel.MetaClicked += encyclopedia.OpenTab;
     }
 

@@ -28,8 +28,6 @@ public partial class MapManager : Node2D
     public bool initialized = false;
     [Export] SimManagerHolder simHolder;
     [Export] PlayerCamera playerCamera;
-    [Export] OptionButton mapModeUI;
-    [Export] public CheckBox showRegionsCheckbox;
 
     [Export(PropertyHint.Range, "1,10")] int regionResolution = 4;
      
@@ -227,10 +225,6 @@ public partial class MapManager : Node2D
         if (initialized)
         {
             ((ShaderMaterial)regionOverlay.Material).SetShaderParameter("horizontalPos", playerCamera.HorizontalFactor);
-            if (regionOverlay.Visible)
-            {
-                CheckMapmodeChange();
-            }
         }
     }
 
@@ -245,24 +239,10 @@ public partial class MapManager : Node2D
         }
     }
 
-    void CheckMapmodeChange(){
-        if (mapModeUI == null) return;
-        MapModes lastMode = mapMode;
-        mapMode = (MapModes)mapModeUI.Selected;
-        if (mapmodeTask == null || mapmodeTask.IsCompleted )
-        {
-            if (lastMode != mapMode)
-            {
-                SetMapMode(mapMode);
-            }
-        }        
-    }
-
     public void SetMapMode(MapModes mode)
     {
         selectionManager.SelectRegion(null);
         mapMode = mode;
-        mapModeUI.Selected = (int)mode;
         UpdateRegionColors(simManager.regionIds.Values);
         mapmodeChanged.Invoke(mode);
     }
