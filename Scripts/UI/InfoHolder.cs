@@ -84,48 +84,29 @@ public partial class InfoHolder : VBoxContainer
 			typeLabel.Text = selectedObject.GetTypeName();
         }
 	}
-	public void OnMapModeChanged(MapModes mapMode)
+	public void OnMapModeChanged(IMapMode newMapMode)
 	{
-		switch (mapManager.mapMode)
-		{
-			case MapModes.REALM:
-				focusTabBar.CurrentTab = 2;
-				break;
-			case MapModes.POLITIY:
-				focusTabBar.CurrentTab = 1;
-				break;
-			case MapModes.ALLIANCE:
-				focusTabBar.CurrentTab = 3;
-				break;
-			case MapModes.CULTURE:
-				focusTabBar.CurrentTab = 4;
-				break;
-			case MapModes.TRADE_WEIGHT:
-				focusTabBar.CurrentTab = 5;
-				break;
-		}
-	}
+        focusTabBar.CurrentTab = mapManager.mapMode.Id switch
+        {
+            "polity" => 1,
+            "realm" => 2,
+            "alliance" => 3,
+            "culture" => 4,
+            "trade_zone" => 5,
+            _ => 0,
+        };
+    }
 	public void TabSelected(long tab)
 	{
 		Region selectedRegion = selectionManager.GetSelectedRegion();
-		switch (tab)
+		mapManager.SetMapMode(tab switch
 		{
-			case 1:
-				mapManager.SetMapMode(MapModes.POLITIY);
-				break;
-			case 2:
-				mapManager.SetMapMode(MapModes.REALM);
-				break;
-			case 3:
-				mapManager.SetMapMode(MapModes.ALLIANCE);
-				break;
-			case 4:
-				mapManager.SetMapMode(MapModes.CULTURE);
-				break;
-			case 5:
-				mapManager.SetMapMode(MapModes.TRADE_WEIGHT);
-				break;
-		}
+            1 => "polity",
+            2 => "realm",
+            3 => "alliance",
+            4 => "culture",
+            5 => "trade_zone",	
+		});
 		selectionManager.SelectRegion(selectedRegion);
 	}
 }

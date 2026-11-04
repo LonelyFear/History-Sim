@@ -49,9 +49,9 @@ public partial class ObjectInfo : Panel
         Culture selectedCulture = selectionManager.GetSelectedCulture();
         State selectedState = selectionManager.GetSelectedState();
         Alliance selectedAlliance = selectionManager.GetSelectedAlliance(AllianceType.ALLIANCE);
-        switch (mapManager.mapMode)
+        switch (mapManager.mapMode.Id)
         {
-            case MapModes.REALM:
+            case "realm":
                 if (selectedState != null)
                 {
                     DisplayPolityText(selectionManager.GetSelectedPolity(), selectedState.GetOverlord()); 
@@ -62,7 +62,7 @@ public partial class ObjectInfo : Panel
                 }
 
                 break;
-            case MapModes.POLITIY:
+            case "polity":
                 if (selectedState != null)
                 {
                     DisplayPolityText(selectedState, selectedState); 
@@ -72,7 +72,7 @@ public partial class ObjectInfo : Panel
                     DisplayRegionText(selectionManager.GetSelectedRegion());
                 }
                 break;
-            case MapModes.ALLIANCE:
+            case "alliance":
                 if (selectedState != null)
                 {
                     if (selectedAlliance != null)
@@ -91,7 +91,7 @@ public partial class ObjectInfo : Panel
                     DisplayRegionText(selectionManager.GetSelectedRegion());
                 }
             break; 
-            case MapModes.CULTURE:
+            case "culture":
                 if (selectedCulture != null)
                 {
                     DisplayCultureText(selectedCulture);

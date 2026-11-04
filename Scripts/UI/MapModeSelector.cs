@@ -16,7 +16,7 @@ public partial class MapModeSelector : GridContainer
 				button.Pressed += OnMapmodePressed;
 				mapModeButtons.Add(button);
 
-				if (button.mapMode == mapManager.mapMode)
+				if (button.mapMode == mapManager.mapMode.Id)
 				{
 					button.Disabled = true;
 				}
@@ -24,12 +24,12 @@ public partial class MapModeSelector : GridContainer
 		}
 		mapManager.mapmodeChanged += OnMapModeChanged;
 	}
-	public void OnMapModeChanged(MapModes mapMode)
+	public void OnMapModeChanged(IMapMode newMapMode)
 	{
 		foreach (MapModeButton button in mapModeButtons)
 		{
 			button.Disabled = false;
-			if (button.mapMode == mapManager.mapMode)
+			if (button.mapMode == mapManager.mapMode.Id)
 			{
 				button.Disabled = true;
 			}

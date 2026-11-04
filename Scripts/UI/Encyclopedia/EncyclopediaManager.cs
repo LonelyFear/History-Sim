@@ -170,8 +170,8 @@ public partial class EncyclopediaManager : CanvasLayer
 			case State:
 				State mapState = (State)mapObject;
 				
-				if (mapState.sovereignty == Sovereignty.INDEPENDENT) mapManager.SetMapMode(MapModes.REALM);
-				else mapManager.SetMapMode(MapModes.POLITIY);
+				if (mapState.sovereignty == Sovereignty.INDEPENDENT) mapManager.SetMapMode("realm");
+				else mapManager.SetMapMode("polity");
 				
 				selectionManager.SelectRegion(mapState.capital);
 				break;
@@ -180,10 +180,10 @@ public partial class EncyclopediaManager : CanvasLayer
 				
 				if (mapAlliance.type == AllianceType.REALM)
 				{
-					mapManager.SetMapMode(MapModes.REALM);
+					mapManager.SetMapMode("realm");
 				} else
 				{
-					mapManager.SetMapMode(MapModes.ALLIANCE);
+					mapManager.SetMapMode("alliance");
 				}
 				selectionManager.SelectRegion(mapAlliance.leadState.capital);
 				break;

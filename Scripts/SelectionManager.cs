@@ -59,14 +59,7 @@ public partial class SelectionManager : Node
 	public bool CanSelectRegion(Region region)
 	{
 		if (region == null) return false;
-        return mapManager.mapMode switch
-        {
-			MapModes.REALM => region.habitable,
-			MapModes.POLITIY => region.habitable,
-			MapModes.ALLIANCE => region.population > 0,
-			MapModes.CULTURE => region.population > 0,
-            _ => false,
-        };
+        return mapManager.mapMode.CanSelectRegion(region);
     }
     public override void _UnhandledInput(InputEvent evnt)
     {

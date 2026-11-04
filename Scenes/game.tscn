@@ -398,6 +398,7 @@ icon = ExtResource("20_6uxt2")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
+mapMode = "realm"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="ProvinceButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=1209447938]
@@ -411,7 +412,7 @@ icon = ExtResource("19_ym3tv")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 1
+mapMode = "polity"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="AllyButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=995530582]
@@ -425,7 +426,7 @@ icon = ExtResource("21_bwj6o")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 2
+mapMode = "alliance"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="CultureButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=666356726]
@@ -439,7 +440,7 @@ icon = ExtResource("22_bwj6o")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 3
+mapMode = "culture"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="TechButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=1392962821]
@@ -456,7 +457,7 @@ icon = ExtResource("23_f3c8l")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 5
+mapMode = "tech"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="PopButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=1954207524]
@@ -471,7 +472,7 @@ icon = ExtResource("24_bu0y5")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 4
+mapMode = "population"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="WealthButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=1492506814]
@@ -486,7 +487,7 @@ icon = ExtResource("25_6a4tp")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 6
+mapMode = "wealth"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="TradeButton" type="Button" parent="UI/MapModes/MapModesOrganizer/MapmodeGrid" unique_id=122215366]
@@ -500,7 +501,7 @@ icon = ExtResource("26_631el")
 icon_alignment = 1
 expand_icon = true
 script = ExtResource("28_v2cs8")
-mapMode = 7
+mapMode = "trade_zone"
 metadata/_custom_type_script = "uid://ca5m1ajlbmt5n"
 
 [node name="InfoHolder" parent="UI" unique_id=770875322 node_paths=PackedStringArray("mapManager", "selectionManager", "encyclopedia") instance=ExtResource("35_631el")]

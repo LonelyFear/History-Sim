@@ -15,22 +15,9 @@ public partial class HoverText : RichTextLabel
 			int xPos = hoveredRegion.gridPos.X;
 			int yPos = hoveredRegion.gridPos.Y;		
 			Text = $"({xPos},{yPos}) {hoveredRegion.name}";
-
-			
-			switch (mapManager.mapMode)
+			if (mapManager.mapMode.GetHoverText(hoveredRegion).Length > 0)
 			{
-				case MapModes.POLITIY:
-					Polity state = hoveredRegion.owner;
-					if (state != null) Text += $", {state.name}";
-					break;
-				case MapModes.REALM:
-					Polity polity = hoveredRegion.owner?.GetPolity();
-					if (polity != null) Text += $", {polity.name}";
-					break;
-				case MapModes.CULTURE:
-					Culture culture = hoveredRegion.largestCulture;
-					if (culture != null) Text += $", {culture.name}";
-					break;
+				Text = mapManager.mapMode.GetHoverText(hoveredRegion);
 			}
 		}
 	}

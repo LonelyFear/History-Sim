@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 [GlobalClass]
 public partial class MapManager : Node2D
 {
-    Task mapmodeTask = null;
     SimManager simManager;
     [Export] TimeManager timeManager;
     [Export] SelectionManager selectionManager;
@@ -23,8 +22,10 @@ public partial class MapManager : Node2D
     Image regionImage;
     Image terrainImage;
     
-    public MapModes mapMode;
-    public MapModes selectedMode;
+    public IMapMode mapMode;
+    IMapMode fallbackMapMode = new FallbackMapMode();
+    public Dictionary<string, IMapMode> mapModes = [];
+
     public bool initialized = false;
     [Export] SimManagerHolder simHolder;
     [Export] PlayerCamera playerCamera;
@@ -45,13 +46,11 @@ public partial class MapManager : Node2D
     Rid cameraBuffer;
 
     // Input arrays
-    ColorData colorData = new ColorData();
     Color[] regionColors;
     ulong[] borderValues;
-    //float[] colorValues;
 
     // Events
-    public delegate void MapmodeChanged(MapModes newMapMode);
+    public delegate void MapmodeChanged(IMapMode newMapMode);
     public event MapmodeChanged mapmodeChanged;
 
     // NOTE: Painted regions are updated in TimeManager.cs
@@ -59,7 +58,20 @@ public partial class MapManager : Node2D
     {
         regionOverlay = GetNode<Sprite2D>("Region Map");
 		simHolder.simStartEvent += InitMapManager;
+        RegisterMapMode(new PopulationMapMode());
+        RegisterMapMode(new WealthMapMode());
+        RegisterMapMode(new TradeZoneMapMode());
+        RegisterMapMode(new TechMapMode());
+        RegisterMapMode(new RealmMapMode());
+        RegisterMapMode(new PolityMapMode());
+        RegisterMapMode(new CultureMapMode());
+        RegisterMapMode(new AllianceMapMode());
+        mapMode = mapModes["realm"];
 	}
+    void RegisterMapMode(IMapMode mapMode)
+    {
+        mapModes.Add(mapMode.Id, mapMode);
+    }
     void InitMapManager() {
         // Frees dimension buffer
         if (colorsBuffer.IsValid) rd.FreeRid(colorsBuffer);
@@ -78,6 +90,9 @@ public partial class MapManager : Node2D
         regionImage = Image.CreateEmpty(worldSize.X*regionResolution, worldSize.Y*regionResolution, false, Image.Format.Rgbaf);
         terrainImage = ((TerrainMap)simManager.terrainMap).terrainMap.Texture.GetImage();
 
+        IMapMode.simManager = simManager;
+        IMapMode.selectionManager = selectionManager;
+        
         initialized = true;
         InitShader();
     }
@@ -141,7 +156,7 @@ public partial class MapManager : Node2D
     {
         try
         {      
-            float[] dimensionsArray = [worldSize.X, worldSize.Y, regionResolution, GetMapmodeOpacity()];
+            float[] dimensionsArray = [worldSize.X, worldSize.Y, regionResolution, mapMode.Opacity];
             byte[] dimensionBytes = MemoryMarshal.AsBytes(dimensionsArray.AsSpan()).ToArray();
             dimensionsBuffer= rd.StorageBufferCreate((uint)dimensionBytes.Length, dimensionBytes);  
 
@@ -227,7 +242,6 @@ public partial class MapManager : Node2D
             ((ShaderMaterial)regionOverlay.Material).SetShaderParameter("horizontalPos", playerCamera.HorizontalFactor);
         }
     }
-
     void UpdateRegionVisibility(bool value) {
         if (value != regionOverlay.Visible)
         {
@@ -238,284 +252,24 @@ public partial class MapManager : Node2D
             }            
         }
     }
-
-    public void SetMapMode(MapModes mode)
+    public void SetMapMode(string mapModeId)
     {
         selectionManager.SelectRegion(null);
-        mapMode = mode;
+        if (!mapModes.TryGetValue(mapModeId, out mapMode))
+        {
+            GD.PushError("No Reigstered MapMode found with Id: " + mapModeId);
+            mapMode = fallbackMapMode;
+        }
         UpdateRegionColors(simManager.regionIds.Values);
-        mapmodeChanged.Invoke(mode);
+        mapmodeChanged.Invoke(mapMode);
     }
-    float GetMapmodeOpacity()
+    public Color GetRegionColor(Region region, out ulong borderId, bool isCenter = false)
     {
-        return mapMode switch
-        {
-            MapModes.REALM => 0.8f,
-            MapModes.POLITIY => 0.8f,
-            MapModes.CULTURE => 0.8f,
-            MapModes.TRADE_WEIGHT => 0.8f,
-            MapModes.ALLIANCE => 0.8f,
-            _ => 1f,
-        };
-    }
-    public Color GetRegionColor(Region region, out ulong borderId, bool includeCapital = false)
-    {
-        float colorDarkness = 0.4f;
-        Color color = new Color(0, 0, 0, 0);
         borderId = 0;
+        if (region == null || mapMode == null) return new Color(0, 0, 0, 0);
 
-        if (region == null) return color;
-        State regionOwner = region.owner;
-        MapModes drawnMapMode = mapMode;
-        int month = (int)(TimeManager.GetMonth(timeManager.ticks) - 1);
-
-        switch (drawnMapMode)
-        {
-            case MapModes.REALM:
-                
-                if (region.pops.Count > 0)
-                {
-                    borderId = 1;
-                    color = new Color(0.2f, 0.2f, 0.2f, 1);
-                }
-                if (regionOwner != null)
-                {
-                    // Draws borders between polities
-                    borderId = region.claimant.GetOverlord().id;
-                    
-                    color = regionOwner.displayColor;
-                    if (region.claimant.capital == region && region.claimant.sovereignty == Sovereignty.INDEPENDENT && includeCapital)
-                    {
-                        color = region.claimant.capitalColor;
-                    }
-                }                 
-                if (selectionManager.IsRegionSelected())
-                {
-                    State selectedState = selectionManager.GetSelectedState();
-                    if (selectedState != null && region.owner != null)
-                    {
-                        // Darkens unrelated states
-                        if (region.owner != null && region.owner.GetOverlord() != selectedState.GetOverlord())
-                        {
-                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
-                        }                      
-                    }
-                    else
-                    {
-                        if (region != selectionManager.GetSelectedRegion())
-                        {
-                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                        }                        
-                    }
-                }
-                break;
-            case MapModes.POLITIY:
-                if (region.pops.Count > 0)
-                {
-                    borderId = 1;
-                    color = new Color(0.2f, 0.2f, 0.2f, 1);
-                }
-                if (region.owner != null)
-                {
-                    borderId = region.claimant.id;
-
-                    color = region.owner.displayColor;
-                    if (region.claimant.capital == region && includeCapital)
-                    {
-                        color = region.claimant.capitalColor;
-                    }
-                }                 
-               
-                if (selectionManager.IsRegionSelected())
-                {
-                    State selectedState = selectionManager.GetSelectedState();
-                    if (selectedState != null && region.owner != null)
-                    {
-                        // Darkens unrelated states
-                        if (region.owner != selectedState)
-                        {
-                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
-                        }                      
-                    } else
-                    {
-                        if (region != selectionManager.GetSelectedRegion())
-                        {
-                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                        }                        
-                    }
-                }
-
-                break;
-            case MapModes.ALLIANCE:
-                Alliance alliance = null;
-                State overlord; 
-                borderId = 1;
-                if (region.owner != null)
-                {
-                    color = new Color(0.4f, 0.4f, 0.4f, 1);
-                    overlord = region.owner.GetOverlord();
-                    borderId = region.claimant.GetOverlord().id;
-
-                    alliance = overlord.GetAllianceOfType(AllianceType.ALLIANCE);
-                    if (alliance != null)
-                    {
-                        borderId = overlord.id;
-                        color = alliance.leadState.displayColor;
-                    }   
-                                      
-                    if (overlord.capital == region && includeCapital)
-                    {
-                        color = overlord.capitalColor;
-                    }
-
-                                       
-                }            
-                else if (region.habitable)
-                {
-                    borderId = 1;
-                    color = new Color(0, 0, 0, 1);
-                }
-
-                if (selectionManager.IsRegionSelected())
-                {
-                    Alliance selectedAlliance = selectionManager.GetSelectedAlliance(AllianceType.ALLIANCE);
-                    
-                    if (region.owner != null)
-                    {
-                        // Darkens unrelated states
-                        if ((selectedAlliance == null && selectionManager.GetSelectedPolity() != region.owner.GetPolity()) || alliance != selectedAlliance)
-                        {
-                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
-                        }                      
-                    }
-                    else
-                    {
-                        if (region != selectionManager.GetSelectedRegion())
-                        {
-                            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                        }                        
-                    }
-                }
-                break;
-            case MapModes.POPULATION:
-                colorData.opacity = 1f;
-                if (region.habitable && region.pops.Count > 0)
-                {
-                    long minRecordedPopulation = 1000 * (int)Mathf.Pow(RegionGenerator.tilesPerRegion, 2);
-                    if (simManager.highestPopulation > minRecordedPopulation && region.population > simManager.highestPopulation * 0.7f)
-                    {
-                        // Shows top 70% of populations in a different color
-                        color = Utility.MultiColourLerp([new Color("green"), new Color("white")], region.population / (float)simManager.highestPopulation);
-                    } else
-                    {
-                        color = Utility.MultiColourLerp([new Color("black"), new Color("green")], region.population / Mathf.Max(simManager.highestPopulation * 0.7f, minRecordedPopulation));
-                    }
-                }
-                else if (region.habitable)
-                {
-                    color = new Color(0, 0, 0, 1);
-                }
-                break;
-            case MapModes.CULTURE:
-
-                if (region.largestCulture != null && region.habitable)
-                {
-                    borderId = region.largestCulture.id;
-                    color = region.largestCulture.color;
-                }
-                else if (region.habitable)
-                {
-                    color = new Color(0, 0, 0, 1);
-                }
-
-                if (selectionManager.IsRegionSelected())
-                {
-                    Culture culture = selectionManager.GetSelectedCulture();
-                    if (region.cultures.TryGetValue(culture, out long population) && population > 0 && region.largestCulture != culture && region.habitable)
-                    {
-                        color = culture.color;
-                        color = (color * 0.8f) + (new Color(0, 0, 0) * 0.2f);
-                    }
-                    else if (region.largestCulture != culture || !region.habitable)
-                    {
-                        color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                    }
-                }                
-                break;
-            case MapModes.TECH:
-                if (region.population > 0)
-                {
-                    color = new Color(region.tech.militaryLevel / 20f, region.tech.industryLevel / 20f, region.tech.societyLevel / 20f);
-                }
-                break;
-            case MapModes.WEALTH:
-                if (region.habitable)
-                {
-                    if (region.wealth > simManager.maxWealth * 0.7f)
-                    {
-                        // Shows top 70% of wealth in a different color
-                        color = Utility.MultiColourLerp([new Color("yellow"), new Color("white")], region.wealth / simManager.maxWealth);
-                    } else
-                    {
-                        color = Utility.MultiColourLerp([new Color("black"), new Color("yellow")], region.wealth / (simManager.maxWealth * 0.7f));
-                    }
-                }
-                break;
-            case MapModes.TRADE_WEIGHT:
-                if (region.habitable)
-                {
-                    color = new Color(0f, 0f, 0f);
-                    if (region.tradeZone != null)
-                    {
-                        borderId = region.tradeZone.id;
-                        color = region.tradeZone.color;
-                    }
-                    if (region.isTradeZoneCenter && includeCapital) color = new Color("Yellow");
-                }   
-                break;
-            case MapModes.TERRAIN_TYPE:
-                borderId = (ulong)region.terrainType;
-                switch (region.terrainType)
-                {
-                    case TerrainType.SHALLOW_WATER:
-                        color = new Color(0.5f, 0.5f, 1f);
-                        break;
-                    case TerrainType.DEEP_WATER:
-                        color = new Color(0, 0, 0.8f);
-                        break;
-                    case TerrainType.LAND:
-                        color = new Color(0f, 1f, 0f);
-                        break;
-                    case TerrainType.HILLS:
-                        color = new Color(0.4f, 0.4f, 0f);
-                        break;
-                    case TerrainType.MOUNTAINS:
-                        color = new Color(0.1f, 0.1f, 0.1f);
-                        break;
-                    case TerrainType.ICE:
-                        color = new Color(1f, 1f, 1f);
-                        break;
-                }
-                break;
-            case MapModes.NONE:
-                if (selectionManager.IsRegionSelected())
-                {
-                    color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], colorDarkness);
-                }
-                break;
-            case MapModes.DAY_LENGTH:
-                float opacity = 0.75f;
-                Tile tile = simManager.tiles[region.centerPos.X, region.centerPos.Y];
-                color = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
-                Mathf.InverseLerp(0, 24, tile.GetDaylightForMonth(month)));
-                break;
-        }
-
-        if (selectionManager.hoveredRegion == region){
-            color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.3f);
-        }
-        //if (region.ocean != null) color = Utility.MultiColourLerp([color, region.ocean.color], 0.8f);
-        
+        Color color = mapMode.GetColor(region, out borderId, isCenter); 
+        if (selectionManager.hoveredRegion == region) color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.3f);
         return color;
     }
     public void UpdateRegionColor(int x, int y)
@@ -537,58 +291,10 @@ public partial class MapManager : Node2D
             {
                 finalColor = (Color)centralColor;
             }
-            
-            float opacity = 0.75f;
-            
-            switch (mapMode)
-            {
-                case MapModes.RAINFALL:
-                    finalColor = Utility.MultiColourLerp([Color.Color8(69, 4, 87, (byte)(opacity * 255f)), Color.Color8(31, 160, 136, (byte)(opacity * 255f)), Color.Color8(253, 231, 37, (byte)(opacity * 255f))], 
-                    Mathf.InverseLerp(0, 160, tile.GetRainfallForMonth(month)));
-                break;
-                case MapModes.TEMPERATURE:
-                    finalColor = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,1,1, opacity), new Color(1,0, 0, opacity)], 
-                    Mathf.InverseLerp(-40, 40, tile.GetTempForMonth(month)));
-                    break;
-                case MapModes.CONTINENTIALITY:
-                    finalColor = Utility.MultiColourLerp([new Color(0,0,1, opacity), new Color(1,0,0, opacity)], 
-                    Mathf.InverseLerp(0, 1, tile.continentiality));
-                    break;                
-            }
 
             int index = (tilePos.Y * worldSize.X) + tilePos.X;
             regionColors[index] = finalColor;     
             borderValues[index] = borderId;   
         }
     }
-    public bool IsMapModeCarved()
-    {
-        if (mapMode == MapModes.TERRAIN_TYPE)
-        {
-            return false;
-        }
-        return true;
-    }
-
-    struct ColorData()
-    {
-        public float opacity;
-    }
-}
-
-public enum MapModes {
-    REALM,
-    POLITIY,
-    ALLIANCE,
-    CULTURE,
-    POPULATION,
-    TECH,
-    WEALTH,
-    TRADE_WEIGHT,
-    TERRAIN_TYPE,
-    TEMPERATURE,
-    RAINFALL,
-    DAY_LENGTH,
-    CONTINENTIALITY,
-    NONE
 }
