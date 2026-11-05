@@ -47,7 +47,7 @@ public partial class MapManager : Node2D
 
     // Input arrays
     Color[] regionColors;
-    ulong[] borderValues;
+    (int,int)[] borderValues;
 
     // Events
     public delegate void MapmodeChanged(IMapMode newMapMode);
@@ -84,7 +84,7 @@ public partial class MapManager : Node2D
         Scale = simManager.terrainMap.Scale/regionResolution;
 
         worldSize = SimManager.worldSize;
-        borderValues = new ulong[worldSize.X * worldSize.Y];
+        borderValues = new (int,int)[worldSize.X * worldSize.Y];
         regionColors = new Color[worldSize.X * worldSize.Y];
 
         regionImage = Image.CreateEmpty(worldSize.X*regionResolution, worldSize.Y*regionResolution, false, Image.Format.Rgbaf);
@@ -156,7 +156,7 @@ public partial class MapManager : Node2D
     {
         try
         {      
-            float[] dimensionsArray = [worldSize.X, worldSize.Y, regionResolution, mapMode.Opacity];
+            float[] dimensionsArray = [worldSize.X, worldSize.Y, regionResolution, mapMode.Opacity, 1, 1];
             byte[] dimensionBytes = MemoryMarshal.AsBytes(dimensionsArray.AsSpan()).ToArray();
             dimensionsBuffer= rd.StorageBufferCreate((uint)dimensionBytes.Length, dimensionBytes);  
 
@@ -263,9 +263,9 @@ public partial class MapManager : Node2D
         UpdateRegionColors(simManager.regionIds.Values);
         mapmodeChanged.Invoke(mapMode);
     }
-    public Color GetRegionColor(Region region, out ulong borderId, bool isCenter = false)
+    public Color GetRegionColor(Region region, out (int,int) borderId, bool isCenter = false)
     {
-        borderId = 0;
+        borderId = (0,0);
         if (region == null || mapMode == null) return new Color(0, 0, 0, 0);
 
         Color color = mapMode.GetColor(region, out borderId, isCenter); 
@@ -278,8 +278,8 @@ public partial class MapManager : Node2D
         Region r = ObjectManager.GetRegion(simManager.tiles[x,y].regionId);
         if (r == null) return;
 
-        Color color = GetRegionColor(r, out ulong borderId, false);
-        Color? centralColor = GetRegionColor(r, out ulong _, true);;
+        Color color = GetRegionColor(r, out (int,int) borderId, false);
+        Color? centralColor = GetRegionColor(r, out (int,int) _, true);;
 
         int month = (int)(TimeManager.GetMonth(timeManager.ticks) - 1);
 

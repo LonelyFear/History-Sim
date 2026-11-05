@@ -11,24 +11,24 @@ public class AllianceMapMode : IMapMode
     {
         return region.population > 0;
     }
-    public Color GetColor(Region region, out ulong borderId, bool isCenter = false)
+    public Color GetColor(Region region, out (int,int) borderId, bool isCenter = false)
     {
         Color color = IMapMode.BaseColor;
 
         Alliance alliance = null;
         State overlord; 
-        borderId = 1;
+        borderId = (0,0);
 
         if (region.owner != null)
         {
             color = new Color(0.4f, 0.4f, 0.4f, 1);
             overlord = region.owner.GetOverlord();
-            borderId = region.claimant.GetOverlord().id;
+            borderId = ((int)region.claimant.GetOverlord().id, (int)region.claimant.GetOverlord().id);
 
             alliance = overlord.GetAllianceOfType(AllianceType.ALLIANCE);
             if (alliance != null)
             {
-                borderId = overlord.id;
+                borderId = ((int)overlord.id, 0);
                 color = alliance.leadState.displayColor;
             }   
                                 
@@ -41,7 +41,6 @@ public class AllianceMapMode : IMapMode
         }            
         else if (region.habitable)
         {
-            borderId = 1;
             color = new Color(0, 0, 0, 1);
         }
 

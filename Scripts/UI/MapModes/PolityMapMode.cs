@@ -11,18 +11,18 @@ public class PolityMapMode : IMapMode
     {
         return region.habitable;
     }
-    public Color GetColor(Region region, out ulong borderId, bool isCenter = false)
+    public Color GetColor(Region region, out (int,int) borderId, bool isCenter = false)
     {
         Color color = IMapMode.BaseColor;
-        borderId = 0;
+        borderId = (0,0);
         if (region.pops.Count > 0)
         {
-            borderId = 1;
+            borderId = (1,1);
             color = new Color(0.2f, 0.2f, 0.2f, 1);
         }
         if (region.owner != null)
         {
-            borderId = region.claimant.id;
+            borderId = ((int)region.claimant.id, (int)region.claimant.GetOverlord().id);
 
             color = region.owner.displayColor;
             if (region.claimant.capital == region && isCenter)

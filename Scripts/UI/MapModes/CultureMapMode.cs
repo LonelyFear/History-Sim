@@ -11,14 +11,14 @@ public class CultureMapMode : IMapMode
     {
         return region.population > 0;
     }
-    public Color GetColor(Region region, out ulong borderId, bool isCenter = false)
+    public Color GetColor(Region region, out (int,int) borderId, bool isCenter = false)
     {
         Color color = IMapMode.BaseColor;
-        borderId = 0;
+        borderId = (0,0);
 
         if (region.largestCulture != null && region.habitable)
         {
-            borderId = region.largestCulture.id;
+            borderId = ((int)region.largestCulture.id, (int)region.largestCulture.id);
             color = region.largestCulture.color;
         }
         else if (region.habitable)

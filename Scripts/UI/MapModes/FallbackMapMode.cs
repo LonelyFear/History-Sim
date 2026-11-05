@@ -11,9 +11,9 @@ public class FallbackMapMode : IMapMode
     {
         return region.habitable;
     }
-    public Color GetColor(Region region, out ulong borderId, bool isCenter = false)
+    public Color GetColor(Region region, out (int,int) borderId, bool isCenter = false)
     {
-        borderId = 0;
+        borderId = (0,0);
         return IMapMode.BaseColor;
     }
     public string GetHoverText(Region region)

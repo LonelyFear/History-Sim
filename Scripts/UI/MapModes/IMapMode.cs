@@ -12,7 +12,7 @@ public interface IMapMode
     public string Id { get; }
     public float Opacity { get; }
     public int FocusTabId { get; }
-    public Color GetColor(Region region, out ulong borderId, bool isCenter = false);  
+    public Color GetColor(Region region, out (int,int) borderId, bool isCenter = false);  
     public bool CanSelectRegion(Region region);
     public string GetHoverText(Region region);
 }

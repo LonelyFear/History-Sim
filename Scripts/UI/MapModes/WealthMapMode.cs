@@ -11,10 +11,10 @@ public class WealthMapMode : IMapMode
     {
         return false;
     }
-    public Color GetColor(Region region, out ulong borderId, bool isCenter = false)
+    public Color GetColor(Region region, out (int,int) borderId, bool isCenter = false)
     {
         Color color = IMapMode.BaseColor;
-        borderId = 0;
+        borderId = (0,0);
         if (region.habitable)
         {
             if (region.wealth > IMapMode.simManager.maxWealth * 0.7f)

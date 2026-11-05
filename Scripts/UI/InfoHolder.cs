@@ -99,14 +99,24 @@ public partial class InfoHolder : VBoxContainer
 	public void TabSelected(long tab)
 	{
 		Region selectedRegion = selectionManager.GetSelectedRegion();
-		mapManager.SetMapMode(tab switch
+		switch (tab)
 		{
-            1 => "polity",
-            2 => "realm",
-            3 => "alliance",
-            4 => "culture",
-            5 => "trade_zone",	
-		});
+			case 1:
+				mapManager.SetMapMode("polity");
+				break;
+			case 2:
+				mapManager.SetMapMode("realm");
+				break;
+			case 3:
+				mapManager.SetMapMode("alliance");
+				break;
+			case 4:
+				mapManager.SetMapMode("culture");
+				break;
+			case 5:
+				mapManager.SetMapMode("trade_zone");
+				break;
+		}
 		selectionManager.SelectRegion(selectedRegion);
 	}
 }

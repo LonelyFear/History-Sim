@@ -8,6 +8,8 @@ layout(set = 0, binding = 0, std430) readonly buffer dimensionBuffer {
     float height;
     float resolution;
     float opacity;
+    float thinBorderThickness;
+    float solidBorderThickness;
 } dimensions;
 
 layout(set = 0, binding = 1, std430) readonly buffer colorBuffer {
@@ -17,7 +19,7 @@ layout(set = 0, binding = 1, std430) readonly buffer colorBuffer {
 layout(set = 0, binding = 2, rgba32f) uniform image2D image;
 
 layout(set = 0, binding = 3, std430) readonly buffer borderBuffer {
-    uint64_t[] borders;
+    ivec2[] borders;
 } borderData;
 
 layout(set = 0, binding = 4, std430) readonly buffer cameraBuffer {
@@ -42,24 +44,35 @@ void main() {
     vec4 terrainColor = imageLoad(terrainImage, uv/int(dimensions.resolution));
     vec4 color = colors.colors[index];
     
-    int borderIndex = 0;
+    int borderId = borderData.borders[index].x;
+    int borderTag = borderData.borders[index].y;
     bool isBorderToRender = false;
+    bool isBorderSolid = false;
 
     int thickness = 1;
 
     for (int dx = -thickness; dx <= thickness; dx++){
         for (int dy = -thickness; dy <= thickness; dy++){
-            ivec2 pos = ivec2(uv.x + dx, uv.y + dy);
-            if (borderData.borders[getIndex(pos.x/int(dimensions.resolution), pos.y/int(dimensions.resolution))] != borderData.borders[index]){
-                isBorderToRender = true;
-                break;
-            }            
+            if (dx != 0 && dy != 0){
+                ivec2 pos = ivec2((uv.x + dx) % int(dimensions.width), (uv.y + dy) % int(dimensions.height));
+                int otherIndex = getIndex(pos.x/int(dimensions.resolution), pos.y/int(dimensions.resolution));
+                int otherBorderId = borderData.borders[otherIndex].x;
+                int otherBorderTag = borderData.borders[otherIndex].y;
+                
+                if (otherBorderId != borderId){
+                    isBorderToRender = true;
+                    if (otherBorderTag != borderTag) isBorderSolid = true;
+                }                 
+            }
         }
     }
 
 
     if (isBorderToRender){
-        color = vec4(color.rgb * 0.5f, 1);
+        color = vec4(color.rgb * 0.75f, 1);
+        if (isBorderSolid){
+            color = vec4(0,0,0,1);
+        }
     } else if (color.a > 0) {
         color = (color * dimensions.opacity) + (terrainColor * (1.0 - dimensions.opacity));
     }
