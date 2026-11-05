@@ -1,13 +1,9 @@
+using System;
 using System.Threading.Tasks;
 using Godot;
 
 public partial class TimeManager : Node
 {
-    
-    [Signal]
-    public delegate void TickEventHandler();
-    [Signal]
-    public delegate void YearEventHandler();
     static readonly string[] months = ["January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     public const uint MonthsPerTick = 1;
@@ -21,7 +17,6 @@ public partial class TimeManager : Node
     bool simStart = false;
     //Task tickTask;
     Task tickTask = Task.CompletedTask;
-    Task drawTask = Task.CompletedTask;
     double currentTime;
     public GameSpeed gameSpeed = GameSpeed.UNLIMITED;
     GameSpeed lastSpeed = GameSpeed.UNLIMITED;
@@ -70,11 +65,8 @@ public partial class TimeManager : Node
         if (simStart && tickTask.IsCompleted)
         {
             tickTask = UpdateTimeManager();
+            
         } 
-        // TODO: Move this function to a more fitting place
-        if (drawTask.IsCompleted) {
-            drawTask = RenderGame();
-        }
     }
     async Task UpdateTimeManager()
     {
@@ -92,25 +84,7 @@ public partial class TimeManager : Node
         
         ticks++;
     }
-    async Task RenderGame()
-    {
-        // Hides region overlay 
-        /*
-        if (!mapManager.showRegionsCheckbox.ButtonPressed)
-        {
-            mapManager.regionOverlay.Visible = false;
-        }
-        */
-        if (drawTask.IsCompleted)
-        {
-            // Shows region overlay
-            mapManager.regionOverlay.Visible = true;
-            // Gets our buffers
-            await Task.Run(() => mapManager.UpdateRegionColors(simManager.regionIds.Values));  
-            // Runs the shader 
-            mapManager.RunShader();
-        }     
-    }
+
     float GetWaitTime()
     {
         return gameSpeed switch
