@@ -32,7 +32,7 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 int getIndex(int posX, int posY){
     ivec2 size = ivec2(int(dimensions.width), int(dimensions.height));
-    return ((posY % size.y) * size.x) + (posX % size.x);
+    return int(mod(posY, size.y) * size.x) + int(mod(posX, size.x));
 }
 
 void main() {
@@ -54,7 +54,7 @@ void main() {
     for (int dx = -thickness; dx <= thickness; dx++){
         for (int dy = -thickness; dy <= thickness; dy++){
             if (dx != 0 && dy != 0){
-                ivec2 pos = ivec2((uv.x + dx) % int(dimensions.width), (uv.y + dy) % int(dimensions.height));
+                ivec2 pos = ivec2(mod((uv.x + dx),size.x), uv.y + dy);
                 int otherIndex = getIndex(pos.x/int(dimensions.resolution), pos.y/int(dimensions.resolution));
                 int otherBorderId = borderData.borders[otherIndex].x;
                 int otherBorderTag = borderData.borders[otherIndex].y;

@@ -25,6 +25,26 @@ public class TradeZoneMapMode : IMapMode
             }
             if (region.isTradeZoneCenter && isCenter) color = new Color("Yellow");
         }   
+
+        if (IMapMode.selectionManager.IsRegionSelected())
+        {
+            TradeZone selectedTradeZone = IMapMode.selectionManager.GetSelectedTradeZone();
+            if (selectedTradeZone != null && region.tradeZone != null)
+            {
+                // Darkens unrelated states
+                if (region.tradeZone != selectedTradeZone)
+                {
+                    color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], 0.7f);
+                }                      
+            } 
+            else
+            {
+                if (region != IMapMode.selectionManager.GetSelectedRegion())
+                {
+                    color = Utility.MultiColourLerp([color, new Color(0, 0, 0)], IMapMode.UnselectedDarkness);
+                }                        
+            }
+        }
         return color;
     }
     public string GetHoverText(Region region)
