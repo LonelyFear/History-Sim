@@ -4,8 +4,8 @@ using System.Linq;
 
 public partial class PauseMenus : Control
 {
-    [Export] TimeManager timeManager;
-    [Export] PlayerCamera playerCamera;
+    TimeManager timeManager;
+    PlayerCamera playerCamera;
 
     VBoxContainer pauseMenuContainer;
     VBoxContainer saveMenuContainer;
@@ -23,6 +23,9 @@ public partial class PauseMenus : Control
 
     public override void _Ready()
     {
+        playerCamera = GetTree().Root.GetChild(0).GetNode<PlayerCamera>("PlayerCamera");
+        timeManager = GetTree().Root.GetChild(0).GetNode<TimeManager>("TimeManager");
+
         mainMenuButton = GetNode<Button>("%MainMenuButton");
         saveSimulationButton = GetNode<Button>("%SaveSimulationButton");
         acceptSaveButton = GetNode<Button>("%AcceptSaveButton");
@@ -46,16 +49,14 @@ public partial class PauseMenus : Control
         pauseMenuClose.Pressed += ClosePauseMenu;
         saveMenuClose.Pressed += ClosePauseMenu;
 
-        VisibilityChanged += () =>
-        {
-            timeManager.forcePause = Visible;
-            playerCamera.controlEnabled = !Visible;
-        };
+        timeManager.forcePause = true;
+        playerCamera.controlEnabled = false;
     }
     public void ClosePauseMenu()
     {
-        ToggleSavePanel(false);
-        Visible = false;        
+        timeManager.forcePause = false;
+        playerCamera.controlEnabled = true;
+        QueueFree();   
     }
     public override void _Process(double delta)
     {

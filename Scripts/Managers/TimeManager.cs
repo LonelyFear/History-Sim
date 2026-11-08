@@ -25,7 +25,7 @@ public partial class TimeManager : Node
 
     public override void _Ready()
     {
-        mapManager = GetNode<MapManager>("/root/Game/Map Manager");
+        mapManager = GetNode<MapManager>("%MapManager");
         // Connection
 		simHolder.simStartEvent += OnSimStart;
 	}

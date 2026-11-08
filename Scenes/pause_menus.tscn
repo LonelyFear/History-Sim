@@ -1,0 +1,139 @@
+[gd_scene format=3 uid="uid://cg58jr6joj8xi"]
+
+[ext_resource type="Script" uid="uid://dftbp7gri5nhx" path="res://Scripts/UI/PauseMenus.cs" id="1_cb153"]
+[ext_resource type="Theme" uid="uid://bdgixxci07rw6" path="res://Godot Themes/main_menu.theme" id="2_1chv5"]
+[ext_resource type="Texture2D" uid="uid://bb8bw6vdpmb60" path="res://Sprites/Icons/close.png" id="3_berrc"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_i26dy"]
+
+[node name="PauseMenus" type="ColorRect" unique_id=1598841225]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+color = Color(1, 1, 1, 0.19607843)
+script = ExtResource("1_cb153")
+
+[node name="PauseMenuPanel" type="Panel" parent="." unique_id=1242791705]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -154.375
+offset_top = -91.0
+offset_right = 154.375
+offset_bottom = 91.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PauseMenuPanel" unique_id=1527204794]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_1chv5")
+
+[node name="PauseMenuContainer" type="VBoxContainer" parent="PauseMenuPanel/MarginContainer" unique_id=1460160075]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PauseMenuTop" type="HBoxContainer" parent="PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=2012414431]
+layout_mode = 2
+
+[node name="PauseMenuLabel" type="Label" parent="PauseMenuPanel/MarginContainer/PauseMenuContainer/PauseMenuTop" unique_id=1624238109]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Pause Menu"
+
+[node name="PauseMenuClose" type="Button" parent="PauseMenuPanel/MarginContainer/PauseMenuContainer/PauseMenuTop" unique_id=728805342]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+icon = ExtResource("3_berrc")
+flat = true
+expand_icon = true
+
+[node name="HSeparator" type="HSeparator" parent="PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=787833907]
+layout_mode = 2
+
+[node name="SaveSimulationButton" type="Button" parent="PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=1939624373]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save Simulation"
+alignment = 0
+
+[node name="MainMenuButton" type="Button" parent="PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=1623409435]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Main Menu"
+alignment = 0
+
+[node name="SaveMenuContainer" type="VBoxContainer" parent="PauseMenuPanel/MarginContainer" unique_id=1260558652]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="SaveMenuTop" type="HBoxContainer" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=23921362]
+layout_mode = 2
+
+[node name="SaveMenuLabel" type="Label" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer/SaveMenuTop" unique_id=1223743777]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Saving Simulation"
+
+[node name="SaveMenuClose" type="Button" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer/SaveMenuTop" unique_id=1737975106]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+icon = ExtResource("3_berrc")
+flat = true
+expand_icon = true
+
+[node name="HSeparator" type="HSeparator" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1991653091]
+layout_mode = 2
+
+[node name="OverwriteToggle" type="CheckButton" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1163887067]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Overwrite Existing"
+
+[node name="SaveNameEdit" type="LineEdit" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1974592799]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Save Name"
+
+[node name="OverwriteSaveDropdown" type="OptionButton" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=9016513]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+selected = 0
+item_count = 1
+popup/item_0/text = "Select A Save"
+popup/item_0/id = 0
+popup/item_0/disabled = true
+
+[node name="SaveMenuPadding" type="HSeparator" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=397160523]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/separator = SubResource("StyleBoxEmpty_i26dy")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=2053249155]
+layout_mode = 2
+
+[node name="AcceptSaveButton" type="Button" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer/HBoxContainer" unique_id=541279738]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Accept"
+
+[node name="CancelSaveButton" type="Button" parent="PauseMenuPanel/MarginContainer/SaveMenuContainer/HBoxContainer" unique_id=132948925]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Back"

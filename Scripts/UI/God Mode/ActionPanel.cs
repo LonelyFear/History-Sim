@@ -5,7 +5,8 @@ public partial class ActionPanel : Panel
     [Export] SimManagerHolder simHolder;
     [Export] public Button encyclopediaButton;
     [Export] EncyclopediaManager encyclopediaManager;
-    [Export] PauseMenus pauseMenus;
+    [Export] PackedScene pauseMenuScene;
+    PauseMenus pauseMenus;
     Button menuButton;
 
     Label worldPopulationLabel;
@@ -41,12 +42,14 @@ public partial class ActionPanel : Panel
     }
     public void TogglePauseMenu()
     {
-        if (pauseMenus.Visible)
+        if (IsInstanceValid(pauseMenus))
         {
             pauseMenus.ClosePauseMenu();
-        } else
+        } 
+        else
         {
-            pauseMenus.Visible = true;
+            pauseMenus = (PauseMenus)pauseMenuScene.Instantiate();
+            GetParent().GetParent().AddChild(pauseMenus);
         }
     }
 }

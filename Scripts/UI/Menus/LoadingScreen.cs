@@ -21,8 +21,8 @@ public partial class LoadingScreen : Control
     WorldGenerator generator = null;
     public override void _Ready()
     {
-        map = GetNode<TerrainMap>("/root/Game/Terrain Map");
-        time = GetNode<TimeManager>("/root/Game/Time Manager");
+        map = GetNode<TerrainMap>("/root/Game/TerrainMap");
+        time = GetNode<TimeManager>("/root/Game/TimeManager");
         ui = GetNode<GameUI>("/root/Game/UI");
         splash = GetNode<Label>("Splash Text");
         camera = GetNode<PlayerCamera>("/root/Game/PlayerCamera");
@@ -78,8 +78,8 @@ public partial class LoadingScreen : Control
 
                 simHolder.simManager = sim;
                 sim.simHolder = simHolder;
-                sim.terrainMap = GetNode<Node2D>("/root/Game/Terrain Map");
-                sim.timeManager = GetParent().GetNode<TimeManager>("/root/Game/Time Manager");
+                sim.terrainMap = map;
+                sim.timeManager = time;
                 // Connection
                 //giveGeneratorEvent.Invoke(this, null);
 
