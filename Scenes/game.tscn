@@ -33,6 +33,8 @@
 [ext_resource type="Texture2D" uid="uid://mr0s2xt8m66g" path="res://Sprites/Icons/32x32 Pie Chart.png" id="30_bwj6o"]
 [ext_resource type="Texture2D" uid="uid://bdjtnarj1d4sk" path="res://Sprites/Icons/16x16 Hamburger Menu.png" id="31_ym3tv"]
 [ext_resource type="PackedScene" uid="uid://ck3kuiv6l2wdg" path="res://Scenes/debug_panel.tscn" id="32_lmoi6"]
+[ext_resource type="Texture2D" uid="uid://bb8bw6vdpmb60" path="res://Sprites/Icons/close.png" id="34_i26dy"]
+[ext_resource type="Script" uid="uid://dftbp7gri5nhx" path="res://Scripts/UI/PauseMenus.cs" id="34_lmoi6"]
 [ext_resource type="PackedScene" uid="uid://cnrouajs7jrl2" path="res://Scenes/info_holder.tscn" id="35_631el"]
 [ext_resource type="Script" uid="uid://b7otfafxlep3u" path="res://Scripts/UI/HoverText.cs" id="42_jcvim"]
 
@@ -51,6 +53,8 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_i26dy"]
 
 [node name="Game" type="Node2D" unique_id=350215680]
 script = ExtResource("1_rku1e")
@@ -218,7 +222,7 @@ popup/item_5/id = 5
 popup/item_6/text = "Unlimited"
 popup/item_6/id = 6
 
-[node name="Action Panel" type="Panel" parent="UI/Bars" unique_id=934192393 node_paths=PackedStringArray("simHolder", "encyclopediaButton", "encyclopediaManager")]
+[node name="Action Panel" type="Panel" parent="UI/Bars" unique_id=934192393 node_paths=PackedStringArray("simHolder", "encyclopediaButton", "encyclopediaManager", "pauseMenus")]
 layout_mode = 1
 anchors_preset = -1
 anchor_top = 0.9
@@ -232,6 +236,7 @@ script = ExtResource("17_7nbq1")
 simHolder = NodePath("../../../Simulation")
 encyclopediaButton = NodePath("ActionBarMargins/ActionBar/EncyclopediaButton")
 encyclopediaManager = NodePath("../../../Encyclopedia")
+pauseMenus = NodePath("../../PauseMenus")
 
 [node name="ActionBarMargins" type="MarginContainer" parent="UI/Bars/Action Panel" unique_id=1315838029]
 layout_mode = 1
@@ -353,7 +358,6 @@ tooltip_text = "Menu"
 focus_mode = 0
 theme = ExtResource("4_exi56")
 theme_override_font_sizes/font_size = 30
-toggle_mode = true
 icon = ExtResource("31_ym3tv")
 icon_alignment = 1
 expand_icon = true
@@ -541,6 +545,140 @@ script = ExtResource("22_vm72l")
 selectionManager = NodePath("../../SelectionManager")
 map = NodePath("../../Map Manager")
 simHolder = NodePath("../../Simulation")
+
+[node name="PauseMenus" type="ColorRect" parent="UI" unique_id=1778430571 node_paths=PackedStringArray("timeManager", "playerCamera")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+color = Color(1, 1, 1, 0.19607843)
+script = ExtResource("34_lmoi6")
+timeManager = NodePath("../../Time Manager")
+playerCamera = NodePath("../../PlayerCamera")
+
+[node name="PauseMenuPanel" type="Panel" parent="UI/PauseMenus" unique_id=1660057886]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -154.375
+offset_top = -91.0
+offset_right = 154.375
+offset_bottom = 91.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/PauseMenus/PauseMenuPanel" unique_id=663273340]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_exi56")
+
+[node name="PauseMenuContainer" type="VBoxContainer" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer" unique_id=892020700]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PauseMenuTop" type="HBoxContainer" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=1479186945]
+layout_mode = 2
+
+[node name="PauseMenuLabel" type="Label" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/PauseMenuContainer/PauseMenuTop" unique_id=1196101689]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Pause Menu"
+
+[node name="PauseMenuClose" type="Button" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/PauseMenuContainer/PauseMenuTop" unique_id=1135051002]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+icon = ExtResource("34_i26dy")
+flat = true
+expand_icon = true
+
+[node name="HSeparator" type="HSeparator" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=1174918526]
+layout_mode = 2
+
+[node name="SaveSimulationButton" type="Button" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=1720821623]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save Simulation"
+alignment = 0
+
+[node name="MainMenuButton" type="Button" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/PauseMenuContainer" unique_id=1649770653]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Main Menu"
+alignment = 0
+
+[node name="SaveMenuContainer" type="VBoxContainer" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer" unique_id=151881296]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="SaveMenuTop" type="HBoxContainer" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=912053525]
+layout_mode = 2
+
+[node name="SaveMenuLabel" type="Label" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer/SaveMenuTop" unique_id=2116013145]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Saving Simulation"
+
+[node name="SaveMenuClose" type="Button" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer/SaveMenuTop" unique_id=735344672]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+icon = ExtResource("34_i26dy")
+flat = true
+expand_icon = true
+
+[node name="HSeparator" type="HSeparator" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1186696001]
+layout_mode = 2
+
+[node name="OverwriteToggle" type="CheckButton" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=122605999]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Overwrite Existing"
+
+[node name="SaveNameEdit" type="LineEdit" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1675991719]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Save Name"
+
+[node name="OverwriteSaveDropdown" type="OptionButton" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1454941527]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+selected = 0
+item_count = 1
+popup/item_0/text = "Select A Save"
+popup/item_0/id = 0
+popup/item_0/disabled = true
+
+[node name="SaveMenuPadding" type="HSeparator" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1239534747]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/separator = SubResource("StyleBoxEmpty_i26dy")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer" unique_id=1070164742]
+layout_mode = 2
+
+[node name="AcceptSaveButton" type="Button" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer/HBoxContainer" unique_id=936057736]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Accept"
+
+[node name="CancelSaveButton" type="Button" parent="UI/PauseMenus/PauseMenuPanel/MarginContainer/SaveMenuContainer/HBoxContainer" unique_id=1393185982]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Back"
 
 [node name="Loading" type="CanvasLayer" parent="." unique_id=259550711]
 

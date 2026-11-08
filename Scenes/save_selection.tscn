@@ -52,15 +52,20 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_qb7vq")
 script = ExtResource("2_fw0v8")
 saveButtonScene = ExtResource("3_morf0")
 
-[node name="Game Title" type="Label" parent="SavesPanel" unique_id=1476540286]
+[node name="MarginContainer" type="MarginContainer" parent="SavesPanel" unique_id=2094803968]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -319.5
-offset_right = 319.5
-offset_bottom = 106.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_qasot")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SavesPanel/MarginContainer" unique_id=492299078]
+layout_mode = 2
+
+[node name="Game Title" type="Label" parent="SavesPanel/MarginContainer/VBoxContainer" unique_id=1476540286]
+layout_mode = 2
 theme = ExtResource("2_qasot")
 theme_override_fonts/font = ExtResource("5_qb7vq")
 theme_override_font_sizes/font_size = 70
@@ -68,47 +73,29 @@ text = "Select A Save"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ScrollContainer" type="ScrollContainer" parent="SavesPanel" unique_id=94043520]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -460.0
-offset_top = -250.5
-offset_right = 460.0
-offset_bottom = 283.5
-grow_horizontal = 2
-grow_vertical = 2
+[node name="ScrollContainer" type="ScrollContainer" parent="SavesPanel/MarginContainer/VBoxContainer" unique_id=94043520]
+layout_mode = 2
+size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxEmpty_qb7vq")
 follow_focus = true
 draw_focus_border = true
 horizontal_scroll_mode = 0
 
-[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/ScrollContainer" unique_id=908031561]
+[node name="SaveButtonContainer" type="VBoxContainer" parent="SavesPanel/MarginContainer/VBoxContainer/ScrollContainer" unique_id=908031561]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(855, 100)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="Buttons" type="HBoxContainer" parent="SavesPanel" unique_id=9823877]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -247.75
-offset_top = -47.0
-offset_right = 247.75
-grow_horizontal = 2
-grow_vertical = 0
+[node name="Buttons" type="HBoxContainer" parent="SavesPanel/MarginContainer/VBoxContainer" unique_id=9823877]
+layout_mode = 2
 theme_override_constants/separation = 18
 alignment = 1
 
-[node name="Back" type="Button" parent="SavesPanel/Buttons" unique_id=1361612061]
+[node name="Back" type="Button" parent="SavesPanel/MarginContainer/VBoxContainer/Buttons" unique_id=1361612061]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
@@ -116,7 +103,8 @@ theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Back"
 
-[node name="Load" type="Button" parent="SavesPanel/Buttons" unique_id=29527614]
+[node name="Load" type="Button" parent="SavesPanel/MarginContainer/VBoxContainer/Buttons" unique_id=29527614]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
@@ -124,10 +112,65 @@ theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Load Save"
 
-[node name="Delete" type="Button" parent="SavesPanel/Buttons" unique_id=130567379]
+[node name="Delete" type="Button" parent="SavesPanel/MarginContainer/VBoxContainer/Buttons" unique_id=130567379]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_qasot")
 theme_override_font_sizes/font_size = 30
 action_mode = 0
 text = "Delete Save"
+
+[node name="ConfirmationPanel" type="Panel" parent="." unique_id=2145797536]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -183.70105
+offset_top = -103.0
+offset_right = 183.70105
+offset_bottom = 103.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="ConfirmationPanel" unique_id=1629373699]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_qasot")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ConfirmationPanel/MarginContainer" unique_id=1044657275]
+layout_mode = 2
+
+[node name="WarningTitle" type="Label" parent="ConfirmationPanel/MarginContainer/VBoxContainer" unique_id=1773832358]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Outdated Save"
+
+[node name="HSeparator" type="HSeparator" parent="ConfirmationPanel/MarginContainer/VBoxContainer" unique_id=523344442]
+layout_mode = 2
+
+[node name="WarningText" type="Label" parent="ConfirmationPanel/MarginContainer/VBoxContainer" unique_id=1438749026]
+layout_mode = 2
+size_flags_vertical = 3
+text = "This save was created in a different version of the game. Are you sure you want to open it?"
+autowrap_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ConfirmationPanel/MarginContainer/VBoxContainer" unique_id=1262442766]
+layout_mode = 2
+
+[node name="ConfirmButton" type="Button" parent="ConfirmationPanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=527880969]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Confirm"
+
+[node name="CancelButton" type="Button" parent="ConfirmationPanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=554715129]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancel"

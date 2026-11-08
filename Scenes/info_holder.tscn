@@ -8,15 +8,12 @@
 [ext_resource type="Texture2D" uid="uid://d0ikusbp8bvy2" path="res://Sprites/Icons/Shield Tab Icon.png" id="6_nmd8a"]
 [ext_resource type="Texture2D" uid="uid://dy0pq3ah4prxn" path="res://Sprites/Icons/Rug Tab Icon.png" id="7_xp768"]
 [ext_resource type="Texture2D" uid="uid://qyiufmqook10" path="res://Sprites/Icons/Crate Tab Icon.png" id="8_85w4f"]
+[ext_resource type="Texture2D" uid="uid://bb8bw6vdpmb60" path="res://Sprites/Icons/close.png" id="9_jwx38"]
 [ext_resource type="Script" uid="uid://y6dbljc821m" path="res://Scripts/UI/DemographicsBox.cs" id="9_qcdvp"]
 [ext_resource type="Script" uid="uid://cv5nuwudhbqr6" path="res://Scripts/UI/LeadershipBox.cs" id="10_2wc5x"]
 [ext_resource type="Script" uid="uid://clmuvck1mxus6" path="res://Scripts/EconomyBox.cs" id="11_bkj7h"]
 [ext_resource type="Script" uid="uid://dm80ni1pwsu8b" path="res://Scripts/UI/InfoPanelBox.cs" id="12_njq0n"]
 [ext_resource type="Script" uid="uid://dcg6vujyu57iu" path="res://Scripts/UI/WarsBox.cs" id="13_bipqf"]
-
-[sub_resource type="DPITexture" id="DPITexture_vm72l"]
-_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#fff\" fill-opacity=\".75\" d=\"m1 3 2-2 5 5 5-5 2 2-5 5 5 5-2 2-5-5-5 5-2-2 5-5z\"/></svg>
-"
 
 [node name="InfoHolder" type="VBoxContainer" unique_id=770875322]
 anchors_preset = -1
@@ -91,10 +88,10 @@ clip_text = true
 
 [node name="CloseInfoButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/NameAndClose" unique_id=1851328997]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(40, 0)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 theme = ExtResource("2_jwx38")
-icon = SubResource("DPITexture_vm72l")
+icon = ExtResource("9_jwx38")
 flat = true
 icon_alignment = 1
 expand_icon = true

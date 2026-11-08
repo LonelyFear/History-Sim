@@ -5,6 +5,9 @@ public partial class ActionPanel : Panel
     [Export] SimManagerHolder simHolder;
     [Export] public Button encyclopediaButton;
     [Export] EncyclopediaManager encyclopediaManager;
+    [Export] PauseMenus pauseMenus;
+    Button menuButton;
+
     Label worldPopulationLabel;
     Label warCountLabel;
     Label stateCountLabel;
@@ -15,11 +18,14 @@ public partial class ActionPanel : Panel
         worldPopulationLabel = GetNode<Label>("%WorldPopulationLabel");
         warCountLabel = GetNode<Label>("%WarCountLabel");
         stateCountLabel = GetNode<Label>("%StateCountLabel");
+        
+        menuButton = GetNode<Button>("%MenuButton");
 
         encyclopediaButton.Pressed += OnEncyclopediaClick;
 
         // Connection
 		simHolder.simStartEvent += () => {simManager = simHolder.simManager;};
+        menuButton.Pressed += TogglePauseMenu;
     }
     public override void _Process(double delta)
     {
@@ -32,5 +38,15 @@ public partial class ActionPanel : Panel
     public void OnEncyclopediaClick()
     {
         encyclopediaManager.OpenEncyclopedia();
+    }
+    public void TogglePauseMenu()
+    {
+        if (pauseMenus.Visible)
+        {
+            pauseMenus.ClosePauseMenu();
+        } else
+        {
+            pauseMenus.Visible = true;
+        }
     }
 }

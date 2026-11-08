@@ -395,6 +395,7 @@ public static class ObjectManager
             id = GetId(),
             color = new Color(simManager.rng.NextSingle(), simManager.rng.NextSingle(), simManager.rng.NextSingle()),
             center = region,
+            tickCreated = timeManager.ticks,
             name = region.name + " Market"
         };
         zone.AddRegion(region);

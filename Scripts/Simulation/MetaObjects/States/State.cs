@@ -477,7 +477,7 @@ public partial class State : Polity, ISaveable
         float size = regions.Count;
         float pop = population;
         float wealth = totalWealth;     
-        float totalMilTech = regions.Sum(r => r.tech.societyLevel);     
+        float techSum = regions.Sum(r => r.tech.societyLevel);     
 
         if (sovereignty == Sovereignty.INDEPENDENT)
         {
@@ -488,7 +488,7 @@ public partial class State : Polity, ISaveable
                 wealth += vassal.totalWealth;
                 size += vassal.regions.Count;
                 pop += vassal.population;
-                totalMilTech += regions.Sum(r => r.tech.societyLevel);    
+                techSum += regions.Sum(r => r.tech.societyLevel);    
             }    
         } 
         // Rebellion Strength
@@ -504,12 +504,12 @@ public partial class State : Polity, ISaveable
                         wealth += rebel.totalWealth;
                         size += rebel.regions.Count;
                         pop += rebel.population;
-                        totalMilTech += regions.Sum(r => r.tech.societyLevel);                      
+                        techSum += regions.Sum(r => r.tech.societyLevel);                      
                     }
                 }                
             }
         }
-        float basePower = (totalMilTech + 1)/size * (wealth/Mathf.Pow(size, 1.5f));
+        float basePower = (techSum + 1)/size * (wealth/(size * 10f));
         return Mathf.FloorToInt(basePower);
     }
     public override int GetManpower()

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 
-public partial class SavesPanel : Panel
+public partial class SavesPanel : Control
 {
 	VBoxContainer saveButtonContainer;
 	[Export] PackedScene saveButtonScene;
@@ -15,11 +15,11 @@ public partial class SavesPanel : Panel
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		saveButtonContainer = GetNode<VBoxContainer>("ScrollContainer/SaveButtonContainer");
-		loadButton = GetNode<Button>("Buttons/Load");
-		deleteButton = GetNode<Button>("Buttons/Delete");
+		saveButtonContainer = GetNode<VBoxContainer>("%SaveButtonContainer");
+		loadButton = GetNode<Button>("%Load");
+		deleteButton = GetNode<Button>("%Delete");
 
-		GetNode<Button>("Buttons/Back").Pressed += OnBackClicked;
+		GetNode<Button>("%Back").Pressed += OnBackClicked;
 		loadButton.Pressed += OnLoadSaveClicked;
 		deleteButton.Pressed += OnDeleteSaveClicked;
 
@@ -67,9 +67,9 @@ public partial class SavesPanel : Panel
 				SaveData saveData = JsonSerializer.Deserialize<SaveData>(saveText);
 				save.saveData = saveData;
 
-				bool outdated = saveData.saveVersion != SaveData.validSaveVersion;
+				bool outdated = saveData.saveFormat != SaveData.SaveFormat;
 				save.outdated = outdated;
-				save.displayPath = $"{save.displayPath} | Format: {saveData.saveVersion}{(outdated ? " [Outdated]" : "")}";
+				save.displayPath = $"{save.displayPath} | Format: {saveData.saveFormat}{(outdated ? " [Outdated]" : "")}";
 			}
 			else
 			{

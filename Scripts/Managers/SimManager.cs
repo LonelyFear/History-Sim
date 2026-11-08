@@ -288,6 +288,9 @@ public class SimManager
         Character.sim = this;
 
         BaseEncyclopediaTab.simManager = this;
+
+        SaveManager.sim = this;
+        SaveManager.world = worldGenerator;
     }
     public void AssignRandom()
     {
