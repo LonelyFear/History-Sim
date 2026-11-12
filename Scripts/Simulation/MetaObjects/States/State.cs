@@ -3,10 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using MessagePack;
-using PixelHistory.Objects.States.AI;
 using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.Wars;
-using System.Threading;
 
 namespace PixelHistory.Objects.States.Base;
 [MessagePackObject(AllowPrivate = true)]
@@ -14,7 +12,6 @@ public partial class State : Polity, ISaveable
 {
     [Key(25)] public string baseName = "Nation";
     [Key(27)] public string leaderTitle { get; set; } = "King";
-    [Key(28)] public StateAIManager AIManager;
     [Key(29)] public Color displayColor;
     [Key(30)] public Color capitalColor;
     [Key(31)] public bool capitualated = false;

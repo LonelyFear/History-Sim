@@ -494,7 +494,7 @@ public partial class Region : PopObject, ISaveable
         long attackerPower;
         attackerPower = owner.GetCombatPower();
 
-        if (Battle.CalcBattle(target, attackerPower, 5000))
+        if (Battle.CalcBattle(target, attackerPower, 4000))
         {
             owner.AddRegion(target, true);
         }

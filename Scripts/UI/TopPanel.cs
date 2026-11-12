@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class TopPanel : Panel
+public partial class TopPanel : Control
 {
     [ExportCategory("References")]
 	[Export] SimManagerHolder simHolder;

@@ -9,7 +9,6 @@ using MessagePack;
 using MessagePack.Resolvers;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
-using PixelHistory.Objects.States.AI;
 using FileAccess = Godot.FileAccess;
 using PixelHistory.Objects.Wars;
 
@@ -276,10 +275,6 @@ public class SimManager
 
         ObjectManager.simManager = this;
         ObjectManager.timeManager = timeManager;
-
-        StateAIManager.simManager = this;
-
-        StateAIManager.simManager = this;
 
         NamedObject.simManager = this;
 
@@ -654,13 +649,6 @@ public class SimManager
         UpdateDiplomacy();
         countedPerformanceInfo["Diplomacy Time"] += stopwatch.Elapsed.TotalMilliseconds;
         // Updates
-        //  State Ai
-        foreach (var pair in statesIds)
-        {
-            State state = pair.Value;
-            state.AIManager.Tick();
-        }
-        countedPerformanceInfo["AI Time"] = stopwatch.Elapsed.TotalMilliseconds;
         stopwatch.Restart();
         // Counts State Stats
         Parallel.ForEach(partitioner, (state) =>
@@ -702,10 +690,6 @@ public class SimManager
         {
             if (relation.truce > 0) relation.truce--;
             State state = rng.NextSingle() < 0.5f ? relation.initiator : relation.recipient;
-            if (state.AIManager.CanTick())
-            {
-                state.AIManager.UpdateRelations(relation);
-            }
         });
     }
     public void UpdateAlliances()

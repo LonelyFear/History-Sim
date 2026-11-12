@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using PixelHistory.Objects.States.AI;
 using PixelHistory.Objects.States.Base;
 using PixelHistory.Objects.States.Diplomacy;
 using PixelHistory.Objects.Wars;
@@ -190,8 +189,6 @@ public static class ObjectManager
                 state.name = NameGenerator.GetStateName(state);
                 state.AddRegion(region, true);
                 simManager.statesIds.Add(state.id, state);      
-                    
-                state.AIManager = new StateAIManager(state);
             }            
         } catch (Exception e)
         {
